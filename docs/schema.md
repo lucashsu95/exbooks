@@ -86,128 +86,128 @@ erDiagram
     Deal ||--o{ Notification : "觸發通知"
 
     UserProfile {
-        uuid id PK
-        int user_id FK
-        string nickname
-        string default_transferability
-        string default_location
-        json available_schedule
-        string avatar
-        datetime created_at
-        datetime updated_at
+        UUID id PK "主鍵"
+        INT user_id FK "Django User 外鍵"
+        VARCHAR nickname "暱稱（最長 50 字）"
+        ENUM default_transferability "預設流通性 TRANSFER｜RETURN"
+        VARCHAR default_location "預設面交地點"
+        JSON available_schedule "可用時間排程"
+        VARCHAR avatar "頭像圖片路徑"
+        DATETIME created_at "建立時間"
+        DATETIME updated_at "最後更新時間"
     }
 
     OfficialBook {
-        uuid id PK
-        string isbn UK
-        string title
-        string author
-        string publisher
-        string cover_image
-        datetime created_at
-        datetime updated_at
+        UUID id PK "主鍵"
+        VARCHAR isbn UK "ISBN 書號（全域唯一）"
+        VARCHAR title "書名"
+        VARCHAR author "作者"
+        VARCHAR publisher "出版社"
+        VARCHAR cover_image "封面圖片路徑"
+        DATETIME created_at "建立時間"
+        DATETIME updated_at "最後更新時間"
     }
 
     BookSet {
-        uuid id PK
-        int owner_id FK
-        string name
-        string description
-        datetime created_at
-        datetime updated_at
+        UUID id PK "主鍵"
+        INT owner_id FK "套書建立者"
+        VARCHAR name "套書名稱"
+        TEXT description "套書描述"
+        DATETIME created_at "建立時間"
+        DATETIME updated_at "最後更新時間"
     }
 
     SharedBook {
-        uuid id PK
-        int official_book_id FK
-        int owner_id FK
-        int keeper_id FK
-        int book_set_id FK "nullable"
-        string transferability
-        string status
-        text condition_description
-        int loan_duration_days
-        int extend_duration_days
-        datetime listed_at
-        datetime created_at
-        datetime updated_at
+        UUID id PK "主鍵"
+        INT official_book_id FK "關聯官方書籍"
+        INT owner_id FK "書籍貢獻者"
+        INT keeper_id FK "當前持有者"
+        INT book_set_id FK "所屬套書（可空）"
+        ENUM transferability "流通性 TRANSFER｜RETURN"
+        ENUM status "書籍狀態 S｜T｜V｜O｜R｜E｜L｜D"
+        TEXT condition_description "書況描述"
+        INT loan_duration_days "借閱天數（15~90，預設 30）"
+        INT extend_duration_days "可延長天數（7~30）"
+        DATETIME listed_at "上架時間"
+        DATETIME created_at "建立時間"
+        DATETIME updated_at "最後更新時間"
     }
 
     Deal {
-        uuid id PK
-        int shared_book_id FK
-        int book_set_id FK "nullable"
-        string deal_type
-        string status
-        int applicant_id FK
-        int responder_id FK
-        string meeting_location
-        datetime meeting_time
-        date due_date "nullable"
-        boolean applicant_rated
-        boolean responder_rated
-        datetime created_at
-        datetime updated_at
+        UUID id PK "主鍵"
+        INT shared_book_id FK "交易書籍"
+        INT book_set_id FK "套書（可空）"
+        ENUM deal_type "交易類別 LN｜RS｜TF｜RG｜EX"
+        ENUM status "交易狀態 Q｜P｜M｜D｜X"
+        INT applicant_id FK "申請者"
+        INT responder_id FK "回應者"
+        VARCHAR meeting_location "面交地點"
+        DATETIME meeting_time "面交時間"
+        DATE due_date "還書到期日（可空）"
+        BOOLEAN applicant_rated "申請者是否已評價"
+        BOOLEAN responder_rated "回應者是否已評價"
+        DATETIME created_at "建立時間"
+        DATETIME updated_at "最後更新時間"
     }
 
     DealMessage {
-        uuid id PK
-        int deal_id FK
-        int sender_id FK
-        text content
-        datetime created_at
+        UUID id PK "主鍵"
+        INT deal_id FK "所屬交易"
+        INT sender_id FK "發送者"
+        TEXT content "訊息內容"
+        DATETIME created_at "發送時間"
     }
 
     BookPhoto {
-        uuid id PK
-        int shared_book_id FK
-        int deal_id FK "nullable"
-        int uploader_id FK
-        string photo
-        string caption
-        datetime created_at
+        UUID id PK "主鍵"
+        INT shared_book_id FK "所屬書籍"
+        INT deal_id FK "所屬交易（可空）"
+        INT uploader_id FK "上傳者"
+        VARCHAR photo "照片路徑"
+        VARCHAR caption "照片說明"
+        DATETIME created_at "上傳時間"
     }
 
     Rating {
-        uuid id PK
-        int deal_id FK
-        int rater_id FK
-        int ratee_id FK
-        int integrity_score
-        int punctuality_score
-        int accuracy_score
-        text comment
-        datetime created_at
+        UUID id PK "主鍵"
+        INT deal_id FK "所屬交易（deal + rater 聯合唯一）"
+        INT rater_id FK "評價者"
+        INT ratee_id FK "被評者"
+        TINYINT integrity_score "誠信評分（1~5）"
+        TINYINT punctuality_score "準時評分（1~5）"
+        TINYINT accuracy_score "書況準確度評分（1~5）"
+        TEXT comment "評價留言"
+        DATETIME created_at "評價時間"
     }
 
     WishListItem {
-        uuid id PK
-        int user_id FK
-        int official_book_id FK
-        datetime created_at
+        UUID id PK "主鍵"
+        INT user_id FK "收藏者（user + official_book 聯合唯一）"
+        INT official_book_id FK "收藏書籍"
+        DATETIME created_at "收藏時間"
     }
 
     LoanExtension {
-        uuid id PK
-        int deal_id FK
-        int requested_by_id FK
-        int approved_by_id FK "nullable"
-        int extra_days
-        string status
-        datetime created_at
-        datetime updated_at
+        UUID id PK "主鍵"
+        INT deal_id FK "所屬交易"
+        INT requested_by_id FK "申請延長者"
+        INT approved_by_id FK "審核者（可空）"
+        INT extra_days "延長天數（7~30）"
+        ENUM status "申請狀態 PENDING｜APPROVED｜REJECTED"
+        DATETIME created_at "申請時間"
+        DATETIME updated_at "最後更新時間"
     }
 
     Notification {
-        uuid id PK
-        int recipient_id FK
-        int deal_id FK "nullable"
-        int shared_book_id FK "nullable"
-        string notification_type
-        string title
-        text message
-        boolean is_read
-        datetime created_at
+        UUID id PK "主鍵"
+        INT recipient_id FK "接收者"
+        INT deal_id FK "關聯交易（可空）"
+        INT shared_book_id FK "關聯書籍（可空）"
+        ENUM notification_type "通知類型（見 3.1 通知類型表）"
+        VARCHAR title "通知標題"
+        TEXT message "通知內容"
+        BOOLEAN is_read "是否已讀"
+        DATETIME created_at "建立時間"
     }
 ```
 
