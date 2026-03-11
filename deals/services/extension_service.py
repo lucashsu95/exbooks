@@ -5,6 +5,10 @@ from django.db import transaction
 
 from books.models import SharedBook
 from deals.models import Deal, LoanExtension
+from deals.services.notification_service import (
+    notify_extend_requested,
+    notify_extend_result,
+)
 
 
 def request_extension(deal, applicant, extra_days):
@@ -32,6 +36,8 @@ def request_extension(deal, applicant, extra_days):
         extra_days=extra_days,
         status=LoanExtension.Status.PENDING,
     )
+
+    notify_extend_requested(extension)
 
     return extension
 
@@ -61,6 +67,8 @@ def approve_extension(extension, reviewer):
         deal.due_date = deal.due_date + timedelta(days=extension.extra_days)
         deal.save(update_fields=['due_date', 'updated_at'])
 
+    notify_extend_result(extension)
+
 
 def reject_extension(extension, reviewer):
     """
@@ -77,6 +85,8 @@ def reject_extension(extension, reviewer):
     extension.status = LoanExtension.Status.REJECTED
     extension.approved_by = reviewer
     extension.save(update_fields=['status', 'approved_by', 'updated_at'])
+
+    notify_extend_result(extension)
 
 
 def cancel_extension(extension, applicant):

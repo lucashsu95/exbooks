@@ -2,7 +2,8 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from books.models import SharedBook
+from books.models import SharedBook, WishListItem
+from deals.services.notification_service import notify_book_available
 
 
 def list_book(shared_book):
@@ -21,6 +22,13 @@ def list_book(shared_book):
     shared_book.status = SharedBook.Status.TRANSFERABLE
     shared_book.listed_at = timezone.now()
     shared_book.save(update_fields=['status', 'listed_at', 'updated_at'])
+
+    # 通知願望書車中的使用者此書已可借閱
+    wish_items = WishListItem.objects.filter(
+        official_book=shared_book.official_book,
+    ).select_related('user')
+    for item in wish_items:
+        notify_book_available(item.user, shared_book)
 
 
 def suspend_book(shared_book):

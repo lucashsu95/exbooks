@@ -7,6 +7,13 @@ from django.utils import timezone
 from books.models import SharedBook
 from books.services.book_service import validate_book_set_completeness
 from deals.models import Deal
+from deals.services.notification_service import (
+    notify_deal_cancelled,
+    notify_deal_meeted,
+    notify_deal_requested,
+    notify_deal_responded,
+    notify_book_overdue,
+)
 
 
 # --- 交易類別與書籍流通性的合法對應 ---
@@ -125,6 +132,8 @@ def create_deal(applicant, shared_book, deal_type, book_set=None):
         due_date=due_date,
     )
 
+    notify_deal_requested(deal)
+
     return deal
 
 
@@ -143,6 +152,12 @@ def accept_deal(deal):
     shared_book = deal.shared_book
 
     # BR-15: 取消同一冊書的其他申請
+    auto_cancelled = list(
+        Deal.objects.filter(
+            shared_book=shared_book,
+            status=Deal.Status.REQUESTED,
+        ).exclude(pk=deal.pk)
+    )
     Deal.objects.filter(
         shared_book=shared_book,
         status=Deal.Status.REQUESTED,
@@ -155,6 +170,13 @@ def accept_deal(deal):
     # 更新書籍狀態為 V（已被預約）
     shared_book.status = SharedBook.Status.RESERVED
     shared_book.save(update_fields=['status', 'updated_at'])
+
+    # 通知申請者交易已被接受
+    notify_deal_responded(deal)
+
+    # 通知被自動取消的申請者
+    for cancelled_deal in auto_cancelled:
+        notify_deal_cancelled(cancelled_deal, deal.responder)
 
 
 def decline_deal(deal):
@@ -169,6 +191,9 @@ def decline_deal(deal):
 
     deal.status = Deal.Status.CANCELLED
     deal.save(update_fields=['status', 'updated_at'])
+
+    # 通知申請者交易被拒絕
+    notify_deal_cancelled(deal, deal.responder)
 
 
 def cancel_deal(deal):
@@ -191,6 +216,9 @@ def cancel_deal(deal):
             shared_book = deal.shared_book
             shared_book.status = deal.previous_book_status
             shared_book.save(update_fields=['status', 'updated_at'])
+
+    # 通知回應者交易已被取消
+    notify_deal_cancelled(deal, deal.applicant)
 
 
 @transaction.atomic
@@ -232,6 +260,9 @@ def complete_meeting(deal):
         deal.due_date = timezone.now().date() + timedelta(days=shared_book.loan_duration_days)
         deal.save(update_fields=['due_date'])
 
+    # 通知雙方面交完成
+    notify_deal_meeted(deal)
+
 
 def process_book_due(deal):
     """
@@ -255,3 +286,6 @@ def process_book_due(deal):
         shared_book.status = SharedBook.Status.TRANSFERABLE
 
     shared_book.save(update_fields=['status', 'updated_at'])
+
+    # 通知持有者與貢獻者書籍已逾期
+    notify_book_overdue(deal)
