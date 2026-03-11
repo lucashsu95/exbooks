@@ -20,6 +20,7 @@ class UserFactory(factory.django.DjangoModelFactory):
 class UserProfileFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = UserProfile
+        django_get_or_create = ('user',)
 
     user = factory.SubFactory(UserFactory)
     nickname = factory.Faker('name', locale='zh_TW')

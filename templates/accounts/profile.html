@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}個人資料{% endblock %}
+
+{% block content %}
+<div class="max-w-lg">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="font-serif text-xl font-bold">個人資料</h1>
+    <a href="{% url 'accounts:profile_edit' %}"
+       class="rounded-lg border border-margin px-3 py-1.5 text-sm hover:bg-page transition-colors">
+      編輯
+    </a>
+  </div>
+
+  <div class="rounded-xl border border-margin bg-white p-6 space-y-5">
+    <!-- Avatar + Name -->
+    <div class="flex items-center gap-4">
+      {% if user.profile.avatar %}
+      <img src="{{ user.profile.avatar.url }}" alt="頭像"
+           class="h-16 w-16 rounded-full object-cover border-2 border-page">
+      {% else %}
+      <div class="flex h-16 w-16 items-center justify-center rounded-full bg-page text-spine font-serif text-xl font-bold">
+        {{ user.profile.nickname|default:user.username|truncatechars:1 }}
+      </div>
+      {% endif %}
+      <div>
+        <h2 class="text-lg font-medium">{{ user.profile.nickname|default:"未設定暱稱" }}</h2>
+        <p class="text-sm text-ink/50">{{ user.username }}</p>
+      </div>
+    </div>
+
+    <hr class="border-page">
+
+    <!-- Info Grid -->
+    <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-sm">
+      <dt class="text-ink/50">電子信箱</dt>
+      <dd>{{ user.email|default:"未設定" }}</dd>
+
+      <dt class="text-ink/50">預設流通性</dt>
+      <dd>
+        <span class="inline-block rounded-full px-2 py-0.5 text-xs font-medium
+          {% if user.profile.default_transferability == 'TRANSFER' %}bg-emerald-50 text-emerald-700
+          {% else %}bg-amber-50 text-amber-700{% endif %}">
+          {{ user.profile.get_default_transferability_display }}
+        </span>
+      </dd>
+
+      <dt class="text-ink/50">取書地點</dt>
+      <dd>{{ user.profile.default_location|default:"未設定" }}</dd>
+
+      <dt class="text-ink/50">加入時間</dt>
+      <dd>{{ user.date_joined|date:"Y 年 n 月 j 日" }}</dd>
+    </dl>
+  </div>
+</div>
+{% endblock %}

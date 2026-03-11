@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}登入{% endblock %}
+
+{% block content %}
+<div class="flex min-h-[60vh] items-center justify-center">
+  <div class="w-full max-w-sm">
+    <!-- Header -->
+    <div class="mb-8 text-center">
+      <h1 class="font-serif text-2xl font-bold text-ink">歡迎回來</h1>
+      <p class="mt-1 text-sm text-ink/50">登入你的 Exbooks 帳號</p>
+    </div>
+
+    <!-- Form -->
+    <form method="post" class="space-y-5">
+      {% csrf_token %}
+
+      {% if form.errors %}
+      <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        帳號或密碼不正確，請重新輸入。
+      </div>
+      {% endif %}
+
+      <div>
+        <label for="id_username" class="block text-sm font-medium text-ink/70 mb-1">帳號</label>
+        <input type="text" name="username" id="id_username" autofocus required
+               class="w-full rounded-lg border border-margin bg-white px-3 py-2 text-sm
+                      focus:border-spine focus:outline-none focus:ring-1 focus:ring-spine
+                      transition-colors placeholder:text-ink/30"
+               placeholder="你的帳號">
+      </div>
+
+      <div>
+        <label for="id_password" class="block text-sm font-medium text-ink/70 mb-1">密碼</label>
+        <input type="password" name="password" id="id_password" required
+               class="w-full rounded-lg border border-margin bg-white px-3 py-2 text-sm
+                      focus:border-spine focus:outline-none focus:ring-1 focus:ring-spine
+                      transition-colors placeholder:text-ink/30"
+               placeholder="你的密碼">
+      </div>
+
+      {% if next %}
+      <input type="hidden" name="next" value="{{ next }}">
+      {% endif %}
+
+      <button type="submit"
+              class="w-full rounded-lg bg-spine px-4 py-2.5 text-sm font-medium text-white
+                     hover:bg-spine-dark focus:outline-none focus:ring-2 focus:ring-spine/50
+                     transition-colors">
+        登入
+      </button>
+    </form>
+
+    <p class="mt-6 text-center text-sm text-ink/40">
+      還沒有帳號？
+      <a href="{% url 'accounts:register' %}" class="text-spine hover:text-spine-dark font-medium transition-colors">註冊</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}註冊{% endblock %}
+
+{% block content %}
+<div class="flex min-h-[60vh] items-center justify-center">
+  <div class="w-full max-w-sm">
+    <!-- Header -->
+    <div class="mb-8 text-center">
+      <h1 class="font-serif text-2xl font-bold text-ink">加入 Exbooks</h1>
+      <p class="mt-1 text-sm text-ink/50">開始分享與借閱書籍</p>
+    </div>
+
+    <!-- Form -->
+    <form method="post" class="space-y-5">
+      {% csrf_token %}
+
+      {% for field in form %}
+      <div>
+        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-ink/70 mb-1">
+          {{ field.label }}
+        </label>
+        <input type="{{ field.field.widget.input_type|default:'text' }}"
+               name="{{ field.html_name }}"
+               id="{{ field.id_for_label }}"
+               value="{{ field.value|default:'' }}"
+               {% if field.field.required %}required{% endif %}
+               {% if forloop.first %}autofocus{% endif %}
+               maxlength="{{ field.field.max_length|default:'' }}"
+               class="w-full rounded-lg border bg-white px-3 py-2 text-sm transition-colors
+                      placeholder:text-ink/30 focus:outline-none focus:ring-1
+                      {% if field.errors %}border-red-300 focus:border-red-400 focus:ring-red-200
+                      {% else %}border-margin focus:border-spine focus:ring-spine{% endif %}"
+               placeholder="{{ field.help_text|default:'' }}">
+        {% if field.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ field.errors.0 }}</p>
+        {% elif field.help_text %}
+        <p class="mt-1 text-xs text-ink/40">{{ field.help_text }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+
+      <button type="submit"
+              class="w-full rounded-lg bg-spine px-4 py-2.5 text-sm font-medium text-white
+                     hover:bg-spine-dark focus:outline-none focus:ring-2 focus:ring-spine/50
+                     transition-colors">
+        建立帳號
+      </button>
+    </form>
+
+    <p class="mt-6 text-center text-sm text-ink/40">
+      已經有帳號？
+      <a href="{% url 'login' %}" class="text-spine hover:text-spine-dark font-medium transition-colors">登入</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
