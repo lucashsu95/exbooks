@@ -1,5 +1,6 @@
 .github/prompts
 .shared
+AGENTS.md
 
 ### Django ###
 *.log
