@@ -2,7 +2,7 @@ import pytest
 from django.db import IntegrityError
 
 from accounts.models import UserProfile
-from tests.factories import UserFactory, UserProfileFactory
+from tests.factories import UserFactory
 
 
 pytestmark = pytest.mark.django_db

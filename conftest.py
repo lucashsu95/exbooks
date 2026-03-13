@@ -6,12 +6,9 @@ import pytest
 
 from tests.factories import (
     BookSetFactory,
-    DealFactory,
-    LoanExtensionFactory,
     OfficialBookFactory,
     SharedBookFactory,
     UserFactory,
-    UserProfileFactory,
 )
 
 
