@@ -1,8 +1,10 @@
 import uuid
+from datetime import date
 
 import pytest
 from django.db import IntegrityError
 
+from books.models import SharedBook
 from deals.models import Deal, DealMessage, LoanExtension, Notification, Rating
 from tests.factories import (
     DealFactory,
@@ -11,6 +13,7 @@ from tests.factories import (
     NotificationFactory,
     RatingFactory,
     SharedBookFactory,
+    UserFactory,
 )
 
 

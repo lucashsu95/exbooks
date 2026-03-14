@@ -31,8 +31,8 @@ def official_book(db):
 def shared_book(db):
     """A SharedBook in TRANSFERABLE status, RETURN transferability, keeper=owner."""
     book = SharedBookFactory(
-        status='T',
-        transferability='RETURN',
+        status="T",
+        transferability="RETURN",
     )
     # keeper defaults to owner in factory
     return book
@@ -42,8 +42,8 @@ def shared_book(db):
 def transfer_book(db):
     """A SharedBook in TRANSFERABLE status, TRANSFER transferability."""
     return SharedBookFactory(
-        status='T',
-        transferability='TRANSFER',
+        status="T",
+        transferability="TRANSFER",
     )
 
 

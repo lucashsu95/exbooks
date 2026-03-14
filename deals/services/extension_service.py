@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from books.models import SharedBook
-from deals.models import LoanExtension
+from deals.models import Deal, LoanExtension
 from deals.services.notification_service import (
     notify_extend_requested,
     notify_extend_result,
