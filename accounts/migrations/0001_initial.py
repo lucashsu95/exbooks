@@ -7,7 +7,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -16,22 +15,76 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='UserProfile',
+            name="UserProfile",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='建立時間')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='更新時間')),
-                ('nickname', models.CharField(blank=True, max_length=50, verbose_name='暱稱')),
-                ('default_transferability', models.CharField(choices=[('TRANSFER', '開放傳遞'), ('RETURN', '閱畢即還')], default='RETURN', max_length=10, verbose_name='預設流通性')),
-                ('default_location', models.CharField(blank=True, max_length=200, verbose_name='預設取書地點')),
-                ('available_schedule', models.JSONField(blank=True, default=list, help_text='格式: [{"weekday": 1, "start": "09:00", "end": "12:00"}, ...]', verbose_name='可取書時間')),
-                ('avatar', models.ImageField(blank=True, null=True, upload_to='avatars/%Y/%m/', verbose_name='頭像')),
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='profile', to=settings.AUTH_USER_MODEL, verbose_name='用戶')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(auto_now_add=True, verbose_name="建立時間"),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(auto_now=True, verbose_name="更新時間"),
+                ),
+                (
+                    "nickname",
+                    models.CharField(blank=True, max_length=50, verbose_name="暱稱"),
+                ),
+                (
+                    "default_transferability",
+                    models.CharField(
+                        choices=[("TRANSFER", "開放傳遞"), ("RETURN", "閱畢即還")],
+                        default="RETURN",
+                        max_length=10,
+                        verbose_name="預設流通性",
+                    ),
+                ),
+                (
+                    "default_location",
+                    models.CharField(
+                        blank=True, max_length=200, verbose_name="預設取書地點"
+                    ),
+                ),
+                (
+                    "available_schedule",
+                    models.JSONField(
+                        blank=True,
+                        default=list,
+                        help_text='格式: [{"weekday": 1, "start": "09:00", "end": "12:00"}, ...]',
+                        verbose_name="可取書時間",
+                    ),
+                ),
+                (
+                    "avatar",
+                    models.ImageField(
+                        blank=True,
+                        null=True,
+                        upload_to="avatars/%Y/%m/",
+                        verbose_name="頭像",
+                    ),
+                ),
+                (
+                    "user",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="profile",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="用戶",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '用戶資料',
-                'verbose_name_plural': '用戶資料',
-                'db_table': 'exbook_user_profile',
+                "verbose_name": "用戶資料",
+                "verbose_name_plural": "用戶資料",
+                "db_table": "exbook_user_profile",
             },
         ),
     ]

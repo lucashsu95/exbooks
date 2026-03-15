@@ -29,18 +29,18 @@ class TestDeal:
         assert deal.updated_at is not None
 
     def test_deal_type_choices(self):
-        assert Deal.DealType.LOAN == 'LN'
-        assert Deal.DealType.RESTORE == 'RS'
-        assert Deal.DealType.TRANSFER == 'TF'
-        assert Deal.DealType.REGRESS == 'RG'
-        assert Deal.DealType.EXCEPT == 'EX'
+        assert Deal.DealType.LOAN == "LN"
+        assert Deal.DealType.RESTORE == "RS"
+        assert Deal.DealType.TRANSFER == "TF"
+        assert Deal.DealType.REGRESS == "RG"
+        assert Deal.DealType.EXCEPT == "EX"
 
     def test_status_choices(self):
-        assert Deal.Status.REQUESTED == 'Q'
-        assert Deal.Status.RESPONDED == 'P'
-        assert Deal.Status.MEETED == 'M'
-        assert Deal.Status.DONE == 'D'
-        assert Deal.Status.CANCELLED == 'X'
+        assert Deal.Status.REQUESTED == "Q"
+        assert Deal.Status.RESPONDED == "P"
+        assert Deal.Status.MEETED == "M"
+        assert Deal.Status.DONE == "D"
+        assert Deal.Status.CANCELLED == "X"
 
     def test_default_status(self):
         deal = DealFactory()
@@ -49,12 +49,12 @@ class TestDeal:
     def test_str(self):
         deal = DealFactory(deal_type=Deal.DealType.LOAN)
         result = str(deal)
-        assert '借用交易' in result
+        assert "借用交易" in result
 
     def test_previous_book_status(self):
-        book = SharedBookFactory(status='T')
-        deal = DealFactory(shared_book=book, previous_book_status='T')
-        assert deal.previous_book_status == 'T'
+        book = SharedBookFactory(status="T")
+        deal = DealFactory(shared_book=book, previous_book_status="T")
+        assert deal.previous_book_status == "T"
 
     def test_due_date_nullable(self):
         deal = DealFactory()
@@ -66,7 +66,7 @@ class TestDeal:
         assert deal.responder_rated is False
 
     def test_db_table(self):
-        assert Deal._meta.db_table == 'exbook_deal'
+        assert Deal._meta.db_table == "exbook_deal"
 
     def test_book_set_nullable(self):
         deal = DealFactory(book_set=None)
@@ -82,18 +82,18 @@ class TestDealMessage:
 
     def test_no_updated_at(self):
         """DealMessage uses BaseModel — no updated_at."""
-        assert 'updated_at' not in [f.name for f in DealMessage._meta.get_fields()]
+        assert "updated_at" not in [f.name for f in DealMessage._meta.get_fields()]
 
     def test_ordering(self):
-        assert DealMessage._meta.ordering == ['created_at']
+        assert DealMessage._meta.ordering == ["created_at"]
 
     def test_str(self):
         msg = DealMessageFactory()
         result = str(msg)
-        assert '@' in result
+        assert "@" in result
 
     def test_db_table(self):
-        assert DealMessage._meta.db_table == 'exbook_deal_message'
+        assert DealMessage._meta.db_table == "exbook_deal_message"
 
     def test_deal_cascade_delete(self):
         msg = DealMessageFactory()
@@ -129,10 +129,10 @@ class TestRating:
     def test_str(self):
         rating = RatingFactory()
         result = str(rating)
-        assert '→' in result
+        assert "→" in result
 
     def test_db_table(self):
-        assert Rating._meta.db_table == 'exbook_rating'
+        assert Rating._meta.db_table == "exbook_rating"
 
 
 class TestLoanExtension:
@@ -143,24 +143,24 @@ class TestLoanExtension:
         assert ext.status == LoanExtension.Status.PENDING
 
     def test_status_choices(self):
-        assert LoanExtension.Status.PENDING == 'PENDING'
-        assert LoanExtension.Status.APPROVED == 'APPROVED'
-        assert LoanExtension.Status.REJECTED == 'REJECTED'
+        assert LoanExtension.Status.PENDING == "PENDING"
+        assert LoanExtension.Status.APPROVED == "APPROVED"
+        assert LoanExtension.Status.REJECTED == "REJECTED"
 
     def test_approved_by_nullable(self):
         ext = LoanExtensionFactory()
         assert ext.approved_by is None
 
     def test_ordering(self):
-        assert LoanExtension._meta.ordering == ['-created_at']
+        assert LoanExtension._meta.ordering == ["-created_at"]
 
     def test_str(self):
         ext = LoanExtensionFactory(extra_days=14)
         result = str(ext)
-        assert '延長 14 天' in result
+        assert "延長 14 天" in result
 
     def test_db_table(self):
-        assert LoanExtension._meta.db_table == 'exbook_loan_extension'
+        assert LoanExtension._meta.db_table == "exbook_loan_extension"
 
     def test_deal_cascade_delete(self):
         ext = LoanExtensionFactory()
@@ -192,15 +192,15 @@ class TestNotification:
         assert notif.shared_book is None
 
     def test_ordering(self):
-        assert Notification._meta.ordering == ['-created_at']
+        assert Notification._meta.ordering == ["-created_at"]
 
     def test_str(self):
         notif = NotificationFactory()
         result = str(notif)
-        assert '-' in result
+        assert "-" in result
 
     def test_db_table(self):
-        assert Notification._meta.db_table == 'exbook_notification'
+        assert Notification._meta.db_table == "exbook_notification"
 
     def test_recipient_cascade_delete(self):
         notif = NotificationFactory()

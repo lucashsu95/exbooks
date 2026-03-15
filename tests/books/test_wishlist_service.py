@@ -20,7 +20,6 @@ pytestmark = pytest.mark.django_db
 # add_wish
 # ============================================================
 class TestAddWish:
-
     def test_success(self):
         user = UserFactory()
         book = OfficialBookFactory()
@@ -28,14 +27,15 @@ class TestAddWish:
         assert item.user == user
         assert item.official_book == book
         assert WishListItem.objects.filter(
-            user=user, official_book=book,
+            user=user,
+            official_book=book,
         ).exists()
 
     def test_duplicate_raises(self):
         user = UserFactory()
         book = OfficialBookFactory()
         add_wish(user, book)
-        with pytest.raises(ValidationError, match='已在'):
+        with pytest.raises(ValidationError, match="已在"):
             add_wish(user, book)
 
     def test_different_users_same_book(self):
@@ -52,20 +52,20 @@ class TestAddWish:
 # remove_wish
 # ============================================================
 class TestRemoveWish:
-
     def test_success(self):
         user = UserFactory()
         book = OfficialBookFactory()
         WishListItemFactory(user=user, official_book=book)
         remove_wish(user, book)
         assert not WishListItem.objects.filter(
-            user=user, official_book=book,
+            user=user,
+            official_book=book,
         ).exists()
 
     def test_not_found_raises(self):
         user = UserFactory()
         book = OfficialBookFactory()
-        with pytest.raises(ValidationError, match='不在'):
+        with pytest.raises(ValidationError, match="不在"):
             remove_wish(user, book)
 
 
@@ -73,7 +73,6 @@ class TestRemoveWish:
 # list_book → WishList 通知觸發
 # ============================================================
 class TestListBookWishlistNotification:
-
     def test_notifies_wishers(self):
         """上架書籍時，通知願望書車中的使用者"""
         official = OfficialBookFactory()
@@ -81,10 +80,10 @@ class TestListBookWishlistNotification:
         wisher2 = UserFactory()
         WishListItemFactory(user=wisher1, official_book=official)
         WishListItemFactory(user=wisher2, official_book=official)
-        book = SharedBookFactory(official_book=official, status='S')
+        book = SharedBookFactory(official_book=official, status="S")
         list_book(book)
         notifs = Notification.objects.filter(
-            notification_type='BOOK_AVAILABLE',
+            notification_type="BOOK_AVAILABLE",
         )
         assert notifs.count() == 2
         assert notifs.filter(recipient=wisher1).exists()
@@ -92,10 +91,10 @@ class TestListBookWishlistNotification:
 
     def test_no_wishers_no_notification(self):
         """無人在願望書車 → 不發通知"""
-        book = SharedBookFactory(status='S')
+        book = SharedBookFactory(status="S")
         list_book(book)
         assert not Notification.objects.filter(
-            notification_type='BOOK_AVAILABLE',
+            notification_type="BOOK_AVAILABLE",
         ).exists()
 
     def test_only_matching_book_wishers(self):
@@ -106,10 +105,10 @@ class TestListBookWishlistNotification:
         wisher_b = UserFactory()
         WishListItemFactory(user=wisher_a, official_book=official_a)
         WishListItemFactory(user=wisher_b, official_book=official_b)
-        book = SharedBookFactory(official_book=official_a, status='S')
+        book = SharedBookFactory(official_book=official_a, status="S")
         list_book(book)
         notifs = Notification.objects.filter(
-            notification_type='BOOK_AVAILABLE',
+            notification_type="BOOK_AVAILABLE",
         )
         assert notifs.count() == 1
         assert notifs.filter(recipient=wisher_a).exists()

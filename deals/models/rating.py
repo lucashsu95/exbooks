@@ -12,50 +12,50 @@ class Rating(BaseModel):
     """
 
     deal = models.ForeignKey(
-        'deals.Deal',
+        "deals.Deal",
         on_delete=models.PROTECT,
-        related_name='ratings',
-        verbose_name='交易',
+        related_name="ratings",
+        verbose_name="交易",
     )
     rater = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
-        related_name='given_ratings',
-        verbose_name='評價者',
+        related_name="given_ratings",
+        verbose_name="評價者",
     )
     ratee = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
-        related_name='received_ratings',
-        verbose_name='被評價者',
+        related_name="received_ratings",
+        verbose_name="被評價者",
     )
     integrity_score = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
-        verbose_name='誠信評分',
+        verbose_name="誠信評分",
     )
     punctuality_score = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
-        verbose_name='準時評分',
+        verbose_name="準時評分",
     )
     accuracy_score = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
-        verbose_name='書況準確度評分',
+        verbose_name="書況準確度評分",
     )
-    comment = models.TextField(blank=True, verbose_name='評語')
+    comment = models.TextField(blank=True, verbose_name="評語")
 
     class Meta:
-        db_table = 'exbook_rating'
-        verbose_name = '評價'
-        verbose_name_plural = '評價'
+        db_table = "exbook_rating"
+        verbose_name = "評價"
+        verbose_name_plural = "評價"
         constraints = [
             models.UniqueConstraint(
-                fields=['deal', 'rater'],
-                name='unique_deal_rater',
+                fields=["deal", "rater"],
+                name="unique_deal_rater",
             ),
         ]
 
     def __str__(self):
-        return f'{self.rater} → {self.ratee} ({self.deal})'
+        return f"{self.rater} → {self.ratee} ({self.deal})"
 
     @property
     def average_score(self):

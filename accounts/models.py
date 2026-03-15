@@ -11,48 +11,48 @@ class UserProfile(UpdatableModel):
     """
 
     class Transferability(models.TextChoices):
-        TRANSFER = 'TRANSFER', '開放傳遞'
-        RETURN = 'RETURN', '閱畢即還'
+        TRANSFER = "TRANSFER", "開放傳遞"
+        RETURN = "RETURN", "閱畢即還"
 
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='profile',
-        verbose_name='用戶',
+        related_name="profile",
+        verbose_name="用戶",
     )
     nickname = models.CharField(
         max_length=50,
         blank=True,
-        verbose_name='暱稱',
+        verbose_name="暱稱",
     )
     default_transferability = models.CharField(
         max_length=10,
         choices=Transferability.choices,
         default=Transferability.RETURN,
-        verbose_name='預設流通性',
+        verbose_name="預設流通性",
     )
     default_location = models.CharField(
         max_length=200,
         blank=True,
-        verbose_name='預設取書地點',
+        verbose_name="預設取書地點",
     )
     available_schedule = models.JSONField(
         default=list,
         blank=True,
-        verbose_name='可取書時間',
+        verbose_name="可取書時間",
         help_text='格式: [{"weekday": 1, "start": "09:00", "end": "12:00"}, ...]',
     )
     avatar = models.ImageField(
-        upload_to='avatars/%Y/%m/',
+        upload_to="avatars/%Y/%m/",
         null=True,
         blank=True,
-        verbose_name='頭像',
+        verbose_name="頭像",
     )
 
     class Meta:
-        db_table = 'exbook_user_profile'
-        verbose_name = '用戶資料'
-        verbose_name_plural = '用戶資料'
+        db_table = "exbook_user_profile"
+        verbose_name = "用戶資料"
+        verbose_name_plural = "用戶資料"
 
     def __str__(self):
         return self.nickname or self.user.get_full_name() or self.user.username

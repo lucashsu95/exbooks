@@ -5,9 +5,9 @@ from .shared_book import SharedBook
 from .wish_list_item import WishListItem
 
 __all__ = [
-    'BookPhoto',
-    'BookSet',
-    'OfficialBook',
-    'SharedBook',
-    'WishListItem',
+    "BookPhoto",
+    "BookSet",
+    "OfficialBook",
+    "SharedBook",
+    "WishListItem",
 ]

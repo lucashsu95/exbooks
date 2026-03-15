@@ -1,7 +1,9 @@
 from deals.models import Notification
 
 
-def notify(recipient, notification_type, title, message='', deal=None, shared_book=None):
+def notify(
+    recipient, notification_type, title, message="", deal=None, shared_book=None
+):
     """
     建立系統通知。
 
@@ -33,8 +35,8 @@ def notify_deal_requested(deal):
     notify(
         recipient=deal.responder,
         notification_type=Notification.NotificationType.DEAL_REQUESTED,
-        title=f'收到{deal.get_deal_type_display()}申請',
-        message=f'{deal.applicant} 對書籍「{deal.shared_book}」發起了{deal.get_deal_type_display()}申請',
+        title=f"收到{deal.get_deal_type_display()}申請",
+        message=f"{deal.applicant} 對書籍「{deal.shared_book}」發起了{deal.get_deal_type_display()}申請",
         deal=deal,
         shared_book=deal.shared_book,
     )
@@ -45,8 +47,8 @@ def notify_deal_responded(deal):
     notify(
         recipient=deal.applicant,
         notification_type=Notification.NotificationType.DEAL_RESPONDED,
-        title=f'{deal.get_deal_type_display()}已被接受',
-        message=f'{deal.responder} 已接受您對書籍「{deal.shared_book}」的{deal.get_deal_type_display()}申請',
+        title=f"{deal.get_deal_type_display()}已被接受",
+        message=f"{deal.responder} 已接受您對書籍「{deal.shared_book}」的{deal.get_deal_type_display()}申請",
         deal=deal,
         shared_book=deal.shared_book,
     )
@@ -62,8 +64,8 @@ def notify_deal_cancelled(deal, cancelled_by):
     notify(
         recipient=recipient,
         notification_type=Notification.NotificationType.DEAL_CANCELLED,
-        title=f'{deal.get_deal_type_display()}已被取消',
-        message=f'書籍「{deal.shared_book}」的{deal.get_deal_type_display()}已被取消',
+        title=f"{deal.get_deal_type_display()}已被取消",
+        message=f"書籍「{deal.shared_book}」的{deal.get_deal_type_display()}已被取消",
         deal=deal,
         shared_book=deal.shared_book,
     )
@@ -75,8 +77,8 @@ def notify_deal_meeted(deal):
         notify(
             recipient=recipient,
             notification_type=Notification.NotificationType.DEAL_MEETED,
-            title='面交完成，請評價交易對象',
-            message=f'書籍「{deal.shared_book}」的{deal.get_deal_type_display()}已完成面交，請進行評價',
+            title="面交完成，請評價交易對象",
+            message=f"書籍「{deal.shared_book}」的{deal.get_deal_type_display()}已完成面交，請進行評價",
             deal=deal,
             shared_book=deal.shared_book,
         )
@@ -87,8 +89,8 @@ def notify_book_due_soon(deal):
     notify(
         recipient=deal.shared_book.keeper,
         notification_type=Notification.NotificationType.BOOK_DUE_SOON,
-        title='書籍即將到期',
-        message=f'您持有的書籍「{deal.shared_book}」將於 {deal.due_date} 到期，請儘速處理',
+        title="書籍即將到期",
+        message=f"您持有的書籍「{deal.shared_book}」將於 {deal.due_date} 到期，請儘速處理",
         deal=deal,
         shared_book=deal.shared_book,
     )
@@ -102,8 +104,8 @@ def notify_book_overdue(deal):
         notify(
             recipient=recipient,
             notification_type=Notification.NotificationType.BOOK_OVERDUE,
-            title='書籍已逾期',
-            message=f'書籍「{shared_book}」已逾期未還',
+            title="書籍已逾期",
+            message=f"書籍「{shared_book}」已逾期未還",
             deal=deal,
             shared_book=shared_book,
         )
@@ -114,8 +116,8 @@ def notify_book_available(user, shared_book):
     notify(
         recipient=user,
         notification_type=Notification.NotificationType.BOOK_AVAILABLE,
-        title='您的願望書籍已可借閱',
-        message=f'書籍「{shared_book.official_book}」已有可借閱的冊數上架',
+        title="您的願望書籍已可借閱",
+        message=f"書籍「{shared_book.official_book}」已有可借閱的冊數上架",
         shared_book=shared_book,
     )
 
@@ -126,8 +128,8 @@ def notify_extend_requested(extension):
     notify(
         recipient=deal.responder,
         notification_type=Notification.NotificationType.EXTEND_REQUESTED,
-        title='收到借閱延長申請',
-        message=f'{extension.requested_by} 申請將書籍「{deal.shared_book}」延長 {extension.extra_days} 天',
+        title="收到借閱延長申請",
+        message=f"{extension.requested_by} 申請將書籍「{deal.shared_book}」延長 {extension.extra_days} 天",
         deal=deal,
         shared_book=deal.shared_book,
     )
@@ -136,14 +138,14 @@ def notify_extend_requested(extension):
 def notify_extend_result(extension):
     """延長申請結果 → 通知申請者"""
     deal = extension.deal
-    if extension.status == 'APPROVED':
+    if extension.status == "APPROVED":
         ntype = Notification.NotificationType.EXTEND_APPROVED
-        title = '延長申請已核准'
-        msg = f'您的延長申請已被核准，書籍「{deal.shared_book}」到期日延長至 {deal.due_date}'
+        title = "延長申請已核准"
+        msg = f"您的延長申請已被核准，書籍「{deal.shared_book}」到期日延長至 {deal.due_date}"
     else:
         ntype = Notification.NotificationType.EXTEND_REJECTED
-        title = '延長申請已拒絕'
-        msg = f'您的延長申請已被拒絕，書籍「{deal.shared_book}」到期日不變'
+        title = "延長申請已拒絕"
+        msg = f"您的延長申請已被拒絕，書籍「{deal.shared_book}」到期日不變"
 
     notify(
         recipient=extension.requested_by,
@@ -158,7 +160,7 @@ def notify_extend_result(extension):
 def mark_as_read(notification):
     """標記通知為已讀"""
     notification.is_read = True
-    notification.save(update_fields=['is_read'])
+    notification.save(update_fields=["is_read"])
 
 
 def mark_all_as_read(user):

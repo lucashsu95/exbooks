@@ -13,26 +13,26 @@ class WishListItem(BaseModel):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='wish_list',
-        verbose_name='用戶',
+        related_name="wish_list",
+        verbose_name="用戶",
     )
     official_book = models.ForeignKey(
-        'books.OfficialBook',
+        "books.OfficialBook",
         on_delete=models.CASCADE,
-        related_name='wished_by',
-        verbose_name='官方書籍',
+        related_name="wished_by",
+        verbose_name="官方書籍",
     )
 
     class Meta:
-        db_table = 'exbook_wish_list_item'
-        verbose_name = '願望書車'
-        verbose_name_plural = '願望書車'
+        db_table = "exbook_wish_list_item"
+        verbose_name = "願望書車"
+        verbose_name_plural = "願望書車"
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'official_book'],
-                name='unique_user_official_book',
+                fields=["user", "official_book"],
+                name="unique_user_official_book",
             ),
         ]
 
     def __str__(self):
-        return f'{self.user} → {self.official_book}'
+        return f"{self.user} → {self.official_book}"

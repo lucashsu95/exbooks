@@ -20,29 +20,31 @@ class TestUserProfile:
 
     def test_default_transferability(self):
         user = UserFactory()
-        assert user.profile.default_transferability == UserProfile.Transferability.RETURN
+        assert (
+            user.profile.default_transferability == UserProfile.Transferability.RETURN
+        )
 
     def test_str_nickname(self):
         user = UserFactory()
         profile = user.profile
-        profile.nickname = '小明'
-        profile.save(update_fields=['nickname'])
-        assert str(profile) == '小明'
+        profile.nickname = "小明"
+        profile.save(update_fields=["nickname"])
+        assert str(profile) == "小明"
 
     def test_str_fallback_full_name(self):
-        user = UserFactory(first_name='明', last_name='王')
+        user = UserFactory(first_name="明", last_name="王")
         profile = user.profile
-        profile.nickname = ''
-        profile.save(update_fields=['nickname'])
+        profile.nickname = ""
+        profile.save(update_fields=["nickname"])
         result = str(profile)
         # Falls back to get_full_name() or username
         assert result  # Non-empty
 
     def test_str_fallback_username(self):
-        user = UserFactory(first_name='', last_name='')
+        user = UserFactory(first_name="", last_name="")
         profile = user.profile
-        profile.nickname = ''
-        profile.save(update_fields=['nickname'])
+        profile.nickname = ""
+        profile.save(update_fields=["nickname"])
         assert str(profile) == user.username
 
     def test_one_to_one_user(self):
@@ -52,12 +54,12 @@ class TestUserProfile:
             UserProfile.objects.create(user=user)
 
     def test_transferability_choices(self):
-        assert UserProfile.Transferability.TRANSFER == 'TRANSFER'
-        assert UserProfile.Transferability.RETURN == 'RETURN'
+        assert UserProfile.Transferability.TRANSFER == "TRANSFER"
+        assert UserProfile.Transferability.RETURN == "RETURN"
 
     def test_available_schedule_default(self):
         user = UserFactory()
         assert user.profile.available_schedule == []
 
     def test_db_table(self):
-        assert UserProfile._meta.db_table == 'exbook_user_profile'
+        assert UserProfile._meta.db_table == "exbook_user_profile"

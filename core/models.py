@@ -11,7 +11,7 @@ class BaseModel(models.Model):
         default=uuid.uuid4,
         editable=False,
     )
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='建立時間')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="建立時間")
 
     class Meta:
         abstract = True
@@ -20,7 +20,7 @@ class BaseModel(models.Model):
 class UpdatableModel(BaseModel):
     """需要追蹤更新時間的實體基類。"""
 
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新時間')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="更新時間")
 
     class Meta:
         abstract = True

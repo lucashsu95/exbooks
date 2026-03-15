@@ -10,59 +10,59 @@ class Notification(BaseModel):
     """
 
     class NotificationType(models.TextChoices):
-        DEAL_REQUESTED = 'DEAL_REQUESTED', '收到交易申請'
-        DEAL_RESPONDED = 'DEAL_RESPONDED', '交易已被回應'
-        DEAL_CANCELLED = 'DEAL_CANCELLED', '交易被取消'
-        DEAL_MEETED = 'DEAL_MEETED', '面交完成，請評價'
-        BOOK_DUE_SOON = 'BOOK_DUE_SOON', '書籍即將到期'
-        BOOK_OVERDUE = 'BOOK_OVERDUE', '書籍已逾期'
-        BOOK_AVAILABLE = 'BOOK_AVAILABLE', '願望書籍已可借閱'
-        EXTEND_REQUESTED = 'EXTEND_REQUESTED', '收到延長申請'
-        EXTEND_APPROVED = 'EXTEND_APPROVED', '延長申請已核准'
-        EXTEND_REJECTED = 'EXTEND_REJECTED', '延長申請已拒絕'
+        DEAL_REQUESTED = "DEAL_REQUESTED", "收到交易申請"
+        DEAL_RESPONDED = "DEAL_RESPONDED", "交易已被回應"
+        DEAL_CANCELLED = "DEAL_CANCELLED", "交易被取消"
+        DEAL_MEETED = "DEAL_MEETED", "面交完成，請評價"
+        BOOK_DUE_SOON = "BOOK_DUE_SOON", "書籍即將到期"
+        BOOK_OVERDUE = "BOOK_OVERDUE", "書籍已逾期"
+        BOOK_AVAILABLE = "BOOK_AVAILABLE", "願望書籍已可借閱"
+        EXTEND_REQUESTED = "EXTEND_REQUESTED", "收到延長申請"
+        EXTEND_APPROVED = "EXTEND_APPROVED", "延長申請已核准"
+        EXTEND_REJECTED = "EXTEND_REJECTED", "延長申請已拒絕"
 
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='notifications',
-        verbose_name='接收者',
+        related_name="notifications",
+        verbose_name="接收者",
     )
     deal = models.ForeignKey(
-        'deals.Deal',
+        "deals.Deal",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='notifications',
-        verbose_name='相關交易',
+        related_name="notifications",
+        verbose_name="相關交易",
     )
     shared_book = models.ForeignKey(
-        'books.SharedBook',
+        "books.SharedBook",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='notifications',
-        verbose_name='相關書籍',
+        related_name="notifications",
+        verbose_name="相關書籍",
     )
     notification_type = models.CharField(
         max_length=20,
         choices=NotificationType.choices,
-        verbose_name='通知類型',
+        verbose_name="通知類型",
     )
     title = models.CharField(
         max_length=200,
-        verbose_name='通知標題',
+        verbose_name="通知標題",
     )
-    message = models.TextField(blank=True, verbose_name='通知訊息')
-    is_read = models.BooleanField(default=False, verbose_name='是否已讀')
+    message = models.TextField(blank=True, verbose_name="通知訊息")
+    is_read = models.BooleanField(default=False, verbose_name="是否已讀")
 
     class Meta:
-        db_table = 'exbook_notification'
-        verbose_name = '通知'
-        verbose_name_plural = '通知'
-        ordering = ['-created_at']
+        db_table = "exbook_notification"
+        verbose_name = "通知"
+        verbose_name_plural = "通知"
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['recipient', 'is_read']),
+            models.Index(fields=["recipient", "is_read"]),
         ]
 
     def __str__(self):
-        return f'{self.recipient} - {self.get_notification_type_display()}'
+        return f"{self.recipient} - {self.get_notification_type_display()}"

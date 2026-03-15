@@ -5,9 +5,9 @@ from .notification import Notification
 from .rating import Rating
 
 __all__ = [
-    'Deal',
-    'DealMessage',
-    'LoanExtension',
-    'Notification',
-    'Rating',
+    "Deal",
+    "DealMessage",
+    "LoanExtension",
+    "Notification",
+    "Rating",
 ]

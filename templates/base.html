@@ -2,28 +2,25 @@
 <html lang="zh-Hant" class="h-full">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Exbooks{% endblock %} — 共享書籍</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Exbooks{% endblock %}</title>
 
   <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <script>
     tailwind.config = {
+      darkMode: "class",
       theme: {
         extend: {
           colors: {
-            parchment: '#faf6f1',
-            ink: '#2c2417',
-            spine: '#8b6914',
-            'spine-dark': '#6b4f0e',
-            page: '#f5efe6',
-            margin: '#e8dfd2',
-            bookmark: '#c4532e',
+            "primary": "#136dec",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101822",
           },
           fontFamily: {
-            serif: ['"Noto Serif TC"', 'Georgia', 'serif'],
-            sans: ['"Noto Sans TC"', 'system-ui', 'sans-serif'],
+            "display": ["Work Sans"]
           },
+          borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
         },
       },
     }
@@ -32,12 +29,18 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 
   <!-- HTMX -->
   <script src="https://unpkg.com/htmx.org@2.0.4"></script>
 
   <style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+
     /* HTMX loading indicator */
     .htmx-indicator { opacity: 0; transition: opacity 300ms ease-in; }
     .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { opacity: 1; }
@@ -50,71 +53,44 @@
     .toast { animation: toastIn 0.4s ease-out, toastOut 0.4s ease-in 4s forwards; }
     @keyframes toastIn { from { opacity: 0; transform: translateY(-12px); } }
     @keyframes toastOut { to { opacity: 0; transform: translateY(-12px); } }
+
+    /* Hide scrollbar for horizontal scrolling */
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .fill-1 {
+        font-variation-settings: 'FILL' 1;
+    }
   </style>
 
   {% block extra_head %}{% endblock %}
 </head>
 
-<body class="h-full bg-parchment font-sans text-ink" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-
-  <!-- Navigation -->
-  <nav class="sticky top-0 z-50 border-b border-margin bg-parchment/95 backdrop-blur-sm">
-    <div class="mx-auto max-w-5xl px-4 sm:px-6">
-      <div class="flex h-14 items-center justify-between">
-        <!-- Logo -->
-        <a href="{% url 'books:list' %}" class="flex items-center gap-2 font-serif text-lg font-bold text-spine-dark hover:text-spine transition-colors">
-          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
-          </svg>
-          Exbooks
-        </a>
-
-        <!-- Nav Links -->
-        <div class="flex items-center gap-1">
-          {% if user.is_authenticated %}
-            <a href="{% url 'books:list' %}" class="rounded-md px-3 py-1.5 text-sm hover:bg-page transition-colors">書籍</a>
-            <a href="{% url 'accounts:profile' %}" class="rounded-md px-3 py-1.5 text-sm hover:bg-page transition-colors">
-              {{ user.profile.nickname|default:user.username }}
-            </a>
-            <form method="post" action="{% url 'logout' %}" class="inline">
-              {% csrf_token %}
-              <button type="submit" class="rounded-md px-3 py-1.5 text-sm text-bookmark hover:bg-red-50 transition-colors">登出</button>
-            </form>
-          {% else %}
-            <a href="{% url 'login' %}" class="rounded-md px-3 py-1.5 text-sm hover:bg-page transition-colors">登入</a>
-            <a href="{% url 'accounts:register' %}" class="rounded-md bg-spine px-3 py-1.5 text-sm font-medium text-white hover:bg-spine-dark transition-colors">註冊</a>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-  </nav>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
 
   <!-- Messages (Toast) -->
   {% if messages %}
-  <div class="fixed top-16 right-4 z-50 flex flex-col gap-2" id="toast-container">
+  <div class="fixed top-4 right-4 z-50 flex flex-col gap-2" id="toast-container">
     {% for message in messages %}
     <div class="toast rounded-lg border px-4 py-3 text-sm shadow-md
-      {% if message.tags == 'success' %}border-green-200 bg-green-50 text-green-800
-      {% elif message.tags == 'error' %}border-red-200 bg-red-50 text-red-800
-      {% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-800
-      {% else %}border-blue-200 bg-blue-50 text-blue-800{% endif %}">
+      {% if message.tags == 'success' %}border-green-200 bg-green-50 text-green-800 dark:bg-green-900/30 dark:border-green-800 dark:text-green-400
+      {% elif message.tags == 'error' %}border-red-200 bg-red-50 text-red-800 dark:bg-red-900/30 dark:border-red-800 dark:text-red-400
+      {% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:border-amber-800 dark:text-amber-400
+      {% else %}border-blue-200 bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-400{% endif %}">
       {{ message }}
     </div>
     {% endfor %}
   </div>
   {% endif %}
 
-  <!-- Main Content -->
-  <main class="mx-auto max-w-5xl px-4 py-8 sm:px-6 fade-in">
+  <!-- Main Content Wrapper -->
+  <div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-x-hidden fade-in">
     {% block content %}{% endblock %}
-  </main>
-
-  <!-- Footer -->
-  <footer class="border-t border-margin mt-auto">
-    <div class="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-      <p class="text-center text-xs text-ink/40 font-light">Exbooks — 讓書籍自由流通</p>
-    </div>
-  </footer>
+  </div>
 
   {% block extra_js %}{% endblock %}
 </body>

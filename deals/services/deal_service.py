@@ -18,29 +18,29 @@ from deals.services.notification_service import (
 
 # --- 交易類別與書籍流通性的合法對應 ---
 DEAL_TYPE_TRANSFERABILITY = {
-    Deal.DealType.LOAN: SharedBook.Transferability.RETURN,       # BR-3
-    Deal.DealType.RESTORE: SharedBook.Transferability.RETURN,    # BR-3
-    Deal.DealType.TRANSFER: SharedBook.Transferability.TRANSFER, # BR-4
+    Deal.DealType.LOAN: SharedBook.Transferability.RETURN,  # BR-3
+    Deal.DealType.RESTORE: SharedBook.Transferability.RETURN,  # BR-3
+    Deal.DealType.TRANSFER: SharedBook.Transferability.TRANSFER,  # BR-4
     Deal.DealType.REGRESS: SharedBook.Transferability.TRANSFER,  # BR-4
     # EX 不限流通性
 }
 
 # --- 交易類別與書籍狀態的合法對應 ---
 DEAL_TYPE_REQUIRED_STATUS = {
-    Deal.DealType.LOAN: SharedBook.Status.TRANSFERABLE,     # BR-5
-    Deal.DealType.TRANSFER: SharedBook.Status.TRANSFERABLE, # BR-5
-    Deal.DealType.RESTORE: SharedBook.Status.RESTORABLE,    # BR-6
+    Deal.DealType.LOAN: SharedBook.Status.TRANSFERABLE,  # BR-5
+    Deal.DealType.TRANSFER: SharedBook.Status.TRANSFERABLE,  # BR-5
+    Deal.DealType.RESTORE: SharedBook.Status.RESTORABLE,  # BR-6
     Deal.DealType.REGRESS: SharedBook.Status.TRANSFERABLE,  # RG 需 T 狀態
     # EX: T/O/R 皆可（在 create_deal 中特殊處理）
 }
 
 # --- 面交完成後書籍狀態轉移 ---
 MEET_STATUS_MAP = {
-    Deal.DealType.LOAN: SharedBook.Status.OCCUPIED,    # LN 面交 → O
-    Deal.DealType.TRANSFER: SharedBook.Status.OCCUPIED, # TF 面交 → O
+    Deal.DealType.LOAN: SharedBook.Status.OCCUPIED,  # LN 面交 → O
+    Deal.DealType.TRANSFER: SharedBook.Status.OCCUPIED,  # TF 面交 → O
     Deal.DealType.RESTORE: SharedBook.Status.SUSPENDED,  # RS 面交 → S
     Deal.DealType.REGRESS: SharedBook.Status.SUSPENDED,  # RG 面交 → S
-    Deal.DealType.EXCEPT: SharedBook.Status.EXCEPTION,   # EX 面交 → E
+    Deal.DealType.EXCEPT: SharedBook.Status.EXCEPTION,  # EX 面交 → E
 }
 
 
@@ -79,15 +79,15 @@ def create_deal(applicant, shared_book, deal_type, book_set=None):
     if deal_type != Deal.DealType.REGRESS:
         # RG 交易的申請者是 Owner，回應者是 Keeper，不受此限制
         if applicant == shared_book.owner or applicant == shared_book.keeper:
-            raise ValidationError('不能對自己貢獻或持有的書籍發起此交易')
+            raise ValidationError("不能對自己貢獻或持有的書籍發起此交易")
 
     # BR-3/BR-4: 驗證交易類別與流通性
     if deal_type in DEAL_TYPE_TRANSFERABILITY:
         required = DEAL_TYPE_TRANSFERABILITY[deal_type]
         if shared_book.transferability != required:
             raise ValidationError(
-                f'「{Deal.DealType(deal_type).label}」僅適用於'
-                f'「{SharedBook.Transferability(required).label}」書籍'
+                f"「{Deal.DealType(deal_type).label}」僅適用於"
+                f"「{SharedBook.Transferability(required).label}」書籍"
             )
 
     # BR-5/BR-6: 驗證書籍狀態
@@ -99,18 +99,21 @@ def create_deal(applicant, shared_book, deal_type, book_set=None):
         )
         if shared_book.status not in valid_statuses:
             raise ValidationError(
-                f'書籍目前狀態「{shared_book.get_status_display()}」無法發起例外處理'
+                f"書籍目前狀態「{shared_book.get_status_display()}」無法發起例外處理"
             )
     else:
         required_status = DEAL_TYPE_REQUIRED_STATUS[deal_type]
         if shared_book.status != required_status:
             raise ValidationError(
-                f'書籍狀態必須為「{SharedBook.Status(required_status).label}」'
-                f'才能發起此交易，目前為「{shared_book.get_status_display()}」'
+                f"書籍狀態必須為「{SharedBook.Status(required_status).label}」"
+                f"才能發起此交易，目前為「{shared_book.get_status_display()}」"
             )
 
     # BR-7: 套書驗證
-    if shared_book.book_set and deal_type in (Deal.DealType.LOAN, Deal.DealType.TRANSFER):
+    if shared_book.book_set and deal_type in (
+        Deal.DealType.LOAN,
+        Deal.DealType.TRANSFER,
+    ):
         validate_book_set_completeness(shared_book.book_set)
         book_set = shared_book.book_set
 
@@ -119,7 +122,9 @@ def create_deal(applicant, shared_book, deal_type, book_set=None):
     # 計算到期日（僅 LN/TF 需要）
     due_date = None
     if deal_type in (Deal.DealType.LOAN, Deal.DealType.TRANSFER):
-        due_date = timezone.now().date() + timedelta(days=shared_book.loan_duration_days)
+        due_date = timezone.now().date() + timedelta(
+            days=shared_book.loan_duration_days
+        )
 
     deal = Deal.objects.create(
         shared_book=shared_book,
@@ -147,7 +152,7 @@ def accept_deal(deal):
     - BR-15: 同一冊書其餘 Q 狀態申請自動取消
     """
     if deal.status != Deal.Status.REQUESTED:
-        raise ValidationError('只有「已請求」狀態的交易可以接受')
+        raise ValidationError("只有「已請求」狀態的交易可以接受")
 
     shared_book = deal.shared_book
 
@@ -165,11 +170,11 @@ def accept_deal(deal):
 
     # 更新交易狀態
     deal.status = Deal.Status.RESPONDED
-    deal.save(update_fields=['status', 'updated_at'])
+    deal.save(update_fields=["status", "updated_at"])
 
     # 更新書籍狀態為 V（已被預約）
     shared_book.status = SharedBook.Status.RESERVED
-    shared_book.save(update_fields=['status', 'updated_at'])
+    shared_book.save(update_fields=["status", "updated_at"])
 
     # 通知申請者交易已被接受
     notify_deal_responded(deal)
@@ -187,10 +192,10 @@ def decline_deal(deal):
     - 書籍狀態不變
     """
     if deal.status != Deal.Status.REQUESTED:
-        raise ValidationError('只有「已請求」狀態的交易可以拒絕')
+        raise ValidationError("只有「已請求」狀態的交易可以拒絕")
 
     deal.status = Deal.Status.CANCELLED
-    deal.save(update_fields=['status', 'updated_at'])
+    deal.save(update_fields=["status", "updated_at"])
 
     # 通知申請者交易被拒絕
     notify_deal_cancelled(deal, deal.responder)
@@ -205,17 +210,17 @@ def cancel_deal(deal):
     - 交易狀態：Q → X
     """
     if deal.status != Deal.Status.REQUESTED:
-        raise ValidationError('只有「已請求」狀態的交易可以取消')
+        raise ValidationError("只有「已請求」狀態的交易可以取消")
 
     with transaction.atomic():
         deal.status = Deal.Status.CANCELLED
-        deal.save(update_fields=['status', 'updated_at'])
+        deal.save(update_fields=["status", "updated_at"])
 
         # BR-14: 恢復書籍狀態
         if deal.previous_book_status:
             shared_book = deal.shared_book
             shared_book.status = deal.previous_book_status
-            shared_book.save(update_fields=['status', 'updated_at'])
+            shared_book.save(update_fields=["status", "updated_at"])
 
     # 通知回應者交易已被取消
     notify_deal_cancelled(deal, deal.applicant)
@@ -232,13 +237,13 @@ def complete_meeting(deal):
     - 重新計算到期日（從面交日起算）
     """
     if deal.status != Deal.Status.RESPONDED:
-        raise ValidationError('只有「已回應」狀態的交易可以確認面交')
+        raise ValidationError("只有「已回應」狀態的交易可以確認面交")
 
     shared_book = deal.shared_book
 
     # 更新交易狀態
     deal.status = Deal.Status.MEETED
-    deal.save(update_fields=['status', 'updated_at'])
+    deal.save(update_fields=["status", "updated_at"])
 
     # BR-8: 變更持有人
     if deal.deal_type in (Deal.DealType.LOAN, Deal.DealType.TRANSFER):
@@ -253,12 +258,14 @@ def complete_meeting(deal):
     if new_status:
         shared_book.status = new_status
 
-    shared_book.save(update_fields=['keeper', 'status', 'updated_at'])
+    shared_book.save(update_fields=["keeper", "status", "updated_at"])
 
     # 重新計算到期日（從面交日起算）
     if deal.deal_type in (Deal.DealType.LOAN, Deal.DealType.TRANSFER):
-        deal.due_date = timezone.now().date() + timedelta(days=shared_book.loan_duration_days)
-        deal.save(update_fields=['due_date'])
+        deal.due_date = timezone.now().date() + timedelta(
+            days=shared_book.loan_duration_days
+        )
+        deal.save(update_fields=["due_date"])
 
     # 通知雙方面交完成
     notify_deal_meeted(deal)
@@ -285,7 +292,7 @@ def process_book_due(deal):
     else:  # TRANSFER
         shared_book.status = SharedBook.Status.TRANSFERABLE
 
-    shared_book.save(update_fields=['status', 'updated_at'])
+    shared_book.save(update_fields=["status", "updated_at"])
 
     # 通知持有者與貢獻者書籍已逾期
     notify_book_overdue(deal)

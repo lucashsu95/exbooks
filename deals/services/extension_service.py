@@ -25,10 +25,10 @@ def request_extension(deal, applicant, extra_days):
         LoanExtension: 建立的延長申請
     """
     if deal.shared_book.status != SharedBook.Status.OCCUPIED:
-        raise ValidationError('只有「借閱中」的書籍可以申請延長')
+        raise ValidationError("只有「借閱中」的書籍可以申請延長")
 
     if applicant != deal.applicant:
-        raise ValidationError('只有借閱者可以申請延長')
+        raise ValidationError("只有借閱者可以申請延長")
 
     extension = LoanExtension.objects.create(
         deal=deal,
@@ -51,21 +51,21 @@ def approve_extension(extension, reviewer):
     - 核准後自動延長 Deal.due_date
     """
     if extension.status != LoanExtension.Status.PENDING:
-        raise ValidationError('只有「待審核」的申請可以核准')
+        raise ValidationError("只有「待審核」的申請可以核准")
 
     deal = extension.deal
 
     if reviewer != deal.responder:
-        raise ValidationError('只有交易回應者可以審核延長申請')
+        raise ValidationError("只有交易回應者可以審核延長申請")
 
     extension.status = LoanExtension.Status.APPROVED
     extension.approved_by = reviewer
-    extension.save(update_fields=['status', 'approved_by', 'updated_at'])
+    extension.save(update_fields=["status", "approved_by", "updated_at"])
 
     # 延長到期日
     if deal.due_date:
         deal.due_date = deal.due_date + timedelta(days=extension.extra_days)
-        deal.save(update_fields=['due_date', 'updated_at'])
+        deal.save(update_fields=["due_date", "updated_at"])
 
     notify_extend_result(extension)
 
@@ -75,16 +75,16 @@ def reject_extension(extension, reviewer):
     拒絕延長申請。
     """
     if extension.status != LoanExtension.Status.PENDING:
-        raise ValidationError('只有「待審核」的申請可以拒絕')
+        raise ValidationError("只有「待審核」的申請可以拒絕")
 
     deal = extension.deal
 
     if reviewer != deal.responder:
-        raise ValidationError('只有交易回應者可以審核延長申請')
+        raise ValidationError("只有交易回應者可以審核延長申請")
 
     extension.status = LoanExtension.Status.REJECTED
     extension.approved_by = reviewer
-    extension.save(update_fields=['status', 'approved_by', 'updated_at'])
+    extension.save(update_fields=["status", "approved_by", "updated_at"])
 
     notify_extend_result(extension)
 
@@ -96,10 +96,10 @@ def cancel_extension(extension, applicant):
     BR-16: 延長申請狀態為 PENDING 時，申請者可取消。
     """
     if extension.status != LoanExtension.Status.PENDING:
-        raise ValidationError('只有「待審核」的申請可以取消')
+        raise ValidationError("只有「待審核」的申請可以取消")
 
     if applicant != extension.requested_by:
-        raise ValidationError('只有申請者可以取消延長申請')
+        raise ValidationError("只有申請者可以取消延長申請")
 
     extension.status = LoanExtension.Status.REJECTED
-    extension.save(update_fields=['status', 'updated_at'])
+    extension.save(update_fields=["status", "updated_at"])

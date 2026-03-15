@@ -26,22 +26,22 @@ class TestOfficialBook:
         assert book.updated_at is not None
 
     def test_isbn_unique(self):
-        OfficialBookFactory(isbn='9781234567890')
+        OfficialBookFactory(isbn="9781234567890")
         with pytest.raises(IntegrityError):
-            OfficialBookFactory(isbn='9781234567890')
+            OfficialBookFactory(isbn="9781234567890")
 
     def test_str(self):
-        book = OfficialBookFactory(title='測試書籍', isbn='9781234567890')
-        assert str(book) == '測試書籍 (9781234567890)'
+        book = OfficialBookFactory(title="測試書籍", isbn="9781234567890")
+        assert str(book) == "測試書籍 (9781234567890)"
 
     def test_db_table(self):
-        assert OfficialBook._meta.db_table == 'exbook_official_book'
+        assert OfficialBook._meta.db_table == "exbook_official_book"
 
     def test_blank_fields(self):
-        book = OfficialBookFactory(author='', publisher='', description='')
-        assert book.author == ''
-        assert book.publisher == ''
-        assert book.description == ''
+        book = OfficialBookFactory(author="", publisher="", description="")
+        assert book.author == ""
+        assert book.publisher == ""
+        assert book.description == ""
 
 
 class TestBookSet:
@@ -51,16 +51,17 @@ class TestBookSet:
         assert book_set.owner is not None
 
     def test_str(self):
-        book_set = BookSetFactory(name='哈利波特全集')
-        assert str(book_set) == '哈利波特全集'
+        book_set = BookSetFactory(name="哈利波特全集")
+        assert str(book_set) == "哈利波特全集"
 
     def test_db_table(self):
-        assert BookSet._meta.db_table == 'exbook_book_set'
+        assert BookSet._meta.db_table == "exbook_book_set"
 
     def test_owner_protect(self):
         """Owner uses PROTECT — cannot delete user with book sets."""
         book_set = BookSetFactory()
         from django.db.models import ProtectedError
+
         with pytest.raises(ProtectedError):
             book_set.owner.delete()
 
@@ -73,18 +74,18 @@ class TestSharedBook:
         assert book.keeper == book.owner  # Factory default
 
     def test_status_choices(self):
-        assert SharedBook.Status.SUSPENDED == 'S'
-        assert SharedBook.Status.TRANSFERABLE == 'T'
-        assert SharedBook.Status.RESTORABLE == 'R'
-        assert SharedBook.Status.RESERVED == 'V'
-        assert SharedBook.Status.OCCUPIED == 'O'
-        assert SharedBook.Status.EXCEPTION == 'E'
-        assert SharedBook.Status.LOST == 'L'
-        assert SharedBook.Status.DESTROYED == 'D'
+        assert SharedBook.Status.SUSPENDED == "S"
+        assert SharedBook.Status.TRANSFERABLE == "T"
+        assert SharedBook.Status.RESTORABLE == "R"
+        assert SharedBook.Status.RESERVED == "V"
+        assert SharedBook.Status.OCCUPIED == "O"
+        assert SharedBook.Status.EXCEPTION == "E"
+        assert SharedBook.Status.LOST == "L"
+        assert SharedBook.Status.DESTROYED == "D"
 
     def test_transferability_choices(self):
-        assert SharedBook.Transferability.TRANSFER == 'TRANSFER'
-        assert SharedBook.Transferability.RETURN == 'RETURN'
+        assert SharedBook.Transferability.TRANSFER == "TRANSFER"
+        assert SharedBook.Transferability.RETURN == "RETURN"
 
     def test_default_status(self):
         book = SharedBookFactory()
@@ -112,16 +113,18 @@ class TestSharedBook:
         assert book.listed_at is None
 
     def test_db_table(self):
-        assert SharedBook._meta.db_table == 'exbook_shared_book'
+        assert SharedBook._meta.db_table == "exbook_shared_book"
 
     def test_owner_protect(self):
         from django.db.models import ProtectedError
+
         book = SharedBookFactory()
         with pytest.raises(ProtectedError):
             book.owner.delete()
 
     def test_official_book_protect(self):
         from django.db.models import ProtectedError
+
         book = SharedBookFactory()
         with pytest.raises(ProtectedError):
             book.official_book.delete()
@@ -138,19 +141,19 @@ class TestBookPhoto:
     def test_no_updated_at(self):
         """BookPhoto uses BaseModel, not UpdatableModel — no updated_at."""
         photo = BookPhotoFactory()
-        assert not hasattr(photo, 'updated_at') or 'updated_at' not in [
+        assert not hasattr(photo, "updated_at") or "updated_at" not in [
             f.name for f in BookPhoto._meta.get_fields()
         ]
 
     def test_ordering(self):
-        assert BookPhoto._meta.ordering == ['-created_at']
+        assert BookPhoto._meta.ordering == ["-created_at"]
 
     def test_deal_nullable(self):
         photo = BookPhotoFactory()
         assert photo.deal is None
 
     def test_db_table(self):
-        assert BookPhoto._meta.db_table == 'exbook_book_photo'
+        assert BookPhoto._meta.db_table == "exbook_book_photo"
 
 
 class TestWishListItem:
@@ -168,10 +171,10 @@ class TestWishListItem:
     def test_str(self):
         item = WishListItemFactory()
         result = str(item)
-        assert '→' in result
+        assert "→" in result
 
     def test_db_table(self):
-        assert WishListItem._meta.db_table == 'exbook_wish_list_item'
+        assert WishListItem._meta.db_table == "exbook_wish_list_item"
 
     def test_user_cascade_delete(self):
         item = WishListItemFactory()

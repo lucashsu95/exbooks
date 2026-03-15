@@ -11,24 +11,24 @@ class DealMessage(BaseModel):
     """
 
     deal = models.ForeignKey(
-        'deals.Deal',
+        "deals.Deal",
         on_delete=models.CASCADE,
-        related_name='messages',
-        verbose_name='交易',
+        related_name="messages",
+        verbose_name="交易",
     )
     sender = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
-        related_name='sent_deal_messages',
-        verbose_name='發送者',
+        related_name="sent_deal_messages",
+        verbose_name="發送者",
     )
-    content = models.TextField(verbose_name='訊息內容')
+    content = models.TextField(verbose_name="訊息內容")
 
     class Meta:
-        db_table = 'exbook_deal_message'
-        verbose_name = '交易留言'
-        verbose_name_plural = '交易留言'
-        ordering = ['created_at']
+        db_table = "exbook_deal_message"
+        verbose_name = "交易留言"
+        verbose_name_plural = "交易留言"
+        ordering = ["created_at"]
 
     def __str__(self):
-        return f'{self.sender} @ {self.deal} ({self.created_at:%Y-%m-%d %H:%M})'
+        return f"{self.sender} @ {self.deal} ({self.created_at:%Y-%m-%d %H:%M})"

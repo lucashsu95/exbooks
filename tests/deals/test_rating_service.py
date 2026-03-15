@@ -13,10 +13,13 @@ class TestCreateRating:
     """create_rating 測試 — 涵蓋 BR-9"""
 
     def test_applicant_rates(self):
-        deal = DealFactory(status='M')
+        deal = DealFactory(status="M")
         rating = create_rating(
-            deal, deal.applicant,
-            integrity_score=4, punctuality_score=5, accuracy_score=3,
+            deal,
+            deal.applicant,
+            integrity_score=4,
+            punctuality_score=5,
+            accuracy_score=3,
         )
         assert rating.rater == deal.applicant
         assert rating.ratee == deal.responder
@@ -25,10 +28,13 @@ class TestCreateRating:
         assert deal.responder_rated is False
 
     def test_responder_rates(self):
-        deal = DealFactory(status='M')
+        deal = DealFactory(status="M")
         rating = create_rating(
-            deal, deal.responder,
-            integrity_score=4, punctuality_score=5, accuracy_score=3,
+            deal,
+            deal.responder,
+            integrity_score=4,
+            punctuality_score=5,
+            accuracy_score=3,
         )
         assert rating.rater == deal.responder
         assert rating.ratee == deal.applicant
@@ -38,79 +44,109 @@ class TestCreateRating:
 
     def test_br9_both_rated_deal_done(self):
         """BR-9: 雙方評價完成 → Deal 狀態 D"""
-        deal = DealFactory(status='M')
+        deal = DealFactory(status="M")
         create_rating(
-            deal, deal.applicant,
-            integrity_score=4, punctuality_score=5, accuracy_score=3,
+            deal,
+            deal.applicant,
+            integrity_score=4,
+            punctuality_score=5,
+            accuracy_score=3,
         )
         create_rating(
-            deal, deal.responder,
-            integrity_score=4, punctuality_score=5, accuracy_score=3,
+            deal,
+            deal.responder,
+            integrity_score=4,
+            punctuality_score=5,
+            accuracy_score=3,
         )
         deal.refresh_from_db()
         assert deal.status == Deal.Status.DONE
 
     def test_single_rate_stays_meeted(self):
         """僅一方評價 → 維持 M"""
-        deal = DealFactory(status='M')
+        deal = DealFactory(status="M")
         create_rating(
-            deal, deal.applicant,
-            integrity_score=4, punctuality_score=5, accuracy_score=3,
+            deal,
+            deal.applicant,
+            integrity_score=4,
+            punctuality_score=5,
+            accuracy_score=3,
         )
         deal.refresh_from_db()
         assert deal.status == Deal.Status.MEETED
 
     def test_cannot_rate_twice(self):
-        deal = DealFactory(status='M')
+        deal = DealFactory(status="M")
         create_rating(
-            deal, deal.applicant,
-            integrity_score=4, punctuality_score=5, accuracy_score=3,
+            deal,
+            deal.applicant,
+            integrity_score=4,
+            punctuality_score=5,
+            accuracy_score=3,
         )
-        with pytest.raises(ValidationError, match='已經評價'):
+        with pytest.raises(ValidationError, match="已經評價"):
             create_rating(
-                deal, deal.applicant,
-                integrity_score=3, punctuality_score=3, accuracy_score=3,
+                deal,
+                deal.applicant,
+                integrity_score=3,
+                punctuality_score=3,
+                accuracy_score=3,
             )
 
     def test_non_participant_raises(self):
-        deal = DealFactory(status='M')
+        deal = DealFactory(status="M")
         stranger = UserFactory()
-        with pytest.raises(ValidationError, match='交易雙方'):
+        with pytest.raises(ValidationError, match="交易雙方"):
             create_rating(
-                deal, stranger,
-                integrity_score=4, punctuality_score=5, accuracy_score=3,
+                deal,
+                stranger,
+                integrity_score=4,
+                punctuality_score=5,
+                accuracy_score=3,
             )
 
     def test_non_meeted_raises(self):
-        deal = DealFactory(status='Q')
-        with pytest.raises(ValidationError, match='已面交'):
+        deal = DealFactory(status="Q")
+        with pytest.raises(ValidationError, match="已面交"):
             create_rating(
-                deal, deal.applicant,
-                integrity_score=4, punctuality_score=5, accuracy_score=3,
+                deal,
+                deal.applicant,
+                integrity_score=4,
+                punctuality_score=5,
+                accuracy_score=3,
             )
 
     def test_done_status_allows_rating(self):
         """D 狀態仍可評價（允許後評的一方）"""
-        deal = DealFactory(status='D', applicant_rated=False)
+        deal = DealFactory(status="D", applicant_rated=False)
         rating = create_rating(
-            deal, deal.applicant,
-            integrity_score=4, punctuality_score=5, accuracy_score=3,
+            deal,
+            deal.applicant,
+            integrity_score=4,
+            punctuality_score=5,
+            accuracy_score=3,
         )
         assert rating.pk is not None
 
     def test_comment_optional(self):
-        deal = DealFactory(status='M')
+        deal = DealFactory(status="M")
         rating = create_rating(
-            deal, deal.applicant,
-            integrity_score=4, punctuality_score=5, accuracy_score=3,
+            deal,
+            deal.applicant,
+            integrity_score=4,
+            punctuality_score=5,
+            accuracy_score=3,
         )
-        assert rating.comment == ''
+        assert rating.comment == ""
 
     def test_comment_saved(self):
-        deal = DealFactory(status='M')
+        deal = DealFactory(status="M")
         rating = create_rating(
-            deal, deal.applicant,
-            integrity_score=4, punctuality_score=5, accuracy_score=3,
-            comment='交易愉快',
+            deal,
+            deal.applicant,
+            integrity_score=4,
+            punctuality_score=5,
+            accuracy_score=3,
+            comment="交易愉快",
         )
-        assert rating.comment == '交易愉快'
+        assert rating.comment == "交易愉快"

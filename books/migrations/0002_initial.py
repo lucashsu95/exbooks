@@ -6,88 +6,148 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
-        ('books', '0001_initial'),
-        ('deals', '0001_initial'),
+        ("books", "0001_initial"),
+        ("deals", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='bookphoto',
-            name='deal',
-            field=models.ForeignKey(blank=True, help_text='面交時拍攝的照片關聯至交易', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='photos', to='deals.deal', verbose_name='交易'),
+            model_name="bookphoto",
+            name="deal",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="面交時拍攝的照片關聯至交易",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="photos",
+                to="deals.deal",
+                verbose_name="交易",
+            ),
         ),
         migrations.AddField(
-            model_name='bookphoto',
-            name='uploader',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='uploaded_photos', to=settings.AUTH_USER_MODEL, verbose_name='上傳者'),
+            model_name="bookphoto",
+            name="uploader",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="uploaded_photos",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="上傳者",
+            ),
         ),
         migrations.AddField(
-            model_name='bookset',
-            name='owner',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='book_sets', to=settings.AUTH_USER_MODEL, verbose_name='擁有者'),
+            model_name="bookset",
+            name="owner",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="book_sets",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="擁有者",
+            ),
         ),
         migrations.AddIndex(
-            model_name='officialbook',
-            index=models.Index(fields=['title'], name='exbook_offi_title_fd3aed_idx'),
+            model_name="officialbook",
+            index=models.Index(fields=["title"], name="exbook_offi_title_fd3aed_idx"),
         ),
         migrations.AddIndex(
-            model_name='officialbook',
-            index=models.Index(fields=['author'], name='exbook_offi_author_7de8cf_idx'),
+            model_name="officialbook",
+            index=models.Index(fields=["author"], name="exbook_offi_author_7de8cf_idx"),
         ),
         migrations.AddField(
-            model_name='sharedbook',
-            name='book_set',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='books', to='books.bookset', verbose_name='所屬套書'),
+            model_name="sharedbook",
+            name="book_set",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="books",
+                to="books.bookset",
+                verbose_name="所屬套書",
+            ),
         ),
         migrations.AddField(
-            model_name='sharedbook',
-            name='keeper',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='kept_books', to=settings.AUTH_USER_MODEL, verbose_name='持有者'),
+            model_name="sharedbook",
+            name="keeper",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="kept_books",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="持有者",
+            ),
         ),
         migrations.AddField(
-            model_name='sharedbook',
-            name='official_book',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='shared_books', to='books.officialbook', verbose_name='官方書籍'),
+            model_name="sharedbook",
+            name="official_book",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="shared_books",
+                to="books.officialbook",
+                verbose_name="官方書籍",
+            ),
         ),
         migrations.AddField(
-            model_name='sharedbook',
-            name='owner',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='owned_books', to=settings.AUTH_USER_MODEL, verbose_name='貢獻者'),
+            model_name="sharedbook",
+            name="owner",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="owned_books",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="貢獻者",
+            ),
         ),
         migrations.AddField(
-            model_name='bookphoto',
-            name='shared_book',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='photos', to='books.sharedbook', verbose_name='分享書籍'),
+            model_name="bookphoto",
+            name="shared_book",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="photos",
+                to="books.sharedbook",
+                verbose_name="分享書籍",
+            ),
         ),
         migrations.AddField(
-            model_name='wishlistitem',
-            name='official_book',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='wished_by', to='books.officialbook', verbose_name='官方書籍'),
+            model_name="wishlistitem",
+            name="official_book",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="wished_by",
+                to="books.officialbook",
+                verbose_name="官方書籍",
+            ),
         ),
         migrations.AddField(
-            model_name='wishlistitem',
-            name='user',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='wish_list', to=settings.AUTH_USER_MODEL, verbose_name='用戶'),
+            model_name="wishlistitem",
+            name="user",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="wish_list",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="用戶",
+            ),
         ),
         migrations.AddIndex(
-            model_name='sharedbook',
-            index=models.Index(fields=['status'], name='exbook_shar_status_42c8c4_idx'),
+            model_name="sharedbook",
+            index=models.Index(fields=["status"], name="exbook_shar_status_42c8c4_idx"),
         ),
         migrations.AddIndex(
-            model_name='sharedbook',
-            index=models.Index(fields=['owner', 'status'], name='exbook_shar_owner_i_ac2210_idx'),
+            model_name="sharedbook",
+            index=models.Index(
+                fields=["owner", "status"], name="exbook_shar_owner_i_ac2210_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='sharedbook',
-            index=models.Index(fields=['keeper', 'status'], name='exbook_shar_keeper__a2e909_idx'),
+            model_name="sharedbook",
+            index=models.Index(
+                fields=["keeper", "status"], name="exbook_shar_keeper__a2e909_idx"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='wishlistitem',
-            constraint=models.UniqueConstraint(fields=('user', 'official_book'), name='unique_user_official_book'),
+            model_name="wishlistitem",
+            constraint=models.UniqueConstraint(
+                fields=("user", "official_book"), name="unique_user_official_book"
+            ),
         ),
     ]
