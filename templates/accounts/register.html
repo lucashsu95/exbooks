@@ -30,7 +30,7 @@
                       placeholder:text-ink/30 focus:outline-none focus:ring-1
                       {% if field.errors %}border-red-300 focus:border-red-400 focus:ring-red-200
                       {% else %}border-margin focus:border-spine focus:ring-spine{% endif %}"
-               placeholder="{{ field.help_text|default:'' }}">
+               placeholder="{{ field.field.widget.attrs.placeholder|default:field.label|striptags }}">
         {% if field.errors %}
         <p class="mt-1 text-xs text-red-600">{{ field.errors.0 }}</p>
         {% elif field.help_text %}
