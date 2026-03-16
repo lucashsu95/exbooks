@@ -1,0 +1,75 @@
+<!-- Search Modal Overlay -->
+<div id="search-modal-overlay" class="fixed inset-0 bg-black/50 z-50 opacity-0 pointer-events-none transition-opacity duration-300" onclick="toggleSearchModal()"></div>
+
+<!-- Search Modal -->
+<div id="search-modal" class="fixed top-0 left-0 right-0 z-50 transform -translate-y-full transition-transform duration-300">
+    <div class="bg-white dark:bg-slate-900 shadow-xl">
+        <!-- Modal Header -->
+        <div class="flex items-center p-4 gap-3">
+            <button type="button" onclick="toggleSearchModal()" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                <span class="material-symbols-outlined text-slate-500 dark:text-slate-400">close</span>
+            </button>
+            
+            <!-- Search Form -->
+            <form method="GET" action="{% url 'books:list' %}" class="flex-1">
+                <div class="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl">
+                    <input 
+                        type="text" 
+                        name="q" 
+                        id="search-modal-input"
+                        class="w-full bg-transparent border-none focus:ring-0 px-4 py-3 text-slate-900 dark:text-slate-100 placeholder:text-slate-500"
+                        placeholder="搜尋 ISBN、書名、作者..."
+                        autocomplete="off"
+                    >
+                    <button type="submit" class="px-4 py-3 text-primary hover:bg-primary/10 rounded-r-xl transition-colors">
+                        <span class="material-symbols-outlined">search</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Search Tips -->
+        <div class="px-4 pb-4">
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+                <span class="material-symbols-outlined text-sm align-middle mr-1">info</span>
+                輸入關鍵字搜尋書籍，支援書名、作者、ISBN
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleSearchModal() {
+    const modal = document.getElementById('search-modal');
+    const overlay = document.getElementById('search-modal-overlay');
+    
+    if (modal.classList.contains('-translate-y-full')) {
+        modal.classList.remove('-translate-y-full');
+        modal.classList.add('translate-y-0');
+        overlay.classList.remove('opacity-0', 'pointer-events-none');
+        overlay.classList.add('opacity-100', 'pointer-events-auto');
+        document.body.style.overflow = 'hidden';
+        
+        // Auto-focus input
+        setTimeout(() => {
+            document.getElementById('search-modal-input').focus();
+        }, 100);
+    } else {
+        modal.classList.remove('translate-y-0');
+        modal.classList.add('-translate-y-full');
+        overlay.classList.remove('opacity-100', 'pointer-events-auto');
+        overlay.classList.add('opacity-0', 'pointer-events-none');
+        document.body.style.overflow = '';
+    }
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('search-modal');
+        if (!modal.classList.contains('-translate-y-full')) {
+            toggleSearchModal();
+        }
+    }
+});
+</script>

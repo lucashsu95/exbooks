@@ -1,7 +1,8 @@
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, render
+from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import ProfileForm, RegisterForm
 
@@ -27,7 +28,11 @@ def register(request):
 @login_required
 def profile(request):
     """查看個人資料。"""
-    return render(request, "accounts/profile.html")
+    profile_obj = None
+    if hasattr(request.user, "profile"):
+        profile_obj = request.user.profile
+
+    return render(request, "accounts/profile.html", {"profile": profile_obj})
 
 
 @login_required
@@ -47,3 +52,23 @@ def profile_edit(request):
         form = ProfileForm(instance=profile)
 
     return render(request, "accounts/profile_edit.html", {"form": form})
+
+
+@login_required
+def public_profile(request, user_id):
+    """查看他人公開資料。"""
+    from .models import UserProfile
+
+    user = get_object_or_404(User, pk=user_id)
+
+    # 嘗試取得 profile，若無則使用預設值
+    try:
+        profile = user.profile
+    except UserProfile.DoesNotExist:
+        profile = None
+
+    context = {
+        "viewed_user": user,
+        "profile": profile,
+    }
+    return render(request, "accounts/public_profile.html", context)

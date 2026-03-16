@@ -72,7 +72,13 @@
 
 <body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
 
-  <!-- Messages (Toast) -->
+<!-- Sidebar -->
+{% include '_sidebar.html' %}
+
+<!-- Search Modal -->
+{% include '_search_modal.html' %}
+
+<!-- Messages (Toast) -->
   {% if messages %}
   <div class="fixed top-4 right-4 z-50 flex flex-col gap-2" id="toast-container">
     {% for message in messages %}
