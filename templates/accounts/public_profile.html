@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Exbooks - {{ viewed_user.profile.nickname|default:viewed_user.username }} 的資料{% endblock %}
+{% block title %}Exbooks - {{ viewed_user.profile.nickname|default:viewed_user.email }} 的資料{% endblock %}
 
 {% block content %}
 <!-- Header Section -->

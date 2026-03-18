@@ -1,71 +1,86 @@
-{% extends "base.html" %}
-{% block title %}編輯個人資料{% endblock %}
+{% extends 'base.html' %}
+
+{% block title %}Exbooks - 編輯個人資料{% endblock %}
 
 {% block content %}
-<div class="max-w-lg">
-  <h1 class="font-serif text-xl font-bold mb-6">編輯個人資料</h1>
-
-  <form method="post" enctype="multipart/form-data"
-        class="rounded-xl border border-margin bg-white p-6 space-y-5">
-    {% csrf_token %}
-
-    {% for field in form %}
-    <div>
-      <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-ink/70 mb-1">
-        {{ field.label }}
-      </label>
-
-      {% if field.field.widget.input_type == 'select' %}
-      <select name="{{ field.html_name }}" id="{{ field.id_for_label }}"
-              class="w-full rounded-lg border border-margin bg-white px-3 py-2 text-sm
-                     focus:border-spine focus:outline-none focus:ring-1 focus:ring-spine transition-colors">
-        {% for value, label in field.field.choices %}
-        <option value="{{ value }}" {% if field.value == value %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-
-      {% elif field.field.widget.input_type == 'clearablefile' or field.name == 'avatar' %}
-      <div class="flex items-center gap-3">
-        {% if field.value %}
-        <img src="{{ field.value.url }}" alt="目前頭像"
-             class="h-12 w-12 rounded-full object-cover border border-page">
-        {% endif %}
-        <input type="file" name="{{ field.html_name }}" id="{{ field.id_for_label }}" accept="image/*"
-               class="text-sm text-ink/60 file:mr-3 file:rounded-lg file:border-0
-                      file:bg-page file:px-3 file:py-1.5 file:text-sm file:font-medium
-                      file:text-ink/70 hover:file:bg-margin file:transition-colors">
-      </div>
-
-      {% else %}
-      <input type="{{ field.field.widget.input_type|default:'text' }}"
-             name="{{ field.html_name }}"
-             id="{{ field.id_for_label }}"
-             value="{{ field.value|default:'' }}"
-             {% if field.field.widget.attrs.placeholder %}placeholder="{{ field.field.widget.attrs.placeholder }}"{% endif %}
-             class="w-full rounded-lg border bg-white px-3 py-2 text-sm transition-colors
-                    placeholder:text-ink/30 focus:outline-none focus:ring-1
-                    {% if field.errors %}border-red-300 focus:border-red-400 focus:ring-red-200
-                    {% else %}border-margin focus:border-spine focus:ring-spine{% endif %}">
-      {% endif %}
-
-      {% if field.errors %}
-      <p class="mt-1 text-xs text-red-600">{{ field.errors.0 }}</p>
-      {% endif %}
+<!-- Header -->
+<header class="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+    <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
+        <div class="flex items-center gap-3">
+            <a href="{% url 'accounts:profile' %}" class="material-symbols-outlined text-slate-600 dark:text-slate-400 cursor-pointer">arrow_back</a>
+            <h1 class="text-xl font-bold tracking-tight">編輯個人資料</h1>
+        </div>
     </div>
-    {% endfor %}
+</header>
 
-    <div class="flex items-center gap-3 pt-2">
-      <button type="submit"
-              class="rounded-lg bg-spine px-4 py-2 text-sm font-medium text-white
-                     hover:bg-spine-dark focus:outline-none focus:ring-2 focus:ring-spine/50
-                     transition-colors">
-        儲存
-      </button>
-      <a href="{% url 'accounts:profile' %}"
-         class="rounded-lg border border-margin px-4 py-2 text-sm hover:bg-page transition-colors">
-        取消
-      </a>
-    </div>
-  </form>
-</div>
+<main class="max-w-xl mx-auto p-4 pb-24">
+    <form method="post" enctype="multipart/form-data" class="space-y-4">
+        {% csrf_token %}
+        
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+            {% for field in form %}
+            <div class="mb-4 last:mb-0">
+                <label for="{{ field.id_for_label }}" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                    {{ field.label }}
+                </label>
+                
+                {% if field.field.widget.input_type == 'select' %}
+                <select name="{{ field.html_name }}" id="{{ field.id_for_label }}"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-primary transition-colors">
+                    {% for value, label in field.field.choices %}
+                    <option value="{{ value }}" {% if field.value == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                
+                {% elif field.field.widget.input_type == 'clearablefile' or field.name == 'avatar' %}
+                <div class="flex items-center gap-4">
+                    {% if field.value %}
+                    <img src="{{ field.value.url }}" alt="目前頭像"
+                        class="h-16 w-16 rounded-full object-cover border-2 border-primary">
+                    {% else %}
+                    <div class="h-16 w-16 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-slate-400">person</span>
+                    </div>
+                    {% endif %}
+                    <input type="file" name="{{ field.html_name }}" id="{{ field.id_for_label }}" accept="image/*"
+                        class="text-sm text-slate-600 dark:text-slate-400
+                               file:mr-3 file:rounded-lg file:border-0
+                               file:bg-primary/10 file:px-4 file:py-2
+                               file:text-sm file:font-medium file:text-primary
+                               hover:file:bg-primary/20 file:transition-colors
+                               file:cursor-pointer">
+                </div>
+                
+                {% else %}
+                <input type="{{ field.field.widget.input_type|default:'text' }}"
+                    name="{{ field.html_name }}"
+                    id="{{ field.id_for_label }}"
+                    value="{{ field.value|default:'' }}"
+                    {% if field.field.widget.attrs.placeholder %}placeholder="{{ field.field.widget.attrs.placeholder }}"{% endif %}
+                    class="w-full rounded-xl border bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 transition-colors
+                           placeholder:text-slate-400 focus:ring-2 focus:ring-primary focus:border-primary
+                           {% if field.errors %}border-rose-400 focus:ring-rose-400{% else %}border-slate-200 dark:border-slate-700{% endif %}">
+                {% endif %}
+                
+                {% if field.errors %}
+                <p class="mt-1 text-xs text-rose-500">{{ field.errors.0 }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="flex gap-3">
+            <button type="submit"
+                class="flex-1 bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-transform">
+                儲存變更
+            </button>
+            <a href="{% url 'accounts:profile' %}"
+                class="flex-1 text-center bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold py-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                取消
+            </a>
+        </div>
+    </form>
+</main>
+
+{% include '_bottom_nav.html' %}
 {% endblock %}

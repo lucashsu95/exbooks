@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% block title %}完成個人資料 - Exbooks{% endblock %}
+
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<style>
+    .login-page {
+        --page-bg: #f6f7f8;
+        --card-bg: #ffffff;
+        --text-primary: #1a1a2e;
+        --text-secondary: #6b7280;
+        --accent: #136dec;
+        --accent-hover: #0d5bb8;
+        --border: #e5e7eb;
+        --input-bg: #f9fafb;
+        font-family: 'Work Sans', sans-serif;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        .login-page {
+            --page-bg: #101822;
+            --card-bg: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+            --input-bg: #0f172a;
+        }
+    }
+    
+    .dark .login-page {
+        --page-bg: #101822;
+        --card-bg: #1e293b;
+        --text-primary: #f1f5f9;
+        --text-secondary: #94a3b8;
+        --border: #334155;
+        --input-bg: #0f172a;
+    }
+    
+    .floating-pages {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+        z-index: 0;
+    }
+    
+    .page-shape {
+        position: absolute;
+        background: linear-gradient(135deg, rgba(19, 109, 236, 0.08) 0%, rgba(19, 109, 236, 0.02) 100%);
+        border-radius: 8px;
+        animation: floatPage 20s ease-in-out infinite;
+    }
+    
+    .page-shape:nth-child(1) { width: 300px; height: 400px; top: -100px; left: 10%; transform: rotate(-15deg); animation-delay: 0s; }
+    .page-shape:nth-child(2) { width: 200px; height: 280px; top: 20%; right: 5%; transform: rotate(12deg); animation-delay: -5s; }
+    .page-shape:nth-child(3) { width: 180px; height: 240px; bottom: 10%; left: 5%; transform: rotate(8deg); animation-delay: -10s; }
+    
+    @keyframes floatPage {
+        0%, 100% { transform: translateY(0) rotate(var(--rotation, -15deg)); opacity: 0.6; }
+        50% { transform: translateY(-30px) rotate(calc(var(--rotation, -15deg) + 5deg)); opacity: 0.9; }
+    }
+    
+    .login-container {
+        position: relative;
+        z-index: 1;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+    }
+    
+    .login-card {
+        background: var(--card-bg);
+        border-radius: 24px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 20px 50px -12px rgba(19, 109, 236, 0.15);
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 460px;
+        animation: cardEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    @keyframes cardEnter {
+        from { opacity: 0; transform: translateY(30px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    
+    .brand-header { text-align: center; margin-bottom: 2rem; }
+    
+    .brand-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.02em;
+    }
+    
+    .brand-subtitle { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; }
+    
+    .login-form { display: flex; flex-direction: column; gap: 1rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.375rem; }
+    .form-label { font-size: 0.85rem; font-weight: 500; color: var(--text-primary); }
+    .form-label .required { color: #dc2626; margin-left: 0.25rem; }
+    
+    .form-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: var(--input-bg);
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        font-size: 0.9rem;
+        color: var(--text-primary);
+        transition: all 0.2s ease;
+    }
+    
+    .form-input::placeholder { color: var(--text-secondary); }
+    .form-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(19, 109, 236, 0.1); }
+    
+    .form-hint { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    
+    .error-message {
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+        color: #dc2626;
+    }
+    
+    .error-message ul { margin: 0.5rem 0 0 0; padding-left: 1.25rem; }
+    
+    .submit-btn {
+        width: 100%;
+        padding: 1rem;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+        margin-top: 0.5rem;
+    }
+    
+    .submit-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 100%); }
+    .submit-btn:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 8px 20px -4px rgba(19, 109, 236, 0.4); }
+    .submit-btn:active { transform: translateY(0); }
+    
+    .age-notice {
+        text-align: center;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-top: 1.5rem;
+        padding: 0.75rem;
+        background: var(--input-bg);
+        border-radius: 8px;
+        border-left: 3px solid var(--accent);
+    }
+    
+    .shield-icon {
+        width: 56px; height: 56px;
+        margin: 0 auto 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    .shield-icon svg { width: 28px; height: 28px; color: white; }
+</style>
+
+<div class="login-page">
+    <div class="floating-pages">
+        <div class="page-shape" style="--rotation: -15deg;"></div>
+        <div class="page-shape" style="--rotation: 12deg;"></div>
+        <div class="page-shape" style="--rotation: 8deg;"></div>
+    </div>
+    
+    <div class="login-container">
+        <div class="login-card">
+            <div class="brand-header">
+                <div class="shield-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        <path d="M9 12l2 2 4-4"></path>
+                    </svg>
+                </div>
+                <h1 class="brand-title">完成個人資料</h1>
+                <p class="brand-subtitle">為了符合法規，我們需要驗證您的年齡</p>
+            </div>
+            
+            <form method="post" class="login-form">
+                {% csrf_token %}
+                
+                {% if form.errors %}
+                <div class="error-message">
+                    <strong>請修正以下錯誤：</strong>
+                    <ul>
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                            <li>{{ field.label }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <div class="form-group">
+                    <label for="id_birth_date" class="form-label">出生日期<span class="required">*</span></label>
+                    <input type="date" name="birth_date" id="id_birth_date" class="form-input" value="{{ form.birth_date.value|default:'' }}" required>
+                    <span class="form-hint">用於年齡驗證</span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="id_nickname" class="form-label">暱稱</label>
+                    <input type="text" name="nickname" id="id_nickname" class="form-input" value="{{ form.nickname.value|default:'' }}" placeholder="顯示在平台上的名稱" maxlength="50">
+                    <span class="form-hint">其他用戶會看到這個名稱</span>
+                </div>
+                
+                <button type="submit" class="submit-btn">儲存並繼續</button>
+            </form>
+            
+            <div class="age-notice">
+                年滿 18 歲以上才能使用本服務
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
