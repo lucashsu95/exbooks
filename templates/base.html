@@ -1,76 +1,104 @@
 <!DOCTYPE html>
 <html lang="zh-Hant" class="h-full">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Exbooks{% endblock %}</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Exbooks 共享書籍{% endblock %}</title>
 
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <script>
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: {
-            "primary": "#136dec",
-            "background-light": "#f6f7f8",
-            "background-dark": "#101822",
-          },
-          fontFamily: {
-            "display": ["Work Sans"]
-          },
-          borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
-        },
-      },
-    }
-  </script>
+<!-- PWA Meta Tags -->
+<meta name="theme-color" content="#136dec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Exbooks">
+<meta name="mobile-web-app-capable" content="yes">
 
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<!-- PWA Manifest -->
+<link rel="manifest" href="/static/manifest.json">
 
-  <!-- HTMX -->
-  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+<!-- Apple Touch Icon -->
+<link rel="apple-touch-icon" href="/static/icons/icon-192.png">
 
-  <style>
-    body {
-      min-height: max(884px, 100dvh);
-    }
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+tailwind.config = {
+darkMode: "class",
+theme: {
+  extend: {
+  colors: {
+    "primary": "#136dec",
+    "background-light": "#f6f7f8",
+    "background-dark": "#101822",
+  },
+  fontFamily: {
+    "display": ["Work Sans"]
+  },
+  borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+  },
+},
+}
+</script>
 
-    /* HTMX loading indicator */
-    .htmx-indicator { opacity: 0; transition: opacity 300ms ease-in; }
-    .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { opacity: 1; }
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 
-    /* Page transition */
-    .fade-in { animation: fadeIn 0.3s ease-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+<!-- HTMX -->
+<script src="https://unpkg.com/htmx.org@2.0.4"></script>
 
-    /* Toast auto-dismiss */
-    .toast { animation: toastIn 0.4s ease-out, toastOut 0.4s ease-in 4s forwards; }
-    @keyframes toastIn { from { opacity: 0; transform: translateY(-12px); } }
-    @keyframes toastOut { to { opacity: 0; transform: translateY(-12px); } }
+<style>
+body {
+min-height: max(884px, 100dvh);
+}
 
-    /* Hide scrollbar for horizontal scrolling */
-    .no-scrollbar::-webkit-scrollbar {
-        display: none;
-    }
-    .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }
-    .fill-1 {
-        font-variation-settings: 'FILL' 1;
-    }
-  </style>
+/* HTMX loading indicator */
+.htmx-indicator { opacity: 0; transition: opacity 300ms ease-in; }
+.htmx-request .htmx-indicator, .htmx-request.htmx-indicator { opacity: 1; }
 
-  {% block extra_head %}{% endblock %}
+/* Page transition */
+.fade-in { animation: fadeIn 0.3s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Toast auto-dismiss */
+.toast { animation: toastIn 0.4s ease-out, toastOut 0.4s ease-in 4s forwards; }
+@keyframes toastIn { from { opacity: 0; transform: translateY(-12px); } }
+@keyframes toastOut { to { opacity: 0; transform: translateY(-12px); } }
+
+/* Hide scrollbar for horizontal scrolling */
+.no-scrollbar::-webkit-scrollbar {
+display: none;
+}
+.no-scrollbar {
+-ms-overflow-style: none;
+scrollbar-width: none;
+}
+.fill-1 {
+font-variation-settings: 'FILL' 1;
+}
+</style>
+
+{% block extra_head %}{% endblock %}
 </head>
 
 <body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+
+<!-- PWA Service Worker Registration -->
+<script>
+if ('serviceWorker' in navigator) {
+window.addEventListener('load', function() {
+  navigator.serviceWorker.register('/static/sw.js')
+  .then(function(registration) {
+    console.log('[PWA] Service Worker 註冊成功:', registration.scope);
+  })
+  .catch(function(error) {
+    console.log('[PWA] Service Worker 註冊失敗:', error);
+  });
+});
+}
+</script>
 
 <!-- Sidebar -->
 {% include '_sidebar.html' %}
@@ -79,25 +107,25 @@
 {% include '_search_modal.html' %}
 
 <!-- Messages (Toast) -->
-  {% if messages %}
-  <div class="fixed top-4 right-4 z-50 flex flex-col gap-2" id="toast-container">
-    {% for message in messages %}
-    <div class="toast rounded-lg border px-4 py-3 text-sm shadow-md
-      {% if message.tags == 'success' %}border-green-200 bg-green-50 text-green-800 dark:bg-green-900/30 dark:border-green-800 dark:text-green-400
-      {% elif message.tags == 'error' %}border-red-200 bg-red-50 text-red-800 dark:bg-red-900/30 dark:border-red-800 dark:text-red-400
-      {% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:border-amber-800 dark:text-amber-400
-      {% else %}border-blue-200 bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-400{% endif %}">
-      {{ message }}
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
+{% if messages %}
+<div class="fixed top-4 right-4 z-50 flex flex-col gap-2" id="toast-container">
+{% for message in messages %}
+<div class="toast rounded-lg border px-4 py-3 text-sm shadow-md
+{% if message.tags == 'success' %}border-green-200 bg-green-50 text-green-800 dark:bg-green-900/30 dark:border-green-800 dark:text-green-400
+{% elif message.tags == 'error' %}border-red-200 bg-red-50 text-red-800 dark:bg-red-900/30 dark:border-red-800 dark:text-red-400
+{% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:border-amber-800 dark:text-amber-400
+{% else %}border-blue-200 bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-400{% endif %}">
+{{ message }}
+</div>
+{% endfor %}
+</div>
+{% endif %}
 
-  <!-- Main Content Wrapper -->
-  <div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-x-hidden fade-in">
-    {% block content %}{% endblock %}
-  </div>
+<!-- Main Content Wrapper -->
+<div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-x-hidden fade-in">
+{% block content %}{% endblock %}
+</div>
 
-  {% block extra_js %}{% endblock %}
+{% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -1,27 +1,46 @@
 {% for message in messages %}
-<div class="flex gap-3 mb-4 {% if message.sender == request.user %}flex-row-reverse{% endif %}">
-    <div class="size-8 rounded-full bg-primary/20 overflow-hidden flex-shrink-0 flex items-center justify-center">
-        {% if message.sender.profile.avatar %}
-        <img src="{{ message.sender.profile.avatar.url }}" alt="{{ message.sender.profile.nickname }}" class="w-full h-full object-cover"/>
-        {% else %}
-        <span class="text-primary text-xs font-bold">{{ message.sender.profile.nickname|default:message.sender.email|truncatechars:1 }}</span>
-        {% endif %}
+<!-- 判斷是否為當前用戶發送的訊息 -->
+{% if message.sender == request.user %}
+<!-- 自己發送的訊息（靠右） -->
+<div class="flex items-end gap-3 justify-end">
+  <div class="flex-1 text-right">
+    <p class="text-xs text-slate-500 dark:text-slate-400 mb-1">您 · {% if message.sender == deal.applicant %}申請者{% else %}回應者{% endif %}</p>
+    <div class="bg-primary text-white rounded-xl px-4 py-2 inline-block max-w-[85%]">
+      <p class="text-sm">{{ message.content }}</p>
     </div>
-    <div class="{% if message.sender == request.user %}items-end{% else %}items-start{% endif %} flex flex-col max-w-[75%]">
-        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">
-            {{ message.sender.profile.nickname|default:message.sender.email }}
-        </div>
-        <div class="{% if message.sender == request.user %}bg-primary text-white{% else %}bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100{% endif %} rounded-xl px-4 py-2 text-sm shadow-sm">
-            {{ message.content }}
-        </div>
-        <div class="text-xs text-slate-400 mt-1">
-            {{ message.created_at|timesince }}
-        </div>
-    </div>
+    <p class="text-xs text-slate-400 mt-1">{{ message.created_at|date:"H:i" }}</p>
+  </div>
+  <div class="size-8 rounded-full bg-primary/20 overflow-hidden shrink-0 flex items-center justify-center">
+    {% if message.sender.profile.avatar %}
+    <img src="{{ message.sender.profile.avatar.url }}" alt="{{ message.sender.profile.nickname }}" class="w-full h-full object-cover"/>
+    {% else %}
+    <span class="text-primary text-xs font-bold">{{ message.sender.profile.nickname|default:message.sender.email|truncatechars:1 }}</span>
+    {% endif %}
+  </div>
 </div>
+{% else %}
+<!-- 對方發送的訊息（靠左） -->
+<div class="flex items-end gap-3">
+  <div class="size-8 rounded-full bg-primary/20 overflow-hidden shrink-0 flex items-center justify-center">
+    {% if message.sender.profile.avatar %}
+    <img src="{{ message.sender.profile.avatar.url }}" alt="{{ message.sender.profile.nickname }}" class="w-full h-full object-cover"/>
+    {% else %}
+    <span class="text-primary text-xs font-bold">{{ message.sender.profile.nickname|default:message.sender.email|truncatechars:1 }}</span>
+    {% endif %}
+  </div>
+  <div class="flex-1">
+    <p class="text-xs text-slate-500 dark:text-slate-400 mb-1">{{ message.sender.profile.nickname|default:message.sender.email }} · {% if message.sender == deal.applicant %}申請者{% else %}回應者{% endif %}</p>
+    <div class="bg-slate-100 dark:bg-slate-700 rounded-xl px-4 py-2 inline-block max-w-[85%]">
+      <p class="text-sm">{{ message.content }}</p>
+    </div>
+    <p class="text-xs text-slate-400 mt-1">{{ message.created_at|date:"H:i" }}</p>
+  </div>
+</div>
+{% endif %}
 {% empty %}
 <div class="text-center py-8 text-slate-500 dark:text-slate-400">
-    <span class="material-symbols-outlined text-4xl mb-2">chat_bubble_outline</span>
-    <p class="text-sm">尚無留言紀錄</p>
+<span class="material-symbols-outlined text-4xl mb-2">chat_bubble_outline</span>
+<p class="text-sm">尚無留言紀錄</p>
+<p class="text-xs mt-1">發送訊息開始協商面交細節</p>
 </div>
 {% endfor %}
