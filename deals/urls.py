@@ -17,4 +17,12 @@ urlpatterns = [
     path("<uuid:pk>/complete/", views.deal_complete_meeting, name="complete"),
     path("<uuid:pk>/message/", views.deal_message_send, name="message_send"),
     path("<uuid:pk>/rate/", views.rating_create, name="rating_create"),
+    # Web Push
+    path(
+        "push/vapid-public-key/",
+        views.push_vapid_public_key,
+        name="push_vapid_public_key",
+    ),
+    path("push/subscribe/", views.push_subscribe, name="push_subscribe"),
+    path("push/unsubscribe/", views.push_unsubscribe, name="push_unsubscribe"),
 ]

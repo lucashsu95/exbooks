@@ -2,16 +2,21 @@
 交易相關 Views。
 """
 
+import json
+import logging
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_POST, require_GET
 
 from books.models import SharedBook
 from .forms import DealApplicationForm, RatingForm, DealMessageForm
-from .models import Deal, DealMessage
+from .models import Deal, DealMessage, PushSubscription, WebPushConfig
 from .services import deal_service, rating_service
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -285,3 +290,130 @@ def rating_create(request, pk):
             "ratee": ratee,
         },
     )
+
+
+# ============================================
+# Web Push 相關 Views
+# ============================================
+
+
+@login_required
+def push_vapid_public_key(request):
+    """
+    取得 VAPID 公開金鑰。
+
+    前端需要此金鑰來註冊 Push 訂閱。
+    """
+    config = WebPushConfig.get_config()
+    if not config:
+        return JsonResponse(
+            {"error": "Web Push 尚未設定"},
+            status=503,
+        )
+
+    return JsonResponse({"publicKey": config.vapid_public_key})
+
+
+@login_required
+@require_POST
+def push_subscribe(request):
+    """
+    註冊 Push 訂閱。
+
+    接收前端 PushManager.subscribe() 返回的訂閱資訊並儲存。
+    """
+    try:
+        data = json.loads(request.body)
+        subscription = data.get("subscription", {})
+
+        endpoint = subscription.get("endpoint")
+        keys = subscription.get("keys", {})
+        p256dh = keys.get("p256dh")
+        auth = keys.get("auth")
+
+        if not all([endpoint, p256dh, auth]):
+            return JsonResponse(
+                {"error": "缺少必要欄位"},
+                status=400,
+            )
+
+        # 使用 update_or_create 確保同一端點不重複
+        subscription_obj, created = PushSubscription.objects.update_or_create(
+            endpoint=endpoint,
+            defaults={
+                "user": request.user,
+                "p256dh": p256dh,
+                "auth": auth,
+                "user_agent": request.META.get("HTTP_USER_AGENT", "")[:500],
+                "is_active": True,
+            },
+        )
+
+        action = "已註冊" if created else "已更新"
+        logger.info(f"Push 訂閱{action}: {request.user} - {endpoint[:50]}...")
+
+        return JsonResponse(
+            {
+                "success": True,
+                "message": f"Push 訂閱{action}",
+                "subscription_id": str(subscription_obj.id),
+            }
+        )
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"error": "無效的 JSON 資料"},
+            status=400,
+        )
+    except Exception as e:
+        logger.error(f"Push 訂閱失敗: {e}")
+        return JsonResponse(
+            {"error": str(e)},
+            status=500,
+        )
+
+
+@login_required
+@require_POST
+def push_unsubscribe(request):
+    """
+    取消 Push 訂閱。
+
+    將訂閱標記為不啟用（軟刪除）。
+    """
+    try:
+        data = json.loads(request.body)
+        endpoint = data.get("endpoint")
+
+        if not endpoint:
+            return JsonResponse(
+                {"error": "缺少 endpoint"},
+                status=400,
+            )
+
+        # 找到並停用訂閱
+        updated = PushSubscription.objects.filter(
+            endpoint=endpoint,
+            user=request.user,
+        ).update(is_active=False)
+
+        if updated:
+            logger.info(f"Push 訂閱已取消: {request.user} - {endpoint[:50]}...")
+            return JsonResponse({"success": True, "message": "已取消訂閱"})
+        else:
+            return JsonResponse(
+                {"error": "找不到訂閱"},
+                status=404,
+            )
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"error": "無效的 JSON 資料"},
+            status=400,
+        )
+    except Exception as e:
+        logger.error(f"取消 Push 訂閱失敗: {e}")
+        return JsonResponse(
+            {"error": str(e)},
+            status=500,
+        )

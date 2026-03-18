@@ -4,15 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0002_create_initial_groups'),
+        ("accounts", "0002_create_initial_groups"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='userprofile',
-            name='birth_date',
-            field=models.DateField(blank=True, help_text='用於年齡驗證（需年滿 18 歲）', null=True, verbose_name='出生日期'),
+            model_name="userprofile",
+            name="birth_date",
+            field=models.DateField(
+                blank=True,
+                help_text="用於年齡驗證（需年滿 18 歲）",
+                null=True,
+                verbose_name="出生日期",
+            ),
         ),
     ]

@@ -85,19 +85,117 @@ font-variation-settings: 'FILL' 1;
 
 <body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
 
-<!-- PWA Service Worker Registration -->
+<!-- PWA Service Worker & Push Registration -->
 <script>
-if ('serviceWorker' in navigator) {
-window.addEventListener('load', function() {
-  navigator.serviceWorker.register('/static/sw.js')
-  .then(function(registration) {
-    console.log('[PWA] Service Worker 註冊成功:', registration.scope);
-  })
-  .catch(function(error) {
-    console.log('[PWA] Service Worker 註冊失敗:', error);
-  });
-});
-}
+(function() {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', async function() {
+      try {
+        // 註冊 Service Worker
+        const registration = await navigator.serviceWorker.register('/static/sw.js');
+        console.log('[PWA] Service Worker 註冊成功:', registration.scope);
+
+        // 檢查是否支援 Push
+        if (!('PushManager' in window)) {
+          console.log('[PWA] 此瀏覽器不支援 Push 通知');
+          return;
+        }
+
+        // 檢查是否已登入（透過檢查是否有登入後才有的元素）
+        {% if user.is_authenticated %}
+        await initPushNotifications(registration);
+        {% endif %}
+      } catch (error) {
+        console.log('[PWA] Service Worker 註冊失敗:', error);
+      }
+    });
+  }
+
+  {% if user.is_authenticated %}
+  async function initPushNotifications(registration) {
+    try {
+      // 取得 VAPID 公開金鑰
+      const response = await fetch('/deals/push/vapid-public-key/');
+      if (!response.ok) {
+        console.log('[PWA] 無法取得 VAPID 金鑰，Web Push 尚未設定');
+        return;
+      }
+      const data = await response.json();
+      const publicKey = data.publicKey;
+
+      // 將 base64 轉換為 Uint8Array
+      const applicationServerKey = urlBase64ToUint8Array(publicKey);
+
+      // 檢查目前的訂閱狀態
+      let subscription = await registration.pushManager.getSubscription();
+
+      if (subscription === null) {
+        // 沒有現有訂閱，詢問用戶是否要啟用通知
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          console.log('[PWA] 用戶拒絕通知權限');
+          return;
+        }
+
+        // 訂閱 Push
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: applicationServerKey
+        });
+        console.log('[PWA] Push 訂閱成功:', subscription.endpoint);
+
+        // 將訂閱資訊發送到後端
+        await sendSubscriptionToServer(subscription);
+      } else {
+        console.log('[PWA] 已有 Push 訂閱:', subscription.endpoint);
+        // 確保後端有此訂閱的記錄
+        await sendSubscriptionToServer(subscription);
+      }
+    } catch (error) {
+      console.error('[PWA] Push 初始化失敗:', error);
+    }
+  }
+
+  async function sendSubscriptionToServer(subscription) {
+    try {
+      const response = await fetch('/deals/push/subscribe/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+          subscription: subscription.toJSON()
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('[PWA] 訂閱已同步到伺服器:', data.message);
+      } else {
+        console.error('[PWA] 同步訂閱到伺服器失敗');
+      }
+    } catch (error) {
+      console.error('[PWA] 發送訂閱到伺服器失敗:', error);
+    }
+  }
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+  {% endif %}
+})();
 </script>
 
 <!-- Sidebar -->

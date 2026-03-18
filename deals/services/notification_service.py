@@ -1,8 +1,16 @@
+from django.urls import reverse
+
 from deals.models import Notification
 
 
 def notify(
-    recipient, notification_type, title, message="", deal=None, shared_book=None
+    recipient,
+    notification_type,
+    title,
+    message="",
+    deal=None,
+    shared_book=None,
+    send_push=True,
 ):
     """
     建立系統通知。
@@ -16,17 +24,71 @@ def notify(
         message: 通知內容（可選）
         deal: 相關交易（可選）
         shared_book: 相關書籍（可選）
+        send_push: 是否發送 Web Push（預設 True）
 
     Returns:
         Notification: 建立的通知
     """
-    return Notification.objects.create(
+    notification = Notification.objects.create(
         recipient=recipient,
         notification_type=notification_type,
         title=title,
         message=message,
         deal=deal,
         shared_book=shared_book,
+    )
+
+    # 發送 Web Push
+    if send_push:
+        _send_push_notification(
+            user=recipient,
+            title=title,
+            message=message,
+            deal=deal,
+            shared_book=shared_book,
+            notification_type=notification_type,
+        )
+
+    return notification
+
+
+def _send_push_notification(
+    user,
+    title,
+    message,
+    deal=None,
+    shared_book=None,
+    notification_type=None,
+):
+    """
+    發送 Web Push 通知（內部函式）。
+
+    Args:
+        user: 接收者
+        title: 通知標題
+        message: 通知內容
+        deal: 相關交易（可選）
+        shared_book: 相關書籍（可選）
+        notification_type: 通知類型（可選）
+    """
+    from deals.services.push_service import send_push_to_user
+
+    # 構建跳轉 URL
+    url = "/"
+    if deal:
+        url = f"/deals/{deal.id}/"
+    elif shared_book:
+        url = f"/books/{shared_book.id}/"
+
+    # 發送 Push
+    send_push_to_user(
+        user=user,
+        title=title,
+        message=message,
+        url=url,
+        deal_id=str(deal.id) if deal else None,
+        book_id=str(shared_book.id) if shared_book else None,
+        notification_type=notification_type,
     )
 
 
