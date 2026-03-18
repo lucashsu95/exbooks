@@ -1,9 +1,98 @@
+import random
+
 import factory
 from django.contrib.auth.models import User
 
 from accounts.models import UserProfile
 from books.models import BookPhoto, BookSet, OfficialBook, SharedBook, WishListItem
 from deals.models import Deal, DealMessage, LoanExtension, Notification, Rating
+
+
+# 台灣常見教科書與參考書資料
+TEXTBOOK_DATA = {
+    "titles": [
+        "國文（二）",
+        "國文（三）",
+        "國文（四）",
+        "國文（五）",
+        "數學（國二）",
+        "數學（國三）",
+        "數學（高一）",
+        "數學（高二）",
+        "英文（二）",
+        "英文（三）",
+        "物理（高一）",
+        "物理（高二）",
+        "化學（高一）",
+        "化學（高二）",
+        "生物（高一）",
+        "生物（高二）",
+        "歷史（台灣史）",
+        "歷史（中國史）",
+        "地理（台灣地理）",
+        "公民與社會（一）",
+        "公民與社會（二）",
+        "地球科學",
+        "基礎物理",
+        "基礎化學",
+        "基礎生物",
+        "選修物理（上）",
+        "選修化學（上）",
+        "選修生物（上）",
+        "高中英文閱讀測驗",
+        "高中數學演練",
+        "國文閱讀理解",
+        "作文範例精選",
+        "英文單字速記",
+        "數學解題技巧",
+        "物理實驗手冊",
+        "化學實驗手冊",
+    ],
+    "authors": [
+        "康軒編輯部",
+        "翰林編輯部",
+        "南一編輯部",
+        "龍騰編輯部",
+        "教育部",
+        "國家教育研究院",
+        "台灣師範大學",
+        "國立編譯館",
+    ],
+    "publishers": [
+        "康軒文教",
+        "翰林出版",
+        "南一書局",
+        "龍騰文化",
+        "大同資訊",
+        "育橋出版",
+        "正中書局",
+        "三民書局",
+    ],
+}
+
+# 台灣常見暱稱
+NICKNAMES = [
+    "小明",
+    "小華",
+    "阿豪",
+    "小美",
+    "阿傑",
+    "小婷",
+    "阿瑋",
+    "小玲",
+    "阿哲",
+    "小雯",
+    "阿翔",
+    "小茹",
+    "阿霖",
+    "小君",
+    "阿欣",
+    "小娟",
+    "阿宏",
+    "小芳",
+    "阿賢",
+    "小琪",
+]
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -23,7 +112,7 @@ class UserProfileFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ("user",)
 
     user = factory.SubFactory(UserFactory)
-    nickname = factory.Faker("name", locale="zh_TW")
+    nickname = factory.LazyAttribute(lambda _: random.choice(NICKNAMES))
     default_transferability = UserProfile.Transferability.RETURN
     default_location = "台北市信義區"
 
@@ -47,10 +136,12 @@ class OfficialBookFactory(factory.django.DjangoModelFactory):
         model = OfficialBook
 
     isbn = factory.Sequence(lambda n: f"{9780000000000 + n}")
-    title = factory.Faker("sentence", nb_words=4, locale="zh_TW")
-    author = factory.Faker("name", locale="zh_TW")
-    publisher = factory.Faker("company", locale="zh_TW")
-    description = factory.Faker("paragraph", locale="zh_TW")
+    title = factory.LazyAttribute(lambda _: random.choice(TEXTBOOK_DATA["titles"]))
+    author = factory.LazyAttribute(lambda _: random.choice(TEXTBOOK_DATA["authors"]))
+    publisher = factory.LazyAttribute(
+        lambda _: random.choice(TEXTBOOK_DATA["publishers"])
+    )
+    description = "適合高中職學生使用，內容涵蓋課程重點與練習題。"
 
 
 class BookSetFactory(factory.django.DjangoModelFactory):
