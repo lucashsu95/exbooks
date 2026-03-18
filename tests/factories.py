@@ -1,4 +1,5 @@
 import random
+import itertools
 
 import factory
 from django.contrib.auth.models import User
@@ -94,6 +95,18 @@ NICKNAMES = [
     "小琪",
 ]
 
+# 無限迭代器，確保不重複
+_title_cycle = itertools.cycle(TEXTBOOK_DATA["titles"])
+_nickname_cycle = itertools.cycle(NICKNAMES)
+
+
+def _get_next_title():
+    return next(_title_cycle)
+
+
+def _get_next_nickname():
+    return next(_nickname_cycle)
+
 
 class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -112,7 +125,7 @@ class UserProfileFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ("user",)
 
     user = factory.SubFactory(UserFactory)
-    nickname = factory.LazyAttribute(lambda _: random.choice(NICKNAMES))
+    nickname = factory.LazyAttribute(lambda _: _get_next_nickname())
     default_transferability = UserProfile.Transferability.RETURN
     default_location = "台北市信義區"
 
@@ -136,7 +149,7 @@ class OfficialBookFactory(factory.django.DjangoModelFactory):
         model = OfficialBook
 
     isbn = factory.Sequence(lambda n: f"{9780000000000 + n}")
-    title = factory.LazyAttribute(lambda _: random.choice(TEXTBOOK_DATA["titles"]))
+    title = factory.LazyAttribute(lambda _: _get_next_title())
     author = factory.LazyAttribute(lambda _: random.choice(TEXTBOOK_DATA["authors"]))
     publisher = factory.LazyAttribute(
         lambda _: random.choice(TEXTBOOK_DATA["publishers"])
