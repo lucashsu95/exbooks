@@ -8,6 +8,7 @@ dependencies = [
     "mysqlclient>=2.2",
     "pillow>=11.0",
     "python-dotenv>=1.0",
+    "django-allauth>=65.0",
 ]
 
 [tool.setuptools.packages.find]
@@ -21,6 +22,7 @@ dev = [
 test = [
     "pytest>=8.0",
     "pytest-django>=4.8",
+    "pytest-playwright>=0.5.0",
     "factory-boy>=3.3",
     "faker>=30.0",
 ]
