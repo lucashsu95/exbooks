@@ -1,0 +1,27 @@
+{% for message in messages %}
+<div class="flex gap-3 mb-4 {% if message.sender == request.user %}flex-row-reverse{% endif %}">
+    <div class="size-8 rounded-full bg-primary/20 overflow-hidden flex-shrink-0 flex items-center justify-center">
+        {% if message.sender.profile.avatar %}
+        <img src="{{ message.sender.profile.avatar.url }}" alt="{{ message.sender.profile.nickname }}" class="w-full h-full object-cover"/>
+        {% else %}
+        <span class="text-primary text-xs font-bold">{{ message.sender.profile.nickname|default:message.sender.username|truncatechars:1 }}</span>
+        {% endif %}
+    </div>
+    <div class="{% if message.sender == request.user %}items-end{% else %}items-start{% endif %} flex flex-col max-w-[75%]">
+        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">
+            {{ message.sender.profile.nickname|default:message.sender.username }}
+        </div>
+        <div class="{% if message.sender == request.user %}bg-primary text-white{% else %}bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100{% endif %} rounded-xl px-4 py-2 text-sm shadow-sm">
+            {{ message.content }}
+        </div>
+        <div class="text-xs text-slate-400 mt-1">
+            {{ message.created_at|timesince }}
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="text-center py-8 text-slate-500 dark:text-slate-400">
+    <span class="material-symbols-outlined text-4xl mb-2">chat_bubble_outline</span>
+    <p class="text-sm">尚無留言紀錄</p>
+</div>
+{% endfor %}
