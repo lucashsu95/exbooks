@@ -2,7 +2,7 @@ import pytest
 from django.db import IntegrityError
 
 from accounts.models import UserProfile
-from tests.factories import UserFactory, UserProfileFactory
+from tests.factories import UserFactory
 
 
 pytestmark = pytest.mark.django_db
@@ -45,7 +45,8 @@ class TestUserProfile:
         profile = user.profile
         profile.nickname = ""
         profile.save(update_fields=["nickname"])
-        assert str(profile) == user.username
+        # Falls back to email since username is no longer used
+        assert str(profile) == user.email
 
     def test_one_to_one_user(self):
         """Signal 已建立 profile，手動再建一個應衝突。"""
