@@ -8,10 +8,15 @@ django-allauth 自定義 Adapters。
 
 import logging
 import uuid
+import os
+from urllib.parse import urlparse
 
 from django.contrib.auth import get_user_model
+from django.core.files.base import ContentFile
 from django.shortcuts import redirect
 from django.urls import reverse
+
+import requests
 
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
@@ -123,23 +128,44 @@ class ExbookSocialAccountAdapter(DefaultSocialAccountAdapter):
 
         return user
 
-    def save_user(self, request, sociallogin, form=None):
-        """
-        儲存新用戶並建立 UserProfile。
-        """
-        user = super().save_user(request, sociallogin, form)
 
-        # 建立 UserProfile
-        profile, created = UserProfile.objects.get_or_create(
-            user=user,
-            defaults={
-                "nickname": user.first_name or user.email.split("@")[0],
-            },
-        )
+def save_user(self, request, sociallogin, form=None):
+    """
+    儲存新用戶並建立 UserProfile。
+    """
+    user = super().save_user(request, sociallogin, form)
 
-        logger.info(f"{'Created' if created else 'Found'} UserProfile for {user.email}")
+    # 建立 UserProfile
+    profile, created = UserProfile.objects.get_or_create(
+        user=user,
+        defaults={
+            "nickname": user.first_name or user.email.split("@")[0],
+        },
+    )
 
-        return user
+    # 下載 Google 頭像
+    if sociallogin.account:
+        extra_data = sociallogin.account.extra_data
+        picture_url = extra_data.get("picture")
+        if picture_url and not profile.avatar:
+            try:
+                response = requests.get(picture_url, timeout=10)
+                if response.status_code == 200:
+                    # 從 URL 取得副檔名
+                    parsed_url = urlparse(picture_url)
+                    ext = os.path.splitext(parsed_url.path)[1] or ".jpg"
+                    filename = f"google_avatar_{uuid.uuid4().hex[:8]}{ext}"
+
+                    profile.avatar.save(
+                        filename, ContentFile(response.content), save=True
+                    )
+                    logger.info(f"Downloaded Google avatar for {user.email}")
+            except Exception as e:
+                logger.warning(f"Failed to download Google avatar: {e}")
+
+    logger.info(f"{'Created' if created else 'Found'} UserProfile for {user.email}")
+
+    return user
 
     def pre_social_login(self, request, sociallogin):
         """
