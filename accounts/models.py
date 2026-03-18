@@ -25,6 +25,12 @@ class UserProfile(UpdatableModel):
         blank=True,
         verbose_name="暱稱",
     )
+    birth_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="出生日期",
+        help_text="用於年齡驗證（需年滿 18 歲）",
+    )
     default_transferability = models.CharField(
         max_length=10,
         choices=Transferability.choices,
@@ -55,4 +61,23 @@ class UserProfile(UpdatableModel):
         verbose_name_plural = "用戶資料"
 
     def __str__(self):
-        return self.nickname or self.user.get_full_name() or self.user.username
+        return self.nickname or self.user.get_full_name() or self.user.email
+
+    @property
+    def age(self):
+        """計算用戶年齡"""
+        if not self.birth_date:
+            return None
+        from datetime import date
+
+        today = date.today()
+        return (
+            today.year
+            - self.birth_date.year
+            - ((today.month, today.day) < (self.birth_date.month, self.birth_date.day))
+        )
+
+    @property
+    def is_adult(self):
+        """檢查是否年滿 18 歲"""
+        return self.age is not None and self.age >= 18
