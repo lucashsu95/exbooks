@@ -4,19 +4,31 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('books', '0002_initial'),
+        ("books", "0002_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='officialbook',
-            name='category',
-            field=models.CharField(choices=[('小說', '小說'), ('科技', '科技'), ('藝術', '藝術'), ('科學', '科學'), ('其他', '其他')], default='其他', max_length=20, verbose_name='分類'),
+            model_name="officialbook",
+            name="category",
+            field=models.CharField(
+                choices=[
+                    ("小說", "小說"),
+                    ("科技", "科技"),
+                    ("藝術", "藝術"),
+                    ("科學", "科學"),
+                    ("其他", "其他"),
+                ],
+                default="其他",
+                max_length=20,
+                verbose_name="分類",
+            ),
         ),
         migrations.AddIndex(
-            model_name='officialbook',
-            index=models.Index(fields=['category'], name='exbook_offi_categor_d9f556_idx'),
+            model_name="officialbook",
+            index=models.Index(
+                fields=["category"], name="exbook_offi_categor_d9f556_idx"
+            ),
         ),
     ]

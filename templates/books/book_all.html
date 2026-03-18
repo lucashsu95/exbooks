@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Exbooks - 所有書籍{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<header class="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+    <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
+        <div class="flex items-center gap-3">
+            <a href="{% url 'books:list' %}" class="material-symbols-outlined text-slate-600 dark:text-slate-400 cursor-pointer">arrow_back</a>
+            <h1 class="text-xl font-bold tracking-tight">所有書籍</h1>
+        </div>
+    </div>
+</header>
+
+<div class="grid grid-cols-1 gap-4 px-4 pb-24 pt-4 max-w-xl mx-auto">
+    {% for book in all_books|default:"" %}
+    <a href="{% url 'books:detail' book.id %}" class="flex gap-4 bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+        <div class="w-24 h-32 rounded-lg bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0">
+            <img class="w-full h-full object-cover" alt="Cover of {{ book.title|default:'book' }}" src="{{ book.cover_url|default:'https://lh3.googleusercontent.com/aida-public/AB6AXuBlSAm5AwcmdJLphEsyKIZJ9iWzB0otfD9IcFu5Buim2RjYBpL4w7vWD3u6qaidnqPQpx0C8g1zdJ69ceuhSRE4bJU1HB6iBJG7LSOanbVN72OFbRT_sXIuMy556iXOIt0f-rQeJZkdqRDUjRq0JZfLx7h3HCiyqqqHUvQdU95O_apLHu1S0DqUMPFWdpVBh6Bxvrty9Fc2MILIMQkOuD_4DZ71tdUDNIAki1-nczh3Sw5Bd8Nd1o3TuyJCHHn6vqgxkiBGoo6j8_0' }}"/>
+        </div>
+        <div class="flex flex-col justify-between py-1 w-full">
+            <div>
+                <p class="text-slate-900 dark:text-slate-100 text-base font-bold">{{ book.official_book.title|default:'書籍' }}</p>
+                <p class="text-slate-500 dark:text-slate-400 text-xs mt-1">{{ book.official_book.author|default:'未知作者' }}</p>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-primary text-xs font-bold bg-primary/10 px-2 py-1 rounded">可借閱</span>
+                <p class="text-slate-400 dark:text-slate-500 text-xs flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]">near_me</span> {{ book.keeper.profile.default_location|default:'未知地點' }}
+                </p>
+            </div>
+        </div>
+    </a>
+    {% empty %}
+    <div class="flex items-center justify-center p-8 w-full">
+        <div class="text-center text-slate-500">
+            <span class="material-symbols-outlined text-4xl mb-2 opacity-50">inbox</span>
+            <p>目前沒有資料</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% include '_bottom_nav.html' %}
+{% endblock %}

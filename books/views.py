@@ -1,10 +1,13 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
-from django.db.models import Prefetch, Q
+from django.db.models import Q
 from django.contrib import messages
 from django.utils import timezone
+from django.http import HttpResponse
+from django.views.decorators.http import require_GET
 
 from .models import SharedBook, OfficialBook
+from .services.isbn_service import lookup_by_isbn
 
 
 @login_required
@@ -157,3 +160,15 @@ def book_add(request):
         form = BookAddForm()
 
     return render(request, "books/book_add.html", {"form": form})
+
+
+@require_GET
+def isbn_lookup(request):
+    """HTMX endpoint: ISBN 查詢"""
+    isbn = request.GET.get("isbn", "")
+    result = lookup_by_isbn(isbn) if isbn else None
+    return render(
+        request,
+        "books/partials/isbn_result.html",
+        {"result": result, "isbn": isbn},
+    )
