@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "primary": "#136dec",
+        "background-light": "#f6f7f8",
+        "background-dark": "#101822",
+      },
+      fontFamily: {
+        "display": ["Work Sans"]
+      },
+      borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+    },
+  },
+}
+</script>
+<title>Exbooks - 評價交易</title>
+<style>
+body { min-height: max(884px, 100dvh); }
+/* Custom slider styles */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: #e2e8f0;
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #136dec;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(19, 109, 236, 0.3);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #136dec;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 6px rgba(19, 109, 236, 0.3);
+}
+.dark input[type="range"] {
+  background: #334155;
+}
+</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+<div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-x-hidden">
+
+<!-- Top Navigation -->
+<div class="flex items-center bg-white dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800">
+  <a href="#" class="text-slate-900 dark:text-slate-100 flex size-12 shrink-0 items-center cursor-pointer">
+    <span class="material-symbols-outlined">arrow_back</span>
+  </a>
+  <h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center">評價交易</h2>
+  <div class="flex w-12 items-center justify-end">
+    <!-- Placeholder for symmetry -->
+  </div>
+</div>
+
+<!-- Main Content -->
+<main class="flex-1 px-4 py-4 pb-32">
+  <!-- Transaction Summary -->
+  <div class="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 p-4 mb-6">
+    <div class="flex gap-4 items-center">
+      <!-- Book Cover -->
+      <div class="w-16 h-22 rounded-lg bg-slate-200 dark:bg-slate-700 overflow-hidden shrink-0 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAOxfy6jTXBa6HLVQwkBc3tJU7mRqE9wHSUD6CXWHc29IRsy1_4Sow75BoeL4-32sPLcBSpABaxY3iiFZrhrWiuKMEIOVacuKUVspevYR_-1catlhZjCK08dfkMOomhcXDN_3yCtROiUYhWDu7y5AvF-e2fcTUmEVTyuYZi0pnp9sKIaysN3J2Y515a2dur3SoaRPbTFh6LokFJVXTmlZtg7Jl3w19Xeur9E9hGnN2RsqhBHQewjLci32ArEMiUujVeBu13Yu1zZYs');">
+      </div>
+      <!-- Book Info -->
+      <div class="flex-1">
+        <h3 class="text-slate-900 dark:text-slate-100 font-bold text-lg mb-1">大亨小傳</h3>
+        <div class="flex items-center gap-2 mb-2">
+          <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-bold">LN 借用</span>
+        </div>
+      </div>
+    </div>
+    <!-- Partner Info -->
+    <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+      <p class="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-tighter mb-2">交易對象</p>
+      <div class="flex items-center gap-3">
+        <div class="size-12 rounded-full bg-primary/20 overflow-hidden border-2 border-primary">
+          <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDojUq0WTv5D6pymWNmlhwK-83aMoYR_ktYitiw8gMAzHNLRukd2JeGRGRObPmU7qs6ntatuXtIWkZSPkNmnj6o0dqSY5ps1yHEdAlYAa6Mrti8lHR9VdWBpivLmjrr384ORVmlguT5ETC6h5EAr1J_X2C-gOgalH_WQY9LM7HutuuHT8U8y6Kyl9dwvCOLrhYEC4vwxqDzqwjex4n0j0k-KSoA9pGkrWYFA-5RtB7doscuo0r6K2HIZ5N4B2aVhMNBeksxQvEw-gI" alt="交易對象頭像" class="w-full h-full object-cover"/>
+        </div>
+        <div>
+          <p class="text-slate-900 dark:text-slate-100 font-bold">Alex Chen</p>
+          <div class="flex items-center gap-1 text-amber-500">
+            <span class="material-symbols-outlined text-sm">star</span>
+            <span class="text-sm font-medium">4.9</span>
+            <span class="text-slate-500 dark:text-slate-400 text-sm ml-1">· 28 則評價</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rating Section -->
+  <div class="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 p-4 mb-4">
+    <h4 class="text-slate-900 dark:text-slate-100 font-bold mb-4 flex items-center gap-2">
+      <span class="material-symbols-outlined text-primary">star</span>
+      評分項目
+    </h4>
+
+    <!-- Integrity Rating -->
+    <div class="mb-6">
+      <div class="flex items-center justify-between mb-2">
+        <label class="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+          <span class="material-symbols-outlined text-primary">handshake</span>
+          誠信
+        </label>
+        <span class="text-lg font-bold text-primary" id="integrity-value">4</span>
+      </div>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">是否守約、交易是否順利</p>
+      <input type="range" min="1" max="5" value="4" class="w-full" id="integrity-slider"/>
+      <div class="flex justify-between text-xs text-slate-400 mt-1">
+        <span>1</span>
+        <span>2</span>
+        <span>3</span>
+        <span>4</span>
+        <span>5</span>
+      </div>
+    </div>
+
+    <!-- Punctuality Rating -->
+    <div class="mb-6">
+      <div class="flex items-center justify-between mb-2">
+        <label class="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+          <span class="material-symbols-outlined text-primary">schedule</span>
+          準時
+        </label>
+        <span class="text-lg font-bold text-primary" id="punctuality-value">5</span>
+      </div>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">是否依約定時間赴約</p>
+      <input type="range" min="1" max="5" value="5" class="w-full" id="punctuality-slider"/>
+      <div class="flex justify-between text-xs text-slate-400 mt-1">
+        <span>1</span>
+        <span>2</span>
+        <span>3</span>
+        <span>4</span>
+        <span>5</span>
+      </div>
+    </div>
+
+    <!-- Condition Accuracy Rating -->
+    <div class="mb-4">
+      <div class="flex items-center justify-between mb-2">
+        <label class="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+          <span class="material-symbols-outlined text-primary">auto_stories</span>
+          書況描述準確度
+        </label>
+        <span class="text-lg font-bold text-primary" id="condition-value">4</span>
+      </div>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">書籍實際狀況與描述是否相符</p>
+      <input type="range" min="1" max="5" value="4" class="w-full" id="condition-slider"/>
+      <div class="flex justify-between text-xs text-slate-400 mt-1">
+        <span>1</span>
+        <span>2</span>
+        <span>3</span>
+        <span>4</span>
+        <span>5</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comment Section -->
+  <div class="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 p-4 mb-4">
+    <h4 class="text-slate-900 dark:text-slate-100 font-bold mb-3 flex items-center gap-2">
+      <span class="material-symbols-outlined text-primary">edit_note</span>
+      評語（選填）
+    </h4>
+    <textarea 
+      class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-primary transition-colors resize-none"
+      rows="3"
+      placeholder="分享您的交易體驗..."
+    ></textarea>
+  </div>
+
+  <!-- Info Box -->
+  <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+    <div class="flex items-start gap-3">
+      <span class="material-symbols-outlined text-primary">info</span>
+      <div>
+        <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm mb-1">評價須知</h4>
+        <ul class="text-sm text-slate-600 dark:text-slate-300 space-y-1 list-disc ml-4">
+          <li>評價送出後無法修改</li>
+          <li>雙方皆完成評價後，交易狀態將變為「已完成」</li>
+          <li>您的評價將公開顯示於對方的個人頁面</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Sticky Footer Actions -->
+<div class="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md p-4 border-t border-slate-200 dark:border-slate-800">
+  <button type="button" class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+    <span class="material-symbols-outlined">send</span>
+    送出評價
+  </button>
+</div>
+
+<!-- Success State (Hidden by default) -->
+<div class="hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md p-4 border-t border-slate-200 dark:border-slate-800">
+  <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 mb-4">
+    <div class="flex items-center gap-3">
+      <span class="material-symbols-outlined text-green-600 text-2xl">check_circle</span>
+      <div>
+        <p class="font-bold text-green-700 dark:text-green-400">評價已送出</p>
+        <p class="text-sm text-green-600 dark:text-green-400">等待對方完成評價</p>
+      </div>
+    </div>
+  </div>
+  <a href="#" class="block w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold py-3 rounded-xl text-center">
+    返回交易詳情
+  </a>
+</div>
+
+<!-- Completed State (Hidden by default) -->
+<div class="hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md p-4 border-t border-slate-200 dark:border-slate-800">
+  <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 mb-4">
+    <div class="flex items-center gap-3">
+      <span class="material-symbols-outlined text-green-600 text-2xl">done_all</span>
+      <div>
+        <p class="font-bold text-green-700 dark:text-green-400">交易完成</p>
+        <p class="text-sm text-green-600 dark:text-green-400">雙方皆已完成評價</p>
+      </div>
+    </div>
+  </div>
+  <a href="#" class="block w-full bg-primary text-white font-bold py-3 rounded-xl text-center">
+    返回首頁
+  </a>
+</div>
+
+</div>
+</body>
+</html>

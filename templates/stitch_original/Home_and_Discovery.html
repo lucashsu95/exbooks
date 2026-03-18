@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#136dec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                    },
+                    fontFamily: {
+                        "display": ["Work Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<title>Exbooks - Home &amp; Discovery</title>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Header Section -->
+<header class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
+<div class="text-primary flex size-12 shrink-0 items-center justify-start">
+<span class="material-symbols-outlined text-3xl">menu</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight tracking-tight flex-1 text-center">Exbooks</h2>
+<div class="flex w-12 items-center justify-end">
+<button class="flex size-10 cursor-pointer items-center justify-center rounded-full bg-primary/10 text-primary">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+<!-- Search Bar Section -->
+<div class="px-4 py-4">
+<label class="flex flex-col min-w-40 h-14 w-full">
+<div class="flex w-full flex-1 items-stretch rounded-xl h-full shadow-sm">
+<div class="text-slate-400 flex border-none bg-white dark:bg-slate-800 items-center justify-center pl-4 rounded-l-xl">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 border-none bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-0 h-full placeholder:text-slate-400 px-4 rounded-r-xl text-base font-normal" placeholder="Search by ISBN, Title, Author" value=""/>
+</div>
+</label>
+</div>
+<!-- Categories horizontal scroll -->
+<div class="flex gap-3 p-4 overflow-x-auto no-scrollbar">
+<div class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-primary text-white px-6">
+<span class="text-sm font-semibold leading-normal">All</span>
+</div>
+<div class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-6">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal">Fiction</span>
+</div>
+<div class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-6">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal">Tech</span>
+</div>
+<div class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-6">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal">Arts</span>
+</div>
+<div class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-6">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal">Science</span>
+</div>
+</div>
+<!-- New Arrivals Section -->
+<div class="flex items-center justify-between px-4 pt-6 pb-4">
+<h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight tracking-tight">New Arrivals</h2>
+<a class="text-primary text-sm font-semibold" href="#">View all</a>
+</div>
+<div class="flex gap-4 px-4 overflow-x-auto no-scrollbar pb-4">
+<!-- Book Card 1 -->
+<div class="min-w-[160px] flex flex-col gap-2">
+<div class="w-40 h-56 rounded-lg bg-slate-200 dark:bg-slate-700 overflow-hidden relative shadow-md">
+<img class="w-full h-full object-cover" data-alt="Cover of a minimal modern fiction book" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJKGFmDT9Y9sG2zd00enOq5IY1RlA1OMkGVx6ZhngS0yiBe_gffqVnF3SU7jYslPY5BSa1ucotaqAVvoRNJL5KR5caY89J1Cgrg0Qqhr1i_htBXL-M74fSsxxAOBREe-km7XJhk8eTcKA1AU36aT3cxkXi8D1UdhmoHeVi8G-c9fBNRqr4PFzQlaepN741GIaic-Y1cA6U49u00zOIaxoJGMnH0ytJ6s5L_eGH94J3-l9BHYLjCIXV_YrfyazMItU9aRWziAXoG1Y"/>
+<div class="absolute bottom-2 right-2 bg-white/90 dark:bg-slate-900/90 rounded px-1.5 py-0.5 text-[10px] font-bold text-slate-900 dark:text-slate-100">
+                        NEW
+                    </div>
+</div>
+<div>
+<p class="text-slate-900 dark:text-slate-100 text-sm font-bold line-clamp-1">The Midnight Library</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">location_on</span> 0.8 km away
+                    </p>
+</div>
+</div>
+<!-- Book Card 2 -->
+<div class="min-w-[160px] flex flex-col gap-2">
+<div class="w-40 h-56 rounded-lg bg-slate-200 dark:bg-slate-700 overflow-hidden relative shadow-md">
+<img class="w-full h-full object-cover" data-alt="Cover of an abstract art and design book" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJJYdaNh5ajcMOrWfTBfqkn79Yzf1fN87N3tcCQ1XnYnBM9RB_R8AslrkNwCyR93WSxlWSyECpzE3IS25heija0ybPErVM4e990tmmxh83BKf1k4sQuf1rIwJ-9M51oGBEHts1kmqB9J8MTkmoRGf1vFYDYGLPS9tN0aqAaQ47q1hzZgCyFge4bECbPN1E3Mfuod-xZwNAxP9cebsH3IASOZvFn_BNm9B4mAmB176q8cV9GWT38fFxsoYlpOr2nE8UQvFB2al7UCQ"/>
+</div>
+<div>
+<p class="text-slate-900 dark:text-slate-100 text-sm font-bold line-clamp-1">Atomic Habits</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">location_on</span> 1.2 km away
+                    </p>
+</div>
+</div>
+<!-- Book Card 3 -->
+<div class="min-w-[160px] flex flex-col gap-2">
+<div class="w-40 h-56 rounded-lg bg-slate-200 dark:bg-slate-700 overflow-hidden relative shadow-md">
+<img class="w-full h-full object-cover" data-alt="Old classic book cover with texture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQB9mmQn-651OH92Vaw8XkpGN0kf6_uxEeKTf-c_pAy4UfgZ6SPlUxqunfjTV-pJY5s4_w_BdjQgtb8kfW-kHVWAOvZnQ3AFiY5iEs0ipsm9rAsMIvmP4DWRi6tx0hj3Px4A9mVnhKRi40aJFYu3LTOir8l7AiWW71XT5uU5wK3ijYchmI19VEBggdqttyv4C7u_vry_PBkrHP_12UV5qeP4maU_4stln0pxP1Pz9TMzsA6RcGIfNcUBV2powruvFOOjcNdQufnyw"/>
+</div>
+<div>
+<p class="text-slate-900 dark:text-slate-100 text-sm font-bold line-clamp-1">Klara and the Sun</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">location_on</span> 2.5 km away
+                    </p>
+</div>
+</div>
+</div>
+<!-- Nearby Books Section -->
+<div class="flex items-center justify-between px-4 pt-8 pb-4">
+<h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight tracking-tight">Nearby Books</h2>
+<div class="flex items-center text-primary text-sm font-semibold gap-1">
+<span class="material-symbols-outlined text-sm">map</span>
+                Show on Map
+            </div>
+</div>
+<div class="grid grid-cols-1 gap-4 px-4 pb-24">
+<!-- List Item 1 -->
+<div class="flex gap-4 bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm">
+<div class="w-24 h-32 rounded-lg bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="Modern tech book cover layout" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlSAm5AwcmdJLphEsyKIZJ9iWzB0otfD9IcFu5Buim2RjYBpL4w7vWD3u6qaidnqPQpx0C8g1zdJ69ceuhSRE4bJU1HB6iBJG7LSOanbVN72OFbRT_sXIuMy556iXOIt0f-rQeJZkdqRDUjRq0JZfLx7h3HCiyqqqHUvQdU95O_apLHu1S0DqUMPFWdpVBh6Bxvrty9Fc2MILIMQkOuD_4DZ71tdUDNIAki1-nczh3Sw5Bd8Nd1o3TuyJCHHn6vqgxkiBGoo6j8_0"/>
+</div>
+<div class="flex flex-col justify-between py-1">
+<div>
+<p class="text-slate-900 dark:text-slate-100 text-base font-bold">Designing Data-Intensive Apps</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs mt-1">Martin Kleppmann</p>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-primary text-xs font-bold bg-primary/10 px-2 py-1 rounded">Tech</span>
+<p class="text-slate-400 dark:text-slate-500 text-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">near_me</span> 0.4 km
+                        </p>
+</div>
+</div>
+</div>
+<!-- List Item 2 -->
+<div class="flex gap-4 bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm">
+<div class="w-24 h-32 rounded-lg bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="Classic fiction book cover spine" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9wN-Nlta5CyOX6TzEDtiFRsVlSKa6TUTLAZuKRKfTLaoRlCUSJlT6iDdLb2-W5TxhuW0WIRgRPcXysxnjhnVvvFk_NhQrPd7pbNQNP9DjeO-lNSd3fcxWtqQvdCQJ1nMKSmCZ1TUFUo1iDfrdhdqWf8S8zsGfPHLJ9FY01UroAWHsfFOj33qtq98XvXGM9CnzQZOEwPQQodmfzHaCkVFMS1m7HuSSHWg9w68-qWuZuc-n98W2mLpblaPozzgykaiOZOlPVOTPdHM"/>
+</div>
+<div class="flex flex-col justify-between py-1">
+<div>
+<p class="text-slate-900 dark:text-slate-100 text-base font-bold">Dune: Deluxe Edition</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs mt-1">Frank Herbert</p>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-amber-600 text-xs font-bold bg-amber-600/10 px-2 py-1 rounded">Fiction</span>
+<p class="text-slate-400 dark:text-slate-500 text-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">near_me</span> 1.1 km
+                        </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 border-t border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-4 pb-6 pt-3 flex justify-between items-center z-20">
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined fill-1">home</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">search</span>
+<span class="text-[10px] font-medium uppercase tracking-wider">Search</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">auto_stories</span>
+<span class="text-[10px] font-medium uppercase tracking-wider">Bookshelf</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium uppercase tracking-wider">Profile</span>
+</a>
+</nav>
+</div>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .fill-1 {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</body></html>

@@ -7,35 +7,35 @@
 {% block content %}
 <!-- Header -->
 <header class="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
-    <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
-        <div class="flex items-center gap-3">
-            <a href="{% url 'books:list' %}" class="material-symbols-outlined text-slate-600 dark:text-slate-400 cursor-pointer">arrow_back</a>
-            <h1 class="text-xl font-bold tracking-tight">我的書架</h1>
-        </div>
-        <button type="button" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
-            <span class="material-symbols-outlined">search</span>
-        </button>
-    </div>
-    <!-- Tabs -->
-    <div class="max-w-xl mx-auto overflow-x-auto no-scrollbar">
-        <nav class="flex px-4 gap-6 whitespace-nowrap">
-            <a class="flex flex-col items-center justify-center border-b-[3px] {% if current_tab == 'keeping' %}border-primary text-primary{% else %}border-transparent text-slate-500 dark:text-slate-400 hover:text-primary{% endif %} py-3 transition-colors" href="?tab=keeping">
-                <span class="text-sm font-semibold">目前持有</span>
-            </a>
-            <a class="flex flex-col items-center justify-center border-b-[3px] {% if current_tab == 'contributions' %}border-primary text-primary{% else %}border-transparent text-slate-500 dark:text-slate-400 hover:text-primary{% endif %} py-3 transition-colors" href="?tab=contributions">
-                <span class="text-sm font-semibold">我的貢獻</span>
-            </a>
-            <a class="flex flex-col items-center justify-center border-b-[3px] {% if current_tab == 'requests' %}border-primary text-primary{% else %}border-transparent text-slate-500 dark:text-slate-400 hover:text-primary{% endif %} py-3 transition-colors" href="?tab=requests">
-                <span class="text-sm font-semibold">進行中的請求</span>
-            </a>
-        </nav>
-    </div>
+<div class="flex items-center p-4 justify-between max-w-xl mx-auto">
+<div class="flex items-center gap-3">
+<a href="{% url 'books:list' %}" class="material-symbols-outlined text-slate-600 dark:text-slate-400 cursor-pointer">arrow_back</a>
+<h1 class="text-xl font-bold tracking-tight">我的書架</h1>
+</div>
+<button type="button" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined">search</span>
+</button>
+</div>
+<!-- Tabs - HTMX 即時切換 -->
+<div class="max-w-xl mx-auto overflow-x-auto no-scrollbar">
+<nav class="flex px-4 gap-6 whitespace-nowrap" hx-boost="true" hx-target="#bookshelf-content" hx-select="#bookshelf-content" hx-swap="innerHTML transition:0.2s">
+<a class="flex flex-col items-center justify-center border-b-[3px] {% if current_tab == 'keeping' %}border-primary text-primary{% else %}border-transparent text-slate-500 dark:text-slate-400 hover:text-primary{% endif %} py-3 transition-colors" href="?tab=keeping">
+<span class="text-sm font-semibold">目前持有</span>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] {% if current_tab == 'contributions' %}border-primary text-primary{% else %}border-transparent text-slate-500 dark:text-slate-400 hover:text-primary{% endif %} py-3 transition-colors" href="?tab=contributions">
+<span class="text-sm font-semibold">我的貢獻</span>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] {% if current_tab == 'requests' %}border-primary text-primary{% else %}border-transparent text-slate-500 dark:text-slate-400 hover:text-primary{% endif %} py-3 transition-colors" href="?tab=requests">
+<span class="text-sm font-semibold">進行中的請求</span>
+</a>
+</nav>
+</div>
 </header>
 
 
-<!-- Main Content -->
-<main class="max-w-xl mx-auto p-4 space-y-4">
-    {% if current_tab == 'keeping' %}
+<!-- Main Content - HTMX 目標區域 -->
+<main class="max-w-xl mx-auto p-4 space-y-4" id="bookshelf-content">
+{% if current_tab == 'keeping' %}
         <div class="flex items-center justify-between mb-2">
             <p class="text-xs font-bold uppercase tracking-wider text-slate-500">您目前持有的書籍</p>
             <span class="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">共 {{ keeping_books|length|default:'0' }} 本</span>
@@ -50,7 +50,7 @@
                 <p class="text-sm text-primary font-medium flex items-center gap-1">
                     <span class="material-symbols-outlined text-sm">book</span> {{ book.get_status_display }}
                 </p>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">擁有者：{{ book.owner.profile.nickname|default:book.owner.username }}</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">擁有者：{{ book.owner.profile.nickname|default:book.owner.email }}</p>
             </div>
         </a>
         {% empty %}
@@ -73,8 +73,8 @@
             </div>
             <div class="flex-1 min-w-0">
                 <h3 class="font-bold text-base truncate">{{ book.official_book.title }}</h3>
-                <p class="text-sm font-medium flex items-center gap-1 text-slate-600">
-                    <span class="material-symbols-outlined text-sm">person</span> 目前持有人：{{ book.keeper.profile.nickname|default:book.keeper.username }}
+<p class="text-sm font-medium flex items-center gap-1 text-slate-600">
+<span class="material-symbols-outlined text-sm">person</span> 目前持有人：{{ book.keeper.profile.nickname|default:book.keeper.email }}
                 </p>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">狀態：{{ book.get_status_display }}</p>
             </div>
@@ -103,7 +103,7 @@
                     <span class="material-symbols-outlined text-sm">swap_horiz</span> {{ deal.get_deal_type_display }}
                 </p>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">狀態：{{ deal.get_status_display }}</p>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">對象：{% if deal.applicant == request.user %}{{ deal.responder.profile.nickname|default:deal.responder.username }}{% else %}{{ deal.applicant.profile.nickname|default:deal.applicant.username }}{% endif %}</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">對象：{% if deal.applicant == request.user %}{{ deal.responder.profile.nickname|default:deal.responder.email }}{% else %}{{ deal.applicant.profile.nickname|default:deal.applicant.email }}{% endif %}</p>
             </div>
         </div>
         {% empty %}

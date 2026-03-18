@@ -9,4 +9,10 @@ from .models import UserProfile
 def create_user_profile(sender, instance, created, **kwargs):
     """User 建立時自動建立對應的 UserProfile。"""
     if created:
-        UserProfile.objects.create(user=instance)
+        # 自動設定 nickname：優先使用 first_name，否則使用 email 前綴
+        default_nickname = (
+            instance.first_name or instance.email.split("@")[0]
+            if instance.email
+            else ""
+        )
+        UserProfile.objects.create(user=instance, nickname=default_nickname)

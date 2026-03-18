@@ -71,7 +71,7 @@
           {% endif %}
         </div>
         <div>
-          <p class="text-slate-900 dark:text-slate-100 font-bold text-sm">{{ deal.applicant.profile.nickname|default:deal.applicant.username }}</p>
+          <p class="text-slate-900 dark:text-slate-100 font-bold text-sm">{{ deal.applicant.profile.nickname|default:deal.applicant.email }}</p>
         </div>
       </div>
     </div>
@@ -85,7 +85,7 @@
           {% endif %}
         </div>
         <div>
-          <p class="text-slate-900 dark:text-slate-100 font-bold text-sm">{{ deal.responder.profile.nickname|default:deal.responder.username }}</p>
+          <p class="text-slate-900 dark:text-slate-100 font-bold text-sm">{{ deal.responder.profile.nickname|default:deal.responder.email }}</p>
         </div>
       </div>
     </div>

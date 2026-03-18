@@ -21,11 +21,11 @@
             <img src="{{ profile.avatar.url }}" alt="頭像" class="h-24 w-24 rounded-full object-cover border-4 border-white dark:border-slate-800 shadow-md">
             {% else %}
             <div class="flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-primary text-3xl font-bold border-4 border-white dark:border-slate-800 shadow-md">
-                {{ profile.nickname|default:viewed_user.username|truncatechars:1 }}
+                {{ profile.nickname|default:viewed_user.email|truncatechars:1 }}
             </div>
             {% endif %}
         </div>
-        <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">{{ profile.nickname|default:viewed_user.username }}</h2>
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">{{ profile.nickname|default:viewed_user.email }}</h2>
         <p class="text-sm text-slate-500 dark:text-slate-400">會員</p>
     </div>
 

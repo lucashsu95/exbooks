@@ -4,12 +4,12 @@
         {% if message.sender.profile.avatar %}
         <img src="{{ message.sender.profile.avatar.url }}" alt="{{ message.sender.profile.nickname }}" class="w-full h-full object-cover"/>
         {% else %}
-        <span class="text-primary text-xs font-bold">{{ message.sender.profile.nickname|default:message.sender.username|truncatechars:1 }}</span>
+        <span class="text-primary text-xs font-bold">{{ message.sender.profile.nickname|default:message.sender.email|truncatechars:1 }}</span>
         {% endif %}
     </div>
     <div class="{% if message.sender == request.user %}items-end{% else %}items-start{% endif %} flex flex-col max-w-[75%]">
         <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">
-            {{ message.sender.profile.nickname|default:message.sender.username }}
+            {{ message.sender.profile.nickname|default:message.sender.email }}
         </div>
         <div class="{% if message.sender == request.user %}bg-primary text-white{% else %}bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100{% endif %} rounded-xl px-4 py-2 text-sm shadow-sm">
             {{ message.content }}

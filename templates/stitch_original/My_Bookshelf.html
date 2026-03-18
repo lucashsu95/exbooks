@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#136dec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                    },
+                    fontFamily: {
+                        "display": ["Work Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Work Sans', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-tab {
+            border-bottom: 3px solid #136dec;
+            color: #136dec;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen pb-24">
+<!-- Header -->
+<header class="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+<div class="flex items-center p-4 justify-between max-w-xl mx-auto">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400">arrow_back</span>
+<h1 class="text-xl font-bold tracking-tight">My Bookshelf</h1>
+</div>
+<button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined">search</span>
+</button>
+</div>
+<!-- Tabs -->
+<div class="max-w-xl mx-auto overflow-x-auto no-scrollbar">
+<nav class="flex px-4 gap-6 whitespace-nowrap">
+<a class="flex flex-col items-center justify-center active-tab py-3 transition-colors" href="#">
+<span class="text-sm font-semibold">Currently Keeping</span>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] border-transparent text-slate-500 dark:text-slate-400 py-3 transition-colors hover:text-primary" href="#">
+<span class="text-sm font-semibold">My Contributions</span>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] border-transparent text-slate-500 dark:text-slate-400 py-3 transition-colors hover:text-primary" href="#">
+<span class="text-sm font-semibold">Active Requests</span>
+</a>
+</nav>
+</div>
+</header>
+<!-- Main Content -->
+<main class="max-w-xl mx-auto p-4 space-y-4">
+<!-- Section Header -->
+<div class="flex items-center justify-between mb-2">
+<p class="text-xs font-bold uppercase tracking-wider text-slate-500">Books in your possession</p>
+<span class="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">3 Total</span>
+</div>
+<!-- Book Item: Return Required -->
+<div class="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex gap-4 items-center">
+<div class="w-16 h-20 bg-slate-200 dark:bg-slate-800 rounded-lg flex-shrink-0 bg-cover bg-center overflow-hidden" data-alt="Book cover of The Great Gatsby showing a classic design" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCKwevj9vxRMG00GjNHP5Z557TWcZBTh8LK8diMQ12Aj5e9E1zG7f5UDVmaM40hFFXzRfsRvxUieNpthgKVBUn2cMvmevG_wU8MhvqWI_IIqOfRMoMCrXCS3S5v5nVSMLpmG3seSdUPq0Wr0X6PIj9lbekrXveQVgdxcxg2gYqkssXJzpqAhKId_-4DERAyn_q125xVVbJEY-BfjxSeEq9qT8SCe30vWZuQSweIfJwXwTYXooU8NUXeK3KLtJrvjxBCJ_0EhG-cUoo')">
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-bold text-base truncate">The Great Gatsby</h3>
+<p class="text-sm text-rose-500 font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">assignment_return</span>
+                    Return Required
+                </p>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Lender: Sarah J.</p>
+</div>
+<div class="text-right flex-shrink-0">
+<p class="text-xs font-bold text-rose-600 bg-rose-50 dark:bg-rose-950/30 px-2 py-1 rounded">Due in 2d</p>
+</div>
+</div>
+<!-- Book Item: Occupied -->
+<div class="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex gap-4 items-center">
+<div class="w-16 h-20 bg-slate-200 dark:bg-slate-800 rounded-lg flex-shrink-0 bg-cover bg-center overflow-hidden" data-alt="Book cover of 1984 by George Orwell featuring iconic eye graphic" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBEJfGGXtGPGkd2kjS6kPEM86QZCc4QlJKVzqaG9oOYckwpWgruHCtiU2_Z956TAH8qQD65Okl7ow6wXACNsnZ5vbkqdE9cT6fcdV3TzB2mEvWG-PQrlMnViUQM6NmKkEgVB7raMXFMbyVojzuBkUsRoI2fgtYOWEO9w0ysIvCTYC7SM2_A3TihHPN46BxISfaloyoYTbbSBP-eMhJHHz3wZ70OePHCgPi4ac6yT6E8RdeStNJsQm4xsXqJecEaZkFNEHCnG2poaI4')">
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-bold text-base truncate">1984 - George Orwell</h3>
+<p class="text-sm text-emerald-600 font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">check_circle</span>
+                    Reading Now
+                </p>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Lender: Mike Chen</p>
+</div>
+<div class="text-right flex-shrink-0">
+<p class="text-xs font-bold text-slate-600 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">Due in 14d</p>
+</div>
+</div>
+<!-- Book Item: Upcoming -->
+<div class="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex gap-4 items-center opacity-75">
+<div class="w-16 h-20 bg-slate-200 dark:bg-slate-800 rounded-lg flex-shrink-0 bg-cover bg-center overflow-hidden" data-alt="Modern book cover with abstract blue and gold patterns" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBRApgbTSjt5DiAidRwPutCkFyN3xPvzF10b6ZqggA1L1QBL04U93uCFsolOLI0jZpdXqsFnKi49MxBSu8tUnvCEza19lB-E1Q_4N5MPY6GGR_OGBgM1f6iEDxJuAoxqWOqZduz1GLn66iLNAxksVf2l1xq5svMn3XXvmil36Q_yT_3-VSBWuZjXhedZx_le41i8jsutvHx9WVkKQySvBmQKz27-aQaEg0u-I9zjO1gmbks9bHKFVvREwKYLPcjYs9D3b0uT1OiIPY')">
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-bold text-base truncate">Atomic Habits</h3>
+<p class="text-sm text-primary font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">schedule</span>
+                    To Start
+                </p>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Lender: Library Hub</p>
+</div>
+<div class="text-right flex-shrink-0">
+<p class="text-xs font-bold text-slate-400 px-2 py-1">Queued</p>
+</div>
+</div>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-24 right-6 bg-primary text-white size-14 rounded-full shadow-lg flex items-center justify-center hover:scale-105 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pb-safe z-20">
+<div class="flex justify-around items-center max-w-xl mx-auto h-16">
+<a class="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">book_2</span>
+<span class="text-[10px] font-medium">Bookshelf</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400" href="#">
+<span class="material-symbols-outlined">handshake</span>
+<span class="text-[10px] font-medium">Requests</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium">Profile</span>
+</a>
+</div>
+</nav>
+</body></html>

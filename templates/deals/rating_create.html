@@ -73,11 +73,11 @@ input[type="range"]::-moz-range-thumb {
                     {% if ratee.profile.avatar %}
                     <img src="{{ ratee.profile.avatar.url }}" alt="交易對象頭像" class="w-full h-full object-cover"/>
                     {% else %}
-                    <span class="text-primary font-bold">{{ ratee.profile.nickname|default:ratee.username|truncatechars:1 }}</span>
+                    <span class="text-primary font-bold">{{ ratee.profile.nickname|default:ratee.email|truncatechars:1 }}</span>
                     {% endif %}
                 </div>
                 <div>
-                    <p class="text-slate-900 dark:text-slate-100 font-bold">{{ ratee.profile.nickname|default:ratee.username }}</p>
+                    <p class="text-slate-900 dark:text-slate-100 font-bold">{{ ratee.profile.nickname|default:ratee.email }}</p>
                     <div class="flex items-center gap-1 text-amber-500">
                         <span class="material-symbols-outlined text-sm">star</span>
                         <span class="text-sm font-medium">{{ ratee.profile.avg_rating|default:"-" }}</span>

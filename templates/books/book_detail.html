@@ -54,7 +54,7 @@
         </div>
         <div>
             <p class="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-tighter">目前持有人</p>
-            <p class="text-slate-900 dark:text-slate-100 font-bold">{{ book.keeper.profile.nickname|default:'Alex Chen' }}</p>
+            <p class="text-slate-900 dark:text-slate-100 font-bold">{{ book.keeper.profile.nickname|default:book.keeper.email }}</p>
         </div>
     </div>
     <a href="{% url 'accounts:public_profile' book.keeper.id %}" class="text-primary font-bold text-sm px-4 py-2 hover:bg-primary/10 rounded-lg transition-colors">查看個人資料</a>
