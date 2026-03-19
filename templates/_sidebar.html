@@ -39,23 +39,23 @@
         </a>
         {% endif %}
 
-        <a href="#" onclick="alert('願望書車功能開發中'); return false;" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-            <span class="material-symbols-outlined text-slate-500 dark:text-slate-400">favorite</span>
-            <span class="text-slate-900 dark:text-slate-100">願望書車</span>
-            <span class="ml-auto text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">開發中</span>
-        </a>
+<a href="{% url 'books:wishlist' %}" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400">favorite</span>
+<span class="text-slate-900 dark:text-slate-100">願望書車</span>
+</a>
 
-        <a href="#" onclick="alert('通知中心功能開發中'); return false;" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-            <span class="material-symbols-outlined text-slate-500 dark:text-slate-400">notifications</span>
-            <span class="text-slate-900 dark:text-slate-100">通知中心</span>
-            <span class="ml-auto text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">開發中</span>
-        </a>
+<a href="{% url 'deals:notification_list' %}" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400">notifications</span>
+<span class="text-slate-900 dark:text-slate-100">通知中心</span>
+<span id="notification-badge-sidebar" hx-get="{% url 'deals:notification_count' %}" hx-trigger="load" hx-swap="innerHTML">
+  {% include 'deals/partials/notification_badge.html' with unread_count=0 %}
+</span>
+</a>
 
-        <a href="#" onclick="alert('交易紀錄功能開發中'); return false;" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-            <span class="material-symbols-outlined text-slate-500 dark:text-slate-400">swap_horiz</span>
-            <span class="text-slate-900 dark:text-slate-100">交易紀錄</span>
-            <span class="ml-auto text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">開發中</span>
-        </a>
+<a href="{% url 'deals:list' %}" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400">swap_horiz</span>
+<span class="text-slate-900 dark:text-slate-100">交易紀錄</span>
+</a>
 
         {% if user.is_authenticated %}
         <a href="{% url 'accounts:profile_edit' %}" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">

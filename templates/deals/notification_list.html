@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}通知中心 - Exbooks{% endblock %}
+
+{% block content %}
+<div class="min-h-screen pb-24">
+  <!-- Header -->
+  <header class="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+    <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
+      <div class="flex items-center gap-3">
+        <a href="{% url 'books:list' %}" class="material-symbols-outlined text-slate-600 dark:text-slate-400 cursor-pointer">arrow_back</a>
+        <h1 class="text-xl font-bold tracking-tight">通知中心</h1>
+      </div>
+      {% if unread_count > 0 %}
+      <form method="POST" action="{% url 'deals:notification_mark_all_read' %}">
+        {% csrf_token %}
+        <button type="submit" class="text-sm text-primary hover:underline">全部已讀</button>
+      </form>
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <div class="border-b border-slate-200 dark:border-slate-800 max-w-xl mx-auto">
+    <nav class="flex">
+      <a href="{% url 'deals:notification_list' %}?tab=all"
+         class="px-4 py-3 text-sm font-medium {% if current_tab == 'all' %}text-primary border-b-2 border-primary{% else %}text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300{% endif %}">
+        全部
+      </a>
+      <a href="{% url 'deals:notification_list' %}?tab=unread"
+         class="px-4 py-3 text-sm font-medium {% if current_tab == 'unread' %}text-primary border-b-2 border-primary{% else %}text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300{% endif %}">
+        未讀
+        {% if unread_count > 0 %}
+        <span class="ml-1 text-xs bg-primary text-white px-1.5 py-0.5 rounded-full">{{ unread_count }}</span>
+        {% endif %}
+      </a>
+      <a href="{% url 'deals:notification_list' %}?tab=read"
+         class="px-4 py-3 text-sm font-medium {% if current_tab == 'read' %}text-primary border-b-2 border-primary{% else %}text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300{% endif %}">
+        已讀
+      </a>
+    </nav>
+  </div>
+
+  <!-- Notification List -->
+  <div class="max-w-xl mx-auto">
+    {% if page_obj.object_list %}
+    <div class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for notification in page_obj %}
+      {% include 'deals/partials/notification_item.html' %}
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="flex justify-center gap-2 py-4">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}&tab={{ current_tab }}"
+         class="px-3 py-1 text-sm bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700">
+        上一頁
+      </a>
+      {% endif %}
+      <span class="px-3 py-1 text-sm text-slate-500">
+        {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+      </span>
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}&tab={{ current_tab }}"
+         class="px-3 py-1 text-sm bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700">
+        下一頁
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="flex flex-col items-center justify-center py-16 text-slate-400">
+      <span class="material-symbols-outlined text-6xl mb-4">notifications_off</span>
+      <p>沒有通知</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% include '_bottom_nav.html' %}
+{% endblock %}

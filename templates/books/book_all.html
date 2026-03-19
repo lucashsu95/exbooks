@@ -5,41 +5,148 @@
 {% block content %}
 <!-- Header -->
 <header class="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
-    <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
-        <div class="flex items-center gap-3">
-            <a href="{% url 'books:list' %}" class="material-symbols-outlined text-slate-600 dark:text-slate-400 cursor-pointer">arrow_back</a>
-            <h1 class="text-xl font-bold tracking-tight">所有書籍</h1>
-        </div>
+  <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
+    <div class="flex items-center gap-3">
+      <a href="{% url 'books:list' %}" class="material-symbols-outlined text-slate-600 dark:text-slate-400 cursor-pointer">arrow_back</a>
+      <h1 class="text-xl font-bold tracking-tight">所有書籍</h1>
     </div>
+  </div>
 </header>
 
-<div class="grid grid-cols-1 gap-4 px-4 pb-24 pt-4 max-w-xl mx-auto">
-    {% for book in all_books|default:"" %}
-    <a href="{% url 'books:detail' book.id %}" class="flex gap-4 bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-        <div class="w-24 h-32 rounded-lg bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0">
-            <img class="w-full h-full object-cover" alt="Cover of {{ book.title|default:'book' }}" src="{{ book.cover_url|default:'https://lh3.googleusercontent.com/aida-public/AB6AXuBlSAm5AwcmdJLphEsyKIZJ9iWzB0otfD9IcFu5Buim2RjYBpL4w7vWD3u6qaidnqPQpx0C8g1zdJ69ceuhSRE4bJU1HB6iBJG7LSOanbVN72OFbRT_sXIuMy556iXOIt0f-rQeJZkdqRDUjRq0JZfLx7h3HCiyqqqHUvQdU95O_apLHu1S0DqUMPFWdpVBh6Bxvrty9Fc2MILIMQkOuD_4DZ71tdUDNIAki1-nczh3Sw5Bd8Nd1o3TuyJCHHn6vqgxkiBGoo6j8_0' }}"/>
-        </div>
-        <div class="flex flex-col justify-between py-1 w-full">
-            <div>
-                <p class="text-slate-900 dark:text-slate-100 text-base font-bold">{{ book.official_book.title|default:'書籍' }}</p>
-                <p class="text-slate-500 dark:text-slate-400 text-xs mt-1">{{ book.official_book.author|default:'未知作者' }}</p>
-            </div>
-            <div class="flex items-center justify-between">
-                <span class="text-primary text-xs font-bold bg-primary/10 px-2 py-1 rounded">可借閱</span>
-                <p class="text-slate-400 dark:text-slate-500 text-xs flex items-center gap-1">
-                    <span class="material-symbols-outlined text-[14px]">near_me</span> {{ book.keeper.profile.default_location|default:'未知地點' }}
-                </p>
-            </div>
-        </div>
-    </a>
-    {% empty %}
-    <div class="flex items-center justify-center p-8 w-full">
-        <div class="text-center text-slate-500">
-            <span class="material-symbols-outlined text-4xl mb-2 opacity-50">inbox</span>
-            <p>目前沒有資料</p>
-        </div>
+<!-- Search & Filter Section -->
+<div class="px-4 py-4 max-w-xl mx-auto">
+  <!-- Search Bar -->
+  <form method="GET" action="{% url 'books:all' %}" class="flex flex-col min-w-40 h-14 w-full mb-4">
+    <div class="flex w-full flex-1 items-stretch rounded-xl h-full shadow-sm">
+      <button type="submit" class="text-slate-400 flex border-none bg-white dark:bg-slate-800 items-center justify-center pl-4 rounded-l-xl">
+        <span class="material-symbols-outlined">search</span>
+      </button>
+      <input name="q" class="form-input flex w-full min-w-0 flex-1 border-none bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-0 h-full placeholder:text-slate-400 px-4 rounded-r-xl text-base font-normal" placeholder="搜尋 ISBN、書名、作者、出版社" value="{{ search_query }}"/>
     </div>
-    {% endfor %}
+  </form>
+
+  <!-- Filter Pills -->
+  <div class="flex flex-wrap gap-2 mb-4">
+    <!-- Status Filter -->
+    <div class="relative">
+      <select name="status" form="filter-form" onchange="this.form.submit()" class="appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm rounded-full px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer">
+        <option value="" {% if not current_status %}selected{% endif %}>全部狀態</option>
+        <option value="T" {% if current_status == 'T' %}selected{% endif %}>可移轉</option>
+        <option value="R" {% if current_status == 'R' %}selected{% endif %}>應返還</option>
+        <option value="V" {% if current_status == 'V' %}selected{% endif %}>已被預約</option>
+        <option value="O" {% if current_status == 'O' %}selected{% endif %}>借閱中</option>
+      </select>
+      <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">expand_more</span>
+    </div>
+
+    <!-- Transferability Filter -->
+    <div class="relative">
+      <select name="transferability" form="filter-form" onchange="this.form.submit()" class="appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm rounded-full px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer">
+        <option value="" {% if not current_transferability %}selected{% endif %}>全部流通性</option>
+        <option value="TRANSFER" {% if current_transferability == 'TRANSFER' %}selected{% endif %}>開放傳遞</option>
+        <option value="RETURN" {% if current_transferability == 'RETURN' %}selected{% endif %}>閱畢即還</option>
+      </select>
+      <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">expand_more</span>
+    </div>
+
+    <!-- Category Filter -->
+    <div class="relative">
+      <select name="category" form="filter-form" onchange="this.form.submit()" class="appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm rounded-full px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer">
+        <option value="" {% if not current_category %}selected{% endif %}>全部分類</option>
+        <option value="小說" {% if current_category == '小說' %}selected{% endif %}>小說</option>
+        <option value="科技" {% if current_category == '科技' %}selected{% endif %}>科技</option>
+        <option value="藝術" {% if current_category == '藝術' %}selected{% endif %}>藝術</option>
+        <option value="科學" {% if current_category == '科學' %}selected{% endif %}>科學</option>
+        <option value="其他" {% if current_category == '其他' %}selected{% endif %}>其他</option>
+      </select>
+      <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">expand_more</span>
+    </div>
+  </div>
+
+  <!-- Hidden Filter Form -->
+  <form id="filter-form" method="GET" action="{% url 'books:all' %}">
+    <input type="hidden" name="q" value="{{ search_query }}">
+    {% if current_status %}<input type="hidden" name="status" value="{{ current_status }}">{% endif %}
+    {% if current_transferability %}<input type="hidden" name="transferability" value="{{ current_transferability }}">{% endif %}
+    {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
+  </form>
 </div>
+
+<!-- Book List -->
+<div class="grid grid-cols-1 gap-4 px-4 pb-4 max-w-xl mx-auto">
+  {% for book in all_books %}
+  <a href="{% url 'books:detail' book.id %}" class="flex gap-4 bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+    <div class="w-24 h-32 rounded-lg bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0">
+      <img class="w-full h-full object-cover" alt="Cover of {{ book.official_book.title|default:'book' }}" src="{% if book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuBlSAm5AwcmdJLphEsyKIZJ9iWzB0otfD9IcFu5Buim2RjYBpL4w7vWD3u6qaidnqPQpx0C8g1zdJ69ceuhSRE4bJU1HB6iBJG7LSOanbVN72OFbRT_sXIuMy556iXOIt0f-rQeJZkdqRDUjRq0JZfLx7h3HCiyqqqHUvQdU95O_apLHu1S0DqUMPFWdpVBh6Bxvrty9Fc2MILIMQkOuD_4DZ71tdUDNIAki1-nczh3Sw5Bd8Nd1o3TuyJCHHn6vqgxkiBGoo6j8_0{% endif %}"/>
+    </div>
+    <div class="flex flex-col justify-between py-1 w-full">
+      <div>
+        <p class="text-slate-900 dark:text-slate-100 text-base font-bold">{{ book.official_book.title|default:'書籍' }}</p>
+        <p class="text-slate-500 dark:text-slate-400 text-xs mt-1">{{ book.official_book.author|default:'未知作者' }}</p>
+        {% if book.official_book.publisher %}
+        <p class="text-slate-400 dark:text-slate-500 text-xs mt-0.5">{{ book.official_book.publisher }}</p>
+        {% endif %}
+      </div>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-primary text-xs font-bold bg-primary/10 px-2 py-1 rounded">{{ book.get_status_display }}</span>
+          <span class="text-slate-500 text-xs bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">{{ book.get_transferability_display }}</span>
+        </div>
+        <p class="text-slate-400 dark:text-slate-500 text-xs flex items-center gap-1">
+          <span class="material-symbols-outlined text-[14px]">near_me</span> {{ book.keeper.profile.default_location|default:'未知地點' }}
+        </p>
+      </div>
+    </div>
+  </a>
+  {% empty %}
+  <div class="flex items-center justify-center p-8 w-full">
+    <div class="text-center text-slate-500">
+      <span class="material-symbols-outlined text-4xl mb-2 opacity-50">inbox</span>
+      <p>目前沒有符合條件的書籍</p>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div class="flex items-center justify-center gap-2 px-4 py-6 max-w-xl mx-auto">
+  <!-- Previous Page -->
+  {% if page_obj.has_previous %}
+  <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" class="flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+    <span class="material-symbols-outlined text-sm">chevron_left</span>
+  </a>
+  {% else %}
+  <span class="flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 cursor-not-allowed">
+    <span class="material-symbols-outlined text-sm">chevron_left</span>
+  </span>
+  {% endif %}
+
+  <!-- Page Numbers -->
+  {% for num in page_obj.paginator.page_range %}
+    {% if num == page_obj.number %}
+    <span class="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white font-semibold text-sm">{{ num }}</span>
+    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+    <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" class="flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium text-sm">{{ num }}</a>
+    {% elif num == 1 or num == page_obj.paginator.num_pages %}
+    <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" class="flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium text-sm">{{ num }}</a>
+    {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+    <span class="flex items-center justify-center w-10 h-10 text-slate-400 text-sm">...</span>
+    {% endif %}
+  {% endfor %}
+
+  <!-- Next Page -->
+  {% if page_obj.has_next %}
+  <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" class="flex items-center justify-center w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+    <span class="material-symbols-outlined text-sm">chevron_right</span>
+  </a>
+  {% else %}
+  <span class="flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 cursor-not-allowed">
+    <span class="material-symbols-outlined text-sm">chevron_right</span>
+  </span>
+  {% endif %}
+</div>
+{% endif %}
+
 {% include '_bottom_nav.html' %}
 {% endblock %}

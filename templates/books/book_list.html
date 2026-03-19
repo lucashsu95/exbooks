@@ -19,17 +19,17 @@
 
 <!-- Search Bar Section -->
 <div class="px-4 py-4">
-    <form method="GET" action="{% url 'books:list' %}" class="flex flex-col min-w-40 h-14 w-full">
-        <div class="flex w-full flex-1 items-stretch rounded-xl h-full shadow-sm">
-            <button type="submit" class="text-slate-400 flex border-none bg-white dark:bg-slate-800 items-center justify-center pl-4 rounded-l-xl">
-                <span class="material-symbols-outlined">search</span>
-            </button>
-            <input name="q" class="form-input flex w-full min-w-0 flex-1 border-none bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-0 h-full placeholder:text-slate-400 px-4 rounded-r-xl text-base font-normal" placeholder="搜尋 ISBN、書名、作者" value="{{ search_query }}"/>
-            {% if current_category != '全部' %}
-            <input type="hidden" name="category" value="{{ current_category }}">
-            {% endif %}
-        </div>
-    </form>
+  <form method="GET" action="{% url 'books:list' %}" class="flex flex-col min-w-40 h-14 w-full">
+    <div class="flex w-full flex-1 items-stretch rounded-xl h-full shadow-sm">
+      <button type="submit" class="text-slate-400 flex border-none bg-white dark:bg-slate-800 items-center justify-center pl-4 rounded-l-xl">
+        <span class="material-symbols-outlined">search</span>
+      </button>
+      <input name="q" class="form-input flex w-full min-w-0 flex-1 border-none bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-0 h-full placeholder:text-slate-400 px-4 rounded-r-xl text-base font-normal" placeholder="搜尋 ISBN、書名、作者、出版社" value="{{ search_query }}"/>
+      {% if current_category != '全部' %}
+      <input type="hidden" name="category" value="{{ current_category }}">
+      {% endif %}
+    </div>
+  </form>
 </div>
 
 <!-- Categories horizontal scroll -->

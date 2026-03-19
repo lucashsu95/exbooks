@@ -10,11 +10,29 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_POST, require_GET
+from django.core.paginator import Paginator
 
 from books.models import SharedBook
-from .forms import DealApplicationForm, RatingForm, DealMessageForm
-from .models import Deal, DealMessage, PushSubscription, WebPushConfig
-from .services import deal_service, rating_service
+from .forms import (
+    DealApplicationForm,
+    RatingForm,
+    DealMessageForm,
+    ExtensionRequestForm,
+)
+from .models import (
+    Deal,
+    DealMessage,
+    PushSubscription,
+    WebPushConfig,
+    LoanExtension,
+    Notification,
+)
+from .services import (
+    deal_service,
+    rating_service,
+    extension_service,
+    notification_service,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +88,10 @@ def deal_detail(request, pk):
         pk=pk,
     )
     messages_list = DealMessage.objects.filter(deal=deal).select_related("sender")[:50]
+    extensions_list = LoanExtension.objects.filter(deal=deal).select_related(
+        "requested_by__profile",
+        "approved_by__profile",
+    )[:20]
 
     return render(
         request,
@@ -77,6 +99,7 @@ def deal_detail(request, pk):
         {
             "deal": deal,
             "messages": messages_list,
+            "extensions": extensions_list,
             "is_applicant": request.user == deal.applicant,
             "is_responder": request.user == deal.responder,
         },
@@ -94,6 +117,16 @@ def deal_list(request):
         responder=user,
         status=Deal.Status.REQUESTED,
     ).select_related("shared_book__official_book", "applicant")
+
+    # 將待回應的申請依書籍分組
+    from collections import OrderedDict
+
+    grouped_pending = OrderedDict()
+    for deal in pending_responder:
+        book = deal.shared_book
+        if book not in grouped_pending:
+            grouped_pending[book] = []
+        grouped_pending[book].append(deal)
 
     # 待對方回應（我是申請者）
     pending_applicant = Deal.objects.filter(
@@ -134,6 +167,7 @@ def deal_list(request):
         {
             "current_tab": tab,
             "pending_responder": pending_responder,
+            "grouped_pending": grouped_pending,
             "pending_applicant": pending_applicant,
             "pending_meeting": pending_meeting,
             "pending_rating": pending_rating,
@@ -417,3 +451,216 @@ def push_unsubscribe(request):
             {"error": str(e)},
             status=500,
         )
+
+
+# ============================================
+# 延長借閱相關 Views
+# ============================================
+
+
+@login_required
+def extension_request(request, deal_pk):
+    """申請延長借閱。"""
+    deal = get_object_or_404(
+        Deal.objects.select_related(
+            "shared_book__official_book",
+            "applicant",
+            "responder",
+        ),
+        pk=deal_pk,
+    )
+
+    # 權限檢查：只有申請者可以申請延長
+    if request.user != deal.applicant:
+        messages.error(request, "只有借閱者可以申請延長。")
+        return redirect("deals:detail", deal_pk)
+
+    if request.method == "POST":
+        form = ExtensionRequestForm(request.POST)
+        if form.is_valid():
+            try:
+                extension = extension_service.request_extension(
+                    deal=deal,
+                    applicant=request.user,
+                    extra_days=form.cleaned_data["extra_days"],
+                )
+                messages.success(request, "延長申請已送出！")
+                return redirect("deals:detail", deal_pk)
+            except Exception as e:
+                messages.error(request, str(e))
+    else:
+        form = ExtensionRequestForm()
+
+    return render(
+        request,
+        "deals/extension_request.html",
+        {
+            "form": form,
+            "deal": deal,
+        },
+    )
+
+
+@login_required
+@require_POST
+def extension_approve(request, extension_pk):
+    """核准延長申請。"""
+    extension = get_object_or_404(
+        LoanExtension.objects.select_related("deal", "deal__responder"),
+        pk=extension_pk,
+    )
+
+    # 權限檢查：只有回應者可以核准
+    if request.user != extension.deal.responder:
+        messages.error(request, "您無權核准此申請。")
+        return redirect("deals:detail", extension.deal.id)
+
+    try:
+        extension_service.approve_extension(
+            extension=extension,
+            reviewer=request.user,
+        )
+        messages.success(request, "延長申請已核准！")
+    except Exception as e:
+        messages.error(request, str(e))
+
+    return redirect("deals:detail", extension.deal.id)
+
+
+@login_required
+@require_POST
+def extension_reject(request, extension_pk):
+    """拒絕延長申請。"""
+    extension = get_object_or_404(
+        LoanExtension.objects.select_related("deal", "deal__responder"),
+        pk=extension_pk,
+    )
+
+    # 權限檢查：只有回應者可以拒絕
+    if request.user != extension.deal.responder:
+        messages.error(request, "您無權拒絕此申請。")
+        return redirect("deals:detail", extension.deal.id)
+
+    try:
+        extension_service.reject_extension(
+            extension=extension,
+            reviewer=request.user,
+        )
+        messages.success(request, "延長申請已拒絕。")
+    except Exception as e:
+        messages.error(request, str(e))
+
+    return redirect("deals:detail", extension.deal.id)
+
+
+@login_required
+@require_POST
+def extension_cancel(request, extension_pk):
+    """取消延長申請。"""
+    extension = get_object_or_404(
+        LoanExtension.objects.select_related("deal", "requested_by"),
+        pk=extension_pk,
+    )
+
+    # 權限檢查：只有申請者可以取消
+    if request.user != extension.requested_by:
+        messages.error(request, "您無權取消此申請。")
+        return redirect("deals:detail", extension.deal.id)
+
+    try:
+        extension_service.cancel_extension(
+            extension=extension,
+            applicant=request.user,
+        )
+        messages.success(request, "延長申請已取消。")
+    except Exception as e:
+        messages.error(request, str(e))
+
+    return redirect("deals:detail", extension.deal.id)
+
+
+# ============================================
+# 通知相關 Views
+# ============================================
+
+
+@login_required
+def notification_list(request):
+    """通知列表頁面。"""
+    user = request.user
+    tab = request.GET.get("tab", "all")
+
+    # 基礎查詢
+    notifications = Notification.objects.filter(recipient=user).select_related(
+        "deal__shared_book__official_book",
+        "shared_book__official_book",
+    )
+
+    # 篩選
+    if tab == "unread":
+        notifications = notifications.filter(is_read=False)
+    elif tab == "read":
+        notifications = notifications.filter(is_read=True)
+
+    # 分頁
+    paginator = Paginator(notifications, 20)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+
+    # 計算未讀數量
+    unread_count = Notification.objects.filter(
+        recipient=user,
+        is_read=False,
+    ).count()
+
+    return render(
+        request,
+        "deals/notification_list.html",
+        {
+            "page_obj": page_obj,
+            "current_tab": tab,
+            "unread_count": unread_count,
+        },
+    )
+
+
+@login_required
+def notification_count(request):
+    """HTMX endpoint: 返回未讀通知數量。"""
+    unread_count = Notification.objects.filter(
+        recipient=request.user,
+        is_read=False,
+    ).count()
+    return render(
+        request,
+        "deals/partials/notification_badge.html",
+        {"unread_count": unread_count},
+    )
+
+
+@login_required
+@require_POST
+def notification_mark_read(request, pk):
+    """標記單一通知為已讀。"""
+    notification = get_object_or_404(
+        Notification,
+        pk=pk,
+        recipient=request.user,
+    )
+    notification.is_read = True
+    notification.save(update_fields=["is_read"])
+
+    # 返回更新後的通知項目
+    return render(
+        request,
+        "deals/partials/notification_item.html",
+        {"notification": notification},
+    )
+
+
+@login_required
+@require_POST
+def notification_mark_all_read(request):
+    """標記所有通知為已讀。"""
+    notification_service.mark_all_as_read(request.user)
+    return redirect("deals:notification_list")

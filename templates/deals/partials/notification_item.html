@@ -1,0 +1,70 @@
+{% load tz %}
+{% with type_icon={
+  'DEAL_REQUESTED': 'swap_horiz',
+  'DEAL_RESPONDED': 'check_circle',
+  'DEAL_CANCELLED': 'cancel',
+  'DEAL_MEETED': 'handshake',
+  'BOOK_DUE_SOON': 'schedule',
+  'BOOK_OVERDUE': 'warning',
+  'BOOK_AVAILABLE': 'favorite',
+  'EXTEND_REQUESTED': 'more_time',
+  'EXTEND_APPROVED': 'check_circle',
+  'EXTEND_REJECTED': 'cancel',
+} %}
+<div class="flex items-start gap-3 p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors {% if not notification.is_read %}bg-primary/5{% endif %}"
+     id="notification-{{ notification.id }}">
+  <!-- Icon -->
+  <div class="size-10 rounded-full {% if not notification.is_read %}bg-primary/20{% else %}bg-slate-100 dark:bg-slate-800{% endif %} flex items-center justify-center shrink-0">
+    <span class="material-symbols-outlined {% if not notification.is_read %}text-primary{% else %}text-slate-400{% endif %}">
+      {{ type_icon|get_item:notification.notification_type|default:'notifications' }}
+    </span>
+  </div>
+
+  <!-- Content -->
+  <div class="flex-1 min-w-0">
+    <div class="flex items-start justify-between gap-2">
+      <div>
+        <p class="text-sm font-medium text-slate-900 dark:text-slate-100">
+          {{ notification.title }}
+        </p>
+        {% if notification.message %}
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+          {{ notification.message }}
+        </p>
+        {% endif %}
+      </div>
+      {% if not notification.is_read %}
+      <form method="POST" action="{% url 'deals:notification_mark_read' notification.id %}"
+            hx-post="{% url 'deals:notification_mark_read' notification.id %}"
+            hx-target="#notification-{{ notification.id }}"
+            hx-swap="outerHTML">
+        {% csrf_token %}
+        <button type="submit" class="shrink-0 p-1 text-slate-400 hover:text-primary">
+          <span class="material-symbols-outlined text-sm">check</span>
+        </button>
+      </form>
+      {% endif %}
+    </div>
+
+    <!-- Time & Link -->
+    <div class="flex items-center gap-2 mt-2">
+      <span class="text-xs text-slate-400">
+        {{ notification.created_at|timesince }}前
+      </span>
+      {% if notification.deal %}
+      <span class="text-slate-300 dark:text-slate-600">•</span>
+      <a href="{% url 'deals:detail' notification.deal.id %}"
+         class="text-xs text-primary hover:underline">
+        查看交易
+      </a>
+      {% elif notification.shared_book %}
+      <span class="text-slate-300 dark:text-slate-600">•</span>
+      <a href="{% url 'books:detail' notification.shared_book.id %}"
+         class="text-xs text-primary hover:underline">
+        查看書籍
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endwith %}

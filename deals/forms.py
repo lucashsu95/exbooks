@@ -91,3 +91,22 @@ class DealMessageForm(forms.Form):
         max_length=1000,
         label="訊息內容",
     )
+
+
+class ExtensionRequestForm(forms.Form):
+    """延長借閱申請表單。"""
+
+    extra_days = forms.IntegerField(
+        min_value=7,
+        max_value=30,
+        widget=forms.NumberInput(
+            attrs={
+                "class": "w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
+                "placeholder": "7-30 天",
+                "min": 7,
+                "max": 30,
+            }
+        ),
+        label="延長天數",
+        help_text="請輸入 7 至 30 天的延長天數",
+    )

@@ -25,4 +25,38 @@ urlpatterns = [
     ),
     path("push/subscribe/", views.push_subscribe, name="push_subscribe"),
     path("push/unsubscribe/", views.push_unsubscribe, name="push_unsubscribe"),
+    # 延長借閱
+    path(
+        "<uuid:deal_pk>/extension/request/",
+        views.extension_request,
+        name="extension_request",
+    ),
+    path(
+        "extension/<uuid:extension_pk>/approve/",
+        views.extension_approve,
+        name="extension_approve",
+    ),
+    path(
+        "extension/<uuid:extension_pk>/reject/",
+        views.extension_reject,
+        name="extension_reject",
+    ),
+    path(
+        "extension/<uuid:extension_pk>/cancel/",
+        views.extension_cancel,
+        name="extension_cancel",
+    ),
+    # 通知
+    path("notifications/", views.notification_list, name="notification_list"),
+    path("notifications/count/", views.notification_count, name="notification_count"),
+    path(
+        "notifications/<uuid:pk>/read/",
+        views.notification_mark_read,
+        name="notification_mark_read",
+    ),
+    path(
+        "notifications/read-all/",
+        views.notification_mark_all_read,
+        name="notification_mark_all_read",
+    ),
 ]

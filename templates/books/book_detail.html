@@ -60,6 +60,11 @@
     <a href="{% url 'accounts:public_profile' book.keeper.id %}" class="text-primary font-bold text-sm px-4 py-2 hover:bg-primary/10 rounded-lg transition-colors">查看個人資料</a>
 </div>
 
+<!-- Status Toggle (Owner Only) -->
+{% if book.owner == request.user %}
+{% include 'books/partials/status_toggle.html' %}
+{% endif %}
+
 <!-- Condition Description -->
 <div class="px-4 mb-8">
     <h3 class="text-slate-900 dark:text-slate-100 text-lg font-bold mb-3">書況描述</h3>
