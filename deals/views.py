@@ -664,3 +664,34 @@ def notification_mark_all_read(request):
     """標記所有通知為已讀。"""
     notification_service.mark_all_as_read(request.user)
     return redirect("deals:notification_list")
+
+
+# ============================================
+# 書籍歸還確認相關 Views
+# ============================================
+
+
+@login_required
+@require_POST
+def deal_confirm_return(request, pk):
+    """確認書籍歸還並重新上架。"""
+    deal = get_object_or_404(
+        Deal.objects.select_related(
+            "shared_book",
+            "shared_book__official_book",
+        ),
+        pk=pk,
+    )
+
+    # 權限檢查：只有回應者（持有者）可以確認歸還
+    if request.user != deal.responder:
+        messages.error(request, "只有持有者可以確認歸還。")
+        return redirect("deals:detail", pk)
+
+    try:
+        deal_service.confirm_return(deal, confirmed_by=request.user)
+        messages.success(request, "書籍已確認歸還並重新上架！")
+    except Exception as e:
+        messages.error(request, str(e))
+
+    return redirect("deals:detail", pk)

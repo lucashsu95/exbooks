@@ -70,13 +70,115 @@ def book_list(request):
 @login_required
 def book_detail(request, pk):
     """書籍詳情"""
+    from deals.models import Deal, LoanExtension
+
     book = get_object_or_404(
         SharedBook.objects.select_related(
             "official_book", "keeper__profile", "owner__profile"
         ),
         pk=pk,
     )
-    return render(request, "books/book_detail.html", {"book": book})
+
+    # 建立時間線事件
+    timeline_events = []
+
+    # 1. 書籍上架事件
+    if book.listed_at:
+        timeline_events.append(
+            {
+                "type": "listed",
+                "time": book.listed_at,
+                "title": "書籍上架",
+                "description": f"{book.owner.profile.nickname if hasattr(book.owner, 'profile') else book.owner.email} 分享了這本書",
+                "user": book.owner,
+            }
+        )
+
+    # 2. 交易記錄事件
+    deals = (
+        Deal.objects.filter(shared_book=book)
+        .select_related("applicant__profile", "responder__profile")
+        .order_by("created_at")
+    )
+
+    for deal in deals:
+        # 交易申請
+        if deal.status in [
+            Deal.Status.REQUESTED,
+            Deal.Status.RESPONDED,
+            Deal.Status.MEETED,
+            Deal.Status.DONE,
+        ]:
+            timeline_events.append(
+                {
+                    "type": "deal_created",
+                    "time": deal.created_at,
+                    "title": f"{deal.get_deal_type_display()}申請",
+                    "description": f"{deal.applicant.profile.nickname if hasattr(deal.applicant, 'profile') else deal.applicant.email} 發起了{deal.get_deal_type_display()}",
+                    "user": deal.applicant,
+                    "deal": deal,
+                }
+            )
+
+        # 面交完成
+        if deal.status in [Deal.Status.MEETED, Deal.Status.DONE]:
+            timeline_events.append(
+                {
+                    "type": "deal_meeted",
+                    "time": deal.updated_at,
+                    "title": "面交完成",
+                    "description": f"書籍已交給 {deal.applicant.profile.nickname if hasattr(deal.applicant, 'profile') else deal.applicant.email}",
+                    "user": deal.applicant,
+                    "deal": deal,
+                }
+            )
+
+        # 交易完成（評價後）
+        if deal.status == Deal.Status.DONE:
+            timeline_events.append(
+                {
+                    "type": "deal_done",
+                    "time": deal.updated_at,
+                    "title": "交易完成",
+                    "description": "雙方已完成評價",
+                    "deal": deal,
+                }
+            )
+
+    # 3. 延長借閱事件
+    extensions = (
+        LoanExtension.objects.filter(deal__shared_book=book)
+        .select_related("requested_by__profile", "approved_by__profile")
+        .order_by("created_at")
+    )
+
+    for ext in extensions:
+        timeline_events.append(
+            {
+                "type": "extension",
+                "time": ext.created_at,
+                "title": "延長借閱",
+                "description": f"延長 {ext.extra_days} 天"
+                + (
+                    f"（已核准）"
+                    if ext.status == "APPROVED"
+                    else f"（{ext.get_status_display()}）"
+                ),
+                "user": ext.requested_by,
+            }
+        )
+
+    # 按時間排序（新到舊）
+    timeline_events.sort(key=lambda x: x["time"], reverse=True)
+
+    return render(
+        request,
+        "books/book_detail.html",
+        {
+            "book": book,
+            "timeline_events": timeline_events,
+        },
+    )
 
 
 @login_required
@@ -332,3 +434,50 @@ def wishlist_remove(request, pk):
         messages.error(request, str(e))
 
     return redirect("books:wishlist")
+
+
+# ============================================
+# 即將到期提醒
+# ============================================
+
+
+@login_required
+def due_soon_list(request):
+    """即將到期提醒：列出即將到期的借閱書籍"""
+    from deals.models import Deal
+    from datetime import timedelta
+
+    # 計算提醒門檻（例如 7 天內到期）
+    remind_days = int(request.GET.get("days", 7))
+    now = timezone.now()
+    deadline = now + timedelta(days=remind_days)
+
+    # 查詢使用者作為借閱者且即將到期的交易
+    due_soon_deals = (
+        Deal.objects.filter(
+            applicant=request.user,
+            status=Deal.Status.MEETED,
+            due_date__lte=deadline,
+            due_date__gt=now,
+        )
+        .select_related("shared_book__official_book", "responder__profile")
+        .order_by("due_date")
+    )
+
+    # 計算剩餘天數
+    deals_with_days_left = []
+    for deal in due_soon_deals:
+        days_left = (deal.due_date - now).days
+        deals_with_days_left.append(
+            {
+                "deal": deal,
+                "days_left": days_left,
+                "is_overdue": days_left <= 0,
+            }
+        )
+
+    context = {
+        "deals_with_days_left": deals_with_days_left,
+        "remind_days": remind_days,
+    }
+    return render(request, "books/due_soon_list.html", context)

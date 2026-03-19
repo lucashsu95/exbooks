@@ -219,10 +219,22 @@
 </div>
 {% elif deal.status == 'M' %}
 <div class="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md p-4 border-t border-slate-200 dark:border-slate-800">
-  <a href="{% url 'deals:rating_create' deal.id %}" class="block w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-    <span class="material-symbols-outlined">star</span>
-    前往評價
-  </a>
+  <div class="space-y-3">
+    {% if deal.shared_book.transferability == 'RETURN' and is_responder %}
+    <!-- 確認歸還按鈕（僅「閱畢即還」模式且為持有者可見） -->
+    <form method="post" action="{% url 'deals:confirm_return' deal.id %}">
+      {% csrf_token %}
+      <button type="submit" class="w-full bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-green-600/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+        <span class="material-symbols-outlined">check_circle</span>
+        確認歸還並重新上架
+      </button>
+    </form>
+    {% endif %}
+    <a href="{% url 'deals:rating_create' deal.id %}" class="block w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+      <span class="material-symbols-outlined">star</span>
+      前往評價
+    </a>
+  </div>
 </div>
 {% endif %}
 

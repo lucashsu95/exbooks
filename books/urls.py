@@ -16,4 +16,6 @@ urlpatterns = [
     path("wishlist/", views.wishlist_list, name="wishlist"),
     path("wishlist/toggle/<uuid:pk>/", views.wishlist_toggle, name="wishlist_toggle"),
     path("wishlist/remove/<uuid:pk>/", views.wishlist_remove, name="wishlist_remove"),
+    # 即將到期提醒
+    path("due-soon/", views.due_soon_list, name="due_soon"),
 ]

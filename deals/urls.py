@@ -59,4 +59,6 @@ urlpatterns = [
         views.notification_mark_all_read,
         name="notification_mark_all_read",
     ),
+    # 書籍歸還確認
+    path("<uuid:pk>/confirm-return/", views.deal_confirm_return, name="confirm_return"),
 ]

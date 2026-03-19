@@ -296,3 +296,45 @@ def process_book_due(deal):
 
     # 通知持有者與貢獻者書籍已逾期
     notify_book_overdue(deal)
+
+
+@transaction.atomic
+def confirm_return(deal, confirmed_by):
+    """
+    確認書籍歸還並重新上架。
+
+    此函式用於「閱畢即還」模式的書籍歸還流程：
+    1. 借閱者完成閱讀，歸還書籍給持有者（Keeper）
+    2. 持有者確認收到書籍後，可將書籍重新上架
+
+    Args:
+        deal: Deal 物件，必須為 MEETED 狀態
+        confirmed_by: 確認歸還的使用者（必須是 deal.responder，即持有者）
+
+    Returns:
+        Deal: 更新後的交易物件
+
+    Raises:
+        ValidationError: 如果交易狀態不符或權限不足
+    """
+    # 狀態檢查：只有 MEETED 狀態可以確認歸還
+    if deal.status != Deal.Status.MEETED:
+        raise ValidationError("只有「已面交」狀態的交易可以確認歸還")
+
+    # 權限檢查：只有持有者（Responder）可以確認歸還
+    if confirmed_by != deal.responder:
+        raise ValidationError("只有持有者可以確認歸還")
+
+    # 檢查是否為「閱畢即還」模式
+    shared_book = deal.shared_book
+    if shared_book.transferability != SharedBook.Transferability.RETURN:
+        raise ValidationError("只有「閱畢即還」模式的書籍可以確認歸還")
+
+    # 更新書籍狀態為可移轉（重新上架）
+    shared_book.status = SharedBook.Status.TRANSFERABLE
+    shared_book.save(update_fields=["status", "updated_at"])
+
+    # 注意：Deal 狀態保持 MEETED，等待雙方評價後才會變成 DONE
+    # 評價流程由 rating_service.create_rating 處理
+
+    return deal

@@ -65,8 +65,13 @@
 {% include 'books/partials/status_toggle.html' %}
 {% endif %}
 
-<!-- Condition Description -->
-<div class="px-4 mb-8">
+  <!-- Timeline Section -->
+  <div class="px-4 mb-6">
+    {% include 'books/partials/book_timeline.html' %}
+  </div>
+
+  <!-- Condition Description -->
+  <div class="px-4 mb-8">
     <h3 class="text-slate-900 dark:text-slate-100 text-lg font-bold mb-3">書況描述</h3>
     <div class="bg-white dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
         <div class="flex gap-4 mb-4">
