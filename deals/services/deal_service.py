@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
+from accounts.services.trust_service import get_borrowing_limits
 from books.models import SharedBook
 from books.services.book_service import validate_book_set_completeness
 from deals.models import Deal
@@ -60,7 +61,9 @@ def _get_responder(shared_book, deal_type):
         return shared_book.keeper
 
 
-def create_deal(applicant, shared_book, deal_type, book_set=None):
+def create_deal(
+    applicant, shared_book, deal_type, book_set=None, loan_duration_days=None
+):
     """
     建立交易申請。
 
@@ -75,6 +78,31 @@ def create_deal(applicant, shared_book, deal_type, book_set=None):
     Returns:
         Deal: 建立的交易
     """
+    # 借閱權限檢查 (Trust Level)
+    if deal_type in (Deal.DealType.LOAN, Deal.DealType.TRANSFER):
+        limits = get_borrowing_limits(applicant.profile.trust_level)
+
+        # 檢查借閱數量
+        active_deals = Deal.objects.filter(
+            applicant=applicant,
+            status__in=[
+                Deal.Status.REQUESTED,
+                Deal.Status.RESPONDED,
+                Deal.Status.MEETED,
+            ],
+        ).count()
+
+        if active_deals >= limits["max_books"]:
+            raise ValidationError(
+                f"您目前信用等級只能同時借閱 {int(limits['max_books'])} 本書"
+            )
+
+        # 檢查借閱天數（如果有指定）
+        if loan_duration_days and loan_duration_days > limits["max_days"]:
+            raise ValidationError(
+                f"您目前信用等級最長只能借閱 {int(limits['max_days'])} 天"
+            )
+
     # BR-10: 不能借閱自己的書
     if deal_type != Deal.DealType.REGRESS:
         # RG 交易的申請者是 Owner，回應者是 Keeper，不受此限制
@@ -122,9 +150,9 @@ def create_deal(applicant, shared_book, deal_type, book_set=None):
     # 計算到期日（僅 LN/TF 需要）
     due_date = None
     if deal_type in (Deal.DealType.LOAN, Deal.DealType.TRANSFER):
-        due_date = timezone.now().date() + timedelta(
-            days=shared_book.loan_duration_days
-        )
+        # 如果有指定借閱天數，使用指定值；否則使用書籍預設值
+        duration = loan_duration_days or shared_book.loan_duration_days
+        due_date = timezone.now().date() + timedelta(days=duration)
 
     deal = Deal.objects.create(
         shared_book=shared_book,

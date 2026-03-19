@@ -54,6 +54,19 @@ class UserProfile(UpdatableModel):
         blank=True,
         verbose_name="頭像",
     )
+    trust_level = models.IntegerField(
+        default=1,
+        verbose_name="信用等級",
+        help_text="0: 新手, 1: 一般, 2: 可信, 3: 優良",
+    )
+    successful_returns = models.IntegerField(
+        default=0,
+        verbose_name="成功歸還次數",
+    )
+    overdue_count = models.IntegerField(
+        default=0,
+        verbose_name="逾期次數",
+    )
 
     class Meta:
         db_table = "exbook_user_profile"
