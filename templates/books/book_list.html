@@ -4,105 +4,105 @@
 {% endblock %}
 
 {% block content %}
-<!-- Header Section -->
-<header class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
-<button type="button" onclick="toggleSidebar()" class="text-primary flex size-12 shrink-0 items-center justify-start cursor-pointer">
+<!-- Header Section - Glassmorphism -->
+<header class="flex items-center bg-white/80 dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-slate-200/50 dark:border-slate-700/50 backdrop-blur-md">
+<button type="button" onclick="toggleSidebar()" class="text-primary flex size-12 shrink-0 items-center justify-start cursor-pointer hover:bg-primary/10 rounded-xl transition-colors">
 <span class="material-symbols-outlined text-3xl">menu</span>
 </button>
 <h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight tracking-tight flex-1 text-center">Exbooks</h2>
 <div class="flex w-12 items-center justify-end">
-<a href="#" onclick="alert('通知功能開發中')" class="flex size-10 cursor-pointer items-center justify-center rounded-full bg-primary/10 text-primary">
+<a href="#" onclick="alert('通知功能開發中')" class="flex size-10 cursor-pointer items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
 <span class="material-symbols-outlined">notifications</span>
 </a>
 </div>
 </header>
 
-<!-- Search Bar Section -->
+<!-- Search Bar Section - Glassmorphism -->
 <div class="px-4 py-4">
-  <form method="GET" action="{% url 'books:list' %}" class="flex flex-col min-w-40 h-14 w-full">
-    <div class="flex w-full flex-1 items-stretch rounded-xl h-full shadow-sm">
-      <button type="submit" class="text-slate-400 flex border-none bg-white dark:bg-slate-800 items-center justify-center pl-4 rounded-l-xl">
-        <span class="material-symbols-outlined">search</span>
-      </button>
-      <input name="q" class="form-input flex w-full min-w-0 flex-1 border-none bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-0 h-full placeholder:text-slate-400 px-4 rounded-r-xl text-base font-normal" placeholder="搜尋 ISBN、書名、作者、出版社" value="{{ search_query }}"/>
-      {% if current_category != '全部' %}
-      <input type="hidden" name="category" value="{{ current_category }}">
-      {% endif %}
-    </div>
-  </form>
+<form method="GET" action="{% url 'books:list' %}" class="flex flex-col min-w-40 h-14 w-full">
+<div class="flex w-full flex-1 items-stretch rounded-xl h-full shadow-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50">
+<button type="submit" class="text-slate-400 flex border-none bg-transparent items-center justify-center pl-4 rounded-l-xl hover:text-primary transition-colors">
+<span class="material-symbols-outlined">search</span>
+</button>
+<input name="q" class="form-input flex w-full min-w-0 flex-1 border-none bg-transparent text-slate-900 dark:text-slate-100 focus:ring-0 h-full placeholder:text-slate-400 px-4 rounded-r-xl text-base font-normal" placeholder="搜尋 ISBN、書名、作者、出版社" value="{{ search_query }}"/>
+{% if current_category != '全部' %}
+<input type="hidden" name="category" value="{{ current_category }}">
+{% endif %}
+</div>
+</form>
 </div>
 
-<!-- Categories horizontal scroll -->
+<!-- Categories horizontal scroll - Glassmorphism -->
 <div class="flex gap-3 p-4 overflow-x-auto no-scrollbar">
-    <a href="?category=全部{% if search_query %}&q={{ search_query }}{% endif %}" class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full px-6 {% if current_category == '全部' %}bg-primary text-white{% else %}bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300{% endif %}">
-        <span class="text-sm font-semibold leading-normal">全部</span>
-    </a>
-    <a href="?category=小說{% if search_query %}&q={{ search_query }}{% endif %}" class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full px-6 {% if current_category == '小說' %}bg-primary text-white{% else %}bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300{% endif %}">
-        <span class="text-sm font-medium leading-normal">小說</span>
-    </a>
-    <a href="?category=科技{% if search_query %}&q={{ search_query }}{% endif %}" class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full px-6 {% if current_category == '科技' %}bg-primary text-white{% else %}bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300{% endif %}">
-        <span class="text-sm font-medium leading-normal">科技</span>
-    </a>
-    <a href="?category=藝術{% if search_query %}&q={{ search_query }}{% endif %}" class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full px-6 {% if current_category == '藝術' %}bg-primary text-white{% else %}bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300{% endif %}">
-        <span class="text-sm font-medium leading-normal">藝術</span>
-    </a>
-    <a href="?category=科學{% if search_query %}&q={{ search_query }}{% endif %}" class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full px-6 {% if current_category == '科學' %}bg-primary text-white{% else %}bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300{% endif %}">
-        <span class="text-sm font-medium leading-normal">科學</span>
-    </a>
+<a href="?category=全部{% if search_query %}&q={{ search_query }}{% endif %}" class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full px-6 transition-all {% if current_category == '全部' %}bg-primary text-white shadow-lg shadow-primary/20{% else %}bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700{% endif %}">
+<span class="text-sm font-semibold leading-normal">全部</span>
+</a>
+<a href="?category=小說{% if search_query %}&q={{ search_query }}{% endif %}" class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full px-6 transition-all {% if current_category == '小說' %}bg-primary text-white shadow-lg shadow-primary/20{% else %}bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700{% endif %}">
+<span class="text-sm font-medium leading-normal">小說</span>
+</a>
+<a href="?category=科技{% if search_query %}&q={{ search_query }}{% endif %}" class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full px-6 transition-all {% if current_category == '科技' %}bg-primary text-white shadow-lg shadow-primary/20{% else %}bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700{% endif %}">
+<span class="text-sm font-medium leading-normal">科技</span>
+</a>
+<a href="?category=藝術{% if search_query %}&q={{ search_query }}{% endif %}" class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full px-6 transition-all {% if current_category == '藝術' %}bg-primary text-white shadow-lg shadow-primary/20{% else %}bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700{% endif %}">
+<span class="text-sm font-medium leading-normal">藝術</span>
+</a>
+<a href="?category=科學{% if search_query %}&q={{ search_query }}{% endif %}" class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full px-6 transition-all {% if current_category == '科學' %}bg-primary text-white shadow-lg shadow-primary/20{% else %}bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700{% endif %}">
+<span class="text-sm font-medium leading-normal">科學</span>
+</a>
 </div>
 
-<!-- New Arrivals Section -->
+<!-- New Arrivals Section - Glassmorphism -->
 <div class="flex items-center justify-between px-4 pt-6 pb-4">
-    <h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight tracking-tight">最新上架</h2>
-    <a class="text-primary text-sm font-semibold" href="{% url 'books:all' %}">查看全部</a>
+<h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight tracking-tight">最新上架</h2>
+<a class="text-primary text-sm font-semibold hover:underline" href="{% url 'books:all' %}">查看全部</a>
 </div>
 <div class="flex gap-4 px-4 overflow-x-auto no-scrollbar pb-4">
-    {% for book in new_arrivals|default:"" %}
-    <a href="{% url 'books:detail' book.id %}" class="min-w-[160px] flex flex-col gap-2 block">
-        <div class="w-40 h-56 rounded-lg bg-slate-200 dark:bg-slate-700 overflow-hidden relative shadow-md">
-            <img class="w-full h-full object-cover" alt="{{ book.official_book.title|default:'書本' }} 的封面" src="{% if book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuCJKGFmDT9Y9sG2zd00enOq5IY1RlA1OMkGVx6ZhngS0yiBe_gffqVnF3SU7jYslPY5BSa1ucotaqAVvoRNJL5KR5caY89J1Cgrg0Qqhr1i_htBXL-M74fSsxxAOBREe-km7XJhk8eTcKA1AU36aT3cxkXi8D1UdhmoHeVi8G-c9fBNRqr4PFzQlaepN741GIaic-Y1cA6U49u00zOIaxoJGMnH0ytJ6s5L_eGH94J3-l9BHYLjCIXV_YrfyazMItU9aRWziAXoG1Y{% endif %}"/>
-            <div class="absolute bottom-2 right-2 bg-white/90 dark:bg-slate-900/90 rounded px-1.5 py-0.5 text-[10px] font-bold text-slate-900 dark:text-slate-100">
-                NEW
-            </div>
-        </div>
+{% for book in new_arrivals|default:"" %}
+<a href="{% url 'books:detail' book.id %}" class="min-w-[160px] flex flex-col gap-2 block group">
+<div class="w-40 h-56 rounded-xl bg-slate-200 dark:bg-slate-700 overflow-hidden relative shadow-lg group-hover:shadow-xl transition-shadow">
+<img class="w-full h-full object-cover" alt="{{ book.official_book.title|default:'書本' }} 的封面" src="{% if book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuCJKGFmDT9Y9sG2zd00enOq5IY1RlA1OMkGVx6ZhngS0yiBe_gffqVnF3SU7jYslPY5BSa1ucotaqAVvoRNJL5KR5caY89J1Cgrg0Qqhr1i_htBXL-M74fSsxxAOBREe-km7XJhk8eTcKA1AU36aT3cxkXi8D1UdhmoHeVi8G-c9fBNRqr4PFzQlaepN741GIaic-Y1cA6U49u00zOIaxoJGMnH0ytJ6s5L_eGH94J3-l9BHYLjCIXV_YrfyazMItU9aRWziAXoG1Y{% endif %}"/>
+<div class="absolute bottom-2 right-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-lg px-2 py-1 text-[10px] font-bold text-slate-900 dark:text-slate-100 shadow-sm">
+NEW
+</div>
+</div>
 <div>
-<p class="text-slate-900 dark:text-slate-100 text-sm font-bold line-clamp-1">{{ book.official_book.title }}</p>
+<p class="text-slate-900 dark:text-slate-100 text-sm font-bold line-clamp-1 group-hover:text-primary transition-colors">{{ book.official_book.title }}</p>
 <p class="text-slate-500 dark:text-slate-400 text-xs mt-1">{{ book.official_book.author|default:"未知作者" }}</p>
 </div>
-    </a>
-    {% empty %}
-    <div class="flex items-center justify-center p-8 w-full">
-        <div class="text-center text-slate-500">
-            <span class="material-symbols-outlined text-4xl mb-2 opacity-50">inbox</span>
-            <p>目前沒有資料</p>
-        </div>
-    </div>
-    {% endfor %}
+</a>
+{% empty %}
+<div class="flex items-center justify-center p-8 w-full">
+<div class="text-center text-slate-500 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl p-6 border border-slate-200/50 dark:border-slate-700/50">
+<span class="material-symbols-outlined text-4xl mb-2 opacity-50">inbox</span>
+<p>目前沒有資料</p>
+</div>
+</div>
+{% endfor %}
 </div>
 
-<!-- Book List Section -->
+<!-- Book List Section - Glassmorphism -->
 <div class="flex items-center justify-between px-4 pt-8 pb-4">
 <h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight tracking-tight">書籍列表</h2>
 </div>
 <div class="grid grid-cols-1 gap-4 px-4 pb-24">
 {% for book in nearby_books|default:"" %}
-<a href="{% url 'books:detail' book.id %}" class="flex gap-4 bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm block">
-<div class="w-24 h-32 rounded-lg bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0">
+<a href="{% url 'books:detail' book.id %}" class="flex gap-4 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 block hover:shadow-xl hover:bg-white dark:hover:bg-slate-800 transition-all group">
+<div class="w-24 h-32 rounded-xl bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0 shadow-md">
 <img class="w-full h-full object-cover" alt="{{ book.official_book.title }} 的封面" src="{% if book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuBlSAm5AwcmdJLphEsyKIZJ9iWzB0otfD9IcFu5Buim2RjYBpL4w7vWD3u6qaidnqPQpx0C8g1zdJ69ceuhSRE4bJU1HB6iBJG7LSOanbVN72OFbRT_sXIuMy556iXOIt0f-rQeJZkdqRDUjRq0JZfLx7h3HCiyqqqHUvQdU95O_apLHu1S0DqUMPFWdpVBh6Bxvrty9Fc2MILIMQkOuD_4DZ71tdUDNIAki1-nczh3Sw5Bd8Nd1o3TuyJCHHn6vqgxkiBGoo6j8_0{% endif %}"/>
 </div>
 <div class="flex flex-col justify-between py-1 w-full">
 <div>
-<p class="text-slate-900 dark:text-slate-100 text-base font-bold">{{ book.official_book.title }}</p>
+<p class="text-slate-900 dark:text-slate-100 text-base font-bold group-hover:text-primary transition-colors">{{ book.official_book.title }}</p>
 <p class="text-slate-500 dark:text-slate-400 text-xs mt-1">{{ book.official_book.author|default:"未知作者" }}</p>
 </div>
 <div class="flex items-center">
-<span class="text-primary text-xs font-bold bg-primary/10 px-2 py-1 rounded">{{ book.official_book.get_category_display }}</span>
+<span class="text-primary text-xs font-bold bg-primary/10 px-3 py-1.5 rounded-full">{{ book.official_book.get_category_display }}</span>
 </div>
 </div>
 </a>
 {% empty %}
 <div class="flex items-center justify-center p-8 w-full">
-<div class="text-center text-slate-500">
+<div class="text-center text-slate-500 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl p-6 border border-slate-200/50 dark:border-slate-700/50">
 <span class="material-symbols-outlined text-4xl mb-2 opacity-50">inbox</span>
 <p>目前沒有資料</p>
 </div>

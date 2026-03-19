@@ -3,61 +3,61 @@
 {% block title %}Exbooks - {{ book.official_book.title|default:'大亨小傳' }}{% endblock %}
 
 {% block content %}
-<!-- Top Navigation -->
-<div class="flex items-center bg-white dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800">
-    <a href="{% url 'books:list' %}" class="text-slate-900 dark:text-slate-100 flex size-12 shrink-0 items-center cursor-pointer">
-        <span class="material-symbols-outlined">arrow_back</span>
-    </a>
-    <h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1">書籍詳情</h2>
-    <div class="flex w-12 items-center justify-end">
-        <button type="button" class="flex items-center justify-center rounded-lg h-12 bg-transparent text-slate-900 dark:text-slate-100 p-0">
-            <span class="material-symbols-outlined">share</span>
-        </button>
-    </div>
+<!-- Top Navigation - Glassmorphism -->
+<div class="flex items-center bg-white/80 dark:bg-background-dark/80 backdrop-blur-md p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200/50 dark:border-slate-700/50">
+<a href="{% url 'books:list' %}" class="text-slate-900 dark:text-slate-100 flex size-12 shrink-0 items-center cursor-pointer hover:bg-primary/10 rounded-xl transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</a>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1">書籍詳情</h2>
+<div class="flex w-12 items-center justify-end">
+<button type="button" class="flex items-center justify-center rounded-xl h-12 bg-transparent text-slate-900 dark:text-slate-100 p-0 hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined">share</span>
+</button>
+</div>
 </div>
 
-<!-- Book Hero Section -->
+<!-- Book Hero Section - Glassmorphism -->
 <div class="px-4 py-4 @container">
-    <div class="flex flex-col md:flex-row gap-6">
-        <!-- Book Cover -->
-        <div class="w-full md:w-1/3">
-            <div class="aspect-[2/3] w-full bg-center bg-no-repeat bg-cover rounded-xl shadow-lg" aria-label="{{ book.official_book.title|default:'大亨小傳' }} 的封面" style="background-image: url('{% if book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuAOxfy6jTXBa6HLVQwkBc3tJU7mRqE9wHSUD6CXWHc29IRsy1_4Sow75BoeL4-32sPLcBSpABaxY3iiFZrhrWiuKMEIOVacuKUVspevYR_-1catlhZjCK08dfkMOomhcXDN_3yCtROiUYhWDu7y5AvF-e2fcTUmEVTyuYZi0pnp9sKIaysN3J2Y515a2dur3SoaRPbTFh6LokFJVXTmlZtg7Jl3w19Xeur9E9hGnN2RsqhBHQewjLci32ArEMiUujVeBu13Yu1zZYs{% endif %}');">
-            </div>
-        </div>
-        <!-- Basic Info -->
-        <div class="flex-1 flex flex-col justify-center">
-            <div class="flex items-center gap-2 mb-2">
-                <span class="px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs font-bold uppercase tracking-wider">{{ book.get_status_display|default:'可流通 (T)' }}</span>
-                <span class="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">{{ book.get_transferability_display|default:'開放傳遞' }}</span>
-            </div>
-            <h1 class="text-slate-900 dark:text-slate-100 text-3xl font-bold leading-tight mb-1">{{ book.official_book.title|default:'大亨小傳' }}</h1>
-            <h2 class="text-slate-600 dark:text-slate-400 text-xl font-medium mb-4">{{ book.official_book.author|default:'F. Scott Fitzgerald' }}</h2>
-            <div class="space-y-2 mb-6">
-                <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                    <span class="material-symbols-outlined text-sm">barcode</span>
-                    <p class="text-sm">ISBN: {{ book.official_book.isbn|default:'9780743273565' }}</p>
-                </div>
-                <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                    <span class="material-symbols-outlined text-sm">location_on</span>
-                    <p class="text-sm" data-location="{{ book.keeper.profile.default_location|default:'台北市' }}">{{ book.keeper.profile.default_location|default:'台灣台北市' }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="flex flex-col md:flex-row gap-6">
+<!-- Book Cover -->
+<div class="w-full md:w-1/3">
+<div class="aspect-[2/3] w-full bg-center bg-no-repeat bg-cover rounded-2xl shadow-2xl hover:shadow-primary/20 transition-shadow" aria-label="{{ book.official_book.title|default:'大亨小傳' }} 的封面" style="background-image: url('{% if book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuAOxfy6jTXBa6HLVQwkBc3tJU7mRqE9wHSUD6CXWHc29IRsy1_4Sow75BoeL4-32sPLcBSpABaxY3iiFZrhrWiuKMEIOVacuKUVspevYR_-1catlhZjCK08dfkMOomhcXDN_3yCtROiUYhWDu7y5AvF-e2fcTUmEVTyuYZi0pnp9sKIaysN3J2Y515a2dur3SoaRPbTFh6LokFJVXTmlZtg7Jl3w19Xeur9E9hGnN2RsqhBHQewjLci32ArEMiUujVeBu13Yu1zZYs{% endif %}');">
+</div>
+</div>
+<!-- Basic Info -->
+<div class="flex-1 flex flex-col justify-center">
+<div class="flex items-center gap-2 mb-3">
+<span class="px-3 py-1 rounded-full bg-green-100/80 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold uppercase tracking-wider backdrop-blur-sm">{{ book.get_status_display|default:'可流通 (T)' }}</span>
+<span class="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider backdrop-blur-sm">{{ book.get_transferability_display|default:'開放傳遞' }}</span>
+</div>
+<h1 class="text-slate-900 dark:text-slate-100 text-3xl font-bold leading-tight mb-2">{{ book.official_book.title|default:'大亨小傳' }}</h1>
+<h2 class="text-slate-600 dark:text-slate-400 text-xl font-medium mb-4">{{ book.official_book.author|default:'F. Scott Fitzgerald' }}</h2>
+<div class="space-y-3 mb-6">
+<div class="flex items-center gap-2 text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-lg px-3 py-2">
+<span class="material-symbols-outlined text-sm text-primary">barcode</span>
+<p class="text-sm">ISBN: {{ book.official_book.isbn|default:'9780743273565' }}</p>
+</div>
+<div class="flex items-center gap-2 text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-lg px-3 py-2">
+<span class="material-symbols-outlined text-sm text-primary">location_on</span>
+<p class="text-sm" data-location="{{ book.keeper.profile.default_location|default:'台北市' }}">{{ book.keeper.profile.default_location|default:'台灣台北市' }}</p>
+</div>
+</div>
+</div>
+</div>
 </div>
 
-<!-- Keeper Profile -->
-<div class="mx-4 mb-6 p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-        <div class="size-12 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border-2 border-primary">
-            <img alt="持書人頭像" class="w-full h-full object-cover" src="{% if book.keeper.profile.avatar %}{{ book.keeper.profile.avatar.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuAZeXWrPxCBU69i-9JLnp1uVIwWZLWRGayrj3CtLPXX2Kil6F7Hg7SXT5LpNZYg4UubLUgUIZ9Z_T5Qb2AlXgtPbueQwzU7ePBtQA35WfXaiOdCLxwHlH0TjQE35k5gKoI2dtzNwBrjbTNrmAutrn5CMHIP_KblHFyEPUxdCBU1lMwT93tcDU3nswh1avusipC4fUR48yHPxj-ziw9paYNEKNWWugqVmcg77c5Gr5RjfhNSmLTxNz79TnYSknsTiPfLpndBkYtmuJU{% endif %}"/>
-        </div>
-        <div>
-            <p class="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-tighter">目前持有人</p>
-            <p class="text-slate-900 dark:text-slate-100 font-bold">{{ book.keeper.profile.nickname|default:book.keeper.email }}</p>
-        </div>
-    </div>
-    <a href="{% url 'accounts:public_profile' book.keeper.id %}" class="text-primary font-bold text-sm px-4 py-2 hover:bg-primary/10 rounded-lg transition-colors">查看個人資料</a>
+<!-- Keeper Profile - Glassmorphism -->
+<div class="mx-4 mb-6 p-4 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-xl border border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between shadow-lg hover:shadow-xl transition-shadow">
+<div class="flex items-center gap-3">
+<div class="size-14 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border-2 border-primary shadow-md">
+<img alt="持書人頭像" class="w-full h-full object-cover" src="{% if book.keeper.profile.avatar %}{{ book.keeper.profile.avatar.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuAZeXWrPxCBU69i-9JLnp1uVIwWZLWRGayrj3CtLPXX2Kil6F7Hg7SXT5LpNZYg4UubLUgUIZ9Z_T5Qb2AlXgtPbueQwzU7ePBtQA35WfXaiOdCLxwHlH0TjQE35k5gKoI2dtzNwBrjbTNrmAutrn5CMHIP_KblHFyEPUxdCBU1lMwT93tcDU3nswh1avusipC4fUR48yHPxj-ziw9paYNEKNWWugqVmcg77c5Gr5RjfhNSmLTxNz79TnYSknsTiPfLpndBkYtmuJU{% endif %}"/>
+</div>
+<div>
+<p class="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-tighter">目前持有人</p>
+<p class="text-slate-900 dark:text-slate-100 font-bold">{{ book.keeper.profile.nickname|default:book.keeper.email }}</p>
+</div>
+</div>
+<a href="{% url 'accounts:public_profile' book.keeper.id %}" class="text-primary font-bold text-sm px-4 py-2 hover:bg-primary/10 rounded-xl transition-colors">查看個人資料</a>
 </div>
 
 <!-- Status Toggle (Owner Only) -->
@@ -70,73 +70,73 @@
     {% include 'books/partials/book_timeline.html' %}
   </div>
 
-  <!-- Condition Description -->
-  <div class="px-4 mb-8">
-    <h3 class="text-slate-900 dark:text-slate-100 text-lg font-bold mb-3">書況描述</h3>
-    <div class="bg-white dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
-        <div class="flex gap-4 mb-4">
-            <div class="flex flex-col items-center p-2 rounded-lg bg-background-light dark:bg-background-dark min-w-[80px]">
-                <span class="text-primary font-bold text-lg">{{ book.condition_rating|default:'9' }}/10</span>
-                <span class="text-[10px] text-slate-500 uppercase font-bold">評分</span>
-            </div>
-            <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                {{ book.condition_description|default:'書況極佳。內頁乾淨無泛黃。書衣邊角有輕微磨損。內無畫線或註記。保存於無菸、無寵物環境。' }}
-            </p>
-        </div>
-        <!-- Photo Gallery -->
-        <div class="grid grid-cols-3 gap-2 mt-4">
-            <div class="aspect-square rounded-lg bg-slate-200 dark:bg-slate-700 bg-cover bg-center" aria-label="書頁特寫" style="background-image: url('{{ book.photo_1_url|default:'https://lh3.googleusercontent.com/aida-public/AB6AXuDWMZiqCK8ufrABVpkojIsI_K3jxYN-BhCzav_t229-GQDXMp_MbYIlVor1mGDpzBxtMtZUZu6Y2kxj4gCxUrHQG2YPX8NKWSyYzihiErMuNq-OhObm1UdJqSl4dC2re3U4iocofY3Of6HWiIFk4pFmhJDgxQuInq0fySP6CdEIjq5qWRq6Lae8kpUni97yGKMQKbJnnoxrs5yr0VVIsiml1iawILjPDgBnwLX37luLajbRhmFNZssNLy8yEK0i4fZIqvlU_8xjbfo' }}')"></div>
-            <div class="aspect-square rounded-lg bg-slate-200 dark:bg-slate-700 bg-cover bg-center" aria-label="書脊側面" style="background-image: url('{{ book.photo_2_url|default:'https://lh3.googleusercontent.com/aida-public/AB6AXuCziVmskchOjZ6o36p-tbcLtmakmLumgbN7X5_vsP7DFIJ4pE_NO8HaOCl1ikccCSbN64Tjzj40Gtm5NTEczBkq9cFX5UAwRr5fePqyoO4-3RRqh8D1AExC4sIkx9UgHIl0w0l68VOLJZ95fbLHJjFcCmrmV1EXPe_VXsJZbO9cPkQARe-2Zaxjm-ibXdwKDxFEJC65YVWhQaPXG7Difz3wc3bR1d7MkT9A-aWkAQCb6qEpE3eb3GuDgOO0_E5OzYbEGwv4gNlDtlw' }}')"></div>
-            <div class="relative aspect-square rounded-lg bg-slate-200 dark:bg-slate-700 bg-cover bg-center" aria-label="書籍封底" style="background-image: url('{{ book.photo_3_url|default:'https://lh3.googleusercontent.com/aida-public/AB6AXuAO_ubYJAJIpjcVYwnyWoxtQwLBwV16LYNj1Uydqk4YennZnXTq4jXK4yg30U9zb3_PoVhjjEEzwqWSYe41GGofpq-bh2rh3Bst0LxDIfdlcKI135NrpHHehaTwaNJaP1n2-DkFdakqFqsrKecLBN8xiIAvuAGFBRLkTLVwcmmfKyA3UGdm8Z-gl6VhzziiFKKQ1XHmujMByi0Bzl55g69SuvojqN_HzkIpiWv_qpdFviFURXnWuRPBVpVw9b-2PasiMf3hSIqosJE' }}')">
-                <div class="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center">
-                    <span class="text-white font-bold">+2</span>
-                </div>
-            </div>
-        </div>
-    </div>
+<!-- Condition Description - Glassmorphism -->
+<div class="px-4 mb-8">
+<h3 class="text-slate-900 dark:text-slate-100 text-lg font-bold mb-3">書況描述</h3>
+<div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-xl p-5 border border-slate-200/50 dark:border-slate-700/50 shadow-lg">
+<div class="flex gap-4 mb-4">
+<div class="flex flex-col items-center p-3 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10 min-w-[90px]">
+<span class="text-primary font-bold text-2xl">{{ book.condition_rating|default:'9' }}/10</span>
+<span class="text-[10px] text-slate-500 uppercase font-bold mt-1">評分</span>
+</div>
+<p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+{{ book.condition_description|default:'書況極佳。內頁乾淨無泛黃。書衣邊角有輕微磨損。內無畫線或註記。保存於無菸、無寵物環境。' }}
+</p>
+</div>
+<!-- Photo Gallery -->
+<div class="grid grid-cols-3 gap-3 mt-4">
+<div class="aspect-square rounded-xl bg-slate-200 dark:bg-slate-700 bg-cover bg-center shadow-md hover:shadow-lg transition-shadow" aria-label="書頁特寫" style="background-image: url('{{ book.photo_1_url|default:'https://lh3.googleusercontent.com/aida-public/AB6AXuDWMZiqCK8ufrABVpkojIsI_K3jxYN-BhCzav_t229-GQDXMp_MbYIlVor1mGDpzBxtMtZUZu6Y2kxj4gCxUrHQG2YPX8NKWSyYzihiErMuNq-OhObm1UdJqSl4dC2re3U4iocofY3Of6HWiIFk4pFmhJDgxQuInq0fySP6CdEIjq5qWRq6Lae8kpUni97yGKMQKbJnnoxrs5yr0VVIsiml1iawILjPDgBnwLX37luLajbRhmFNZssNLy8yEK0i4fZIqvlU_8xjbfo' }}')"></div>
+<div class="aspect-square rounded-xl bg-slate-200 dark:bg-slate-700 bg-cover bg-center shadow-md hover:shadow-lg transition-shadow" aria-label="書脊側面" style="background-image: url('{{ book.photo_2_url|default:'https://lh3.googleusercontent.com/aida-public/AB6AXuCziVmskchOjZ6o36p-tbcLtmakmLumgbN7X5_vsP7DFIJ4pE_NO8HaOCl1ikccCSbN64Tjzj40Gtm5NTEczBkq9cFX5UAwRr5fePqyoO4-3RRqh8D1AExC4sIkx9UgHIl0w0l68VOLJZ95fbLHJjFcCmrmV1EXPe_VXsJZbO9cPkQARe-2Zaxjm-ibXdwKDxFEJC65YVWhQaPXG7Difz3wc3bR1d7MkT9A-aWkAQCb6qEpE3eb3GuDgOO0_E5OzYbEGwv4gNlDtlw' }}')"></div>
+<div class="relative aspect-square rounded-xl bg-slate-200 dark:bg-slate-700 bg-cover bg-center shadow-md hover:shadow-lg transition-shadow" aria-label="書籍封底" style="background-image: url('{{ book.photo_3_url|default:'https://lh3.googleusercontent.com/aida-public/AB6AXuAO_ubYJAJIpjcVYwnyWoxtQwLBwV16LYNj1Uydqk4YennZnXTq4jXK4yg30U9zb3_PoVhjjEEzwqWSYe41GGofpq-bh2rh3Bst0LxDIfdlcKI135NrpHHehaTwaNJaP1n2-DkFdakqFqsrKecLBN8xiIAvuAGFBRLkTLVwcmmfKyA3UGdm8Z-gl6VhzziiFKKQ1XHmujMByi0Bzl55g69SuvojqN_HzkIpiWv_qpdFviFURXnWuRPBVpVw9b-2PasiMf3hSIqosJE' }}')">
+<div class="absolute inset-0 bg-black/50 rounded-xl flex items-center justify-center backdrop-blur-sm">
+<span class="text-white font-bold text-lg">+2</span>
+</div>
+</div>
+</div>
+</div>
 </div>
 
-<!-- Sticky Footer Actions -->
-<div class="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md p-4 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-3">
+<!-- Sticky Footer Actions - Glassmorphism -->
+<div class="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-background-dark/90 backdrop-blur-xl p-4 border-t border-slate-200/50 dark:border-slate-700/50 flex flex-col gap-3 shadow-2xl">
 {% if book.keeper != request.user %}
 {% if book.status == 'T' and book.transferability == 'RETURN' %}
-<a href="{% url 'deals:create' book.id 'LN' %}" class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+<a href="{% url 'deals:create' book.id 'LN' %}" class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/30 flex items-center justify-center gap-2 active:scale-[0.98] transition-all hover:bg-primary/90">
 <span class="material-symbols-outlined">auto_stories</span>
 申請借用
 </a>
 {% elif book.status == 'T' and book.transferability == 'TRANSFER' %}
-<a href="{% url 'deals:create' book.id 'TF' %}" class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+<a href="{% url 'deals:create' book.id 'TF' %}" class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/30 flex items-center justify-center gap-2 active:scale-[0.98] transition-all hover:bg-primary/90">
 <span class="material-symbols-outlined">swap_horiz</span>
 申請傳遞
 </a>
 {% elif book.status == 'R' %}
-<a href="{% url 'deals:create' book.id 'RS' %}" class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+<a href="{% url 'deals:create' book.id 'RS' %}" class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/30 flex items-center justify-center gap-2 active:scale-[0.98] transition-all hover:bg-primary/90">
 <span class="material-symbols-outlined">assignment_return</span>
 申請返還
 </a>
 {% elif book.status == 'O' and book.owner == request.user %}
-<a href="{% url 'deals:create' book.id 'RG' %}" class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+<a href="{% url 'deals:create' book.id 'RG' %}" class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/30 flex items-center justify-center gap-2 active:scale-[0.98] transition-all hover:bg-primary/90">
 <span class="material-symbols-outlined">home</span>
 申請回歸
 </a>
 {% elif book.status in 'E,L,D' %}
-<a href="{% url 'deals:create' book.id 'EX' %}" class="w-full bg-rose-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-rose-500/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+<a href="{% url 'deals:create' book.id 'EX' %}" class="w-full bg-rose-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-rose-500/30 flex items-center justify-center gap-2 active:scale-[0.98] transition-all hover:bg-rose-600">
 <span class="material-symbols-outlined">report_problem</span>
 申請例外處理
 </a>
 {% else %}
-<div class="w-full bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-bold py-4 rounded-xl flex items-center justify-center gap-2">
+<div class="w-full bg-slate-200/80 dark:bg-slate-700/80 backdrop-blur-sm text-slate-500 dark:text-slate-400 font-bold py-4 rounded-xl flex items-center justify-center gap-2">
 <span class="material-symbols-outlined">block</span>
 目前無法申請交易
 </div>
 {% endif %}
 {% else %}
-<div class="w-full bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-bold py-4 rounded-xl flex items-center justify-center gap-2">
+<div class="w-full bg-slate-200/80 dark:bg-slate-700/80 backdrop-blur-sm text-slate-500 dark:text-slate-400 font-bold py-4 rounded-xl flex items-center justify-center gap-2">
 <span class="material-symbols-outlined">info</span>
 這是您自己的書籍
 </div>
 {% endif %}
-<button type="button" class="w-full bg-primary/10 dark:bg-primary/20 text-primary font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+<button type="button" class="w-full bg-primary/10 dark:bg-primary/20 backdrop-blur-sm text-primary font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all hover:bg-primary/20">
 <span class="material-symbols-outlined">favorite</span>
 加入願望清單
 </button>
