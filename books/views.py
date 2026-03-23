@@ -481,3 +481,174 @@ def due_soon_list(request):
         "remind_days": remind_days,
     }
     return render(request, "books/due_soon_list.html", context)
+
+
+# ============================================
+# 套書管理 Views
+# ============================================
+
+from .models import BookSet
+from .services import (
+    create_book_set,
+    add_book_to_set,
+    remove_book_from_set,
+    delete_book_set,
+    get_user_book_sets,
+    get_book_set_detail,
+)
+from .forms import BookSetCreateForm, BookSetManageForm
+
+
+@login_required
+def book_set_list(request):
+    """套書列表頁"""
+    book_sets = get_user_book_sets(request.user)
+    return render(
+        request,
+        "books/book_set_list.html",
+        {"book_sets": book_sets},
+    )
+
+
+@login_required
+def book_set_create(request):
+    """建立套書"""
+    if request.method == "POST":
+        form = BookSetCreateForm(request.POST)
+        if form.is_valid():
+            book_set = create_book_set(
+                owner=request.user,
+                name=form.cleaned_data["name"],
+                description=form.cleaned_data.get("description", ""),
+            )
+            messages.success(request, "套書已建立")
+            return redirect("books:book_set_detail", pk=book_set.pk)
+    else:
+        form = BookSetCreateForm()
+
+    # 取得用戶可加入的書籍
+    available_books = SharedBook.objects.filter(
+        owner=request.user,
+        book_set=None,
+    ).select_related("official_book")
+
+    return render(
+        request,
+        "books/book_set_create.html",
+        {"form": form, "available_books": available_books},
+    )
+
+
+@login_required
+def book_set_detail(request, pk):
+    """套書詳情"""
+    try:
+        book_set = get_book_set_detail(pk, request.user)
+    except Exception as e:
+        messages.error(request, str(e))
+        return redirect("books:book_set_list")
+
+    books = book_set.books.select_related("official_book", "keeper").all()
+
+    return render(
+        request,
+        "books/book_set_detail.html",
+        {"book_set": book_set, "books": books},
+    )
+
+
+@login_required
+def book_set_edit(request, pk):
+    """編輯套書"""
+    book_set = get_object_or_404(BookSet, pk=pk, owner=request.user)
+
+    if request.method == "POST":
+        form = BookSetCreateForm(request.POST, instance=book_set)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "套書已更新")
+            return redirect("books:book_set_detail", pk=pk)
+    else:
+        form = BookSetCreateForm(instance=book_set)
+
+    # 取得套書中的書籍和可加入的書籍
+    books_in_set = book_set.books.select_related("official_book").all()
+    available_books = SharedBook.objects.filter(
+        owner=request.user,
+        book_set=None,
+    ).select_related("official_book")
+
+    return render(
+        request,
+        "books/book_set_edit.html",
+        {
+            "form": form,
+            "book_set": book_set,
+            "books_in_set": books_in_set,
+            "available_books": available_books,
+        },
+    )
+
+
+@login_required
+def book_set_delete(request, pk):
+    """刪除套書"""
+    book_set = get_object_or_404(BookSet, pk=pk, owner=request.user)
+
+    if request.method == "POST":
+        try:
+            delete_book_set(book_set)
+            messages.success(request, "套書已刪除")
+        except Exception as e:
+            messages.error(request, str(e))
+        return redirect("books:book_set_list")
+
+    return render(
+        request,
+        "books/book_set_delete_confirm.html",
+        {"book_set": book_set},
+    )
+
+
+@login_required
+@require_POST
+def book_set_add_book(request, pk):
+    """加入書籍到套書（HTMX）"""
+    book_set = get_object_or_404(BookSet, pk=pk, owner=request.user)
+    book_id = request.POST.get("book_id")
+
+    if book_id:
+        book = get_object_or_404(SharedBook, pk=book_id, owner=request.user)
+        try:
+            add_book_to_set(book_set, book)
+            messages.success(request, f"已加入「{book.official_book.title}」")
+        except Exception as e:
+            messages.error(request, str(e))
+
+    books = book_set.books.select_related("official_book").all()
+    return render(
+        request,
+        "books/partials/book_set_books.html",
+        {"book_set": book_set, "books": books},
+    )
+
+
+@login_required
+@require_POST
+def book_set_remove_book(request, pk, book_id):
+    """從套書移除書籍（HTMX）"""
+    book_set = get_object_or_404(BookSet, pk=pk, owner=request.user)
+    book = get_object_or_404(SharedBook, pk=book_id, owner=request.user)
+
+    try:
+        remove_book_from_set(book_set, book)
+        messages.success(request, f"已移除「{book.official_book.title}」")
+    except Exception as e:
+        messages.error(request, str(e))
+
+    books = book_set.books.select_related("official_book").all()
+    return render(
+        request,
+        "books/partials/book_set_books.html",
+        {"book_set": book_set, "books": books},
+    )

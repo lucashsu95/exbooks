@@ -61,4 +61,15 @@ urlpatterns = [
     ),
     # 書籍歸還確認
     path("<uuid:pk>/confirm-return/", views.deal_confirm_return, name="confirm_return"),
+    # 例外處理
+    path(
+        "exception/create/<uuid:book_id>/",
+        views.exception_create,
+        name="exception_create",
+    ),
+    path(
+        "exception/<uuid:pk>/resolve/",
+        views.exception_resolve,
+        name="exception_resolve",
+    ),
 ]

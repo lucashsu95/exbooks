@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}申請例外處理 - Exbooks{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">申請例外處理</h1>
+
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 mb-6">
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">書籍資訊</h2>
+        <p class="text-slate-600 dark:text-slate-400">{{ book.official_book.title }}</p>
+        <p class="text-sm text-slate-500 dark:text-slate-500">{{ book.official_book.author }}</p>
+    </div>
+
+    <form method="post" class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+        {% csrf_token %}
+
+        <div class="space-y-6">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                    請選擇例外原因
+                </label>
+                <div class="space-y-2">
+                    {% for choice in form.reason %}
+                    <label class="flex items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700">
+                        {{ choice.tag }}
+                        <span class="ml-3 text-slate-900 dark:text-slate-100">{{ choice.choice_label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% if form.reason.errors %}
+                <p class="text-red-500 text-sm mt-2">{{ form.reason.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    詳細說明（選填）
+                </label>
+                {{ form.description }}
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    請描述書籍狀況或遺失/損毀原因
+                </p>
+            </div>
+        </div>
+
+        <div class="mt-6 flex gap-3">
+            <button type="submit"
+                    class="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors">
+                送出申請
+            </button>
+            <a href="{% url 'books:detail' book.pk %}"
+               class="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                取消
+            </a>
+        </div>
+    </form>
+
+    <div class="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl">
+        <p class="text-sm text-yellow-800 dark:text-yellow-200">
+            <strong>注意：</strong>申請例外處理後，書籍狀態將變更為「例外狀況」，需等待貢獻者審核處置。
+        </p>
+    </div>
+</div>
+{% endblock %}

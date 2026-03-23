@@ -1,6 +1,6 @@
 from django import forms
 from django.forms.widgets import Input
-from .models import SharedBook, OfficialBook
+from .models import SharedBook, OfficialBook, BookSet
 
 
 class BookSearchForm(forms.Form):
@@ -78,3 +78,78 @@ class BookAddForm(forms.ModelForm):
     class Meta:
         model = SharedBook
         fields = ["transferability", "condition_description", "loan_duration_days"]
+
+
+# ============================================
+# 套書相關表單
+# ============================================
+
+
+class BookSetCreateForm(forms.ModelForm):
+    """建立套書表單"""
+
+    class Meta:
+        model = BookSet
+        fields = ["name", "description"]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
+                    "placeholder": "例如：哈利波特全套",
+                }
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
+                    "rows": 3,
+                    "placeholder": "套書說明（選填）",
+                }
+            ),
+        }
+        labels = {
+            "name": "套書名稱",
+            "description": "套書說明",
+        }
+
+
+class BookSetManageForm(forms.Form):
+    """管理套書書籍表單"""
+
+    book_ids = forms.ModelMultipleChoiceField(
+        queryset=SharedBook.objects.none(),
+        required=False,
+        label="選擇書籍",
+        widget=forms.CheckboxSelectMultiple(
+            attrs={
+                "class": "rounded border-slate-300 text-primary focus:ring-primary",
+            }
+        ),
+    )
+
+    def __init__(self, *args, user=None, book_set=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.book_set = book_set
+
+        # 只顯示用戶擁有的書籍
+        if user:
+            queryset = SharedBook.objects.filter(owner=user).select_related(
+                "official_book"
+            )
+            # 如果是編輯現有套書，排除已屬於其他套書的書籍
+            if book_set:
+                queryset = queryset.filter(
+                    forms.Q(book_set=None) | forms.Q(book_set=book_set)
+                )
+            else:
+                queryset = queryset.filter(book_set=None)
+            self.fields["book_ids"].queryset = queryset
+
+    def clean_book_ids(self):
+        book_ids = self.cleaned_data.get("book_ids", [])
+        for book in book_ids:
+            if book.owner != self.user:
+                raise forms.ValidationError("只能加入自己擁有的書籍")
+            if self.book_set and book.book_set and book.book_set != self.book_set:
+                raise forms.ValidationError(f"{book} 已屬於其他套書")
+        return book_ids

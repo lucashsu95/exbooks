@@ -695,3 +695,106 @@ def deal_confirm_return(request, pk):
         messages.error(request, str(e))
 
     return redirect("deals:detail", pk)
+
+
+# ============================================
+# 例外處理 Views
+# ============================================
+
+from books.services import declare_exception, resolve_exception
+from .forms import ExceptionDealForm, ExceptionResolveForm
+
+
+@login_required
+def exception_create(request, book_id):
+    """申請例外處理（EX 交易）"""
+    from books.models import SharedBook
+
+    book = get_object_or_404(SharedBook, pk=book_id)
+
+    # 權限檢查：只有 Keeper 可以申請
+    if request.user != book.keeper:
+        messages.error(request, "只有持有者可以申請例外處理")
+        return redirect("books:detail", pk=book_id)
+
+    # 狀態檢查
+    if book.status not in [
+        SharedBook.Status.TRANSFERABLE,
+        SharedBook.Status.OCCUPIED,
+        SharedBook.Status.RESTORABLE,
+    ]:
+        messages.error(request, "此書籍狀態無法申請例外處理")
+        return redirect("books:detail", pk=book_id)
+
+    if request.method == "POST":
+        form = ExceptionDealForm(request.POST)
+        if form.is_valid():
+            try:
+                # 建立 EX 交易
+                deal = deal_service.create_deal(
+                    deal_type=Deal.DealType.EXCEPT,
+                    shared_book=book,
+                    applicant=request.user,
+                    note=form.cleaned_data.get("description", ""),
+                )
+                # 宣告例外狀態
+                declare_exception(book)
+                messages.success(request, "例外處理申請已送出")
+                return redirect("deals:detail", pk=deal.pk)
+            except Exception as e:
+                messages.error(request, str(e))
+    else:
+        form = ExceptionDealForm()
+
+    return render(
+        request,
+        "deals/exception_create.html",
+        {"form": form, "book": book},
+    )
+
+
+@login_required
+def exception_resolve(request, pk):
+    """處置例外（Owner 審核）"""
+    deal = get_object_or_404(
+        Deal.objects.select_related("shared_book"),
+        pk=pk,
+    )
+
+    # 權限檢查：只有 Owner 可以處置
+    if request.user != deal.shared_book.owner:
+        messages.error(request, "只有貢獻者可以處置例外")
+        return redirect("deals:detail", pk=pk)
+
+    # 狀態檢查
+    if deal.deal_type != Deal.DealType.EXCEPT:
+        messages.error(request, "此交易不是例外處理類型")
+        return redirect("deals:detail", pk=pk)
+
+    if deal.shared_book.status != SharedBook.Status.EXCEPTION:
+        messages.error(request, "書籍不在例外狀態")
+        return redirect("deals:detail", pk=pk)
+
+    if request.method == "POST":
+        form = ExceptionResolveForm(request.POST)
+        if form.is_valid():
+            try:
+                resolution = form.cleaned_data["resolution"]
+                resolve_exception(deal.shared_book, resolution)
+                deal.status = Deal.Status.DONE
+                deal.save(update_fields=["status", "updated_at"])
+                messages.success(
+                    request,
+                    f"已處置為「{dict(ExceptionResolveForm.RESOLUTION_CHOICES).get(resolution)}」",
+                )
+                return redirect("books:detail", pk=deal.shared_book.pk)
+            except Exception as e:
+                messages.error(request, str(e))
+    else:
+        form = ExceptionResolveForm()
+
+    return render(
+        request,
+        "deals/exception_resolve.html",
+        {"form": form, "deal": deal},
+    )

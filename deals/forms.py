@@ -110,3 +110,73 @@ class ExtensionRequestForm(forms.Form):
         label="延長天數",
         help_text="請輸入 7 至 30 天的延長天數",
     )
+
+
+# ============================================
+# 例外處理相關表單
+# ============================================
+
+
+class ExceptionDealForm(forms.Form):
+    """例外處理申請表單（EX 交易）。"""
+
+    REASON_CHOICES = [
+        ("lost", "書籍遺失"),
+        ("damaged", "書籍損毀"),
+        ("found", "書籍尋獲"),
+    ]
+
+    reason = forms.ChoiceField(
+        choices=REASON_CHOICES,
+        widget=forms.RadioSelect(
+            attrs={
+                "class": "h-4 w-4 border-slate-300 text-primary focus:ring-primary",
+            }
+        ),
+        label="例外原因",
+        help_text="請選擇例外處理的原因",
+    )
+    description = forms.CharField(
+        widget=forms.Textarea(
+            attrs={
+                "rows": 4,
+                "class": "w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
+                "placeholder": "請詳細說明情況...",
+            }
+        ),
+        required=False,
+        label="詳細說明",
+        help_text="請描述書籍狀況或遺失/損毀原因",
+    )
+
+
+class ExceptionResolveForm(forms.Form):
+    """例外處理處置表單（Owner 審核）。"""
+
+    RESOLUTION_CHOICES = [
+        ("lost", "確認遺失"),
+        ("destroyed", "確認損毀"),
+        ("found", "確認尋獲歸還"),
+    ]
+
+    resolution = forms.ChoiceField(
+        choices=RESOLUTION_CHOICES,
+        widget=forms.RadioSelect(
+            attrs={
+                "class": "h-4 w-4 border-slate-300 text-primary focus:ring-primary",
+            }
+        ),
+        label="處置方式",
+        help_text="請選擇處置結果",
+    )
+    note = forms.CharField(
+        widget=forms.Textarea(
+            attrs={
+                "rows": 3,
+                "class": "w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
+                "placeholder": "備註說明（選填）",
+            }
+        ),
+        required=False,
+        label="備註",
+    )

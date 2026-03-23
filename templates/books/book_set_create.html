@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}建立套書 - Exbooks{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">建立套書</h1>
+
+    <form method="post" class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+        {% csrf_token %}
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    套書名稱
+                </label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.name.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    套書說明（選填）
+                </label>
+                {{ form.description }}
+            </div>
+        </div>
+
+        {% if available_books %}
+        <div class="mt-6">
+            <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">選擇書籍加入套書</h2>
+            <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">建立套書後，您可以在詳情頁面加入書籍</p>
+        </div>
+        {% endif %}
+
+        <div class="mt-6 flex gap-3">
+            <button type="submit"
+                    class="px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors">
+                建立套書
+            </button>
+            <a href="{% url 'books:book_set_list' %}"
+               class="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                取消
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
