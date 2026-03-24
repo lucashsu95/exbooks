@@ -56,21 +56,24 @@ def test_deal_list_click_to_detail(authenticated_page, live_server, deal):
     # First create a deal that will show in the list
     authenticated_page.goto(f"{live_server.url}/deals/")
 
-    # If there are deal cards, click on one
-    deal_links = authenticated_page.locator("a[href*='/deals/']")
-    count = deal_links.count()
+    # Use a more specific selector to find deal cards
+    # Deal cards have href like /deals/<uuid>/ but exclude:
+    # - /deals/ (list page itself)
+    # - /deals/notifications/ (notification page)
+    # - /deals/push/ (push subscription endpoints)
+    deal_cards = authenticated_page.locator("main a[href^='/deals/']").locator(
+        ":not([href='/deals/']):not([href='/deals/notifications/']):not([href^='/deals/push/'])"
+    )
+    count = deal_cards.count()
 
     if count > 0:
-        # Click on the first deal link that's not the list page itself
-        for i in range(count):
-            link = deal_links.nth(i)
-            href = link.get_attribute("href")
-            if href and href != "/deals/" and "/deals/" in href:
-                link.click()
-                # Verify navigation to detail page
-                authenticated_page.wait_for_url("**/deals/**", timeout=10000)
-                expect(authenticated_page.locator("body")).to_be_visible()
-                break
+        # Click on the first deal card
+        first_card = deal_cards.first
+        first_card.scroll_into_view_if_needed()
+        first_card.click()
+        # Verify navigation to detail page (URL should contain a UUID)
+        authenticated_page.wait_for_url(r"**/deals/[0-9a-f-]{36}/", timeout=10000)
+        expect(authenticated_page.locator("body")).to_be_visible()
     else:
         # No deals to click - just verify page is visible
         expect(authenticated_page.locator("body")).to_be_visible()
