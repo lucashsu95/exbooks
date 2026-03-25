@@ -29,6 +29,65 @@
 <p class="text-sm text-slate-500 dark:text-slate-400">會員</p>
 </div>
 
+<!-- Trust Level Badge -->
+{% if profile %}
+<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
+<div class="flex items-center gap-3">
+<div class="size-12 rounded-full flex items-center justify-center shrink-0
+{% if profile.trust_level == 0 %}
+bg-gray-100 dark:bg-gray-800
+{% elif profile.trust_level == 1 %}
+bg-blue-100 dark:bg-blue-900/30
+{% elif profile.trust_level == 2 %}
+bg-green-100 dark:bg-green-900/30
+{% elif profile.trust_level == 3 %}
+bg-amber-100 dark:bg-amber-900/30
+{% endif %}">
+<span class="material-symbols-outlined text-2xl
+{% if profile.trust_level == 0 %}
+text-gray-400
+{% elif profile.trust_level == 1 %}
+text-blue-500
+{% elif profile.trust_level == 2 %}
+text-green-500
+{% elif profile.trust_level == 3 %}
+text-amber-500
+{% endif %}">
+{% if profile.trust_level == 0 %}new_releases
+{% elif profile.trust_level == 1 %}person
+{% elif profile.trust_level == 2 %}verified
+{% elif profile.trust_level == 3 %}workspace_premium
+{% endif %}
+</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-2">
+<p class="text-sm font-bold text-slate-900 dark:text-slate-100">
+信用等級：
+{% if profile.trust_level == 0 %}新手
+{% elif profile.trust_level == 1 %}一般
+{% elif profile.trust_level == 2 %}可信
+{% elif profile.trust_level == 3 %}優良
+{% endif %}
+</p>
+<span class="px-2 py-0.5 rounded-full text-xs font-bold
+{% if profile.trust_level == 0 %}
+bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400
+{% elif profile.trust_level == 1 %}
+bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400
+{% elif profile.trust_level == 2 %}
+bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400
+{% elif profile.trust_level == 3 %}
+bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400
+{% endif %}">
+Lv.{{ profile.trust_level }}
+</span>
+</div>
+</div>
+</div>
+</div>
+{% endif %}
+
 <!-- Activity Stats Card -->
 <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
 <h3 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">活動統計</h3>

@@ -4,34 +4,116 @@
 {% block content %}
 <!-- Header Section -->
 <header class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
-    <div class="text-primary flex size-12 shrink-0 items-center justify-start">
-        <span class="material-symbols-outlined text-3xl">menu</span>
-    </div>
-    <h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight tracking-tight flex-1 text-center">個人資料</h2>
-    <div class="flex w-12 items-center justify-end">
-        <a href="{% url 'accounts:profile_edit' %}" class="flex size-10 cursor-pointer items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20">
-            <span class="material-symbols-outlined">edit</span>
-        </a>
-    </div>
+<div class="text-primary flex size-12 shrink-0 items-center justify-start">
+<span class="material-symbols-outlined text-3xl">menu</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight tracking-tight flex-1 text-center">個人資料</h2>
+<div class="flex w-12 items-center justify-end">
+<a href="{% url 'accounts:profile_edit' %}" class="flex size-10 cursor-pointer items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20">
+<span class="material-symbols-outlined">edit</span>
+</a>
+</div>
 </header>
 
 <main class="px-4 py-6 max-w-lg mx-auto w-full space-y-6 pb-24">
-    <!-- Profile Card -->
-    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 flex flex-col items-center text-center">
-        <div class="relative mb-4">
-            {% if user.profile.avatar %}
-            <img src="{{ user.profile.avatar.url }}" alt="頭像" class="h-24 w-24 rounded-full object-cover border-4 border-white dark:border-slate-800 shadow-md">
-            {% else %}
-            <div class="flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-primary text-3xl font-bold border-4 border-white dark:border-slate-800 shadow-md">
-                {{ user.profile.nickname|default:user.email|truncatechars:1 }}
-            </div>
-            {% endif %}
-        </div>
-        <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">{{ user.profile.nickname|default:"未設定暱稱" }}</h2>
-        <p class="text-sm text-slate-500 dark:text-slate-400">{{ user.email }}</p>
-    </div>
+<!-- Profile Card -->
+<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 flex flex-col items-center text-center">
+<div class="relative mb-4">
+{% if user.profile.avatar %}
+<img src="{{ user.profile.avatar.url }}" alt="頭像" class="h-24 w-24 rounded-full object-cover border-4 border-white dark:border-slate-800 shadow-md">
+{% else %}
+<div class="flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-primary text-3xl font-bold border-4 border-white dark:border-slate-800 shadow-md">
+{{ user.profile.nickname|default:user.email|truncatechars:1 }}
+</div>
+{% endif %}
+</div>
+<h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">{{ user.profile.nickname|default:"未設定暱稱" }}</h2>
+<p class="text-sm text-slate-500 dark:text-slate-400">{{ user.email }}</p>
+</div>
 
-    <!-- Info Details -->
+<!-- Trust Level Card -->
+<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
+<div class="flex items-center gap-3">
+<div class="size-12 rounded-full flex items-center justify-center shrink-0
+{% if user.profile.trust_level == 0 %}
+bg-gray-100 dark:bg-gray-800
+{% elif user.profile.trust_level == 1 %}
+bg-blue-100 dark:bg-blue-900/30
+{% elif user.profile.trust_level == 2 %}
+bg-green-100 dark:bg-green-900/30
+{% elif user.profile.trust_level == 3 %}
+bg-amber-100 dark:bg-amber-900/30
+{% endif %}">
+<span class="material-symbols-outlined text-2xl
+{% if user.profile.trust_level == 0 %}
+text-gray-400
+{% elif user.profile.trust_level == 1 %}
+text-blue-500
+{% elif user.profile.trust_level == 2 %}
+text-green-500
+{% elif user.profile.trust_level == 3 %}
+text-amber-500
+{% endif %}">
+{% if user.profile.trust_level == 0 %}new_releases
+{% elif user.profile.trust_level == 1 %}person
+{% elif user.profile.trust_level == 2 %}verified
+{% elif user.profile.trust_level == 3 %}workspace_premium
+{% endif %}
+</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-2">
+<p class="text-sm font-bold text-slate-900 dark:text-slate-100">
+{% if user.profile.trust_level == 0 %}新手
+{% elif user.profile.trust_level == 1 %}一般
+{% elif user.profile.trust_level == 2 %}可信
+{% elif user.profile.trust_level == 3 %}優良
+{% endif %}
+</p>
+<span class="px-2 py-0.5 rounded-full text-xs font-bold
+{% if user.profile.trust_level == 0 %}
+bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400
+{% elif user.profile.trust_level == 1 %}
+bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400
+{% elif user.profile.trust_level == 2 %}
+bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400
+{% elif user.profile.trust_level == 3 %}
+bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400
+{% endif %}">
+Lv.{{ user.profile.trust_level }}
+</span>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+{% if borrowing_limits.max_books == 999 %}
+無借閱限制
+{% else %}
+最多借 {{ borrowing_limits.max_books }} 本，最長 {{ borrowing_limits.max_days }} 天
+{% endif %}
+</p>
+</div>
+</div>
+</div>
+
+<!-- Activity Stats Card -->
+<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
+<h3 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">活動統計</h3>
+<div class="grid grid-cols-3 gap-4">
+<div class="text-center">
+<p class="text-2xl font-bold text-primary">{{ activity_stats.books_contributed }}</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">貢獻書籍</p>
+</div>
+<div class="text-center">
+<p class="text-2xl font-bold text-primary">{{ activity_stats.books_borrowed }}</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">借閱次數</p>
+</div>
+<div class="text-center">
+<p class="text-2xl font-bold text-primary">{{ activity_stats.books_lent }}</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">出借次數</p>
+</div>
+</div>
+</div>
+
+<!-- Info Details -->
     <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
         <div class="p-4 border-b border-slate-100 dark:border-slate-700/50 flex items-center gap-3">
             <div class="size-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 shrink-0">
