@@ -4,11 +4,14 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 
+from accounts.models import Appeal
+from accounts.services import appeal_service
 from books.models import SharedBook
 from deals.models import Deal, Rating
-from .forms import CompleteProfileForm, ProfileForm
+from .forms import AppealForm, CompleteProfileForm, ProfileForm
 from .models import UserProfile
 from .services import user_stats_service
 
@@ -20,7 +23,22 @@ def profile(request):
     if hasattr(request.user, "profile"):
         profile_obj = request.user.profile
 
-    return render(request, "accounts/profile.html", {"profile": profile_obj})
+    # 統計資料
+    activity_stats = user_stats_service.get_user_activity_stats(request.user)
+
+    # 信用等級借閱限制
+    from accounts.services.trust_service import get_borrowing_limits
+
+    borrowing_limits = get_borrowing_limits(
+        profile_obj.trust_level if profile_obj else 1
+    )
+
+    context = {
+        "profile": profile_obj,
+        "activity_stats": activity_stats,
+        "borrowing_limits": borrowing_limits,
+    }
+    return render(request, "accounts/profile.html", context)
 
 
 @login_required
@@ -148,3 +166,58 @@ def complete_profile(request):
         form = CompleteProfileForm(instance=profile)
 
     return render(request, "accounts/complete_profile.html", {"form": form})
+
+
+# ==================== 申訴相關 Views ====================
+
+
+@login_required
+def appeal_list(request):
+    """申訴列表"""
+    status_filter = request.GET.get("status")
+    appeals = appeal_service.get_user_appeals(request.user, status=status_filter)
+    return render(request, "accounts/appeal_list.html", {"appeals": appeals})
+
+
+@login_required
+def appeal_create(request):
+    """建立申訴"""
+    if request.method == "POST":
+        form = AppealForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                appeal = appeal_service.create_appeal(
+                    user=request.user,
+                    appeal_type=form.cleaned_data["appeal_type"],
+                    title=form.cleaned_data["title"],
+                    description=form.cleaned_data["description"],
+                    evidence=form.cleaned_data.get("evidence"),
+                )
+                messages.success(request, "申訴已送出")
+                return redirect("accounts:appeal_detail", appeal_id=appeal.id)
+            except Exception as e:
+                messages.error(request, str(e))
+    else:
+        form = AppealForm()
+    return render(request, "accounts/appeal_form.html", {"form": form})
+
+
+@login_required
+def appeal_detail(request, appeal_id):
+    """申訴詳情"""
+    appeal = get_object_or_404(Appeal, id=appeal_id)
+    if appeal.user != request.user:
+        return HttpResponseForbidden("您無權查看此申訴")
+    return render(request, "accounts/appeal_detail.html", {"appeal": appeal})
+
+
+@login_required
+def appeal_cancel(request, appeal_id):
+    """取消申訴"""
+    if request.method == "POST":
+        try:
+            appeal_service.cancel_appeal(appeal_id, request.user)
+            messages.success(request, "申訴已取消")
+        except Exception as e:
+            messages.error(request, str(e))
+    return redirect("accounts:appeal_list")

@@ -5,10 +5,54 @@ from django.utils.translation import gettext_lazy as _
 from allauth.account.forms import SignupForm as AllauthSignupForm
 from allauth.socialaccount.forms import SignupForm as SocialSignupForm
 
-from .models import UserProfile
+from .models import Appeal, UserProfile
 from .validators import is_adult, validate_age_18_or_older
 
 User = get_user_model()
+
+
+class AppealForm(forms.ModelForm):
+    """申訴表單。"""
+
+    class Meta:
+        model = Appeal
+        fields = ["appeal_type", "title", "description", "evidence"]
+        widgets = {
+            "appeal_type": forms.Select(
+                attrs={
+                    "class": "w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                }
+            ),
+            "title": forms.TextInput(
+                attrs={
+                    "class": "w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100",
+                    "placeholder": "申訴標題",
+                }
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100",
+                    "rows": 5,
+                    "placeholder": "請詳細描述您的申訴內容（至少 50 字元）",
+                }
+            ),
+            "evidence": forms.FileInput(
+                attrs={
+                    "class": "w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                }
+            ),
+        }
+        error_messages = {
+            "title": {"required": "請輸入申訴標題"},
+            "description": {"required": "請輸入申訴描述"},
+        }
+
+    def clean_description(self):
+        """驗證描述至少 50 字元"""
+        description = self.cleaned_data.get("description", "")
+        if len(description) < 50:
+            raise forms.ValidationError("申訴描述需至少 50 字元")
+        return description
 
 
 class CustomSignupForm(AllauthSignupForm):
