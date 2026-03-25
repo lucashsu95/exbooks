@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load socialaccount %}
+{% load crispy_forms_tags %}
 {% block title %}註冊 - Exbooks{% endblock %}
 
 {% block extra_head %}
@@ -22,25 +23,7 @@
         font-family: 'Work Sans', sans-serif;
     }
     
-    @media (prefers-color-scheme: dark) {
-        .login-page {
-            --page-bg: #101822;
-            --card-bg: #1e293b;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --border: #334155;
-            --input-bg: #0f172a;
-        }
-    }
-    
-    .dark .login-page {
-        --page-bg: #101822;
-        --card-bg: #1e293b;
-        --text-primary: #f1f5f9;
-        --text-secondary: #94a3b8;
-        --border: #334155;
-        --input-bg: #0f172a;
-    }
+
     
     .floating-pages {
         position: fixed;
@@ -239,54 +222,10 @@
                 <div class="divider-line"></div>
             </div>
             
-            <form method="post" class="login-form">
-                {% csrf_token %}
-                
-                {% if form.errors %}
-                <div class="error-message">
-                    <strong>請修正以下錯誤：</strong>
-                    <ul>
-                        {% for field in form %}
-                            {% for error in field.errors %}
-                            <li>{{ field.label }}: {{ error }}</li>
-                            {% endfor %}
-                        {% endfor %}
-                        {% for error in form.non_field_errors %}
-                        <li>{{ error }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-                {% endif %}
-                
-                <div class="form-group">
-                    <label for="id_email" class="form-label">電子信箱<span class="required">*</span></label>
-                    <input type="email" name="email" id="id_email" class="form-input" placeholder="your@email.com" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="id_password1" class="form-label">密碼<span class="required">*</span></label>
-                    <input type="password" name="password1" id="id_password1" class="form-input" placeholder="至少 8 個字元" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="id_password2" class="form-label">確認密碼<span class="required">*</span></label>
-                    <input type="password" name="password2" id="id_password2" class="form-input" placeholder="再次輸入密碼" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="id_nickname" class="form-label">暱稱<span class="required">*</span></label>
-                    <input type="text" name="nickname" id="id_nickname" class="form-input" placeholder="顯示在平台上的名稱" maxlength="50" required>
-                    <span class="form-hint">其他用戶會看到這個名稱</span>
-                </div>
-                
-                <div class="form-group">
-                    <label for="id_birth_date" class="form-label">出生日期<span class="required">*</span></label>
-                    <input type="date" name="birth_date" id="id_birth_date" class="form-input" required>
-                    <span class="form-hint">用於年齡驗證</span>
-                </div>
-                
-                <button type="submit" class="submit-btn">建立帳號</button>
-            </form>
+<form method="post" class="login-form">
+  {% csrf_token %}
+  {% crispy form %}
+</form>
             
             <div class="age-notice">
                 年滿 18 歲以上才能使用本服務

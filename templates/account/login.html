@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load socialaccount %}
+{% load crispy_forms_tags %}
 {% block title %}登入 - Exbooks{% endblock %}
 
 {% block extra_head %}
@@ -25,25 +26,7 @@
         font-family: 'Work Sans', sans-serif;
     }
     
-    @media (prefers-color-scheme: dark) {
-        .login-page {
-            --page-bg: #101822;
-            --card-bg: #1e293b;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --border: #334155;
-            --input-bg: #0f172a;
-        }
-    }
-    
-    .dark .login-page {
-        --page-bg: #101822;
-        --card-bg: #1e293b;
-        --text-primary: #f1f5f9;
-        --text-secondary: #94a3b8;
-        --border: #334155;
-        --input-bg: #0f172a;
-    }
+
     
     /* 背景動畫 - 浮動書頁 */
     .floating-pages {
@@ -429,58 +412,36 @@
                 <div class="divider-line"></div>
             </div>
             
-            <!-- Email 登入表單 -->
-            <form method="post" class="login-form">
-                {% csrf_token %}
-                
-                {% if form.errors %}
-                <div class="error-message">
-                    帳號或密碼不正確，請重新輸入
-                </div>
-                {% endif %}
-                
-                <div class="form-group">
-                    <label for="id_login" class="form-label">電子信箱</label>
-                    <input 
-                        type="email" 
-                        name="login" 
-                        id="id_login" 
-                        class="form-input" 
-                        placeholder="your@email.com"
-                        required
-                    >
-                </div>
-                
-                <div class="form-group">
-                    <label for="id_password" class="form-label">密碼</label>
-                    <input 
-                        type="password" 
-                        name="password" 
-                        id="id_password" 
-                        class="form-input" 
-                        placeholder="輸入你的密碼"
-                        required
-                    >
-                </div>
-                
-                {% if redirect_field_value %}
-                <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
-                {% endif %}
-                
-                <div class="form-row">
-                    <label class="remember-me">
-                        <input type="checkbox" name="remember">
-                        記住我
-                    </label>
-                    <a href="{% url 'account_reset_password' %}" class="forgot-link">
-                        忘記密碼？
-                    </a>
-                </div>
-                
-                <button type="submit" class="submit-btn">
-                    登入
-                </button>
-            </form>
+<!-- Email 登入表單 -->
+      <form method="post" class="login-form">
+        {% csrf_token %}
+
+        {% if form.errors %}
+        <div class="error-message">
+          帳號或密碼不正確，請重新輸入
+        </div>
+        {% endif %}
+
+        {% crispy form %}
+
+        {% if redirect_field_value %}
+        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+        {% endif %}
+
+        <div class="form-row">
+          <label class="remember-me">
+            <input type="checkbox" name="remember">
+            記住我
+          </label>
+          <a href="{% url 'account_reset_password' %}" class="forgot-link">
+            忘記密碼？
+          </a>
+        </div>
+
+        <button type="submit" class="submit-btn">
+          登入
+        </button>
+      </form>
             
             <!-- 註冊連結 -->
             <p class="footer-link">

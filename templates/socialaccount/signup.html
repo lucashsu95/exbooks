@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load socialaccount %}
+{% load crispy_forms_tags %}
 {% block title %}完成註冊 - Exbooks{% endblock %}
 
 {% block extra_head %}
@@ -22,25 +23,7 @@
   font-family: 'Work Sans', sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  .login-page {
-    --page-bg: #101822;
-    --card-bg: #1e293b;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --border: #334155;
-    --input-bg: #0f172a;
-  }
-}
 
-.dark .login-page {
-  --page-bg: #101822;
-  --card-bg: #1e293b;
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --border: #334155;
-  --input-bg: #0f172a;
-}
 
 .floating-pages {
   position: fixed;
@@ -228,54 +211,10 @@
         </div>
       </div>
 
-      <form method="post" class="login-form">
-        {% csrf_token %}
-
-        {% if form.errors %}
-        <div class="error-message">
-          <strong>請修正以下錯誤：</strong>
-          <ul>
-            {% for field in form %}
-              {% for error in field.errors %}
-                <li>{{ field.label }}: {{ error }}</li>
-              {% endfor %}
-            {% endfor %}
-            {% for error in form.non_field_errors %}
-              <li>{{ error }}</li>
-            {% endfor %}
-          </ul>
-        </div>
-        {% endif %}
-
-        <div class="form-group">
-          <label for="id_nickname" class="form-label">暱稱<span class="required">*</span></label>
-          <input type="text" name="nickname" id="id_nickname" class="form-input" 
-                 value="{{ form.nickname.value|default:'' }}" 
-                 placeholder="顯示在平台上的名稱" maxlength="50" required>
-          <span class="form-hint">其他用戶會看到這個名稱</span>
-        </div>
-
-        <div class="form-group">
-          <label for="id_birth_date" class="form-label">出生日期<span class="required">*</span></label>
-          <input type="date" name="birth_date" id="id_birth_date" class="form-input" 
-                 value="{{ form.birth_date.value|default:'' }}" required>
-          <span class="form-hint">用於年齡驗證</span>
-        </div>
-
-        <div class="form-group">
-          <label for="id_default_location" class="form-label">預設取書地點（選填）</label>
-          <input type="text" name="default_location" id="id_default_location" class="form-input" 
-                 value="{{ form.default_location.value|default:'' }}" 
-                 placeholder="例：台北市大安區" maxlength="200">
-          <span class="form-hint">方便其他人與您面交取書</span>
-        </div>
-
-        {% if redirect_field_value %}
-          <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
-        {% endif %}
-
-        <button type="submit" class="submit-btn">完成註冊</button>
-      </form>
+<form method="post" class="login-form">
+  {% csrf_token %}
+  {% crispy form %}
+</form>
 
       <div class="age-notice">
         年滿 18 歲以上才能使用本服務
