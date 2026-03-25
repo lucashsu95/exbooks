@@ -320,30 +320,3 @@ class ProfileForm(forms.ModelForm):
                 raise forms.ValidationError("每個時段需包含星期、開始時間、結束時間")
 
         return schedule
-
-
-# 保留舊的 RegisterForm 以向後相容（將被逐步淘汰）
-class RegisterForm(forms.ModelForm):
-    """舊版註冊表單 — 僅用於向後相容。"""
-
-    nickname = forms.CharField(
-        max_length=50,
-        label="暱稱",
-        help_text="顯示在平台上的名稱",
-    )
-
-    class Meta:
-        model = User
-        fields = ("username", "email")
-        labels = {
-            "username": "帳號",
-            "email": "電子信箱",
-        }
-
-    def save(self, commit=True):
-        user = super().save(commit=commit)
-        if commit:
-            profile = UserProfile.objects.get(user=user)  # signal 已建立
-            profile.nickname = self.cleaned_data["nickname"]
-            profile.save(update_fields=["nickname"])
-        return user
