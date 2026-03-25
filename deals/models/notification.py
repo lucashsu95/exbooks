@@ -20,6 +20,8 @@ class Notification(BaseModel):
         EXTEND_REQUESTED = "EXTEND_REQUESTED", "收到延長申請"
         EXTEND_APPROVED = "EXTEND_APPROVED", "延長申請已核准"
         EXTEND_REJECTED = "EXTEND_REJECTED", "延長申請已拒絕"
+        APPEAL_SUBMITTED = "APPEAL_SUBMITTED", "申訴已送出"
+        APPEAL_RESOLVED = "APPEAL_RESOLVED", "申訴審核完成"
 
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL,
