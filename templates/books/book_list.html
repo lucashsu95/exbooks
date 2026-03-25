@@ -117,16 +117,33 @@
       <div class="relative w-24 h-32 rounded-xl overflow-hidden shrink-0 shadow-lg group-hover:shadow-xl transition-shadow">
         <img class="w-full h-full object-cover" alt="{{ book.official_book.title }} 的封面" src="{% if book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuBlSAm5AwcmdJLphEsyKIZJ9iWzB0otfD9IcFu5Buim2RjYBpL4w7vWD3u6qaidnqPQpx0C8g1zdJ69ceuhSRE4bJU1HB6iBJG7LSOanbVN72OFbRT_sXIuMy556iXOIt0f-rQeJZkdqRDUjRq0JZfLx7h3HCiyqqqHUvQdU95O_apLHu1S0DqUMPFWdpVBh6Bxvrty9Fc2MILIMQkOuD_4DZ71tdUDNIAki1-nczh3Sw5Bd8Nd1o3TuyJCHHn6vqgxkiBGoo6j8_0{% endif %}"/>
       </div>
-      <div class="relative flex flex-col justify-between py-1 w-full">
-        <div>
-          <p class="text-slate-900 dark:text-slate-100 text-base font-bold group-hover:text-primary transition-colors">{{ book.official_book.title }}</p>
-          <p class="text-slate-500 dark:text-slate-400 text-xs mt-1">{{ book.official_book.author|default:"未知作者" }}</p>
-        </div>
-        <div class="flex items-center justify-between mt-2">
-          <span class="text-primary text-xs font-bold bg-primary/10 backdrop-blur-sm px-3 py-1.5 rounded-full">{{ book.official_book.get_category_display }}</span>
-          <span class="material-symbols-outlined text-primary opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">arrow_forward</span>
-        </div>
-      </div>
+<div class="relative flex flex-col justify-between py-1 w-full">
+<div>
+<p class="text-slate-900 dark:text-slate-100 text-base font-bold group-hover:text-primary transition-colors">{{ book.official_book.title }}</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs mt-1">{{ book.official_book.author|default:"未知作者" }}</p>
+</div>
+<div class="flex items-center justify-between mt-2">
+<div class="flex items-center gap-2">
+<span class="text-primary text-xs font-bold bg-primary/10 backdrop-blur-sm px-3 py-1.5 rounded-full">{{ book.official_book.get_category_display }}</span>
+<!-- 持有者信用等級徽章 -->
+{% if book.keeper.profile %}
+<span class="text-xs font-medium px-2 py-1 rounded-full
+{% if book.keeper.profile.trust_level == 0 %}bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400
+{% elif book.keeper.profile.trust_level == 1 %}bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400
+{% elif book.keeper.profile.trust_level == 2 %}bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400
+{% elif book.keeper.profile.trust_level == 3 %}bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400
+{% endif %}">
+{% if book.keeper.profile.trust_level == 0 %}新手
+{% elif book.keeper.profile.trust_level == 1 %}一般
+{% elif book.keeper.profile.trust_level == 2 %}可信
+{% elif book.keeper.profile.trust_level == 3 %}優良
+{% endif %}
+</span>
+{% endif %}
+</div>
+<span class="material-symbols-outlined text-primary opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">arrow_forward</span>
+</div>
+</div>
     </a>
     {% empty %}
     <div class="flex items-center justify-center p-8 w-full">

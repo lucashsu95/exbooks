@@ -224,6 +224,7 @@ class ProfileForm(forms.ModelForm):
             "birth_date",
             "default_transferability",
             "default_location",
+            "available_schedule",
             "avatar",
         )
         widgets = {
@@ -232,6 +233,7 @@ class ProfileForm(forms.ModelForm):
             "default_location": forms.TextInput(
                 attrs={"placeholder": "例：台北市大安區"}
             ),
+            "available_schedule": forms.HiddenInput(),
         }
 
     def clean_birth_date(self):
@@ -240,6 +242,29 @@ class ProfileForm(forms.ModelForm):
         if birth_date:
             validate_age_18_or_older(birth_date)
         return birth_date
+
+    def clean_available_schedule(self):
+        """驗證可取書時間格式"""
+        import json
+
+        schedule = self.cleaned_data.get("available_schedule")
+        if not schedule:
+            return []
+
+        if isinstance(schedule, str):
+            try:
+                schedule = json.loads(schedule)
+            except json.JSONDecodeError:
+                raise forms.ValidationError("可取書時間格式錯誤")
+
+        # 驗證每個時段
+        for slot in schedule:
+            if not isinstance(slot, dict):
+                raise forms.ValidationError("每個時段必須是物件")
+            if "weekday" not in slot or "start" not in slot or "end" not in slot:
+                raise forms.ValidationError("每個時段需包含星期、開始時間、結束時間")
+
+        return schedule
 
 
 # 保留舊的 RegisterForm 以向後相容（將被逐步淘汰）

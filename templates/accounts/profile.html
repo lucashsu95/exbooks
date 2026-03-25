@@ -162,21 +162,61 @@ Lv.{{ user.profile.trust_level }}
         </div>
     </div>
 
-    <!-- Actions -->
-    <div class="space-y-3">
-        <a href="{% url 'accounts:profile_edit' %}" class="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold py-3.5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-            <span class="material-symbols-outlined">settings</span>
-            帳號設定
-        </a>
-        <form method="post" action="{% url 'account_logout' %}">
-            {% csrf_token %}
-            <button type="submit" class="w-full bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 font-bold py-3.5 rounded-xl shadow-sm border border-rose-100 dark:border-rose-900/30 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-                <span class="material-symbols-outlined">logout</span>
-                登出
-            </button>
-        </form>
-    </div>
+<!-- Data Export Section -->
+<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary">download</span>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-900 dark:text-slate-100">下載我的資料</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">今日剩餘 <span id="remaining-exports">--</span> 次</p>
+</div>
+</div>
+<form method="post" action="{% url 'accounts:export_user_data' %}" class="inline">
+{% csrf_token %}
+<button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition-colors">
+下載
+</button>
+</form>
+</div>
+</div>
+
+<!-- Actions -->
+<div class="space-y-3">
+<a href="{% url 'accounts:profile_edit' %}" class="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold py-3.5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+<span class="material-symbols-outlined">settings</span>
+帳號設定
+</a>
+<form method="post" action="{% url 'account_logout' %}">
+{% csrf_token %}
+<button type="submit" class="w-full bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 font-bold py-3.5 rounded-xl shadow-sm border border-rose-100 dark:border-rose-900/30 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+<span class="material-symbols-outlined">logout</span>
+登出
+</button>
+</form>
+</div>
 </main>
 
 {% include '_bottom_nav.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 載入今日剩餘匯出次數
+    fetch('{% url "accounts:export_status" %}')
+        .then(response => response.json())
+        .then(data => {
+            const remainingEl = document.getElementById('remaining-exports');
+            if (remainingEl) {
+                remainingEl.textContent = data.remaining;
+            }
+        })
+        .catch(error => {
+            console.error('無法取得匯出次數:', error);
+        });
+});
+</script>
 {% endblock %}

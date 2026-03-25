@@ -174,7 +174,8 @@ class TestNotification:
 
     def test_notification_type_choices(self):
         types = Notification.NotificationType
-        assert len(types.choices) == 10
+        # 10 original + 2 appeal types (APPEAL_SUBMITTED, APPEAL_RESOLVED)
+        assert len(types.choices) == 12
 
     def test_default_is_read(self):
         notif = NotificationFactory()

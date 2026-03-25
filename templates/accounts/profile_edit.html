@@ -5,82 +5,162 @@
 {% block content %}
 <!-- Header -->
 <header class="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
-    <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
-        <div class="flex items-center gap-3">
-            <a href="{% url 'accounts:profile' %}" class="material-symbols-outlined text-slate-600 dark:text-slate-400 cursor-pointer">arrow_back</a>
-            <h1 class="text-xl font-bold tracking-tight">編輯個人資料</h1>
-        </div>
-    </div>
+<div class="flex items-center p-4 justify-between max-w-xl mx-auto">
+<div class="flex items-center gap-3">
+<a href="{% url 'accounts:profile' %}" class="material-symbols-outlined text-slate-600 dark:text-slate-400 cursor-pointer">arrow_back</a>
+<h1 class="text-xl font-bold tracking-tight">編輯個人資料</h1>
+</div>
+</div>
 </header>
 
 <main class="max-w-xl mx-auto p-4 pb-24">
-    <form method="post" enctype="multipart/form-data" class="space-y-4">
-        {% csrf_token %}
-        
-        <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-            {% for field in form %}
-            <div class="mb-4 last:mb-0">
-                <label for="{{ field.id_for_label }}" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                    {{ field.label }}
-                </label>
-                
-                {% if field.field.widget.input_type == 'select' %}
-                <select name="{{ field.html_name }}" id="{{ field.id_for_label }}"
-                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-primary transition-colors">
-                    {% for value, label in field.field.choices %}
-                    <option value="{{ value }}" {% if field.value == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-                
-                {% elif field.field.widget.input_type == 'clearablefile' or field.name == 'avatar' %}
-                <div class="flex items-center gap-4">
-                    {% if field.value %}
-                    <img src="{{ field.value.url }}" alt="目前頭像"
-                        class="h-16 w-16 rounded-full object-cover border-2 border-primary">
-                    {% else %}
-                    <div class="h-16 w-16 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-                        <span class="material-symbols-outlined text-slate-400">person</span>
-                    </div>
-                    {% endif %}
-                    <input type="file" name="{{ field.html_name }}" id="{{ field.id_for_label }}" accept="image/*"
-                        class="text-sm text-slate-600 dark:text-slate-400
-                               file:mr-3 file:rounded-lg file:border-0
-                               file:bg-primary/10 file:px-4 file:py-2
-                               file:text-sm file:font-medium file:text-primary
-                               hover:file:bg-primary/20 file:transition-colors
-                               file:cursor-pointer">
-                </div>
-                
-                {% else %}
-                <input type="{{ field.field.widget.input_type|default:'text' }}"
-                    name="{{ field.html_name }}"
-                    id="{{ field.id_for_label }}"
-                    value="{{ field.value|default:'' }}"
-                    {% if field.field.widget.attrs.placeholder %}placeholder="{{ field.field.widget.attrs.placeholder }}"{% endif %}
-                    class="w-full rounded-xl border bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 transition-colors
-                           placeholder:text-slate-400 focus:ring-2 focus:ring-primary focus:border-primary
-                           {% if field.errors %}border-rose-400 focus:ring-rose-400{% else %}border-slate-200 dark:border-slate-700{% endif %}">
-                {% endif %}
-                
-                {% if field.errors %}
-                <p class="mt-1 text-xs text-rose-500">{{ field.errors.0 }}</p>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-        
-        <div class="flex gap-3">
-            <button type="submit"
-                class="flex-1 bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-transform">
-                儲存變更
-            </button>
-            <a href="{% url 'accounts:profile' %}"
-                class="flex-1 text-center bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold py-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                取消
-            </a>
-        </div>
-    </form>
+<form method="post" enctype="multipart/form-data" class="space-y-4" x-data="scheduleForm()">
+{% csrf_token %}
+
+<div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+{% for field in form %}
+{% if field.name != 'available_schedule' %}
+<div class="mb-4 last:mb-0">
+<label for="{{ field.id_for_label }}" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+{{ field.label }}
+</label>
+
+{% if field.field.widget.input_type == 'select' %}
+<select name="{{ field.html_name }}" id="{{ field.id_for_label }}"
+class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-primary transition-colors">
+{% for value, label in field.field.choices %}
+<option value="{{ value }}" {% if field.value == value %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
+</select>
+
+{% elif field.field.widget.input_type == 'clearablefile' or field.name == 'avatar' %}
+<div class="flex items-center gap-4">
+{% if field.value %}
+<img src="{{ field.value.url }}" alt="目前頭像"
+class="h-16 w-16 rounded-full object-cover border-2 border-primary">
+{% else %}
+<div class="h-16 w-16 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-400">person</span>
+</div>
+{% endif %}
+<input type="file" name="{{ field.html_name }}" id="{{ field.id_for_label }}" accept="image/*"
+class="text-sm text-slate-600 dark:text-slate-400
+file:mr-3 file:rounded-lg file:border-0
+file:bg-primary/10 file:px-4 file:py-2
+file:text-sm file:font-medium file:text-primary
+hover:file:bg-primary/20 file:transition-colors
+file:cursor-pointer">
+</div>
+
+{% else %}
+<input type="{{ field.field.widget.input_type|default:'text' }}"
+name="{{ field.html_name }}"
+id="{{ field.id_for_label }}"
+value="{{ field.value|default:'' }}"
+{% if field.field.widget.attrs.placeholder %}placeholder="{{ field.field.widget.attrs.placeholder }}"{% endif %}
+class="w-full rounded-xl border bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 transition-colors
+placeholder:text-slate-400 focus:ring-2 focus:ring-primary focus:border-primary
+{% if field.errors %}border-rose-400 focus:ring-rose-400{% else %}border-slate-200 dark:border-slate-700{% endif %}">
+{% endif %}
+
+{% if field.errors %}
+<p class="mt-1 text-xs text-rose-500">{{ field.errors.0 }}</p>
+{% endif %}
+</div>
+{% endif %}
+{% endfor %}
+
+<!-- 可取書時間動態表單 -->
+<div class="mb-4">
+<label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+可取書時間
+</label>
+<p class="text-xs text-slate-500 dark:text-slate-400 mb-3">
+設定您方便面交取書的時段，讓借書者知道何時可以聯繫您
+</p>
+
+<!-- 時段列表 -->
+<div class="space-y-2 mb-3">
+<template x-for="(slot, index) in schedule" :key="index">
+<div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
+<span class="text-sm font-medium text-slate-700 dark:text-slate-300" x-text="getWeekdayName(slot.weekday)"></span>
+<span class="text-sm text-slate-500 dark:text-slate-400" x-text="slot.start + ' - ' + slot.end"></span>
+<button type="button" @click="removeSlot(index)" class="ml-auto text-rose-500 hover:text-rose-600">
+<span class="material-symbols-outlined text-lg">delete</span>
+</button>
+</div>
+</template>
+</div>
+
+<!-- 新增時段 -->
+<div x-show="schedule.length < 14" class="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-3">
+<div class="grid grid-cols-3 gap-2 mb-2">
+<select x-model="newSlot.weekday" class="rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
+<option value="">選擇星期</option>
+<template x-for="(name, idx) in weekdays" :key="idx">
+<option :value="idx" x-text="name"></option>
+</template>
+</select>
+<input type="time" x-model="newSlot.start" class="rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
+<input type="time" x-model="newSlot.end" class="rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
+</div>
+<button type="button" @click="addSlot()" 
+:disabled="!newSlot.weekday || !newSlot.start || !newSlot.end"
+class="w-full bg-primary/10 text-primary text-sm font-medium py-2 rounded-lg hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+新增時段
+</button>
+</div>
+
+<!-- 隱藏欄位儲存 JSON -->
+<input type="hidden" name="available_schedule" :value="JSON.stringify(schedule)">
+</div>
+</div>
+
+<div class="flex gap-3">
+<button type="submit"
+class="flex-1 bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-transform">
+儲存變更
+</button>
+<a href="{% url 'accounts:profile' %}"
+class="flex-1 text-center bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold py-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+取消
+</a>
+</div>
+</form>
 </main>
 
 {% include '_bottom_nav.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function scheduleForm() {
+return {
+schedule: {{ form.instance.available_schedule|default:"[]" }},
+weekdays: ['週日', '週一', '週二', '週三', '週四', '週五', '週六'],
+newSlot: {
+weekday: '',
+start: '09:00',
+end: '12:00'
+},
+getWeekdayName(day) {
+return this.weekdays[day] || '';
+},
+addSlot() {
+if (this.newSlot.weekday !== '' && this.newSlot.start && this.newSlot.end) {
+this.schedule.push({
+weekday: parseInt(this.newSlot.weekday),
+start: this.newSlot.start,
+end: this.newSlot.end
+});
+// 重置表單
+this.newSlot = { weekday: '', start: '09:00', end: '12:00' };
+}
+},
+removeSlot(index) {
+this.schedule.splice(index, 1);
+}
+};
+}
+</script>
 {% endblock %}

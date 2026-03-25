@@ -1,14 +1,16 @@
+import json
+
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.http import HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from accounts.models import Appeal
-from accounts.services import appeal_service
+from accounts.services import appeal_service, export_service
 from books.models import SharedBook
 from deals.models import Deal, Rating
 from .forms import AppealForm, CompleteProfileForm, ProfileForm
@@ -220,4 +222,42 @@ def appeal_cancel(request, appeal_id):
             messages.success(request, "申訴已取消")
         except Exception as e:
             messages.error(request, str(e))
-    return redirect("accounts:appeal_list")
+        return redirect("accounts:appeal_list")
+
+
+# ==================== 資料匯出 View ====================
+
+
+@login_required
+def export_user_data(request):
+    """匯出用戶個人資料 JSON"""
+    if request.method != "POST":
+        messages.error(request, "請使用 POST 請求")
+        return redirect("accounts:profile")
+
+    try:
+        # 執行匯出
+        data = export_service.export_user_data(request.user)
+
+        # 產生 JSON 檔案名稱
+        filename = f"exbook_data_{request.user.id}_{data['exported_at'][:10]}.json"
+
+        # 回傳 JSON 檔案
+        response = HttpResponse(
+            json.dumps(data, ensure_ascii=False, indent=2),
+            content_type="application/json",
+        )
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        messages.success(request, "資料匯出成功")
+        return response
+
+    except export_service.ExportLimitExceededError as e:
+        messages.error(request, str(e))
+        return redirect("accounts:profile")
+
+
+@login_required
+def get_export_status(request):
+    """取得今日剩餘匯出次數"""
+    remaining = export_service.get_remaining_exports(request.user)
+    return JsonResponse({"remaining": remaining, "limit": export_service.EXPORT_LIMIT_PER_DAY})
