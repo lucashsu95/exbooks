@@ -3,11 +3,11 @@
 
 {% block content %}
 <!-- Header Section -->
-<header class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
-<a href="javascript:history.back()" class="text-slate-900 dark:text-slate-100 flex size-12 shrink-0 items-center cursor-pointer">
+<header class="flex items-center bg-background-light-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
+<a href="javascript:history.back()" class="text-slate-900-slate-100 flex size-12 shrink-0 items-center cursor-pointer">
 <span class="material-symbols-outlined">arrow_back</span>
 </a>
-<h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight tracking-tight flex-1 text-center">個人資料</h2>
+<h2 class="text-slate-900-slate-100 text-xl font-bold leading-tight tracking-tight flex-1 text-center">個人資料</h2>
 <div class="flex w-12 items-center justify-end">
 <!-- 空白區域，保持對稱 -->
 </div>
@@ -15,33 +15,33 @@
 
 <main class="px-4 py-6 max-w-lg mx-auto w-full space-y-6 pb-24">
 <!-- Profile Card -->
-<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 flex flex-col items-center text-center">
+<div class="bg-white-slate-800 rounded-xl shadow-sm border border-slate-200-slate-700 p-6 flex flex-col items-center text-center">
 <div class="relative mb-4">
 {% if profile.avatar %}
-<img src="{{ profile.avatar.url }}" alt="頭像" class="h-24 w-24 rounded-full object-cover border-4 border-white dark:border-slate-800 shadow-md">
+<img src="{{ profile.avatar.url }}" alt="頭像" class="h-24 w-24 rounded-full object-cover border-4 border-white-slate-800 shadow-md">
 {% else %}
-<div class="flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-primary text-3xl font-bold border-4 border-white dark:border-slate-800 shadow-md">
+<div class="flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-primary text-3xl font-bold border-4 border-white-slate-800 shadow-md">
 {{ profile.nickname|default:viewed_user.email|truncatechars:1 }}
 </div>
 {% endif %}
 </div>
-<h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">{{ profile.nickname|default:viewed_user.email }}</h2>
-<p class="text-sm text-slate-500 dark:text-slate-400">會員</p>
+<h2 class="text-2xl font-bold text-slate-900-slate-100 mb-1">{{ profile.nickname|default:viewed_user.email }}</h2>
+<p class="text-sm text-slate-500-slate-400">會員</p>
 </div>
 
 <!-- Trust Level Badge -->
 {% if profile %}
-<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
+<div class="bg-white-slate-800 rounded-xl shadow-sm border border-slate-200-slate-700 p-4">
 <div class="flex items-center gap-3">
 <div class="size-12 rounded-full flex items-center justify-center shrink-0
 {% if profile.trust_level == 0 %}
-bg-gray-100 dark:bg-gray-800
+bg-gray-100-gray-800
 {% elif profile.trust_level == 1 %}
-bg-blue-100 dark:bg-blue-900/30
+bg-blue-100-blue-900/30
 {% elif profile.trust_level == 2 %}
-bg-green-100 dark:bg-green-900/30
+bg-green-100-green-900/30
 {% elif profile.trust_level == 3 %}
-bg-amber-100 dark:bg-amber-900/30
+bg-amber-100-amber-900/30
 {% endif %}">
 <span class="material-symbols-outlined text-2xl
 {% if profile.trust_level == 0 %}
@@ -62,7 +62,7 @@ text-amber-500
 </div>
 <div class="flex-1">
 <div class="flex items-center gap-2">
-<p class="text-sm font-bold text-slate-900 dark:text-slate-100">
+<p class="text-sm font-bold text-slate-900-slate-100">
 信用等級：
 {% if profile.trust_level == 0 %}新手
 {% elif profile.trust_level == 1 %}一般
@@ -72,13 +72,13 @@ text-amber-500
 </p>
 <span class="px-2 py-0.5 rounded-full text-xs font-bold
 {% if profile.trust_level == 0 %}
-bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400
+bg-gray-100 text-gray-700-gray-800-gray-400
 {% elif profile.trust_level == 1 %}
-bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400
+bg-blue-100 text-blue-700-blue-900/30-blue-400
 {% elif profile.trust_level == 2 %}
-bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400
+bg-green-100 text-green-700-green-900/30-green-400
 {% elif profile.trust_level == 3 %}
-bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400
+bg-amber-100 text-amber-700-amber-900/30-amber-400
 {% endif %}">
 Lv.{{ profile.trust_level }}
 </span>
@@ -89,28 +89,28 @@ Lv.{{ profile.trust_level }}
 {% endif %}
 
 <!-- Activity Stats Card -->
-<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
-<h3 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">活動統計</h3>
+<div class="bg-white-slate-800 rounded-xl shadow-sm border border-slate-200-slate-700 p-4">
+<h3 class="text-sm font-bold text-slate-500-slate-400 uppercase tracking-wider mb-3">活動統計</h3>
 <div class="grid grid-cols-3 gap-4">
 <div class="text-center">
 <p class="text-2xl font-bold text-primary">{{ activity_stats.books_contributed }}</p>
-<p class="text-xs text-slate-500 dark:text-slate-400">貢獻書籍</p>
+<p class="text-xs text-slate-500-slate-400">貢獻書籍</p>
 </div>
 <div class="text-center">
 <p class="text-2xl font-bold text-primary">{{ activity_stats.books_borrowed }}</p>
-<p class="text-xs text-slate-500 dark:text-slate-400">借閱次數</p>
+<p class="text-xs text-slate-500-slate-400">借閱次數</p>
 </div>
 <div class="text-center">
 <p class="text-2xl font-bold text-primary">{{ activity_stats.books_lent }}</p>
-<p class="text-xs text-slate-500 dark:text-slate-400">出借次數</p>
+<p class="text-xs text-slate-500-slate-400">出借次數</p>
 </div>
 </div>
 </div>
 
 <!-- Rating Summary Card -->
-<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
+<div class="bg-white-slate-800 rounded-xl shadow-sm border border-slate-200-slate-700 p-4">
 <div class="flex items-center justify-between mb-3">
-<h3 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">信用評價</h3>
+<h3 class="text-sm font-bold text-slate-500-slate-400 uppercase tracking-wider">信用評價</h3>
 {% if rating_summary.total_ratings > 0 %}
 <a href="{% url 'accounts:user_ratings' viewed_user.id %}" class="text-sm text-primary hover:underline">
 查看全部 ({{ rating_summary.total_ratings }})
@@ -128,7 +128,7 @@ Lv.{{ profile.trust_level }}
 {% if forloop.counter <= rating_summary.overall_average %}
 <span class="material-symbols-outlined text-amber-400 text-sm">star</span>
 {% else %}
-<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-sm">star</span>
+<span class="material-symbols-outlined text-slate-300-slate-600 text-sm">star</span>
 {% endif %}
 {% endfor %}
 </div>
@@ -136,15 +136,15 @@ Lv.{{ profile.trust_level }}
 <!-- Detail Scores -->
 <div class="flex-1 space-y-2">
 <div class="flex items-center justify-between">
-<span class="text-sm text-slate-600 dark:text-slate-400">誠信</span>
+<span class="text-sm text-slate-600-slate-400">誠信</span>
 <span class="text-sm font-medium">{{ rating_summary.average_integrity|floatformat:1 }}</span>
 </div>
 <div class="flex items-center justify-between">
-<span class="text-sm text-slate-600 dark:text-slate-400">準時</span>
+<span class="text-sm text-slate-600-slate-400">準時</span>
 <span class="text-sm font-medium">{{ rating_summary.average_punctuality|floatformat:1 }}</span>
 </div>
 <div class="flex items-center justify-between">
-<span class="text-sm text-slate-600 dark:text-slate-400">書況準確</span>
+<span class="text-sm text-slate-600-slate-400">書況準確</span>
 <span class="text-sm font-medium">{{ rating_summary.average_accuracy|floatformat:1 }}</span>
 </div>
 </div>
@@ -155,14 +155,14 @@ Lv.{{ profile.trust_level }}
 </div>
 
 <!-- Tabs -->
-<div class="border-b border-slate-200 dark:border-slate-700">
+<div class="border-b border-slate-200-slate-700">
 <nav class="flex">
 <a href="?tab=books"
-class="px-4 py-3 text-sm font-medium {% if current_tab == 'books' %}text-primary border-b-2 border-primary{% else %}text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300{% endif %}">
+class="px-4 py-3 text-sm font-medium {% if current_tab == 'books' %}text-primary border-b-2 border-primary{% else %}text-slate-500-slate-400 hover:text-slate-700-slate-300{% endif %}">
 上架書籍 ({{ activity_stats.books_contributed }})
 </a>
 <a href="?tab=deals"
-class="px-4 py-3 text-sm font-medium {% if current_tab == 'deals' %}text-primary border-b-2 border-primary{% else %}text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300{% endif %}">
+class="px-4 py-3 text-sm font-medium {% if current_tab == 'deals' %}text-primary border-b-2 border-primary{% else %}text-slate-500-slate-400 hover:text-slate-700-slate-300{% endif %}">
 借閱紀錄
 </a>
 </nav>
@@ -175,8 +175,8 @@ class="px-4 py-3 text-sm font-medium {% if current_tab == 'deals' %}text-primary
 {% if books_contributed %}
 <div class="grid grid-cols-2 gap-3">
 {% for book in books_contributed %}
-<a href="{% url 'books:detail' book.id %}" class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-<div class="aspect-[3/4] bg-slate-100 dark:bg-slate-700">
+<a href="{% url 'books:detail' book.id %}" class="bg-white-slate-800 rounded-xl shadow-sm border border-slate-200-slate-700 overflow-hidden">
+<div class="aspect-[3/4] bg-slate-100-slate-700">
 {% if book.official_book.cover_url %}
 <img src="{{ book.official_book.cover_url }}" alt="{{ book.official_book.title }}" class="w-full h-full object-cover">
 {% else %}
@@ -186,8 +186,8 @@ class="px-4 py-3 text-sm font-medium {% if current_tab == 'deals' %}text-primary
 {% endif %}
 </div>
 <div class="p-2">
-<p class="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{{ book.official_book.title }}</p>
-<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+<p class="text-sm font-medium text-slate-900-slate-100 truncate">{{ book.official_book.title }}</p>
+<p class="text-xs text-slate-500-slate-400 mt-0.5">
 {% if book.status == 'T' %}
 <span class="text-primary">可借閱</span>
 {% elif book.status == 'O' %}
@@ -212,9 +212,9 @@ class="px-4 py-3 text-sm font-medium {% if current_tab == 'deals' %}text-primary
 {% if deals_history %}
 <div class="space-y-3">
 {% for deal in deals_history %}
-<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-3">
+<div class="bg-white-slate-800 rounded-xl shadow-sm border border-slate-200-slate-700 p-3">
 <div class="flex items-center gap-3">
-<div class="size-12 rounded-lg bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0">
+<div class="size-12 rounded-lg bg-slate-100-slate-700 overflow-hidden shrink-0">
 {% if deal.shared_book.official_book.cover_url %}
 <img src="{{ deal.shared_book.official_book.cover_url }}" alt="" class="w-full h-full object-cover">
 {% else %}
@@ -224,8 +224,8 @@ class="px-4 py-3 text-sm font-medium {% if current_tab == 'deals' %}text-primary
 {% endif %}
 </div>
 <div class="flex-1 min-w-0">
-<p class="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{{ deal.shared_book.official_book.title }}</p>
-<p class="text-xs text-slate-500 dark:text-slate-400">
+<p class="text-sm font-medium text-slate-900-slate-100 truncate">{{ deal.shared_book.official_book.title }}</p>
+<p class="text-xs text-slate-500-slate-400">
 {% if deal.applicant == viewed_user %}向{% else %}借給{% endif %}
 {% if deal.applicant == viewed_user %}{{ deal.responder.profile.nickname|default:deal.responder.email }}{% else %}{{ deal.applicant.profile.nickname|default:deal.applicant.email }}{% endif %}
 </p>
@@ -249,7 +249,7 @@ class="px-4 py-3 text-sm font-medium {% if current_tab == 'deals' %}text-primary
 </div>
 
 <!-- Back Button -->
-<a href="javascript:history.back()" class="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold py-3.5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+<a href="javascript:history.back()" class="w-full bg-white-slate-800 text-slate-900-slate-100 font-bold py-3.5 rounded-xl shadow-sm border border-slate-200-slate-700 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
 <span class="material-symbols-outlined">arrow_back</span>
 返回
 </a>

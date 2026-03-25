@@ -6,15 +6,15 @@
 <!-- Hero Section with Gradient Background -->
 <div class="relative">
   <!-- Gradient Background -->
-  <div class="absolute inset-0 bg-gradient-to-br from-primary/10 via-background-light to-primary/5 dark:from-primary/20 dark:via-background-dark dark:to-primary/10 h-72"></div>
+  <div class="absolute inset-0 bg-gradient-to-br from-primary/10 via-background-light to-primary/5-primary/20-background-dark-primary/10 h-72"></div>
   
   <!-- Navigation Header -->
   <div class="relative flex items-center p-4 justify-between">
-    <a href="{% url 'books:list' %}" class="flex size-12 items-center justify-center rounded-2xl bg-white/60 dark:bg-slate-800/60 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-slate-700 dark:text-slate-300">
+    <a href="{% url 'books:list' %}" class="flex size-12 items-center justify-center rounded-2xl bg-white/60-slate-800/60 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-slate-700-slate-300">
       <span class="material-symbols-outlined">arrow_back</span>
     </a>
-    <h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center">書籍詳情</h2>
-    <button type="button" class="flex size-12 items-center justify-center rounded-2xl bg-white/60 dark:bg-slate-800/60 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-slate-700 dark:text-slate-300">
+    <h2 class="text-slate-900-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center">書籍詳情</h2>
+    <button type="button" class="flex size-12 items-center justify-center rounded-2xl bg-white/60-slate-800/60 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-slate-700-slate-300">
       <span class="material-symbols-outlined">share</span>
     </button>
   </div>
@@ -33,17 +33,17 @@
       <!-- Basic Info -->
       <div class="flex-1 flex flex-col justify-center text-center md:text-left">
         <div class="flex items-center gap-2 mb-3 justify-center md:justify-start flex-wrap">
-          <span class="px-3 py-1.5 rounded-full bg-green-100/80 dark:bg-green-900/40 text-green-700 dark:text-green-400 text-xs font-bold uppercase tracking-wider backdrop-blur-sm shadow-sm">{{ book.get_status_display|default:'可流通 (T)' }}</span>
+          <span class="px-3 py-1.5 rounded-full bg-green-100/80-green-900/40 text-green-700-green-400 text-xs font-bold uppercase tracking-wider backdrop-blur-sm shadow-sm">{{ book.get_status_display|default:'可流通 (T)' }}</span>
           <span class="px-3 py-1.5 rounded-full bg-primary/15 text-primary text-xs font-bold uppercase tracking-wider backdrop-blur-sm shadow-sm">{{ book.get_transferability_display|default:'開放傳遞' }}</span>
         </div>
-        <h1 class="text-slate-900 dark:text-slate-100 text-2xl md:text-3xl font-bold leading-tight mb-2">{{ book.official_book.title|default:'大亨小傳' }}</h1>
-        <h2 class="text-slate-600 dark:text-slate-400 text-lg md:text-xl font-medium mb-4">{{ book.official_book.author|default:'F. Scott Fitzgerald' }}</h2>
+        <h1 class="text-slate-900-slate-100 text-2xl md:text-3xl font-bold leading-tight mb-2">{{ book.official_book.title|default:'大亨小傳' }}</h1>
+        <h2 class="text-slate-600-slate-400 text-lg md:text-xl font-medium mb-4">{{ book.official_book.author|default:'F. Scott Fitzgerald' }}</h2>
         <div class="flex flex-col gap-2 items-center md:items-start">
-          <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-xl px-4 py-2 shadow-sm">
+          <div class="flex items-center gap-2 text-slate-500-slate-400 bg-white/50-slate-800/50 backdrop-blur-md rounded-xl px-4 py-2 shadow-sm">
             <span class="material-symbols-outlined text-sm text-primary">barcode</span>
             <p class="text-sm font-medium">ISBN: {{ book.official_book.isbn|default:'9780743273565' }}</p>
           </div>
-          <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-xl px-4 py-2 shadow-sm">
+          <div class="flex items-center gap-2 text-slate-500-slate-400 bg-white/50-slate-800/50 backdrop-blur-md rounded-xl px-4 py-2 shadow-sm">
             <span class="material-symbols-outlined text-sm text-primary">location_on</span>
             <p class="text-sm font-medium" data-location="{{ book.keeper.profile.default_location|default:'台北市' }}">{{ book.keeper.profile.default_location|default:'台灣台北市' }}</p>
           </div>
@@ -55,14 +55,14 @@
 
   <!-- Keeper Profile Card -->
   <div class="px-4 -mt-2">
-    <div class="p-4 bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl rounded-2xl border border-white/50 dark:border-slate-700/50 flex items-center justify-between shadow-xl">
+    <div class="p-4 bg-white/70-slate-800/70 backdrop-blur-xl rounded-2xl border border-white/50-slate-700/50 flex items-center justify-between shadow-xl">
       <div class="flex items-center gap-4">
-        <div class="size-14 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center overflow-hidden border-2 border-white dark:border-slate-700 shadow-lg">
+        <div class="size-14 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center overflow-hidden border-2 border-white-slate-700 shadow-lg">
           <img alt="持書人頭像" class="w-full h-full object-cover" src="{% if book.keeper.profile.avatar %}{{ book.keeper.profile.avatar.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuAZeXWrPxCBU69i-9JLnp1uVIwWZLWRGayrj3CtLPXX2Kil6F7Hg7SXT5LpNZYg4UubLUgUIZ9Z_T5Qb2AlXgtPbueQwzU7ePBtQA35WfXaiOdCLxwHlH0TjQE35k5gKoI2dtzNwBrjbTNrmAutrn5CMHIP_KblHFyEPUxdCBU1lMwT93tcDU3nswh1avusipC4fUR48yHPxj-ziw9paYNEKNWWugqVmcg77c5Gr5RjfhNSmLTxNz79TnYSknsTiPfLpndBkYtmuJU{% endif %}"/>
         </div>
         <div>
-          <p class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">目前持有人</p>
-          <p class="text-slate-900 dark:text-slate-100 font-bold text-lg">{{ book.keeper.profile.nickname|default:book.keeper.email }}</p>
+          <p class="text-[10px] text-slate-400-slate-500 uppercase font-bold tracking-wider">目前持有人</p>
+          <p class="text-slate-900-slate-100 font-bold text-lg">{{ book.keeper.profile.nickname|default:book.keeper.email }}</p>
         </div>
       </div>
       <a href="{% url 'accounts:public_profile' book.keeper.id %}" class="flex items-center gap-2 text-primary font-bold text-sm px-4 py-2.5 hover:bg-primary/10 rounded-xl transition-all duration-300 group">
@@ -75,17 +75,17 @@
   <!-- BookSet Info -->
   {% if book.book_set %}
   <div class="px-4 mt-4">
-    <div class="p-4 bg-blue-50/70 dark:bg-blue-900/20 backdrop-blur-xl rounded-2xl border border-blue-200/50 dark:border-blue-800/50 shadow-lg">
+    <div class="p-4 bg-blue-50/70-blue-900/20 backdrop-blur-xl rounded-2xl border border-blue-200/50-blue-800/50 shadow-lg">
       <div class="flex items-center gap-3">
-        <span class="material-symbols-outlined text-blue-600 dark:text-blue-400">collections_bookmark</span>
+        <span class="material-symbols-outlined text-blue-600-blue-400">collections_bookmark</span>
         <div>
-          <p class="text-xs text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider">所屬套書</p>
-          <a href="{% url 'books:book_set_detail' book.book_set.pk %}" class="text-blue-800 dark:text-blue-200 font-bold hover:underline">
+          <p class="text-xs text-blue-600-blue-400 font-bold uppercase tracking-wider">所屬套書</p>
+          <a href="{% url 'books:book_set_detail' book.book_set.pk %}" class="text-blue-800-blue-200 font-bold hover:underline">
             {{ book.book_set.name }}
           </a>
         </div>
       </div>
-      <p class="text-sm text-blue-600 dark:text-blue-400 mt-2">
+      <p class="text-sm text-blue-600-blue-400 mt-2">
         此書籍為套書的一部分，借閱時需整套借出
       </p>
     </div>
@@ -108,15 +108,15 @@
 <div class="px-4 mt-6 mb-32">
   <div class="flex items-center gap-2 mb-4">
     <span class="material-symbols-outlined text-primary">description</span>
-    <h3 class="text-slate-900 dark:text-slate-100 text-lg font-bold">書況描述</h3>
+    <h3 class="text-slate-900-slate-100 text-lg font-bold">書況描述</h3>
   </div>
-  <div class="bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl rounded-2xl p-5 border border-white/50 dark:border-slate-700/50 shadow-xl">
+  <div class="bg-white/70-slate-800/70 backdrop-blur-xl rounded-2xl p-5 border border-white/50-slate-700/50 shadow-xl">
     <div class="flex gap-4 mb-4">
-      <div class="flex flex-col items-center p-4 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 dark:from-primary/30 dark:to-primary/15 min-w-[100px]">
+      <div class="flex flex-col items-center p-4 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10-primary/30-primary/15 min-w-[100px]">
         <span class="text-primary font-bold text-3xl">{{ book.condition_rating|default:'9' }}</span>
         <span class="text-slate-400 text-xs font-bold mt-1">/ 10</span>
       </div>
-      <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed pt-2">
+      <p class="text-slate-600-slate-400 text-sm leading-relaxed pt-2">
         {{ book.condition_description|default:'書況極佳。內頁乾淨無泛黃。書衣邊角有輕微磨損。內無畫線或註記。保存於無菸、無寵物環境。' }}
       </p>
     </div>
@@ -134,7 +134,7 @@
 </div>
 
 <!-- Sticky Footer Actions - Enhanced -->
-<div class="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-background-dark/90 backdrop-blur-2xl p-4 border-t border-white/50 dark:border-slate-700/50 flex flex-col gap-3 shadow-2xl">
+<div class="fixed bottom-0 left-0 right-0 bg-white/90-background-dark/90 backdrop-blur-2xl p-4 border-t border-white/50-slate-700/50 flex flex-col gap-3 shadow-2xl">
   {% if book.keeper != request.user %}
     {% if book.status == 'T' and book.transferability == 'RETURN' %}
     <a href="{% url 'deals:create' book.id 'LN' %}" class="w-full bg-gradient-to-r from-primary to-primary/80 text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all duration-300 hover:shadow-xl hover:shadow-primary/40">
@@ -167,18 +167,18 @@
       申請例外處理
     </a>
     {% else %}
-    <div class="w-full bg-slate-200/80 dark:bg-slate-700/80 backdrop-blur-md text-slate-500 dark:text-slate-400 font-bold py-4 rounded-2xl flex items-center justify-center gap-3">
+    <div class="w-full bg-slate-200/80-slate-700/80 backdrop-blur-md text-slate-500-slate-400 font-bold py-4 rounded-2xl flex items-center justify-center gap-3">
       <span class="material-symbols-outlined">block</span>
       目前無法申請交易
     </div>
     {% endif %}
   {% else %}
-    <div class="w-full bg-slate-200/80 dark:bg-slate-700/80 backdrop-blur-md text-slate-500 dark:text-slate-400 font-bold py-4 rounded-2xl flex items-center justify-center gap-3">
+    <div class="w-full bg-slate-200/80-slate-700/80 backdrop-blur-md text-slate-500-slate-400 font-bold py-4 rounded-2xl flex items-center justify-center gap-3">
       <span class="material-symbols-outlined">info</span>
       這是您自己的書籍
     </div>
   {% endif %}
-  <button type="button" class="w-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-primary/30 text-primary font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-300 hover:bg-primary/10 hover:border-primary">
+  <button type="button" class="w-full bg-white/80-slate-800/80 backdrop-blur-md border border-primary/30 text-primary font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-300 hover:bg-primary/10 hover:border-primary">
     <span class="material-symbols-outlined">favorite</span>
     加入願望清單
   </button>

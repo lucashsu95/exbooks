@@ -3,11 +3,11 @@
 
 {% block content %}
 <!-- Header Section -->
-<header class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
-<a href="{% url 'accounts:public_profile' viewed_user.id %}" class="text-slate-900 dark:text-slate-100 flex size-12 shrink-0 items-center cursor-pointer">
+<header class="flex items-center bg-background-light-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
+<a href="{% url 'accounts:public_profile' viewed_user.id %}" class="text-slate-900-slate-100 flex size-12 shrink-0 items-center cursor-pointer">
 <span class="material-symbols-outlined">arrow_back</span>
 </a>
-<h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight tracking-tight flex-1 text-center">評價詳情</h2>
+<h2 class="text-slate-900-slate-100 text-xl font-bold leading-tight tracking-tight flex-1 text-center">評價詳情</h2>
 <div class="flex w-12 items-center justify-end">
 <!-- 空白區域，保持對稱 -->
 </div>
@@ -24,13 +24,13 @@
 {% endif %}
 </div>
 <div>
-<p class="font-bold text-slate-900 dark:text-slate-100">{{ profile.nickname|default:viewed_user.email }}</p>
-<p class="text-xs text-slate-500 dark:text-slate-400">共 {{ rating_summary.total_ratings }} 則評價</p>
+<p class="font-bold text-slate-900-slate-100">{{ profile.nickname|default:viewed_user.email }}</p>
+<p class="text-xs text-slate-500-slate-400">共 {{ rating_summary.total_ratings }} 則評價</p>
 </div>
 </div>
 
 <!-- Rating Summary -->
-<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
+<div class="bg-white-slate-800 rounded-xl shadow-sm border border-slate-200-slate-700 p-4">
 <div class="flex items-center gap-6">
 <!-- Overall Score -->
 <div class="text-center">
@@ -40,7 +40,7 @@
 {% if forloop.counter <= rating_summary.overall_average %}
 <span class="material-symbols-outlined text-amber-400">star</span>
 {% else %}
-<span class="material-symbols-outlined text-slate-300 dark:text-slate-600">star</span>
+<span class="material-symbols-outlined text-slate-300-slate-600">star</span>
 {% endif %}
 {% endfor %}
 </div>
@@ -48,22 +48,22 @@
 <!-- Detail Scores -->
 <div class="flex-1 space-y-2">
 <div class="flex items-center gap-2">
-<span class="text-sm text-slate-600 dark:text-slate-400 w-16">誠信</span>
-<div class="flex-1 h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+<span class="text-sm text-slate-600-slate-400 w-16">誠信</span>
+<div class="flex-1 h-2 bg-slate-100-slate-700 rounded-full overflow-hidden">
 <div class="h-full bg-primary rounded-full" style="width: {{ rating_summary.average_integrity|default:0|floatformat:0 }}%"></div>
 </div>
 <span class="text-sm font-medium w-8">{{ rating_summary.average_integrity|default:0|floatformat:1 }}</span>
 </div>
 <div class="flex items-center gap-2">
-<span class="text-sm text-slate-600 dark:text-slate-400 w-16">準時</span>
-<div class="flex-1 h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+<span class="text-sm text-slate-600-slate-400 w-16">準時</span>
+<div class="flex-1 h-2 bg-slate-100-slate-700 rounded-full overflow-hidden">
 <div class="h-full bg-primary rounded-full" style="width: {{ rating_summary.average_punctuality|default:0|floatformat:0 }}%"></div>
 </div>
 <span class="text-sm font-medium w-8">{{ rating_summary.average_punctuality|default:0|floatformat:1 }}</span>
 </div>
 <div class="flex items-center gap-2">
-<span class="text-sm text-slate-600 dark:text-slate-400 w-16">書況</span>
-<div class="flex-1 h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+<span class="text-sm text-slate-600-slate-400 w-16">書況</span>
+<div class="flex-1 h-2 bg-slate-100-slate-700 rounded-full overflow-hidden">
 <div class="h-full bg-primary rounded-full" style="width: {{ rating_summary.average_accuracy|default:0|floatformat:0 }}%"></div>
 </div>
 <span class="text-sm font-medium w-8">{{ rating_summary.average_accuracy|default:0|floatformat:1 }}</span>
@@ -76,7 +76,7 @@
 {% if page_obj.object_list %}
 <div class="space-y-3">
 {% for rating in page_obj %}
-<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
+<div class="bg-white-slate-800 rounded-xl shadow-sm border border-slate-200-slate-700 p-4">
 <div class="flex items-start gap-3">
 <!-- Rater Avatar -->
 <div class="size-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border-2 border-primary shrink-0">
@@ -88,7 +88,7 @@
 </div>
 <div class="flex-1 min-w-0">
 <div class="flex items-center justify-between">
-<a href="{% url 'accounts:public_profile' rating.rater.id %}" class="text-sm font-medium text-slate-900 dark:text-slate-100 hover:underline">
+<a href="{% url 'accounts:public_profile' rating.rater.id %}" class="text-sm font-medium text-slate-900-slate-100 hover:underline">
 {{ rating.rater.profile.nickname|default:rating.rater.email }}
 </a>
 <div class="flex items-center gap-0.5">
@@ -97,7 +97,7 @@
 </div>
 </div>
 {% if rating.comment %}
-<p class="text-sm text-slate-600 dark:text-slate-400 mt-2">{{ rating.comment }}</p>
+<p class="text-sm text-slate-600-slate-400 mt-2">{{ rating.comment }}</p>
 {% endif %}
 <p class="text-xs text-slate-400 mt-2">{{ rating.created_at|date:"Y 年 n 月 j 日" }}</p>
 </div>
@@ -111,7 +111,7 @@
 <div class="flex justify-center gap-2 py-4">
 {% if page_obj.has_previous %}
 <a href="?page={{ page_obj.previous_page_number }}"
-class="px-3 py-1 text-sm bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700">
+class="px-3 py-1 text-sm bg-slate-100-slate-800 rounded-lg hover:bg-slate-200-slate-700">
 上一頁
 </a>
 {% endif %}
@@ -120,7 +120,7 @@ class="px-3 py-1 text-sm bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slat
 </span>
 {% if page_obj.has_next %}
 <a href="?page={{ page_obj.next_page_number }}"
-class="px-3 py-1 text-sm bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700">
+class="px-3 py-1 text-sm bg-slate-100-slate-800 rounded-lg hover:bg-slate-200-slate-700">
 下一頁
 </a>
 {% endif %}

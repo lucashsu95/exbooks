@@ -3,29 +3,29 @@
 
 {% block content %}
 <!-- Header Section -->
-<header class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
-<a href="{% url 'accounts:appeal_list' %}" class="text-slate-900 dark:text-slate-100 flex size-12 shrink-0 items-center cursor-pointer">
+<header class="flex items-center bg-background-light-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
+<a href="{% url 'accounts:appeal_list' %}" class="text-slate-900-slate-100 flex size-12 shrink-0 items-center cursor-pointer">
 <span class="material-symbols-outlined">arrow_back</span>
 </a>
-<h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight tracking-tight flex-1 text-center">申訴詳情</h2>
+<h2 class="text-slate-900-slate-100 text-xl font-bold leading-tight tracking-tight flex-1 text-center">申訴詳情</h2>
 <div class="flex w-12 items-center justify-end"></div>
 </header>
 
 <main class="px-4 py-6 max-w-lg mx-auto w-full space-y-6 pb-24">
 <!-- Status Card -->
-<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
+<div class="bg-white-slate-800 rounded-xl shadow-sm border border-slate-200-slate-700 p-4">
 <div class="flex items-center gap-3">
 <div class="size-12 rounded-full flex items-center justify-center shrink-0
 {% if appeal.status == 'submitted' %}
-bg-blue-100 dark:bg-blue-900/30
+bg-blue-100-blue-900/30
 {% elif appeal.status == 'under_review' %}
-bg-amber-100 dark:bg-amber-900/30
+bg-amber-100-amber-900/30
 {% elif appeal.status == 'approved' %}
-bg-green-100 dark:bg-green-900/30
+bg-green-100-green-900/30
 {% elif appeal.status == 'rejected' %}
-bg-rose-100 dark:bg-rose-900/30
+bg-rose-100-rose-900/30
 {% else %}
-bg-gray-100 dark:bg-gray-800
+bg-gray-100-gray-800
 {% endif %}">
 <span class="material-symbols-outlined text-2xl
 {% if appeal.status == 'submitted' %}
@@ -47,32 +47,32 @@ text-gray-400
 </span>
 </div>
 <div class="flex-1">
-<p class="text-lg font-bold text-slate-900 dark:text-slate-100">{{ appeal.get_status_display }}</p>
-<p class="text-sm text-slate-500 dark:text-slate-400">{{ appeal.created_at|date:"Y 年 n 月 j 日 H:i" }}</p>
+<p class="text-lg font-bold text-slate-900-slate-100">{{ appeal.get_status_display }}</p>
+<p class="text-sm text-slate-500-slate-400">{{ appeal.created_at|date:"Y 年 n 月 j 日 H:i" }}</p>
 </div>
 </div>
 </div>
 
 <!-- Appeal Details -->
-<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 space-y-4">
+<div class="bg-white-slate-800 rounded-xl shadow-sm border border-slate-200-slate-700 p-4 space-y-4">
 <div>
-<p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">申訴類型</p>
-<p class="text-sm font-medium text-slate-900 dark:text-slate-100">{{ appeal.get_appeal_type_display }}</p>
+<p class="text-xs font-bold text-slate-500-slate-400 uppercase tracking-wider mb-1">申訴類型</p>
+<p class="text-sm font-medium text-slate-900-slate-100">{{ appeal.get_appeal_type_display }}</p>
 </div>
 
 <div>
-<p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">標題</p>
-<p class="text-sm font-medium text-slate-900 dark:text-slate-100">{{ appeal.title }}</p>
+<p class="text-xs font-bold text-slate-500-slate-400 uppercase tracking-wider mb-1">標題</p>
+<p class="text-sm font-medium text-slate-900-slate-100">{{ appeal.title }}</p>
 </div>
 
 <div>
-<p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">描述</p>
-<p class="text-sm text-slate-900 dark:text-slate-100 whitespace-pre-wrap">{{ appeal.description }}</p>
+<p class="text-xs font-bold text-slate-500-slate-400 uppercase tracking-wider mb-1">描述</p>
+<p class="text-sm text-slate-900-slate-100 whitespace-pre-wrap">{{ appeal.description }}</p>
 </div>
 
 {% if appeal.evidence %}
 <div>
-<p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">證據文件</p>
+<p class="text-xs font-bold text-slate-500-slate-400 uppercase tracking-wider mb-1">證據文件</p>
 <a href="{{ appeal.evidence.url }}" target="_blank" class="text-primary hover:underline text-sm">查看文件</a>
 </div>
 {% endif %}
@@ -80,17 +80,17 @@ text-gray-400
 
 <!-- Resolution (if resolved) -->
 {% if appeal.resolved_by %}
-<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 space-y-4">
+<div class="bg-white-slate-800 rounded-xl shadow-sm border border-slate-200-slate-700 p-4 space-y-4">
 <div>
-<p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">審核結果</p>
-<p class="text-sm font-medium text-slate-900 dark:text-slate-100">
+<p class="text-xs font-bold text-slate-500-slate-400 uppercase tracking-wider mb-1">審核結果</p>
+<p class="text-sm font-medium text-slate-900-slate-100">
 由 {{ appeal.resolved_by.email }} 於 {{ appeal.resolved_at|date:"Y 年 n 月 j 日" }} 審核
 </p>
 </div>
 {% if appeal.resolution_notes %}
 <div>
-<p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">審核備註</p>
-<p class="text-sm text-slate-900 dark:text-slate-100 whitespace-pre-wrap">{{ appeal.resolution_notes }}</p>
+<p class="text-xs font-bold text-slate-500-slate-400 uppercase tracking-wider mb-1">審核備註</p>
+<p class="text-sm text-slate-900-slate-100 whitespace-pre-wrap">{{ appeal.resolution_notes }}</p>
 </div>
 {% endif %}
 </div>
@@ -100,7 +100,7 @@ text-gray-400
 {% if appeal.status == 'submitted' %}
 <form method="post" action="{% url 'accounts:appeal_cancel' appeal.id %}" onsubmit="return confirm('確定要取消此申訴嗎？');">
 {% csrf_token %}
-<button type="submit" class="w-full bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 font-bold py-3.5 rounded-xl shadow-sm border border-rose-100 dark:border-rose-900/30 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+<button type="submit" class="w-full bg-rose-50-rose-900/20 text-rose-600-rose-400 font-bold py-3.5 rounded-xl shadow-sm border border-rose-100-rose-900/30 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
 <span class="material-symbols-outlined">cancel</span>
 取消申訴
 </button>

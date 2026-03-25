@@ -1,6 +1,6 @@
 {% load tz %}
-<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">
-  <h3 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+<div class="bg-white-slate-800 rounded-xl shadow-sm border border-slate-200-slate-700 p-4">
+  <h3 class="text-sm font-bold text-slate-500-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
     <span class="material-symbols-outlined text-primary">timeline</span>
     書況追蹤
   </h3>
@@ -8,14 +8,14 @@
   {% if timeline_events %}
   <div class="relative">
     <!-- Timeline Line -->
-    <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-700"></div>
+    <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-200-slate-700"></div>
 
     <!-- Timeline Events -->
     <div class="space-y-4">
       {% for event in timeline_events %}
       <div class="relative flex items-start gap-3 pl-10">
         <!-- Event Icon -->
-        <div class="absolute left-0 size-8 rounded-full bg-white dark:bg-slate-800 border-2 border-primary flex items-center justify-center z-10">
+        <div class="absolute left-0 size-8 rounded-full bg-white-slate-800 border-2 border-primary flex items-center justify-center z-10">
           <span class="material-symbols-outlined text-primary text-sm">
             {% if event.type == 'listed' %}upload{% endif %}
             {% if event.type == 'deal_created' %}swap_horiz{% endif %}
@@ -28,11 +28,11 @@
         <!-- Event Content -->
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 mb-1">
-            <p class="text-sm font-medium text-slate-900 dark:text-slate-100">{{ event.title }}</p>
+            <p class="text-sm font-medium text-slate-900-slate-100">{{ event.title }}</p>
             <span class="text-xs text-slate-400">{{ event.time|timesince }}前</span>
           </div>
           {% if event.description %}
-          <p class="text-xs text-slate-500 dark:text-slate-400">{{ event.description }}</p>
+          <p class="text-xs text-slate-500-slate-400">{{ event.description }}</p>
           {% endif %}
           {% if event.deal %}
           <a href="{% url 'deals:detail' event.deal.id %}" class="text-xs text-primary hover:underline mt-1 inline-block">

@@ -1,15 +1,15 @@
 {% if result %}
-<div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800 mt-2">
-  <p class="font-medium text-green-800 dark:text-green-200">{{ result.title }}</p>
-  <p class="text-sm text-green-600 dark:text-green-400">{{ result.author }}</p>
+<div class="bg-green-50-green-900/20 p-3 rounded-lg border border-green-200-green-800 mt-2">
+  <p class="font-medium text-green-800-green-200">{{ result.title }}</p>
+  <p class="text-sm text-green-600-green-400">{{ result.author }}</p>
   {% if result.publisher %}
-  <p class="text-xs text-green-500 dark:text-green-500">{{ result.publisher }}</p>
+  <p class="text-xs text-green-500-green-500">{{ result.publisher }}</p>
   {% endif %}
   <input type="hidden" name="title" value="{{ result.title }}">
   <input type="hidden" name="author" value="{{ result.author }}">
 </div>
 {% elif isbn %}
-<div class="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-800 mt-2">
-  <p class="text-sm text-yellow-700 dark:text-yellow-300">查無此 ISBN，請手動輸入書籍資訊</p>
+<div class="bg-yellow-50-yellow-900/20 p-3 rounded-lg border border-yellow-200-yellow-800 mt-2">
+  <p class="text-sm text-yellow-700-yellow-300">查無此 ISBN，請手動輸入書籍資訊</p>
 </div>
 {% endif %}

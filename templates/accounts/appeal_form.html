@@ -3,11 +3,11 @@
 
 {% block content %}
 <!-- Header Section -->
-<header class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
-<a href="{% url 'accounts:appeal_list' %}" class="text-slate-900 dark:text-slate-100 flex size-12 shrink-0 items-center cursor-pointer">
+<header class="flex items-center bg-background-light-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
+<a href="{% url 'accounts:appeal_list' %}" class="text-slate-900-slate-100 flex size-12 shrink-0 items-center cursor-pointer">
 <span class="material-symbols-outlined">arrow_back</span>
 </a>
-<h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight tracking-tight flex-1 text-center">提交申訴</h2>
+<h2 class="text-slate-900-slate-100 text-xl font-bold leading-tight tracking-tight flex-1 text-center">提交申訴</h2>
 <div class="flex w-12 items-center justify-end"></div>
 </header>
 
@@ -17,7 +17,7 @@
 
 <!-- Appeal Type -->
 <div>
-<label for="id_appeal_type" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">申訴類型</label>
+<label for="id_appeal_type" class="block text-sm font-bold text-slate-700-slate-300 mb-2">申訴類型</label>
 {{ form.appeal_type }}
 {% if form.appeal_type.errors %}
 <p class="text-rose-500 text-sm mt-1">{{ form.appeal_type.errors.0 }}</p>
@@ -26,7 +26,7 @@
 
 <!-- Title -->
 <div>
-<label for="id_title" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">標題</label>
+<label for="id_title" class="block text-sm font-bold text-slate-700-slate-300 mb-2">標題</label>
 {{ form.title }}
 {% if form.title.errors %}
 <p class="text-rose-500 text-sm mt-1">{{ form.title.errors.0 }}</p>
@@ -35,9 +35,9 @@
 
 <!-- Description -->
 <div>
-<label for="id_description" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">描述</label>
+<label for="id_description" class="block text-sm font-bold text-slate-700-slate-300 mb-2">描述</label>
 {{ form.description }}
-<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">請詳細描述您的申訴內容（至少 50 字元）</p>
+<p class="text-xs text-slate-500-slate-400 mt-1">請詳細描述您的申訴內容（至少 50 字元）</p>
 {% if form.description.errors %}
 <p class="text-rose-500 text-sm mt-1">{{ form.description.errors.0 }}</p>
 {% endif %}
@@ -45,9 +45,9 @@
 
 <!-- Evidence -->
 <div>
-<label for="id_evidence" class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">證據文件（選填）</label>
+<label for="id_evidence" class="block text-sm font-bold text-slate-700-slate-300 mb-2">證據文件（選填）</label>
 {{ form.evidence }}
-<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">可上傳相關截圖或文件作為證據</p>
+<p class="text-xs text-slate-500-slate-400 mt-1">可上傳相關截圖或文件作為證據</p>
 {% if form.evidence.errors %}
 <p class="text-rose-500 text-sm mt-1">{{ form.evidence.errors.0 }}</p>
 {% endif %}

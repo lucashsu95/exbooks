@@ -86,7 +86,7 @@ font-variation-settings: 'FILL' 1;
 {% block extra_head %}{% endblock %}
 </head>
 
-<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+<body class="bg-background-light-background-dark font-display text-slate-900-slate-100" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
 
 <!-- PWA Service Worker & Push Registration -->
 <script>
@@ -212,10 +212,10 @@ font-variation-settings: 'FILL' 1;
 <div class="fixed top-4 right-4 z-50 flex flex-col gap-2" id="toast-container">
 {% for message in messages %}
 <div class="toast rounded-lg border px-4 py-3 text-sm shadow-md
-{% if message.tags == 'success' %}border-green-200 bg-green-50 text-green-800 dark:bg-green-900/30 dark:border-green-800 dark:text-green-400
-{% elif message.tags == 'error' %}border-red-200 bg-red-50 text-red-800 dark:bg-red-900/30 dark:border-red-800 dark:text-red-400
-{% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:border-amber-800 dark:text-amber-400
-{% else %}border-blue-200 bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-400{% endif %}">
+{% if message.tags == 'success' %}border-green-200 bg-green-50 text-green-800-green-900/30-green-800-green-400
+{% elif message.tags == 'error' %}border-red-200 bg-red-50 text-red-800-red-900/30-red-800-red-400
+{% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-800-amber-900/30-amber-800-amber-400
+{% else %}border-blue-200 bg-blue-50 text-blue-800-blue-900/30-blue-800-blue-400{% endif %}">
 {{ message }}
 </div>
 {% endfor %}
@@ -223,7 +223,7 @@ font-variation-settings: 'FILL' 1;
 {% endif %}
 
 <!-- Main Content Wrapper -->
-<div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-x-hidden fade-in">
+<div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light-background-dark overflow-x-hidden fade-in">
 {% block content %}{% endblock %}
 </div>
 

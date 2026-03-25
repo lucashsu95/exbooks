@@ -4,41 +4,41 @@
 
 {% block content %}
 <!-- Top Navigation -->
-<div class="flex items-center bg-white dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800">
-  <a href="{% url 'deals:detail' deal.id %}" class="text-slate-900 dark:text-slate-100 flex size-12 shrink-0 items-center cursor-pointer">
+<div class="flex items-center bg-white-background-dark p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200-slate-800">
+  <a href="{% url 'deals:detail' deal.id %}" class="text-slate-900-slate-100 flex size-12 shrink-0 items-center cursor-pointer">
     <span class="material-symbols-outlined">arrow_back</span>
   </a>
-  <h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center">申請延長借閱</h2>
+  <h2 class="text-slate-900-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center">申請延長借閱</h2>
   <div class="flex w-12 items-center justify-end"></div>
 </div>
 
 <!-- Main Content -->
 <main class="flex-1 px-4 py-4 pb-32">
   <!-- Book Info Card -->
-  <div class="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 p-4 mb-4">
+  <div class="bg-white-slate-800/50 rounded-xl border border-slate-200-slate-800 p-4 mb-4">
     <div class="flex gap-4">
       <!-- Book Cover -->
-      <div class="w-24 h-32 rounded-lg bg-slate-200 dark:bg-slate-700 overflow-hidden shrink-0 bg-cover bg-center" style="{% if deal.shared_book.official_book.cover_image %}background-image: url('{{ deal.shared_book.official_book.cover_image.url }}');{% endif %}">
+      <div class="w-24 h-32 rounded-lg bg-slate-200-slate-700 overflow-hidden shrink-0 bg-cover bg-center" style="{% if deal.shared_book.official_book.cover_image %}background-image: url('{{ deal.shared_book.official_book.cover_image.url }}');{% endif %}">
       </div>
       <!-- Book Details -->
       <div class="flex-1 flex flex-col justify-center">
-        <h3 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight mb-1">{{ deal.shared_book.official_book.title }}</h3>
-        <p class="text-slate-600 dark:text-slate-400 text-sm mb-2">{{ deal.shared_book.official_book.author }}</p>
+        <h3 class="text-slate-900-slate-100 text-lg font-bold leading-tight mb-1">{{ deal.shared_book.official_book.title }}</h3>
+        <p class="text-slate-600-slate-400 text-sm mb-2">{{ deal.shared_book.official_book.author }}</p>
         <div class="flex items-center gap-2">
-          <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-bold">{{ deal.get_deal_type_display }}</span>
+          <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700-blue-900/30-blue-400 text-xs font-bold">{{ deal.get_deal_type_display }}</span>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Current Due Date -->
-  <div class="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 p-4 mb-4">
-    <h4 class="text-slate-900 dark:text-slate-100 font-bold mb-3 flex items-center gap-2">
+  <div class="bg-white-slate-800/50 rounded-xl border border-slate-200-slate-800 p-4 mb-4">
+    <h4 class="text-slate-900-slate-100 font-bold mb-3 flex items-center gap-2">
       <span class="material-symbols-outlined text-primary">event</span>
       目前到期日
     </h4>
-    <div class="bg-slate-100 dark:bg-slate-700/50 rounded-lg p-4">
-      <p class="text-slate-900 dark:text-slate-100 font-bold text-lg">
+    <div class="bg-slate-100-slate-700/50 rounded-lg p-4">
+      <p class="text-slate-900-slate-100 font-bold text-lg">
         {% if deal.due_date %}
           {{ deal.due_date|date:"Y年n月j日" }}
         {% else %}
@@ -52,18 +52,18 @@
   <form method="post" action="" id="extension-form">
     {% csrf_token %}
 
-    <div class="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 p-4 mb-4">
-      <h4 class="text-slate-900 dark:text-slate-100 font-bold mb-3 flex items-center gap-2">
+    <div class="bg-white-slate-800/50 rounded-xl border border-slate-200-slate-800 p-4 mb-4">
+      <h4 class="text-slate-900-slate-100 font-bold mb-3 flex items-center gap-2">
         <span class="material-symbols-outlined text-primary">more_time</span>
         延長天數
       </h4>
       <div class="space-y-3">
         {{ form.extra_days }}
         {% if form.extra_days.help_text %}
-          <p class="text-sm text-slate-500 dark:text-slate-400">{{ form.extra_days.help_text }}</p>
+          <p class="text-sm text-slate-500-slate-400">{{ form.extra_days.help_text }}</p>
         {% endif %}
         {% if form.extra_days.errors %}
-          <div class="text-rose-600 dark:text-rose-400 text-sm">
+          <div class="text-rose-600-rose-400 text-sm">
             {% for error in form.extra_days.errors %}
               <p>{{ error }}</p>
             {% endfor %}
@@ -74,8 +74,8 @@
 
     <!-- Error Messages -->
     {% if form.non_field_errors %}
-    <div class="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl p-4 mb-4">
-      <div class="flex items-center gap-2 text-rose-600 dark:text-rose-400">
+    <div class="bg-rose-50-rose-900/20 border border-rose-200-rose-800 rounded-xl p-4 mb-4">
+      <div class="flex items-center gap-2 text-rose-600-rose-400">
         <span class="material-symbols-outlined">error</span>
         <ul class="text-sm">
           {% for error in form.non_field_errors %}
@@ -87,12 +87,12 @@
     {% endif %}
 
     <!-- Info Box -->
-    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+    <div class="bg-blue-50-blue-900/20 border border-blue-200-blue-800 rounded-xl p-4">
       <div class="flex items-start gap-3">
         <span class="material-symbols-outlined text-primary">info</span>
         <div>
-          <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm mb-1">申請須知</h4>
-          <ul class="text-sm text-slate-600 dark:text-slate-300 space-y-1 list-disc ml-4">
+          <h4 class="font-bold text-slate-900-slate-100 text-sm mb-1">申請須知</h4>
+          <ul class="text-sm text-slate-600-slate-300 space-y-1 list-disc ml-4">
             <li>延長天數範圍為 7 至 30 天</li>
             <li>提交申請後，對方將收到通知</li>
             <li>對方核准後，到期日將自動延長</li>
@@ -105,7 +105,7 @@
 </main>
 
 <!-- Sticky Footer Actions -->
-<div class="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md p-4 border-t border-slate-200 dark:border-slate-800">
+<div class="fixed bottom-0 left-0 right-0 bg-white/80-background-dark/80 backdrop-blur-md p-4 border-t border-slate-200-slate-800">
   <button type="submit" form="extension-form" class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
     <span class="material-symbols-outlined">send</span>
     送出申請
