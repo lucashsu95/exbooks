@@ -4,8 +4,10 @@
 
 import json
 import logging
+from collections import OrderedDict
 
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
@@ -112,15 +114,20 @@ def deal_list(request):
     user = request.user
     tab = request.GET.get("tab", "pending")
 
+    # Base queryset with common select_related
+    base_qs = Deal.objects.select_related(
+        "shared_book__official_book",
+        "applicant",
+        "responder",
+    )
+
     # 待回應（我是回應者）
-    pending_responder = Deal.objects.filter(
+    pending_responder = base_qs.filter(
         responder=user,
         status=Deal.Status.REQUESTED,
-    ).select_related("shared_book__official_book", "applicant")
+    )
 
     # 將待回應的申請依書籍分組
-    from collections import OrderedDict
-
     grouped_pending = OrderedDict()
     for deal in pending_responder:
         book = deal.shared_book
@@ -129,37 +136,28 @@ def deal_list(request):
         grouped_pending[book].append(deal)
 
     # 待對方回應（我是申請者）
-    pending_applicant = Deal.objects.filter(
+    pending_applicant = base_qs.filter(
         applicant=user,
         status=Deal.Status.REQUESTED,
-    ).select_related("shared_book__official_book", "responder")
+    )
 
     # 待面交
-    pending_meeting = Deal.objects.filter(
-        applicant=user,
+    pending_meeting = base_qs.filter(
+        Q(applicant=user) | Q(responder=user),
         status=Deal.Status.RESPONDED,
-    ).select_related("shared_book__official_book", "responder") | Deal.objects.filter(
-        responder=user,
-        status=Deal.Status.RESPONDED,
-    ).select_related("shared_book__official_book", "applicant")
+    )
 
     # 待評價
-    pending_rating = Deal.objects.filter(
-        applicant=user,
+    pending_rating = base_qs.filter(
+        Q(applicant=user) | Q(responder=user),
         status=Deal.Status.MEETED,
-    ).select_related("shared_book__official_book", "responder") | Deal.objects.filter(
-        responder=user,
-        status=Deal.Status.MEETED,
-    ).select_related("shared_book__official_book", "applicant")
+    )
 
     # 歷史紀錄
-    history = Deal.objects.filter(
-        applicant=user,
+    history = base_qs.filter(
+        Q(applicant=user) | Q(responder=user),
         status__in=[Deal.Status.DONE, Deal.Status.CANCELLED],
-    ).select_related("shared_book__official_book", "responder") | Deal.objects.filter(
-        responder=user,
-        status__in=[Deal.Status.DONE, Deal.Status.CANCELLED],
-    ).select_related("shared_book__official_book", "applicant")
+    )
 
     return render(
         request,

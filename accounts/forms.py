@@ -5,8 +5,11 @@ from django.utils.translation import gettext_lazy as _
 from allauth.account.forms import SignupForm as AllauthSignupForm
 from allauth.socialaccount.forms import SignupForm as SocialSignupForm
 
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Field
+
 from .models import Appeal, UserProfile
-from .validators import is_adult, validate_age_18_or_older
+from .validators import validate_age_18_or_older
 
 User = get_user_model()
 
@@ -20,25 +23,25 @@ class AppealForm(forms.ModelForm):
         widgets = {
             "appeal_type": forms.Select(
                 attrs={
-                    "class": "w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                    "class": "w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900"
                 }
             ),
             "title": forms.TextInput(
                 attrs={
-                    "class": "w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100",
+                    "class": "w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900",
                     "placeholder": "申訴標題",
                 }
             ),
             "description": forms.Textarea(
                 attrs={
-                    "class": "w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100",
+                    "class": "w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900",
                     "rows": 5,
                     "placeholder": "請詳細描述您的申訴內容（至少 50 字元）",
                 }
             ),
             "evidence": forms.FileInput(
                 attrs={
-                    "class": "w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                    "class": "w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900"
                 }
             ),
         }
@@ -46,6 +49,17 @@ class AppealForm(forms.ModelForm):
             "title": {"required": "請輸入申訴標題"},
             "description": {"required": "請輸入申訴描述"},
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            Field("appeal_type"),
+            Field("title"),
+            Field("description"),
+            Field("evidence"),
+        )
 
     def clean_description(self):
         """驗證描述至少 50 字元"""
@@ -78,6 +92,17 @@ class CustomSignupForm(AllauthSignupForm):
 
     class Meta:
         model = User
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Field("email"),
+            Field("password1"),
+            Field("password2"),
+            Field("nickname"),
+            Field("birth_date"),
+        )
 
     def clean_birth_date(self):
         """驗證年齡是否滿 18 歲"""
@@ -141,6 +166,16 @@ class CustomSocialSignupForm(SocialSignupForm):
 
     class Meta:
         model = User
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Field("email"),
+            Field("nickname"),
+            Field("birth_date"),
+            Field("default_location"),
+        )
 
     def clean_birth_date(self):
         """驗證年齡是否滿 18 歲"""
@@ -206,6 +241,14 @@ class CompleteProfileForm(forms.ModelForm):
         model = UserProfile
         fields = ["nickname", "birth_date"]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Field("nickname"),
+            Field("birth_date"),
+        )
+
     def clean_birth_date(self):
         """驗證年齡是否滿 18 歲"""
         birth_date = self.cleaned_data.get("birth_date")
@@ -235,6 +278,18 @@ class ProfileForm(forms.ModelForm):
             ),
             "available_schedule": forms.HiddenInput(),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Field("nickname"),
+            Field("birth_date"),
+            Field("default_transferability"),
+            Field("default_location"),
+            Field("available_schedule", template="forms/widgets/schedule_picker.html"),
+            Field("avatar", template="forms/widgets/image_preview.html"),
+        )
 
     def clean_birth_date(self):
         """驗證年齡是否滿 18 歲"""

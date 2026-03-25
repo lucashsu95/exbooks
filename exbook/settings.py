@@ -49,6 +49,9 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
+    # crispy-forms
+    "crispy_forms",
+    "crispy_tailwind",
     # Local apps
     "core",
     "accounts",
@@ -230,3 +233,7 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@localhost")
 LOGIN_URL = "account_login"
 LOGIN_REDIRECT_URL = "books:list"
 LOGOUT_REDIRECT_URL = "account_login"
+
+# Crispy Forms configuration
+CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
+CRISPY_TEMPLATE_PACK = "tailwind"

@@ -1,5 +1,9 @@
 from django import forms
+from django.db.models import Q
 from django.forms.widgets import Input
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Field
+
 from .models import SharedBook, OfficialBook, BookSet
 
 
@@ -34,6 +38,18 @@ class BookSearchForm(forms.Form):
         choices=[("", "全部分類")] + list(OfficialBook.Category.choices),
         widget=forms.Select(attrs={"class": "form-select"}),
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.form_method = "get"
+        self.helper.layout = Layout(
+            Field("q"),
+            Field("status"),
+            Field("transferability"),
+            Field("category"),
+        )
 
 
 class MultipleFileInput(Input):
@@ -79,6 +95,21 @@ class BookAddForm(forms.ModelForm):
         model = SharedBook
         fields = ["transferability", "condition_description", "loan_duration_days"]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Field("isbn"),
+            Field("title"),
+            Field("author"),
+            Field("publisher"),
+            Field("category"),
+            Field("transferability"),
+            Field("condition_description"),
+            Field("loan_duration_days"),
+            Field("photos"),
+        )
+
 
 # ============================================
 # 套書相關表單
@@ -94,13 +125,13 @@ class BookSetCreateForm(forms.ModelForm):
         widgets = {
             "name": forms.TextInput(
                 attrs={
-                    "class": "w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
+                    "class": "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
                     "placeholder": "例如：哈利波特全套",
                 }
             ),
             "description": forms.Textarea(
                 attrs={
-                    "class": "w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
+                    "class": "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
                     "rows": 3,
                     "placeholder": "套書說明（選填）",
                 }
@@ -110,6 +141,14 @@ class BookSetCreateForm(forms.ModelForm):
             "name": "套書名稱",
             "description": "套書說明",
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Field("name"),
+            Field("description"),
+        )
 
 
 class BookSetManageForm(forms.Form):
@@ -130,6 +169,10 @@ class BookSetManageForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.user = user
         self.book_set = book_set
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Field("book_ids"),
+        )
 
         # 只顯示用戶擁有的書籍
         if user:
@@ -138,9 +181,7 @@ class BookSetManageForm(forms.Form):
             )
             # 如果是編輯現有套書，排除已屬於其他套書的書籍
             if book_set:
-                queryset = queryset.filter(
-                    forms.Q(book_set=None) | forms.Q(book_set=book_set)
-                )
+                queryset = queryset.filter(Q(book_set=None) | Q(book_set=book_set))
             else:
                 queryset = queryset.filter(book_set=None)
             self.fields["book_ids"].queryset = queryset

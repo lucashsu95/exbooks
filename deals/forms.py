@@ -3,6 +3,8 @@
 """
 
 from django import forms
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Field
 
 from .models import Deal
 
@@ -16,7 +18,7 @@ class DealApplicationForm(forms.ModelForm):
         widget=forms.Textarea(
             attrs={
                 "rows": 3,
-                "class": "w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
+                "class": "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
             }
         ),
         required=False,
@@ -28,6 +30,16 @@ class DealApplicationForm(forms.ModelForm):
         model = Deal
         fields = ["deal_type"]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            Field("deal_type"),
+            Field("shared_book"),
+            Field("note"),
+        )
+
 
 class RatingForm(forms.Form):
     """評價表單。"""
@@ -37,7 +49,7 @@ class RatingForm(forms.Form):
         max_value=5,
         widget=forms.NumberInput(
             attrs={
-                "class": "w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer",
+                "class": "w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer",
                 "type": "range",
             }
         ),
@@ -48,7 +60,7 @@ class RatingForm(forms.Form):
         max_value=5,
         widget=forms.NumberInput(
             attrs={
-                "class": "w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer",
+                "class": "w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer",
                 "type": "range",
             }
         ),
@@ -59,7 +71,7 @@ class RatingForm(forms.Form):
         max_value=5,
         widget=forms.NumberInput(
             attrs={
-                "class": "w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer",
+                "class": "w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer",
                 "type": "range",
             }
         ),
@@ -69,13 +81,23 @@ class RatingForm(forms.Form):
         widget=forms.Textarea(
             attrs={
                 "rows": 3,
-                "class": "w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
+                "class": "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
                 "placeholder": "分享您的交易體驗...",
             }
         ),
         required=False,
         label="評語",
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Field("integrity_score", template="forms/widgets/rating_slider.html"),
+            Field("punctuality_score", template="forms/widgets/rating_slider.html"),
+            Field("accuracy_score", template="forms/widgets/rating_slider.html"),
+            Field("comment"),
+        )
 
 
 class DealMessageForm(forms.Form):
@@ -84,13 +106,21 @@ class DealMessageForm(forms.Form):
     content = forms.CharField(
         widget=forms.TextInput(
             attrs={
-                "class": "flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-primary",
+                "class": "flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary",
                 "placeholder": "輸入訊息...",
             }
         ),
         max_length=1000,
         label="訊息內容",
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            Field("content"),
+        )
 
 
 class ExtensionRequestForm(forms.Form):
@@ -101,7 +131,7 @@ class ExtensionRequestForm(forms.Form):
         max_value=30,
         widget=forms.NumberInput(
             attrs={
-                "class": "w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
+                "class": "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
                 "placeholder": "7-30 天",
                 "min": 7,
                 "max": 30,
@@ -110,6 +140,13 @@ class ExtensionRequestForm(forms.Form):
         label="延長天數",
         help_text="請輸入 7 至 30 天的延長天數",
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Field("extra_days"),
+        )
 
 
 # ============================================
@@ -140,7 +177,7 @@ class ExceptionDealForm(forms.Form):
         widget=forms.Textarea(
             attrs={
                 "rows": 4,
-                "class": "w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
+                "class": "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
                 "placeholder": "請詳細說明情況...",
             }
         ),
@@ -148,6 +185,14 @@ class ExceptionDealForm(forms.Form):
         label="詳細說明",
         help_text="請描述書籍狀況或遺失/損毀原因",
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Field("reason"),
+            Field("description"),
+        )
 
 
 class ExceptionResolveForm(forms.Form):
@@ -173,10 +218,18 @@ class ExceptionResolveForm(forms.Form):
         widget=forms.Textarea(
             attrs={
                 "rows": 3,
-                "class": "w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
+                "class": "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
                 "placeholder": "備註說明（選填）",
             }
         ),
         required=False,
         label="備註",
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Field("resolution"),
+            Field("note"),
+        )

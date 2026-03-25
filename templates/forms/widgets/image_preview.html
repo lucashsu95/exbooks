@@ -1,0 +1,24 @@
+<div class="flex items-center gap-4">
+  {% if widget.value %}
+    <img src="{{ widget.value.url }}" alt="目前圖片"
+      class="h-16 w-16 rounded-full object-cover border-2 border-primary">
+  {% else %}
+    <div class="h-16 w-16 rounded-full bg-slate-200 flex items-center justify-center">
+      <span class="material-symbols-outlined text-slate-400">person</span>
+    </div>
+  {% endif %}
+  <input type="file" name="{{ widget.name }}" id="{{ widget.attrs.id }}" accept="image/*"
+    class="text-sm text-slate-600
+    file:mr-3 file:rounded-lg file:border-0
+    file:bg-primary/10 file:px-4 file:py-2
+    file:text-sm file:font-medium file:text-primary
+    hover:file:bg-primary/20 file:transition-colors
+    file:cursor-pointer">
+</div>
+{% if widget.value %}
+  <div class="mt-2 flex items-center gap-2">
+    <input type="checkbox" name="{{ widget.name }}_clear" id="{{ widget.attrs.id }}_clear" value="1"
+      class="rounded border-slate-300 text-primary focus:ring-primary">
+    <label for="{{ widget.attrs.id }}_clear" class="text-sm text-slate-600">清除目前圖片</label>
+  </div>
+{% endif %}
