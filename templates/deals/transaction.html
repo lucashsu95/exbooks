@@ -1,136 +1,142 @@
 {% extends 'base.html' %}
-
 {% block title %}Exbooks - 面交：{{ deal.book.title|default:'哈比人' }}{% endblock %}
-
 {% block content %}
-<!-- Top Navigation -->
-<div class="flex items-center bg-white dark:bg-slate-900 p-4 pb-2 justify-between border-b border-slate-200 dark:border-slate-800">
-    <a href="{% url 'books:list' %}" class="text-slate-900 dark:text-slate-100 flex size-12 shrink-0 items-center cursor-pointer">
-        <span class="material-symbols-outlined">arrow_back</span>
-    </a>
-    <h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center">面交：{{ deal.book.title|default:'哈比人' }}</h2>
-    <div class="flex w-12 items-center justify-end">
-        <button type="button" class="flex cursor-pointer items-center justify-center rounded-lg h-12 bg-transparent text-slate-900 dark:text-slate-100">
-            <span class="material-symbols-outlined">more_horiz</span>
-        </button>
-    </div>
-</div>
-
-<!-- Chat Header Tabs -->
-<div class="bg-white dark:bg-slate-900">
-    <div class="flex border-b border-slate-200 dark:border-slate-800 px-4 gap-8">
-        <a class="flex flex-col items-center justify-center border-b-[3px] border-primary text-primary pb-[13px] pt-4" href="#">
-            <p class="text-sm font-bold leading-normal tracking-wide">協調面交</p>
+    <!-- Top Navigation -->
+    <div class="flex items-center bg-white dark:bg-slate-900 p-4 pb-2 justify-between border-b border-slate-200 dark:border-slate-800">
+        <a href="{% url 'books:list' %}"
+           class="text-slate-900 dark:text-slate-100 flex size-12 shrink-0 items-center cursor-pointer">
+            <span class="material-symbols-outlined">arrow_back</span>
         </a>
-        <a class="flex flex-col items-center justify-center border-b-[3px] border-transparent text-slate-500 pb-[13px] pt-4" href="#">
-            <p class="text-sm font-bold leading-normal tracking-wide">交易詳情</p>
-        </a>
+        <h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center">
+            面交：{{ deal.book.title|default:'哈比人' }}
+        </h2>
+        <div class="flex w-12 items-center justify-end">
+            <button type="button"
+                    class="flex cursor-pointer items-center justify-center rounded-lg h-12 bg-transparent text-slate-900 dark:text-slate-100">
+                <span class="material-symbols-outlined">more_horiz</span>
+            </button>
+        </div>
     </div>
-</div>
-
-<!-- Status Timeline -->
-<div class="p-4 bg-white dark:bg-slate-900 mb-2">
-    <div class="flex items-center justify-between w-full max-w-md mx-auto px-4">
-        <div class="flex flex-col items-center gap-2">
-            <div class="size-8 rounded-full bg-primary flex items-center justify-center text-white">
-                <span class="material-symbols-outlined text-sm">check</span>
+    <!-- Chat Header Tabs -->
+    <div class="bg-white dark:bg-slate-900">
+        <div class="flex border-b border-slate-200 dark:border-slate-800 px-4 gap-8">
+            <a class="flex flex-col items-center justify-center border-b-[3px] border-primary text-primary pb-[13px] pt-4"
+               href="#">
+                <p class="text-sm font-bold leading-normal tracking-wide">協調面交</p>
+            </a>
+            <a class="flex flex-col items-center justify-center border-b-[3px] border-transparent text-slate-500 pb-[13px] pt-4"
+               href="#">
+                <p class="text-sm font-bold leading-normal tracking-wide">交易詳情</p>
+            </a>
+        </div>
+    </div>
+    <!-- Status Timeline -->
+    <div class="p-4 bg-white dark:bg-slate-900 mb-2">
+        <div class="flex items-center justify-between w-full max-w-md mx-auto px-4">
+            <div class="flex flex-col items-center gap-2">
+                <div class="size-8 rounded-full bg-primary flex items-center justify-center text-white">
+                    <span class="material-symbols-outlined text-sm">check</span>
+                </div>
+                <span class="text-xs font-medium text-slate-600">已請求</span>
             </div>
-            <span class="text-xs font-medium text-slate-600">已請求</span>
-        </div>
-        <div class="flex-1 h-[2px] bg-primary mx-2 mb-6"></div>
-        <div class="flex flex-col items-center gap-2">
-            <div class="size-8 rounded-full bg-primary flex items-center justify-center text-white">
-                <span class="material-symbols-outlined text-sm">check</span>
+            <div class="flex-1 h-[2px] bg-primary mx-2 mb-6"></div>
+            <div class="flex flex-col items-center gap-2">
+                <div class="size-8 rounded-full bg-primary flex items-center justify-center text-white">
+                    <span class="material-symbols-outlined text-sm">check</span>
+                </div>
+                <span class="text-xs font-medium text-slate-600">已回應</span>
             </div>
-            <span class="text-xs font-medium text-slate-600">已回應</span>
-        </div>
-        <div class="flex-1 h-[2px] bg-slate-200 mx-2 mb-6"></div>
-        <div class="flex flex-col items-center gap-2 opacity-50">
-            <div class="size-8 rounded-full border-2 border-slate-300-slate-600 flex items-center justify-center">
-                <span class="material-symbols-outlined text-sm">handshake</span>
-            </div>
-            <span class="text-xs font-medium text-slate-400">面交</span>
-        </div>
-    </div>
-</div>
-
-<!-- Chat Area (Meeting Coordination) -->
-<div class="flex-1 flex flex-col overflow-y-auto">
-    {% for message in messages_list|default:"" %}
-    {% if message.sender == request.user %}
-    <div class="flex items-end gap-3 p-4 justify-end">
-        <div class="flex flex-1 flex-col gap-1 items-end">
-            <p class="text-slate-500 text-[13px] font-normal leading-normal text-right">我（借書人）</p>
-            <p class="text-base font-normal leading-normal flex max-w-[85%] rounded-xl px-4 py-3 bg-primary text-white">
-                {{ message.content|default:"我剛到，在木椅這邊！" }}
-            </p>
-        </div>
-        <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-10 shrink-0 border border-slate-200 dark:border-slate-700" aria-label="使用者的頭像" style="background-image: url('{% if request.user.profile.avatar_url %}{{ request.user.profile.avatar_url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuDojUq0WTv5D6pymWNmlhwK-83aMoYR_ktYitiw8gMAzHNLRukd2JeGRGRObPmU7qs6ntatuXtIWkZSPkNmnj6o0dqSY5ps1yHEdAlYAa6Mrti8lHR9VdWBpivLmjrr384ORVmlguT5ETC6h5EAr1J_X2C-gOgalH_WQY9LM7HutuuHT8U8y6Kyl9dwvCOLrhYEC4vwxqDzqwjex4n0j0k-KSoA9pGkrWYFA-5RtB7doscuo0r6K2HIZ5N4B2aVhMNBeksxQvEw-gI{% endif %}');"></div>
-    </div>
-    {% else %}
-    <div class="flex items-end gap-3 p-4">
-        <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-10 shrink-0 border border-slate-200 dark:border-slate-700" aria-label="書主的頭像" style="background-image: url('{% if message.sender.profile.avatar_url %}{{ message.sender.profile.avatar_url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuA4o4mQga9VyWMJWs4P2pLYtw50l-PD_wHvnr5ybr6eSFATLE6EaxKZyy0IzTmblUDuT13XC3zlHeZ5Y_ccsWmJSP1YB8pVjGaiaL3dFVOvUp8pa2Dnd_KF_kDIGc9vkrs8H2f7NCiH7b8Ut2stmGNUOCPRuoWLNyuo2K9P0nxWywx3TnCD2angWiHC8wq1xkDcWKtgCqhjyJn6bGRuKBhDQvqsNoUqmsdcIpQPWHvxB6irSyqm_tSs1fWQNFvsLjz4olQWUhb6A5g{% endif %}');"></div>
-        <div class="flex flex-1 flex-col gap-1 items-start">
-            <p class="text-slate-500 text-[13px] font-normal leading-normal">{{ message.sender.name|default:'Alex（書主）' }}</p>
-            <p class="text-base font-normal leading-normal flex max-w-[85%] rounded-xl px-4 py-3 bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
-                {{ message.content|default:"我在圖書館北側入口，你在哪裡？" }}
-            </p>
-        </div>
-    </div>
-    {% endif %}
-    {% empty %}
-    <div class="flex items-center justify-center p-8 w-full">
-        <div class="text-center text-slate-500">
-            <span class="material-symbols-outlined text-4xl mb-2 opacity-50">inbox</span>
-            <p>目前沒有資料</p>
-        </div>
-    </div>
-    {% endfor %}
-</div>
-
-<!-- Handover Instructions & Action -->
-<div class="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 space-y-4">
-    <div class="bg-primary/10 dark:bg-primary/20 rounded-xl p-4 border border-primary/20">
-        <div class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-primary">info</span>
-            <div>
-                <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm mb-1">面交指南</h4>
-                <ul class="text-sm text-slate-600 space-y-2 list-disc ml-4">
-                    <li>請約在光線明亮的公共場所（如圖書館或咖啡廳）。</li>
-                    <li>雙方共同檢查《{{ deal.book.title|default:'哈比人' }}》的書況。</li>
-                    <li>點擊下方按鈕拍攝書籍面交照片，以完成交易。</li>
-                </ul>
+            <div class="flex-1 h-[2px] bg-slate-200 mx-2 mb-6"></div>
+            <div class="flex flex-col items-center gap-2 opacity-50">
+                <div class="size-8 rounded-full border-2 border-slate-300-slate-600 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-sm">handshake</span>
+                </div>
+                <span class="text-xs font-medium text-slate-400">面交</span>
             </div>
         </div>
     </div>
-
-    <!-- Main Action Button -->
-    <button type="button" class="w-full flex items-center justify-center gap-3 bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transition-colors">
-        <span class="material-symbols-outlined">photo_camera</span>
-        <span>確認面交並拍照</span>
-    </button>
-
-    <!-- Message Input Area -->
-    <div class="flex items-center gap-3 pt-2">
-        <label class="flex flex-col flex-1">
-            <div class="flex w-full items-stretch rounded-xl bg-slate-100 h-12">
-                <input class="w-full bg-transparent border-none focus:ring-0 px-4 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 text-base" placeholder="輸入訊息..."/>
-                <div class="flex items-center gap-2 pr-3">
-                    <button type="button" class="text-slate-500 hover:text-primary">
-                        <span class="material-symbols-outlined text-xl">image</span>
-                    </button>
-                    <button type="button" class="text-slate-500 hover:text-primary">
-                        <span class="material-symbols-outlined text-xl">location_on</span>
-                    </button>
+    <!-- Chat Area (Meeting Coordination) -->
+    <div class="flex-1 flex flex-col overflow-y-auto">
+        {% for message in messages_list|default:"" %}
+            {% if message.sender == request.user %}
+                <div class="flex items-end gap-3 p-4 justify-end">
+                    <div class="flex flex-1 flex-col gap-1 items-end">
+                        <p class="text-slate-500 text-[13px] font-normal leading-normal text-right">我（借書人）</p>
+                        <p class="text-base font-normal leading-normal flex max-w-[85%] rounded-xl px-4 py-3 bg-primary text-white">
+                            {{ message.content|default:"我剛到，在木椅這邊！" }}
+                        </p>
+                    </div>
+                    <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-10 shrink-0 border border-slate-200 dark:border-slate-700"
+                         aria-label="使用者的頭像"
+                         style="background-image: url('{% if request.user.profile.avatar_url %}{{ request.user.profile.avatar_url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuDojUq0WTv5D6pymWNmlhwK-83aMoYR_ktYitiw8gMAzHNLRukd2JeGRGRObPmU7qs6ntatuXtIWkZSPkNmnj6o0dqSY5ps1yHEdAlYAa6Mrti8lHR9VdWBpivLmjrr384ORVmlguT5ETC6h5EAr1J_X2C-gOgalH_WQY9LM7HutuuHT8U8y6Kyl9dwvCOLrhYEC4vwxqDzqwjex4n0j0k-KSoA9pGkrWYFA-5RtB7doscuo0r6K2HIZ5N4B2aVhMNBeksxQvEw-gI{% endif %}')">
+                    </div>
+                </div>
+            {% else %}
+                <div class="flex items-end gap-3 p-4">
+                    <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-10 shrink-0 border border-slate-200 dark:border-slate-700"
+                         aria-label="書主的頭像"
+                         style="background-image: url('{% if message.sender.profile.avatar_url %}{{ message.sender.profile.avatar_url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuA4o4mQga9VyWMJWs4P2pLYtw50l-PD_wHvnr5ybr6eSFATLE6EaxKZyy0IzTmblUDuT13XC3zlHeZ5Y_ccsWmJSP1YB8pVjGaiaL3dFVOvUp8pa2Dnd_KF_kDIGc9vkrs8H2f7NCiH7b8Ut2stmGNUOCPRuoWLNyuo2K9P0nxWywx3TnCD2angWiHC8wq1xkDcWKtgCqhjyJn6bGRuKBhDQvqsNoUqmsdcIpQPWHvxB6irSyqm_tSs1fWQNFvsLjz4olQWUhb6A5g{% endif %}')">
+                    </div>
+                    <div class="flex flex-1 flex-col gap-1 items-start">
+                        <p class="text-slate-500 text-[13px] font-normal leading-normal">{{ message.sender.name|default:'Alex（書主）' }}</p>
+                        <p class="text-base font-normal leading-normal flex max-w-[85%] rounded-xl px-4 py-3 bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+                            {{ message.content|default:"我在圖書館北側入口，你在哪裡？" }}
+                        </p>
+                    </div>
+                </div>
+            {% endif %}
+        {% empty %}
+            <div class="flex items-center justify-center p-8 w-full">
+                <div class="text-center text-slate-500">
+                    <span class="material-symbols-outlined text-4xl mb-2 opacity-50">inbox</span>
+                    <p>目前沒有資料</p>
                 </div>
             </div>
-        </label>
-        <button type="button" class="size-12 rounded-xl bg-primary text-white flex items-center justify-center">
-            <span class="material-symbols-outlined">send</span>
-        </button>
+        {% endfor %}
     </div>
-</div>
-
-<!-- Footer Spacer -->
-<div class="h-6 bg-white dark:bg-slate-900"></div>
+    <!-- Handover Instructions & Action -->
+    <div class="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 space-y-4">
+        <div class="bg-primary/10 dark:bg-primary/20 rounded-xl p-4 border border-primary/20">
+            <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-primary">info</span>
+                <div>
+                    <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm mb-1">面交指南</h4>
+                    <ul class="text-sm text-slate-600 space-y-2 list-disc ml-4">
+                        <li>請約在光線明亮的公共場所（如圖書館或咖啡廳）。</li>
+                        <li>雙方共同檢查《{{ deal.book.title|default:'哈比人' }}》的書況。</li>
+                        <li>點擊下方按鈕拍攝書籍面交照片，以完成交易。</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- Main Action Button -->
+        <button type="button"
+                class="w-full flex items-center justify-center gap-3 bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transition-colors">
+            <span class="material-symbols-outlined">photo_camera</span>
+            <span>確認面交並拍照</span>
+        </button>
+        <!-- Message Input Area -->
+        <div class="flex items-center gap-3 pt-2">
+            <label class="flex flex-col flex-1">
+                <div class="flex w-full items-stretch rounded-xl bg-slate-100 h-12">
+                    <input class="w-full bg-transparent border-none focus:ring-0 px-4 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 text-base"
+                           placeholder="輸入訊息..." />
+                    <div class="flex items-center gap-2 pr-3">
+                        <button type="button" class="text-slate-500 hover:text-primary">
+                            <span class="material-symbols-outlined text-xl">image</span>
+                        </button>
+                        <button type="button" class="text-slate-500 hover:text-primary">
+                            <span class="material-symbols-outlined text-xl">location_on</span>
+                        </button>
+                    </div>
+                </div>
+            </label>
+            <button type="button"
+                    class="size-12 rounded-xl bg-primary text-white flex items-center justify-center">
+                <span class="material-symbols-outlined">send</span>
+            </button>
+        </div>
+    </div>
+    <!-- Footer Spacer -->
+    <div class="h-6 bg-white dark:bg-slate-900"></div>
 {% endblock %}

@@ -1,29 +1,27 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 {% block title %}Exbooks - 提交申訴{% endblock %}
-
 {% block content %}
-<!-- Header Section -->
-<header class="flex items-center bg-background-light-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
-<a href="{% url 'accounts:appeal_list' %}" class="text-slate-900 flex size-12 shrink-0 items-center cursor-pointer">
-<span class="material-symbols-outlined">arrow_back</span>
-</a>
-<h2 class="text-slate-900 text-xl font-bold leading-tight tracking-tight flex-1 text-center">提交申訴</h2>
-<div class="flex w-12 items-center justify-end"></div>
-</header>
-
-<main class="px-4 py-6 max-w-lg mx-auto w-full space-y-6 pb-24">
-<form method="post" enctype="multipart/form-data" class="space-y-6">
-{% csrf_token %}
-{% crispy form %}
-
-<!-- Submit Button -->
-<button type="submit" class="w-full bg-primary text-white font-bold py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-<span class="material-symbols-outlined">send</span>
-提交申訴
-</button>
-</form>
-</main>
-
-{% include '_bottom_nav.html' %}
+    <!-- Header Section -->
+    <header class="flex items-center bg-background-light-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
+        <a href="{% url 'accounts:appeal_list' %}"
+           class="text-slate-900 flex size-12 shrink-0 items-center cursor-pointer">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <h2 class="text-slate-900 text-xl font-bold leading-tight tracking-tight flex-1 text-center">提交申訴</h2>
+        <div class="flex w-12 items-center justify-end"></div>
+    </header>
+    <main class="px-4 py-6 max-w-lg mx-auto w-full space-y-6 pb-24">
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            {% crispy form %}
+            <!-- Submit Button -->
+            <button type="submit"
+                    class="w-full bg-primary text-white font-bold py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+                <span class="material-symbols-outlined">send</span>
+                提交申訴
+            </button>
+        </form>
+    </main>
+    {% include '_bottom_nav.html' %}
 {% endblock %}

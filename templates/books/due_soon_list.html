@@ -1,115 +1,103 @@
 {% extends 'base.html' %}
-
 {% block title %}Exbooks - 即將到期提醒{% endblock %}
-
 {% block content %}
-<!-- Top Navigation -->
-<div class="flex items-center bg-white p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200">
-  <a href="{% url 'books:bookshelf' %}" class="text-slate-900 flex size-12 shrink-0 items-center cursor-pointer">
-    <span class="material-symbols-outlined">arrow_back</span>
-  </a>
-  <h2 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1">即將到期提醒</h2>
-  <div class="flex w-12 items-center justify-end">
-    <!-- Placeholder for symmetry -->
-  </div>
-</div>
-
-<!-- Filter Tabs -->
-<div class="px-4 py-3 bg-white border-b border-slate-200">
-  <div class="flex gap-2">
-    <a href="?days=7" class="px-4 py-2 rounded-full text-sm font-medium {% if remind_days == 7 %}bg-primary text-white{% else %}bg-slate-100 text-slate-600{% endif %}">
-      7 天內
-    </a>
-    <a href="?days=14" class="px-4 py-2 rounded-full text-sm font-medium {% if remind_days == 14 %}bg-primary text-white{% else %}bg-slate-100 text-slate-600{% endif %}">
-      14 天內
-    </a>
-    <a href="?days=30" class="px-4 py-2 rounded-full text-sm font-medium {% if remind_days == 30 %}bg-primary text-white{% else %}bg-slate-100 text-slate-600{% endif %}">
-      30 天內
-    </a>
-  </div>
-</div>
-
-<!-- Content -->
-<div class="px-4 py-4">
-  {% if deals_with_days_left %}
-    <div class="space-y-4">
-      {% for item in deals_with_days_left %}
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-        <div class="flex gap-4">
-          <!-- Book Cover -->
-          <div class="w-20 h-28 bg-slate-200 rounded-lg bg-cover bg-center flex-shrink-0"
-               style="background-image: url('{% if item.deal.shared_book.official_book.cover_image %}{{ item.deal.shared_book.official_book.cover_image.url }}{% else %}https://placehold.co/80x112/e2e8f0/64748b?text=No+Cover{% endif %}');">
-          </div>
-          
-          <!-- Book Info -->
-          <div class="flex-1 min-w-0">
-            <div class="flex items-start justify-between gap-2 mb-2">
-              <div>
-                <h3 class="text-slate-900 font-bold text-lg leading-tight">
-                  {{ item.deal.shared_book.official_book.title }}
-                </h3>
-                <p class="text-slate-500 text-sm">
-                  {{ item.deal.shared_book.official_book.author }}
-                </p>
-              </div>
-              <!-- Days Left Badge -->
-              <div class="flex-shrink-0">
-                {% if item.days_left <= 0 %}
-                <span class="px-2 py-1 rounded-full bg-rose-100-rose-900/30 text-rose-600 text-xs font-bold">
-                  已逾期
-                </span>
-                {% elif item.days_left <= 3 %}
-                <span class="px-2 py-1 rounded-full bg-orange-100-orange-900/30 text-orange-600-orange-400 text-xs font-bold">
-                  {{ item.days_left }} 天
-                </span>
-                {% elif item.days_left <= 7 %}
-                <span class="px-2 py-1 rounded-full bg-yellow-100-yellow-900/30 text-yellow-600-yellow-400 text-xs font-bold">
-                  {{ item.days_left }} 天
-                </span>
-                {% else %}
-                <span class="px-2 py-1 rounded-full bg-green-100 text-green-600-green-400 text-xs font-bold">
-                  {{ item.days_left }} 天
-                </span>
-                {% endif %}
-              </div>
-            </div>
-            
-            <!-- Due Date -->
-            <div class="flex items-center gap-2 text-slate-500 text-sm mb-2">
-              <span class="material-symbols-outlined text-sm">event</span>
-              <span>到期日：{{ item.deal.due_date|date:"Y/m/d" }}</span>
-            </div>
-            
-            <!-- Lender Info -->
-            <div class="flex items-center gap-2 text-slate-500 text-sm mb-3">
-              <span class="material-symbols-outlined text-sm">person</span>
-              <span>借閱對象：{{ item.deal.responder.profile.nickname|default:item.deal.responder.email }}</span>
-            </div>
-            
-            <!-- Actions -->
-            <div class="flex gap-2">
-              <a href="{% url 'deals:detail' item.deal.id %}"
-                 class="flex-1 bg-primary/10 text-primary font-bold text-sm py-2 rounded-lg text-center hover:bg-primary/20 transition-colors">
-                查看交易
-              </a>
-              <a href="{% url 'books:detail' item.deal.shared_book.id %}"
-                 class="flex-1 bg-slate-100 text-slate-600 font-medium text-sm py-2 rounded-lg text-center hover:bg-slate-200 transition-colors">
-                書籍詳情
-              </a>
-            </div>
-          </div>
+    <!-- Top Navigation -->
+    <div class="flex items-center bg-white p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200">
+        <a href="{% url 'books:bookshelf' %}"
+           class="text-slate-900 flex size-12 shrink-0 items-center cursor-pointer">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <h2 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1">即將到期提醒</h2>
+        <div class="flex w-12 items-center justify-end">
+            <!-- Placeholder for symmetry -->
         </div>
-      </div>
-      {% endfor %}
     </div>
-  {% else %}
-    <div class="text-center py-12">
-      <span class="material-symbols-outlined text-6xl text-slate-300-slate-600 mb-4">check_circle</span>
-      <h3 class="text-slate-500 font-medium mb-2">沒有即將到期的書籍</h3>
-      <p class="text-slate-400 text-sm">
-        您目前沒有在 {{ remind_days }} 天內需要歸還的書籍
-      </p>
+    <!-- Filter Tabs -->
+    <div class="px-4 py-3 bg-white border-b border-slate-200">
+        <div class="flex gap-2">
+            <a href="?days=7"
+               class="px-4 py-2 rounded-full text-sm font-medium {% if remind_days == 7 %}bg-primary text-white{% else %}bg-slate-100 text-slate-600{% endif %}">
+                7 天內
+            </a>
+            <a href="?days=14"
+               class="px-4 py-2 rounded-full text-sm font-medium {% if remind_days == 14 %}bg-primary text-white{% else %}bg-slate-100 text-slate-600{% endif %}">
+                14 天內
+            </a>
+            <a href="?days=30"
+               class="px-4 py-2 rounded-full text-sm font-medium {% if remind_days == 30 %}bg-primary text-white{% else %}bg-slate-100 text-slate-600{% endif %}">
+                30 天內
+            </a>
+        </div>
     </div>
-  {% endif %}
-</div>
+    <!-- Content -->
+    <div class="px-4 py-4">
+        {% if deals_with_days_left %}
+            <div class="space-y-4">
+                {% for item in deals_with_days_left %}
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                        <div class="flex gap-4">
+                            <!-- Book Cover -->
+                            <div class="w-20 h-28 bg-slate-200 rounded-lg bg-cover bg-center flex-shrink-0"
+                                 style="background-image: url('{% if item.deal.shared_book.official_book.cover_image %}{{ item.deal.shared_book.official_book.cover_image.url }}{% else %}https://placehold.co/80x112/e2e8f0/64748b?text=No+Cover{% endif %}')">
+                            </div>
+                            <!-- Book Info -->
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-start justify-between gap-2 mb-2">
+                                    <div>
+                                        <h3 class="text-slate-900 font-bold text-lg leading-tight">{{ item.deal.shared_book.official_book.title }}</h3>
+                                        <p class="text-slate-500 text-sm">{{ item.deal.shared_book.official_book.author }}</p>
+                                    </div>
+                                    <!-- Days Left Badge -->
+                                    <div class="flex-shrink-0">
+                                        {% if item.days_left <= 0 %}
+                                            <span class="px-2 py-1 rounded-full bg-rose-100-rose-900/30 text-rose-600 text-xs font-bold">已逾期</span>
+                                        {% elif item.days_left <= 3 %}
+                                            <span class="px-2 py-1 rounded-full bg-orange-100-orange-900/30 text-orange-600-orange-400 text-xs font-bold">
+                                                {{ item.days_left }} 天
+                                            </span>
+                                        {% elif item.days_left <= 7 %}
+                                            <span class="px-2 py-1 rounded-full bg-yellow-100-yellow-900/30 text-yellow-600-yellow-400 text-xs font-bold">
+                                                {{ item.days_left }} 天
+                                            </span>
+                                        {% else %}
+                                            <span class="px-2 py-1 rounded-full bg-green-100 text-green-600-green-400 text-xs font-bold">
+                                                {{ item.days_left }} 天
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <!-- Due Date -->
+                                <div class="flex items-center gap-2 text-slate-500 text-sm mb-2">
+                                    <span class="material-symbols-outlined text-sm">event</span>
+                                    <span>到期日：{{ item.deal.due_date|date:"Y/m/d" }}</span>
+                                </div>
+                                <!-- Lender Info -->
+                                <div class="flex items-center gap-2 text-slate-500 text-sm mb-3">
+                                    <span class="material-symbols-outlined text-sm">person</span>
+                                    <span>借閱對象：{{ item.deal.responder.profile.nickname|default:item.deal.responder.email }}</span>
+                                </div>
+                                <!-- Actions -->
+                                <div class="flex gap-2">
+                                    <a href="{% url 'deals:detail' item.deal.id %}"
+                                       class="flex-1 bg-primary/10 text-primary font-bold text-sm py-2 rounded-lg text-center hover:bg-primary/20 transition-colors">
+                                        查看交易
+                                    </a>
+                                    <a href="{% url 'books:detail' item.deal.shared_book.id %}"
+                                       class="flex-1 bg-slate-100 text-slate-600 font-medium text-sm py-2 rounded-lg text-center hover:bg-slate-200 transition-colors">
+                                        書籍詳情
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <span class="material-symbols-outlined text-6xl text-slate-300-slate-600 mb-4">check_circle</span>
+                <h3 class="text-slate-500 font-medium mb-2">沒有即將到期的書籍</h3>
+                <p class="text-slate-400 text-sm">您目前沒有在 {{ remind_days }} 天內需要歸還的書籍</p>
+            </div>
+        {% endif %}
+    </div>
 {% endblock %}

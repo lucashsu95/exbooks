@@ -1,32 +1,28 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 {% block title %}註冊{% endblock %}
-
 {% block content %}
-<div class="flex min-h-[60vh] items-center justify-center">
-  <div class="w-full max-w-sm">
-    <!-- Header -->
-    <div class="mb-8 text-center">
-      <h1 class="font-serif text-2xl font-bold text-ink">加入 Exbooks</h1>
-      <p class="mt-1 text-sm text-ink/50">開始分享與借閱書籍</p>
+    <div class="flex min-h-[60vh] items-center justify-center">
+        <div class="w-full max-w-sm">
+            <!-- Header -->
+            <div class="mb-8 text-center">
+                <h1 class="font-serif text-2xl font-bold text-ink">加入 Exbooks</h1>
+                <p class="mt-1 text-sm text-ink/50">開始分享與借閱書籍</p>
+            </div>
+            <!-- Form -->
+            <form method="post" class="space-y-5">
+                {% csrf_token %}
+                {% crispy form %}
+                <button type="submit"
+                        class="w-full rounded-lg bg-spine px-4 py-2.5 text-sm font-medium text-white hover:bg-spine-dark focus:outline-none focus:ring-2 focus:ring-spine/50 transition-colors">
+                    建立帳號
+                </button>
+            </form>
+            <p class="mt-6 text-center text-sm text-ink/40">
+                已經有帳號？
+                <a href="{% url 'account_login' %}"
+                   class="text-spine hover:text-spine-dark font-medium transition-colors">登入</a>
+            </p>
+        </div>
     </div>
-
-    <!-- Form -->
-    <form method="post" class="space-y-5">
-      {% csrf_token %}
-      {% crispy form %}
-      <button type="submit"
-        class="w-full rounded-lg bg-spine px-4 py-2.5 text-sm font-medium text-white
-        hover:bg-spine-dark focus:outline-none focus:ring-2 focus:ring-spine/50
-        transition-colors">
-        建立帳號
-      </button>
-    </form>
-
-    <p class="mt-6 text-center text-sm text-ink/40">
-      已經有帳號？
-      <a href="{% url 'account_login' %}" class="text-spine hover:text-spine-dark font-medium transition-colors">登入</a>
-    </p>
-  </div>
-</div>
 {% endblock %}

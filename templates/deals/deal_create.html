@@ -1,166 +1,158 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
-
 {% block title %}Exbooks - 申請交易{% endblock %}
-
 {% block content %}
-<!-- Top Navigation -->
-<div class="flex items-center bg-white p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200">
-  <a href="{% url 'books:detail' book.id %}" class="text-slate-900 flex size-12 shrink-0 items-center cursor-pointer">
-    <span class="material-symbols-outlined">arrow_back</span>
-  </a>
-  <h2 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">申請交易</h2>
-  <div class="flex w-12 items-center justify-end"></div>
-</div>
-
-<!-- Main Content -->
-<main class="flex-1 px-4 py-4 pb-32">
-  <!-- Book Info Card -->
-  <div class="bg-white rounded-xl border border-slate-200 p-4 mb-4">
-    <div class="flex gap-4">
-      <!-- Book Cover -->
-      <div class="w-24 h-32 rounded-lg bg-slate-200 overflow-hidden shrink-0 bg-cover bg-center" style="{% if book.official_book.cover_image %}background-image: url('{{ book.official_book.cover_image.url }}');{% endif %}">
-      </div>
-      <!-- Book Details -->
-      <div class="flex-1 flex flex-col justify-center">
-        <h3 class="text-slate-900 text-lg font-bold leading-tight mb-1">{{ book.official_book.title }}</h3>
-        <p class="text-slate-600 text-sm mb-2">{{ book.official_book.author }}</p>
-        <div class="flex items-center gap-2">
-          <span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold">{{ book.get_status_display }}</span>
-          <span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-bold">{{ book.get_transferability_display }}</span>
+    <!-- Top Navigation -->
+    <div class="flex items-center bg-white p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200">
+        <a href="{% url 'books:detail' book.id %}"
+           class="text-slate-900 flex size-12 shrink-0 items-center cursor-pointer">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <h2 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">申請交易</h2>
+        <div class="flex w-12 items-center justify-end"></div>
+    </div>
+    <!-- Main Content -->
+    <main class="flex-1 px-4 py-4 pb-32">
+        <!-- Book Info Card -->
+        <div class="bg-white rounded-xl border border-slate-200 p-4 mb-4">
+            <div class="flex gap-4">
+                <!-- Book Cover -->
+                <div class="w-24 h-32 rounded-lg bg-slate-200 overflow-hidden shrink-0 bg-cover bg-center"
+                     style="{% if book.official_book.cover_image %}background-image: url('{{ book.official_book.cover_image.url }}');
+                            {% endif %}"></div>
+                <!-- Book Details -->
+                <div class="flex-1 flex flex-col justify-center">
+                    <h3 class="text-slate-900 text-lg font-bold leading-tight mb-1">{{ book.official_book.title }}</h3>
+                    <p class="text-slate-600 text-sm mb-2">{{ book.official_book.author }}</p>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold">{{ book.get_status_display }}</span>
+                        <span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-bold">{{ book.get_transferability_display }}</span>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Keeper Info -->
-  <div class="bg-white rounded-xl border border-slate-200 p-4 mb-4 flex items-center gap-3">
-    <div class="size-12 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border-2 border-primary">
-      {% if book.keeper.profile.avatar %}
-      <img alt="持書人頭像" class="w-full h-full object-cover" src="{{ book.keeper.profile.avatar.url }}"/>
-      {% else %}
-      <span class="text-primary font-bold">{{ book.keeper.profile.nickname|default:book.keeper.email|truncatechars:1 }}</span>
-      {% endif %}
-    </div>
-    <div class="flex-1">
-      <p class="text-xs text-slate-500 uppercase font-bold tracking-tighter">持書人</p>
-      <p class="text-slate-900 font-bold">{{ book.keeper.profile.nickname|default:book.keeper.email }}</p>
-    </div>
-    <div class="flex items-center gap-1 text-amber-500">
-      <span class="material-symbols-outlined text-sm">star</span>
-      <span class="text-sm font-bold">4.8</span>
-    </div>
-  </div>
-
-  <!-- Deal Type Section -->
-  <div class="bg-white rounded-xl border border-slate-200 p-4 mb-4">
-    <h4 class="text-slate-900 font-bold mb-3 flex items-center gap-2">
-      <span class="material-symbols-outlined text-primary">swap_horiz</span>
-      交易類型
-    </h4>
-    <div class="bg-primary/10 rounded-lg p-4">
-      <div class="flex items-center gap-3">
-        <div class="size-10 rounded-full bg-primary flex items-center justify-center text-white">
-          {% if deal_type == 'LN' %}
-          <span class="material-symbols-outlined">auto_stories</span>
-          {% elif deal_type == 'TF' %}
-          <span class="material-symbols-outlined">swap_horiz</span>
-          {% elif deal_type == 'RS' %}
-          <span class="material-symbols-outlined">assignment_return</span>
-          {% elif deal_type == 'RG' %}
-          <span class="material-symbols-outlined">home</span>
-          {% elif deal_type == 'EX' %}
-          <span class="material-symbols-outlined">report_problem</span>
-          {% endif %}
+        <!-- Keeper Info -->
+        <div class="bg-white rounded-xl border border-slate-200 p-4 mb-4 flex items-center gap-3">
+            <div class="size-12 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border-2 border-primary">
+                {% if book.keeper.profile.avatar %}
+                    <img alt="持書人頭像"
+                         class="w-full h-full object-cover"
+                         src="{{ book.keeper.profile.avatar.url }}" />
+                {% else %}
+                    <span class="text-primary font-bold">{{ book.keeper.profile.nickname|default:book.keeper.email|truncatechars:1 }}</span>
+                {% endif %}
+            </div>
+            <div class="flex-1">
+                <p class="text-xs text-slate-500 uppercase font-bold tracking-tighter">持書人</p>
+                <p class="text-slate-900 font-bold">{{ book.keeper.profile.nickname|default:book.keeper.email }}</p>
+            </div>
+            <div class="flex items-center gap-1 text-amber-500">
+                <span class="material-symbols-outlined text-sm">star</span>
+                <span class="text-sm font-bold">4.8</span>
+            </div>
         </div>
-        <div>
-          {% if deal_type == 'LN' %}
-          <p class="text-slate-900 font-bold">借用交易 (LN)</p>
-          <p class="text-slate-600 text-sm">借閱書籍，閱畢後歸還給持書人</p>
-          {% elif deal_type == 'TF' %}
-          <p class="text-slate-900 font-bold">傳遞交易 (TF)</p>
-          <p class="text-slate-600 text-sm">書籍傳遞給下一位讀者</p>
-          {% elif deal_type == 'RS' %}
-          <p class="text-slate-900 font-bold">返還交易 (RS)</p>
-          <p class="text-slate-600 text-sm">歸還書籍給貢獻者</p>
-          {% elif deal_type == 'RG' %}
-          <p class="text-slate-900 font-bold">回歸交易 (RG)</p>
-          <p class="text-slate-600 text-sm">貢獻者取回書籍</p>
-          {% elif deal_type == 'EX' %}
-          <p class="text-slate-900 font-bold">例外處理 (EX)</p>
-          <p class="text-slate-600 text-sm">書籍遺失、損毀或尋獲</p>
-          {% endif %}
+        <!-- Deal Type Section -->
+        <div class="bg-white rounded-xl border border-slate-200 p-4 mb-4">
+            <h4 class="text-slate-900 font-bold mb-3 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">swap_horiz</span>
+                交易類型
+            </h4>
+            <div class="bg-primary/10 rounded-lg p-4">
+                <div class="flex items-center gap-3">
+                    <div class="size-10 rounded-full bg-primary flex items-center justify-center text-white">
+                        {% if deal_type == 'LN' %}
+                            <span class="material-symbols-outlined">auto_stories</span>
+                        {% elif deal_type == 'TF' %}
+                            <span class="material-symbols-outlined">swap_horiz</span>
+                        {% elif deal_type == 'RS' %}
+                            <span class="material-symbols-outlined">assignment_return</span>
+                        {% elif deal_type == 'RG' %}
+                            <span class="material-symbols-outlined">home</span>
+                        {% elif deal_type == 'EX' %}
+                            <span class="material-symbols-outlined">report_problem</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        {% if deal_type == 'LN' %}
+                            <p class="text-slate-900 font-bold">借用交易 (LN)</p>
+                            <p class="text-slate-600 text-sm">借閱書籍，閱畢後歸還給持書人</p>
+                        {% elif deal_type == 'TF' %}
+                            <p class="text-slate-900 font-bold">傳遞交易 (TF)</p>
+                            <p class="text-slate-600 text-sm">書籍傳遞給下一位讀者</p>
+                        {% elif deal_type == 'RS' %}
+                            <p class="text-slate-900 font-bold">返還交易 (RS)</p>
+                            <p class="text-slate-600 text-sm">歸還書籍給貢獻者</p>
+                        {% elif deal_type == 'RG' %}
+                            <p class="text-slate-900 font-bold">回歸交易 (RG)</p>
+                            <p class="text-slate-600 text-sm">貢獻者取回書籍</p>
+                        {% elif deal_type == 'EX' %}
+                            <p class="text-slate-900 font-bold">例外處理 (EX)</p>
+                            <p class="text-slate-600 text-sm">書籍遺失、損毀或尋獲</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% if deal_type == 'LN' or deal_type == 'TF' %}
+                <div class="mt-3 text-sm text-slate-600">
+                    <p class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm text-primary">info</span>
+                        預計借閱天數：{{ book.loan_duration_days }} 天
+                    </p>
+                </div>
+            {% endif %}
         </div>
-      </div>
+        <!-- Note Section -->
+        <form method="post" action="">
+            {% csrf_token %}
+            <input type="hidden" name="deal_type" value="{{ deal_type }}">
+            <div class="bg-white rounded-xl border border-slate-200 p-4 mb-4">
+                <h4 class="text-slate-900 font-bold mb-3 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">edit_note</span>
+                    備註（選填）
+                </h4>
+                {% crispy form %}
+            </div>
+            <!-- Error Messages -->
+            {% if form.errors %}
+                <div class="bg-rose-50 border border-rose-200 rounded-xl p-4 mb-4">
+                    <div class="flex items-center gap-2 text-rose-600">
+                        <span class="material-symbols-outlined">error</span>
+                        <ul class="text-sm">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            {% endif %}
+            <!-- Info Box -->
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div class="flex items-start gap-3">
+                    <span class="material-symbols-outlined text-primary">info</span>
+                    <div>
+                        <h4 class="font-bold text-slate-900 text-sm mb-1">申請須知</h4>
+                        <ul class="text-sm text-slate-600 space-y-1 list-disc ml-4">
+                            <li>提交申請後，持書人將收到通知</li>
+                            <li>對方接受後，您可與持書人協商面交時間地點</li>
+                            <li>面交時請確認書況，並在系統中完成確認</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </main>
+    <!-- Sticky Footer Actions -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md p-4 border-t border-slate-200 dark:border-slate-800">
+        <button type="submit"
+                form="deal-form"
+                class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+            <span class="material-symbols-outlined">send</span>
+            送出申請
+        </button>
     </div>
-    {% if deal_type == 'LN' or deal_type == 'TF' %}
-    <div class="mt-3 text-sm text-slate-600">
-      <p class="flex items-center gap-2">
-        <span class="material-symbols-outlined text-sm text-primary">info</span>
-        預計借閱天數：{{ book.loan_duration_days }} 天
-      </p>
-    </div>
-    {% endif %}
-  </div>
-
-  <!-- Note Section -->
-  <form method="post" action="">
-    {% csrf_token %}
-    <input type="hidden" name="deal_type" value="{{ deal_type }}">
-    
-    <div class="bg-white rounded-xl border border-slate-200 p-4 mb-4">
-      <h4 class="text-slate-900 font-bold mb-3 flex items-center gap-2">
-        <span class="material-symbols-outlined text-primary">edit_note</span>
-        備註（選填）
-      </h4>
-      {% crispy form %}
-    </div>
-
-    <!-- Error Messages -->
-    {% if form.errors %}
-    <div class="bg-rose-50 border border-rose-200 rounded-xl p-4 mb-4">
-      <div class="flex items-center gap-2 text-rose-600">
-        <span class="material-symbols-outlined">error</span>
-        <ul class="text-sm">
-          {% for field, errors in form.errors.items %}
-          {% for error in errors %}
-          <li>{{ error }}</li>
-          {% endfor %}
-          {% endfor %}
-        </ul>
-      </div>
-    </div>
-    {% endif %}
-
-    <!-- Info Box -->
-    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-      <div class="flex items-start gap-3">
-        <span class="material-symbols-outlined text-primary">info</span>
-        <div>
-          <h4 class="font-bold text-slate-900 text-sm mb-1">申請須知</h4>
-          <ul class="text-sm text-slate-600 space-y-1 list-disc ml-4">
-            <li>提交申請後，持書人將收到通知</li>
-            <li>對方接受後，您可與持書人協商面交時間地點</li>
-            <li>面交時請確認書況，並在系統中完成確認</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </form>
-</main>
-
-<!-- Sticky Footer Actions -->
-<div class="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md p-4 border-t border-slate-200 dark:border-slate-800">
-  <button type="submit" form="deal-form" class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-    <span class="material-symbols-outlined">send</span>
-    送出申請
-  </button>
-</div>
-
 {% endblock %}
-
 {% block extra_js %}
-<script>
+    <script>
 // Move form outside main for proper submission
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('form[method="post"]');
@@ -168,5 +160,5 @@ document.addEventListener('DOMContentLoaded', function() {
         form.id = 'deal-form';
     }
 });
-</script>
+    </script>
 {% endblock %}

@@ -1,49 +1,37 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
-
 {% block title %}處置例外 - Exbooks{% endblock %}
-
 {% block content %}
-<div class="max-w-2xl mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold text-slate-900 mb-6">處置例外</h1>
-
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
-        <h2 class="text-lg font-semibold text-slate-900 mb-2">書籍資訊</h2>
-        <p class="text-slate-600">{{ deal.shared_book.official_book.title }}</p>
-        <p class="text-sm text-slate-500">{{ deal.shared_book.official_book.author }}</p>
-        <p class="text-sm text-slate-500 mt-2">
-            申請者：{{ deal.applicant.profile.nickname|default:deal.applicant.email }}
-        </p>
-    </div>
-
-    <form method="post" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        {% csrf_token %}
-
-        <div class="space-y-6">
-            {% crispy form %}
+    <div class="max-w-2xl mx-auto px-4 py-8">
+        <h1 class="text-2xl font-bold text-slate-900 mb-6">處置例外</h1>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+            <h2 class="text-lg font-semibold text-slate-900 mb-2">書籍資訊</h2>
+            <p class="text-slate-600">{{ deal.shared_book.official_book.title }}</p>
+            <p class="text-sm text-slate-500">{{ deal.shared_book.official_book.author }}</p>
+            <p class="text-sm text-slate-500 mt-2">申請者：{{ deal.applicant.profile.nickname|default:deal.applicant.email }}</p>
         </div>
-
-        <div class="mt-6 flex gap-3">
-            <button type="submit"
-                    class="px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors">
-                確認處置
-            </button>
-            <a href="{% url 'deals:detail' deal.pk %}"
-               class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors">
-                取消
-            </a>
+        <form method="post"
+              class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            {% csrf_token %}
+            <div class="space-y-6">{% crispy form %}</div>
+            <div class="mt-6 flex gap-3">
+                <button type="submit"
+                        class="px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors">
+                    確認處置
+                </button>
+                <a href="{% url 'deals:detail' deal.pk %}"
+                   class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors">取消</a>
+            </div>
+        </form>
+        <div class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+            <p class="text-sm text-blue-800 dark:text-blue-200">
+                <strong>說明：</strong>
+            </p>
+            <ul class="text-sm text-blue-800 dark:text-blue-200 mt-2 list-disc list-inside">
+                <li>確認遺失：書籍狀態將變更為「已遺失」</li>
+                <li>確認損毀：書籍狀態將變更為「已損毀」</li>
+                <li>確認尋獲歸還：書籍狀態將變更為「暫不開放」，可重新上架</li>
+            </ul>
         </div>
-    </form>
-
-    <div class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-        <p class="text-sm text-blue-800 dark:text-blue-200">
-            <strong>說明：</strong>
-        </p>
-        <ul class="text-sm text-blue-800 dark:text-blue-200 mt-2 list-disc list-inside">
-            <li>確認遺失：書籍狀態將變更為「已遺失」</li>
-            <li>確認損毀：書籍狀態將變更為「已損毀」</li>
-            <li>確認尋獲歸還：書籍狀態將變更為「暫不開放」，可重新上架</li>
-        </ul>
     </div>
-</div>
 {% endblock %}

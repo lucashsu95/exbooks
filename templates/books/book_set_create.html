@@ -1,36 +1,27 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
-
 {% block title %}建立套書 - Exbooks{% endblock %}
-
 {% block content %}
-<div class="max-w-2xl mx-auto px-4 py-8">
-  <h1 class="text-2xl font-bold text-slate-900 mb-6">建立套書</h1>
-
-  <form method="post" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-    {% csrf_token %}
-
-    <div class="space-y-4">
-      {% crispy form %}
+    <div class="max-w-2xl mx-auto px-4 py-8">
+        <h1 class="text-2xl font-bold text-slate-900 mb-6">建立套書</h1>
+        <form method="post"
+              class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            {% csrf_token %}
+            <div class="space-y-4">{% crispy form %}</div>
+            {% if available_books %}
+                <div class="mt-6">
+                    <h2 class="text-lg font-semibold text-slate-900 mb-3">選擇書籍加入套書</h2>
+                    <p class="text-sm text-slate-600 mb-4">建立套書後，您可以在詳情頁面加入書籍</p>
+                </div>
+            {% endif %}
+            <div class="mt-6 flex gap-3">
+                <button type="submit"
+                        class="px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors">
+                    建立套書
+                </button>
+                <a href="{% url 'books:book_set_list' %}"
+                   class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors">取消</a>
+            </div>
+        </form>
     </div>
-
-    {% if available_books %}
-    <div class="mt-6">
-      <h2 class="text-lg font-semibold text-slate-900 mb-3">選擇書籍加入套書</h2>
-      <p class="text-sm text-slate-600 mb-4">建立套書後，您可以在詳情頁面加入書籍</p>
-    </div>
-    {% endif %}
-
-    <div class="mt-6 flex gap-3">
-      <button type="submit"
-        class="px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors">
-        建立套書
-      </button>
-      <a href="{% url 'books:book_set_list' %}"
-        class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors">
-        取消
-      </a>
-    </div>
-  </form>
-</div>
 {% endblock %}

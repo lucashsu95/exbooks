@@ -1,112 +1,93 @@
 {% extends "base.html" %}
 {% block title %}Exbooks - 申訴詳情{% endblock %}
-
 {% block content %}
-<!-- Header Section -->
-<header class="flex items-center bg-background-light-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
-<a href="{% url 'accounts:appeal_list' %}" class="text-slate-900 flex size-12 shrink-0 items-center cursor-pointer">
-<span class="material-symbols-outlined">arrow_back</span>
-</a>
-<h2 class="text-slate-900 text-xl font-bold leading-tight tracking-tight flex-1 text-center">申訴詳情</h2>
-<div class="flex w-12 items-center justify-end"></div>
-</header>
-
-<main class="px-4 py-6 max-w-lg mx-auto w-full space-y-6 pb-24">
-<!-- Status Card -->
-<div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-<div class="flex items-center gap-3">
-<div class="size-12 rounded-full flex items-center justify-center shrink-0
-{% if appeal.status == 'submitted' %}
-bg-blue-100-blue-900/30
-{% elif appeal.status == 'under_review' %}
-bg-amber-100
-{% elif appeal.status == 'approved' %}
-bg-green-100
-{% elif appeal.status == 'rejected' %}
-bg-rose-100-rose-900/30
-{% else %}
-bg-gray-100-gray-800
-{% endif %}">
-<span class="material-symbols-outlined text-2xl
-{% if appeal.status == 'submitted' %}
-text-blue-500
-{% elif appeal.status == 'under_review' %}
-text-amber-500
-{% elif appeal.status == 'approved' %}
-text-green-500
-{% elif appeal.status == 'rejected' %}
-text-rose-500
-{% else %}
-text-gray-400
-{% endif %}">
-{% if appeal.status == 'submitted' %}send
-{% elif appeal.status == 'under_review' %}hourglass_empty
-{% elif appeal.status == 'approved' %}check_circle
-{% elif appeal.status == 'rejected' %}cancel
-{% else %}done_all{% endif %}
-</span>
-</div>
-<div class="flex-1">
-<p class="text-lg font-bold text-slate-900">{{ appeal.get_status_display }}</p>
-<p class="text-sm text-slate-500">{{ appeal.created_at|date:"Y 年 n 月 j 日 H:i" }}</p>
-</div>
-</div>
-</div>
-
-<!-- Appeal Details -->
-<div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 space-y-4">
-<div>
-<p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">申訴類型</p>
-<p class="text-sm font-medium text-slate-900">{{ appeal.get_appeal_type_display }}</p>
-</div>
-
-<div>
-<p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">標題</p>
-<p class="text-sm font-medium text-slate-900">{{ appeal.title }}</p>
-</div>
-
-<div>
-<p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">描述</p>
-<p class="text-sm text-slate-900 whitespace-pre-wrap">{{ appeal.description }}</p>
-</div>
-
-{% if appeal.evidence %}
-<div>
-<p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">證據文件</p>
-<a href="{{ appeal.evidence.url }}" target="_blank" class="text-primary hover:underline text-sm">查看文件</a>
-</div>
-{% endif %}
-</div>
-
-<!-- Resolution (if resolved) -->
-{% if appeal.resolved_by %}
-<div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 space-y-4">
-<div>
-<p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">審核結果</p>
-<p class="text-sm font-medium text-slate-900">
-由 {{ appeal.resolved_by.email }} 於 {{ appeal.resolved_at|date:"Y 年 n 月 j 日" }} 審核
-</p>
-</div>
-{% if appeal.resolution_notes %}
-<div>
-<p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">審核備註</p>
-<p class="text-sm text-slate-900 whitespace-pre-wrap">{{ appeal.resolution_notes }}</p>
-</div>
-{% endif %}
-</div>
-{% endif %}
-
-<!-- Cancel Button (only for submitted status) -->
-{% if appeal.status == 'submitted' %}
-<form method="post" action="{% url 'accounts:appeal_cancel' appeal.id %}" onsubmit="return confirm('確定要取消此申訴嗎？');">
-{% csrf_token %}
-<button type="submit" class="w-full bg-rose-50 text-rose-600 font-bold py-3.5 rounded-xl shadow-sm border border-rose-100-rose-900/30 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-<span class="material-symbols-outlined">cancel</span>
-取消申訴
-</button>
-</form>
-{% endif %}
-</main>
-
-{% include '_bottom_nav.html' %}
+    <!-- Header Section -->
+    <header class="flex items-center bg-background-light-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
+        <a href="{% url 'accounts:appeal_list' %}"
+           class="text-slate-900 flex size-12 shrink-0 items-center cursor-pointer">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <h2 class="text-slate-900 text-xl font-bold leading-tight tracking-tight flex-1 text-center">申訴詳情</h2>
+        <div class="flex w-12 items-center justify-end"></div>
+    </header>
+    <main class="px-4 py-6 max-w-lg mx-auto w-full space-y-6 pb-24">
+        <!-- Status Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+            <div class="flex items-center gap-3">
+                <div class="size-12 rounded-full flex items-center justify-center shrink-0 {% if appeal.status == 'submitted' %} bg-blue-100-blue-900/30 {% elif appeal.status == 'under_review' %} bg-amber-100 {% elif appeal.status == 'approved' %} bg-green-100 {% elif appeal.status == 'rejected' %} bg-rose-100-rose-900/30 {% else %} bg-gray-100-gray-800 {% endif %}">
+                    <span class="material-symbols-outlined text-2xl {% if appeal.status == 'submitted' %} text-blue-500 {% elif appeal.status == 'under_review' %} text-amber-500 {% elif appeal.status == 'approved' %} text-green-500 {% elif appeal.status == 'rejected' %} text-rose-500 {% else %} text-gray-400 {% endif %}">
+                        {% if appeal.status == 'submitted' %}
+                            send
+                        {% elif appeal.status == 'under_review' %}
+                            hourglass_empty
+                        {% elif appeal.status == 'approved' %}
+                            check_circle
+                        {% elif appeal.status == 'rejected' %}
+                            cancel
+                        {% else %}
+                            done_all
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="flex-1">
+                    <p class="text-lg font-bold text-slate-900">{{ appeal.get_status_display }}</p>
+                    <p class="text-sm text-slate-500">{{ appeal.created_at|date:"Y 年 n 月 j 日 H:i" }}</p>
+                </div>
+            </div>
+        </div>
+        <!-- Appeal Details -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 space-y-4">
+            <div>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">申訴類型</p>
+                <p class="text-sm font-medium text-slate-900">{{ appeal.get_appeal_type_display }}</p>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">標題</p>
+                <p class="text-sm font-medium text-slate-900">{{ appeal.title }}</p>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">描述</p>
+                <p class="text-sm text-slate-900 whitespace-pre-wrap">{{ appeal.description }}</p>
+            </div>
+            {% if appeal.evidence %}
+                <div>
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">證據文件</p>
+                    <a href="{{ appeal.evidence.url }}"
+                       target="_blank"
+                       class="text-primary hover:underline text-sm">查看文件</a>
+                </div>
+            {% endif %}
+        </div>
+        <!-- Resolution (if resolved) -->
+        {% if appeal.resolved_by %}
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 space-y-4">
+                <div>
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">審核結果</p>
+                    <p class="text-sm font-medium text-slate-900">
+                        由 {{ appeal.resolved_by.email }} 於 {{ appeal.resolved_at|date:"Y 年 n 月 j 日" }} 審核
+                    </p>
+                </div>
+                {% if appeal.resolution_notes %}
+                    <div>
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">審核備註</p>
+                        <p class="text-sm text-slate-900 whitespace-pre-wrap">{{ appeal.resolution_notes }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+        <!-- Cancel Button (only for submitted status) -->
+        {% if appeal.status == 'submitted' %}
+            <form method="post"
+                  action="{% url 'accounts:appeal_cancel' appeal.id %}"
+                  onsubmit="return confirm('確定要取消此申訴嗎？');">
+                {% csrf_token %}
+                <button type="submit"
+                        class="w-full bg-rose-50 text-rose-600 font-bold py-3.5 rounded-xl shadow-sm border border-rose-100-rose-900/30 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+                    <span class="material-symbols-outlined">cancel</span>
+                    取消申訴
+                </button>
+            </form>
+        {% endif %}
+    </main>
+    {% include '_bottom_nav.html' %}
 {% endblock %}

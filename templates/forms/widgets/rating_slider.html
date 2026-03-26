@@ -1,21 +1,28 @@
-<div class="rating-slider" x-data="{ value: {{ widget.value|default:3 }} }" x-init="$refs.rangeInput.value = value">
-  <div class="flex items-center justify-between mb-2">
-    <label class="flex items-center gap-2 text-sm font-medium text-slate-700" for="{{ widget.attrs.id }}">
-      <span class="material-symbols-outlined text-primary">star</span>
-      評分
-    </label>
-    <span class="text-lg font-bold text-primary" x-text="value"></span>
-  </div>
-  <input type="range" name="{{ widget.name }}" id="{{ widget.attrs.id }}"
-    min="1" max="5" step="1"
-    x-ref="rangeInput"
-    x-model="value"
-    class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary">
-  <div class="flex justify-between text-xs text-slate-400 mt-1">
-    <span>1</span>
-    <span>2</span>
-    <span>3</span>
-    <span>4</span>
-    <span>5</span>
-  </div>
+<div class="rating-slider"
+     x-data="{ value: {{ widget.value|default:3 }} }"
+     x-init="$refs.rangeInput.value = value">
+    <div class="flex items-center justify-between mb-2">
+        <label class="flex items-center gap-2 text-sm font-medium text-slate-700"
+               for="{{ widget.attrs.id }}">
+            <span class="material-symbols-outlined text-primary">star</span>
+            評分
+        </label>
+        <span class="text-lg font-bold text-primary" x-text="value"></span>
+    </div>
+    <input type="range"
+           name="{{ widget.name }}"
+           id="{{ widget.attrs.id }}"
+           min="1"
+           max="5"
+           step="1"
+           x-ref="rangeInput"
+           x-model="value"
+           class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary">
+    <div class="flex justify-between text-xs text-slate-400 mt-1">
+        <span>1</span>
+        <span>2</span>
+        <span>3</span>
+        <span>4</span>
+        <span>5</span>
+    </div>
 </div>

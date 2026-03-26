@@ -1,30 +1,34 @@
 {% if book.owner == request.user %}
-<div id="status-toggle-container" class="mx-4 mb-6 p-4 bg-white rounded-xl border border-slate-200">
-    <div class="flex items-center justify-between">
-        <div>
-            <p class="text-xs text-slate-500 uppercase font-bold tracking-tighter">書籍狀態</p>
-            <p class="text-slate-900 font-bold">
-                {% if book.status == 'S' %}
-                    暫不開放借閱
-                {% elif book.status == 'T' %}
-                    可借閱
-                {% else %}
-                    {{ book.get_status_display }}
-                {% endif %}
-            </p>
+    <div id="status-toggle-container"
+         class="mx-4 mb-6 p-4 bg-white rounded-xl border border-slate-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-xs text-slate-500 uppercase font-bold tracking-tighter">書籍狀態</p>
+                <p class="text-slate-900 font-bold">
+                    {% if book.status == 'S' %}
+                        暫不開放借閱
+                    {% elif book.status == 'T' %}
+                        可借閱
+                    {% else %}
+                        {{ book.get_status_display }}
+                    {% endif %}
+                </p>
+            </div>
+            <form hx-post="{% url 'books:toggle_status' book.pk %}"
+                  hx-target="#status-toggle-container"
+                  hx-swap="outerHTML">
+                {% csrf_token %}
+                <button type="submit"
+                        class="px-4 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 transition-colors">
+                    {% if book.status == 'S' %}
+                        開放借閱
+                    {% elif book.status == 'T' %}
+                        暫停借閱
+                    {% else %}
+                        狀態切換
+                    {% endif %}
+                </button>
+            </form>
         </div>
-        <form hx-post="{% url 'books:toggle_status' book.pk %}" hx-target="#status-toggle-container" hx-swap="outerHTML">
-            {% csrf_token %}
-            <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 transition-colors">
-                {% if book.status == 'S' %}
-                    開放借閱
-                {% elif book.status == 'T' %}
-                    暫停借閱
-                {% else %}
-                    狀態切換
-                {% endif %}
-            </button>
-        </form>
     </div>
-</div>
 {% endif %}

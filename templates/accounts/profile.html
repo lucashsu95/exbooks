@@ -1,158 +1,162 @@
 {% extends "base.html" %}
 {% block title %}Exbooks - 個人資料{% endblock %}
-
 {% block content %}
-<!-- Header Section -->
-<header class="flex items-center bg-background-light-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
-<div class="text-primary flex size-12 shrink-0 items-center justify-start">
-<span class="material-symbols-outlined text-3xl">menu</span>
-</div>
-<h2 class="text-slate-900 text-xl font-bold leading-tight tracking-tight flex-1 text-center">個人資料</h2>
-<div class="flex w-12 items-center justify-end">
-<a href="{% url 'accounts:profile_edit' %}" class="flex size-10 cursor-pointer items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20">
-<span class="material-symbols-outlined">edit</span>
-</a>
-</div>
-</header>
-
-<main class="px-4 py-6 max-w-lg mx-auto w-full space-y-6 pb-24">
-<!-- Profile Card -->
-<div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col items-center text-center">
-<div class="relative mb-4">
-{% if user.profile.avatar %}
-<img src="{{ user.profile.avatar.url }}" alt="頭像" class="h-24 w-24 rounded-full object-cover border-4 border-white-slate-800 shadow-md">
-{% else %}
-<div class="flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-primary text-3xl font-bold border-4 border-white-slate-800 shadow-md">
-{{ user.profile.nickname|default:user.email|truncatechars:1 }}
-</div>
-{% endif %}
-</div>
-<h2 class="text-2xl font-bold text-slate-900 mb-1">{{ user.profile.nickname|default:"未設定暱稱" }}</h2>
-<p class="text-sm text-slate-500">{{ user.email }}</p>
-</div>
-
-  <!-- Trust Level Card -->
-  <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-    {% include "partials/trust_badge.html" with trust_level=user.profile.trust_level %}
-    <p class="text-xs text-slate-500 mt-1">
-      {% if borrowing_limits.max_books == 999 %}
-      無借閱限制
-      {% else %}
-      最多借 {{ borrowing_limits.max_books }} 本，最長 {{ borrowing_limits.max_days }} 天
-      {% endif %}
-    </p>
-  </div>
-
-<!-- Activity Stats Card -->
-<div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-<h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">活動統計</h3>
-<div class="grid grid-cols-3 gap-4">
-<div class="text-center">
-<p class="text-2xl font-bold text-primary">{{ activity_stats.books_contributed }}</p>
-<p class="text-xs text-slate-500">貢獻書籍</p>
-</div>
-<div class="text-center">
-<p class="text-2xl font-bold text-primary">{{ activity_stats.books_borrowed }}</p>
-<p class="text-xs text-slate-500">借閱次數</p>
-</div>
-<div class="text-center">
-<p class="text-2xl font-bold text-primary">{{ activity_stats.books_lent }}</p>
-<p class="text-xs text-slate-500">出借次數</p>
-</div>
-</div>
-</div>
-
-<!-- Info Details -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="p-4 border-b border-slate-100-slate-700/50 flex items-center gap-3">
-            <div class="size-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
-                <span class="material-symbols-outlined">mail</span>
-            </div>
-            <div class="flex-1 min-w-0">
-                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">電子信箱</p>
-                <p class="text-sm font-medium text-slate-900 truncate">{{ user.email|default:"未設定" }}</p>
-            </div>
+    <!-- Header Section -->
+    <header class="flex items-center bg-background-light-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
+        <div class="text-primary flex size-12 shrink-0 items-center justify-start">
+            <button type="button"
+                    onclick="toggleSidebar()"
+                    class="flex size-10 cursor-pointer items-center justify-center rounded-xl transition-colors hover:bg-slate-100">
+                <span class="material-symbols-outlined text-3xl">menu</span>
+            </button>
         </div>
-
-        <div class="p-4 border-b border-slate-100-slate-700/50 flex items-center gap-3">
-            <div class="size-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
-                <span class="material-symbols-outlined">swap_horiz</span>
+        <h2 class="text-slate-900 text-xl font-bold leading-tight tracking-tight flex-1 text-center">個人資料</h2>
+        <div class="flex w-12 items-center justify-end">
+            <a href="{% url 'accounts:profile_edit' %}"
+               class="flex size-10 cursor-pointer items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20">
+                <span class="material-symbols-outlined">edit</span>
+            </a>
+        </div>
+    </header>
+    <main class="px-4 py-6 max-w-lg mx-auto w-full space-y-6 pb-24">
+        <!-- Profile Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col items-center text-center">
+            <div class="relative mb-4">
+                {% if user.profile.avatar %}
+                    <img src="{{ user.profile.avatar.url }}"
+                         alt="頭像"
+                         class="h-24 w-24 rounded-full object-cover border-4 border-white-slate-800 shadow-md">
+                {% elif user.socialaccount_set.all.0.extra_data.picture %}
+                    <img src="{{ user.socialaccount_set.all.0.extra_data.picture }}"
+                         alt="Google 頭像"
+                         class="h-24 w-24 rounded-full object-cover border-4 border-white-slate-800 shadow-md">
+                {% else %}
+                    <div class="flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-primary text-3xl font-bold border-4 border-white-slate-800 shadow-md">
+                        {{ user.profile.nickname|default:user.email|truncatechars:1 }}
+                    </div>
+                {% endif %}
             </div>
-            <div class="flex-1 min-w-0">
-                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">預設流通性</p>
-                <div>
-                    <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-bold tracking-wider uppercase
-                        {% if user.profile.default_transferability == 'TRANSFER' %}bg-emerald-100 text-emerald-700-emerald-900/30-emerald-400
-                        {% else %}bg-amber-100 text-amber-700{% endif %}">
-                        {{ user.profile.get_default_transferability_display }}
-                    </span>
+            <h2 class="text-2xl font-bold text-slate-900 mb-1">{{ user.profile.nickname|default:"未設定暱稱" }}</h2>
+            <p class="text-sm text-slate-500">{{ user.email }}</p>
+        </div>
+        <!-- Trust Level Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+            {% include "partials/trust_badge.html" with trust_level=user.profile.trust_level %}
+            <p class="text-xs text-slate-500 mt-1">
+                {% if borrowing_limits.max_books == 999 %}
+                    無借閱限制
+                {% else %}
+                    最多借 {{ borrowing_limits.max_books }} 本，最長 {{ borrowing_limits.max_days }} 天
+                {% endif %}
+            </p>
+        </div>
+        <!-- Activity Stats Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+            <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">活動統計</h3>
+            <div class="grid grid-cols-3 gap-4">
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-primary">{{ activity_stats.books_contributed }}</p>
+                    <p class="text-xs text-slate-500">貢獻書籍</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-primary">{{ activity_stats.books_borrowed }}</p>
+                    <p class="text-xs text-slate-500">借閱次數</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-primary">{{ activity_stats.books_lent }}</p>
+                    <p class="text-xs text-slate-500">出借次數</p>
                 </div>
             </div>
         </div>
-
-        <div class="p-4 border-b border-slate-100-slate-700/50 flex items-center gap-3">
-            <div class="size-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
-                <span class="material-symbols-outlined">location_on</span>
+        <!-- Info Details -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-4 border-b border-slate-100-slate-700/50 flex items-center gap-3">
+                <div class="size-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                    <span class="material-symbols-outlined">mail</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">電子信箱</p>
+                    <p class="text-sm font-medium text-slate-900 truncate">{{ user.email|default:"未設定" }}</p>
+                </div>
             </div>
-            <div class="flex-1 min-w-0">
-                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">取書地點</p>
-                <p class="text-sm font-medium text-slate-900 truncate">{{ user.profile.default_location|default:"未設定" }}</p>
+            <div class="p-4 border-b border-slate-100-slate-700/50 flex items-center gap-3">
+                <div class="size-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                    <span class="material-symbols-outlined">swap_horiz</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">預設流通性</p>
+                    <div>
+                        <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-bold tracking-wider uppercase {% if user.profile.default_transferability == 'TRANSFER' %}bg-emerald-100 text-emerald-700-emerald-900/30-emerald-400 {% else %}bg-amber-100 text-amber-700{% endif %}">
+                            {{ user.profile.get_default_transferability_display }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-b border-slate-100-slate-700/50 flex items-center gap-3">
+                <div class="size-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                    <span class="material-symbols-outlined">location_on</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">取書地點</p>
+                    <p class="text-sm font-medium text-slate-900 truncate">{{ user.profile.default_location|default:"未設定" }}</p>
+                </div>
+            </div>
+            <div class="p-4 flex items-center gap-3">
+                <div class="size-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                    <span class="material-symbols-outlined">calendar_today</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">加入時間</p>
+                    <p class="text-sm font-medium text-slate-900 truncate">{{ user.date_joined|date:"Y 年 n 月 j 日" }}</p>
+                </div>
             </div>
         </div>
-
-        <div class="p-4 flex items-center gap-3">
-            <div class="size-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
-                <span class="material-symbols-outlined">calendar_today</span>
-            </div>
-            <div class="flex-1 min-w-0">
-                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">加入時間</p>
-                <p class="text-sm font-medium text-slate-900 truncate">{{ user.date_joined|date:"Y 年 n 月 j 日" }}</p>
+        <!-- Data Export Section -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="size-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-primary">download</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-slate-900">下載我的資料</p>
+                        <p class="text-xs text-slate-500">
+                            今日剩餘 <span id="remaining-exports">--</span> 次
+                        </p>
+                    </div>
+                </div>
+                <form method="post"
+                      action="{% url 'accounts:export_user_data' %}"
+                      class="inline">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition-colors">
+                        下載
+                    </button>
+                </form>
             </div>
         </div>
-    </div>
-
-<!-- Data Export Section -->
-<div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-<div class="flex items-center justify-between">
-<div class="flex items-center gap-3">
-<div class="size-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-<span class="material-symbols-outlined text-primary">download</span>
-</div>
-<div>
-<p class="text-sm font-bold text-slate-900">下載我的資料</p>
-<p class="text-xs text-slate-500">今日剩餘 <span id="remaining-exports">--</span> 次</p>
-</div>
-</div>
-<form method="post" action="{% url 'accounts:export_user_data' %}" class="inline">
-{% csrf_token %}
-<button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition-colors">
-下載
-</button>
-</form>
-</div>
-</div>
-
-<!-- Actions -->
-<div class="space-y-3">
-<a href="{% url 'accounts:profile_edit' %}" class="w-full bg-white text-slate-900 font-bold py-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-<span class="material-symbols-outlined">settings</span>
-帳號設定
-</a>
-<form method="post" action="{% url 'account_logout' %}">
-{% csrf_token %}
-<button type="submit" class="w-full bg-rose-50 text-rose-600 font-bold py-3.5 rounded-xl shadow-sm border border-rose-100-rose-900/30 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-<span class="material-symbols-outlined">logout</span>
-登出
-</button>
-</form>
-</div>
-</main>
-
-{% include '_bottom_nav.html' %}
+        <!-- Actions -->
+        <div class="space-y-3">
+            <a href="{% url 'accounts:profile_edit' %}"
+               class="w-full bg-white text-slate-900 font-bold py-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+                <span class="material-symbols-outlined">settings</span>
+                帳號設定
+            </a>
+            <form method="post" action="{% url 'account_logout' %}">
+                {% csrf_token %}
+                <button type="submit"
+                        class="w-full bg-rose-50 text-rose-600 font-bold py-3.5 rounded-xl shadow-sm border border-rose-100-rose-900/30 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+                    <span class="material-symbols-outlined">logout</span>
+                    登出
+                </button>
+            </form>
+        </div>
+    </main>
+    {% include '_bottom_nav.html' %}
 {% endblock %}
-
 {% block extra_js %}
-<script>
+    <script>
 document.addEventListener('DOMContentLoaded', function() {
     // 載入今日剩餘匯出次數
     fetch('{% url "accounts:export_status" %}')
@@ -167,5 +171,5 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('無法取得匯出次數:', error);
         });
 });
-</script>
+    </script>
 {% endblock %}

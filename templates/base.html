@@ -1,26 +1,24 @@
 <!DOCTYPE html>
 <html lang="zh-Hant" class="h-full">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{% block title %}Exbooks 共享書籍{% endblock %}</title>
-
-<!-- PWA Meta Tags -->
-<meta name="theme-color" content="#136dec">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Exbooks">
-<meta name="mobile-web-app-capable" content="yes">
-
-<!-- PWA Manifest -->
-<link rel="manifest" href="/static/manifest.json">
-
-<!-- Apple Touch Icon -->
-<link rel="apple-touch-icon" href="/static/icons/icon-192.png">
-
-<!-- Tailwind CSS -->
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>
+            {% block title %}Exbooks 共享書籍{% endblock %}
+        </title>
+        <!-- PWA Meta Tags -->
+        <meta name="theme-color" content="#136dec">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <meta name="apple-mobile-web-app-title" content="Exbooks">
+        <meta name="mobile-web-app-capable" content="yes">
+        <!-- PWA Manifest -->
+        <link rel="manifest" href="/static/manifest.json">
+        <!-- Apple Touch Icon -->
+        <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+        <!-- Tailwind CSS -->
+        <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+        <script>
 tailwind.config = {
 darkMode: "class",
 theme: {
@@ -37,22 +35,22 @@ theme: {
   },
 },
 }
-</script>
-
-<!-- Google Fonts -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-
-<!-- HTMX -->
-<script src="https://unpkg.com/htmx.org@2.0.4"></script>
-
-<!-- Alpine.js -->
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-<style>
+        </script>
+        <!-- Google Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap"
+              rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap"
+              rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+              rel="stylesheet">
+        <!-- HTMX -->
+        <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+        <!-- Alpine.js -->
+        <script defer
+                src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+        <style>
 body {
 min-height: max(884px, 100dvh);
 }
@@ -81,15 +79,13 @@ scrollbar-width: none;
 .fill-1 {
 font-variation-settings: 'FILL' 1;
 }
-</style>
-
-{% block extra_head %}{% endblock %}
-</head>
-
-<body class="bg-background-light-background-dark font-display text-slate-900" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-
-<!-- PWA Service Worker & Push Registration -->
-<script>
+        </style>
+        {% block extra_head %}{% endblock %}
+    </head>
+    <body class="bg-background-light-background-dark font-display text-slate-900"
+          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+        <!-- PWA Service Worker & Push Registration -->
+        <script>
 (function() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', async function() {
@@ -199,34 +195,26 @@ font-variation-settings: 'FILL' 1;
   }
   {% endif %}
 })();
-</script>
-
-<!-- Sidebar -->
-{% include '_sidebar.html' %}
-
-<!-- Search Modal -->
-{% include '_search_modal.html' %}
-
-<!-- Messages (Toast) -->
-{% if messages %}
-<div class="fixed top-4 right-4 z-50 flex flex-col gap-2" id="toast-container">
-{% for message in messages %}
-<div class="toast rounded-lg border px-4 py-3 text-sm shadow-md
-{% if message.tags == 'success' %}border-green-200 bg-green-50 text-green-800-green-900/30-green-800-green-400
-{% elif message.tags == 'error' %}border-red-200 bg-red-50 text-red-800-red-900/30-red-800-red-400
-{% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-800-amber-900/30-amber-800-amber-400
-{% else %}border-blue-200 bg-blue-50 text-blue-800-blue-900/30-blue-800-blue-400{% endif %}">
-{{ message }}
-</div>
-{% endfor %}
-</div>
-{% endif %}
-
-<!-- Main Content Wrapper -->
-<div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light-background-dark overflow-x-hidden fade-in">
-{% block content %}{% endblock %}
-</div>
-
-{% block extra_js %}{% endblock %}
-</body>
+        </script>
+        <!-- Sidebar -->
+        {% include '_sidebar.html' %}
+        <!-- Search Modal -->
+        {% include '_search_modal.html' %}
+        <!-- Messages (Toast) -->
+        {% if messages %}
+            <div class="fixed top-4 right-4 z-50 flex flex-col gap-2"
+                 id="toast-container">
+                {% for message in messages %}
+                    <div class="toast rounded-lg border px-4 py-3 text-sm shadow-md {% if message.tags == 'success' %}border-green-200 bg-green-50 text-green-800-green-900/30-green-800-green-400 {% elif message.tags == 'error' %}border-red-200 bg-red-50 text-red-800-red-900/30-red-800-red-400 {% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-800-amber-900/30-amber-800-amber-400 {% else %}border-blue-200 bg-blue-50 text-blue-800-blue-900/30-blue-800-blue-400{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        <!-- Main Content Wrapper -->
+        <div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light-background-dark overflow-x-hidden fade-in">
+            {% block content %}{% endblock %}
+        </div>
+        {% block extra_js %}{% endblock %}
+    </body>
 </html>

@@ -126,99 +126,101 @@ class ExbookSocialAccountAdapter(DefaultSocialAccountAdapter):
 
         return user
 
+    def save_user(self, request, sociallogin, form=None):
+        """
+        儲存新用戶並建立 UserProfile。
+        """
+        user = super().save_user(request, sociallogin, form)
 
-def save_user(self, request, sociallogin, form=None):
-    """
-    儲存新用戶並建立 UserProfile。
-    """
-    user = super().save_user(request, sociallogin, form)
+        # 建立 UserProfile
+        profile, created = UserProfile.objects.get_or_create(
+            user=user,
+            defaults={
+                "nickname": user.first_name or user.email.split("@")[0],
+            },
+        )
 
-    # 建立 UserProfile
-    profile, created = UserProfile.objects.get_or_create(
-        user=user,
-        defaults={
-            "nickname": user.first_name or user.email.split("@")[0],
-        },
-    )
+        # 下載 Google 頭像
+        if sociallogin.account:
+            extra_data = sociallogin.account.extra_data
+            picture_url = extra_data.get("picture")
+            if picture_url and not profile.avatar:
+                try:
+                    response = requests.get(picture_url, timeout=10)
+                    if response.status_code == 200:
+                        # 從 URL 取得副檔名
+                        parsed_url = urlparse(picture_url)
+                        ext = os.path.splitext(parsed_url.path)[1] or ".jpg"
+                        filename = f"google_avatar_{uuid.uuid4().hex[:8]}{ext}"
 
-    # 下載 Google 頭像
-    if sociallogin.account:
-        extra_data = sociallogin.account.extra_data
-        picture_url = extra_data.get("picture")
-        if picture_url and not profile.avatar:
+                        profile.avatar.save(
+                            filename, ContentFile(response.content), save=True
+                        )
+                        logger.info(f"Downloaded Google avatar for {user.email}")
+                except Exception as e:
+                    logger.warning(f"Failed to download Google avatar: {e}")
+
+        logger.info(f"{'Created' if created else 'Found'} UserProfile for {user.email}")
+
+        return user
+
+    def pre_social_login(self, request, sociallogin):
+        """
+        社交登入前的處理。
+
+        檢查：
+        1. 是否已有相同 email 的本地帳號（自動連結）
+        2. 用戶是否需要補填 birth_date
+        3. 下載 Google 頭像（如果沒有的話）
+        """
+        email = sociallogin.user.email
+
+        if email:
             try:
-                response = requests.get(picture_url, timeout=10)
-                if response.status_code == 200:
-                    # 從 URL 取得副檔名
-                    parsed_url = urlparse(picture_url)
-                    ext = os.path.splitext(parsed_url.path)[1] or ".jpg"
-                    filename = f"google_avatar_{uuid.uuid4().hex[:8]}{ext}"
+                # 嘗試找到現有用戶
+                existing_user = User.objects.get(email=email)
 
-                    profile.avatar.save(
-                        filename, ContentFile(response.content), save=True
-                    )
-                    logger.info(f"Downloaded Google avatar for {user.email}")
-            except Exception as e:
-                logger.warning(f"Failed to download Google avatar: {e}")
+                # 自動連結現有帳號
+                if sociallogin.is_existing:
+                    logger.debug(f"Social account already linked to {email}")
+                else:
+                    sociallogin.connect(request, existing_user)
+                    logger.info(f"Linked social account to existing user: {email}")
 
-    logger.info(f"{'Created' if created else 'Found'} UserProfile for {user.email}")
+                # 為既有用戶下載 Google 頭像（如果沒有的話）
+                if sociallogin.account:
+                    extra_data = sociallogin.account.extra_data
+                    picture_url = extra_data.get("picture")
+                    if picture_url:
+                        try:
+                            profile = existing_user.profile
+                            if not profile.avatar:
+                                response = requests.get(picture_url, timeout=10)
+                                if response.status_code == 200:
+                                    parsed_url = urlparse(picture_url)
+                                    ext = os.path.splitext(parsed_url.path)[1] or ".jpg"
+                                    filename = (
+                                        f"google_avatar_{uuid.uuid4().hex[:8]}{ext}"
+                                    )
+                                    profile.avatar.save(
+                                        filename,
+                                        ContentFile(response.content),
+                                        save=True,
+                                    )
+                                    logger.info(
+                                        f"Downloaded Google avatar for existing user: {email}"
+                                    )
+                        except UserProfile.DoesNotExist:
+                            logger.debug(
+                                f"No profile for {email}, will be created in save_user"
+                            )
+                        except Exception as e:
+                            logger.warning(
+                                f"Failed to download avatar for existing user: {e}"
+                            )
 
-    return user
-
-
-def pre_social_login(self, request, sociallogin):
-    """
-    社交登入前的處理。
-
-    檢查：
-    1. 是否已有相同 email 的本地帳號（自動連結）
-    2. 用戶是否需要補填 birth_date
-    3. 下載 Google 頭像（如果沒有的話）
-    """
-    email = sociallogin.user.email
-
-    if email:
-        try:
-            # 嘗試找到現有用戶
-            existing_user = User.objects.get(email=email)
-
-            # 自動連結現有帳號
-            if sociallogin.is_existing:
-                logger.debug(f"Social account already linked to {email}")
-            else:
-                sociallogin.connect(request, existing_user)
-                logger.info(f"Linked social account to existing user: {email}")
-
-            # 為既有用戶下載 Google 頭像（如果沒有的話）
-            if sociallogin.account:
-                extra_data = sociallogin.account.extra_data
-                picture_url = extra_data.get("picture")
-                if picture_url:
-                    try:
-                        profile = existing_user.profile
-                        if not profile.avatar:
-                            response = requests.get(picture_url, timeout=10)
-                            if response.status_code == 200:
-                                parsed_url = urlparse(picture_url)
-                                ext = os.path.splitext(parsed_url.path)[1] or ".jpg"
-                                filename = f"google_avatar_{uuid.uuid4().hex[:8]}{ext}"
-                                profile.avatar.save(
-                                    filename, ContentFile(response.content), save=True
-                                )
-                                logger.info(
-                                    f"Downloaded Google avatar for existing user: {email}"
-                                )
-                    except UserProfile.DoesNotExist:
-                        logger.debug(
-                            f"No profile for {email}, will be created in save_user"
-                        )
-                    except Exception as e:
-                        logger.warning(
-                            f"Failed to download avatar for existing user: {e}"
-                        )
-
-        except User.DoesNotExist:
-            logger.debug(f"New user from social login: {email}")
+            except User.DoesNotExist:
+                logger.debug(f"New user from social login: {email}")
 
     def is_open_for_signup(self, request, sociallogin):
         """

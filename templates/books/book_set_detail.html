@@ -1,65 +1,46 @@
 {% extends "base.html" %}
-
 {% block title %}{{ book_set.name }} - Exbooks{% endblock %}
-
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
-        <div>
-            <h1 class="text-2xl font-bold text-slate-900">{{ book_set.name }}</h1>
-            {% if book_set.description %}
-            <p class="text-slate-600 mt-1">{{ book_set.description }}</p>
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900">{{ book_set.name }}</h1>
+                {% if book_set.description %}<p class="text-slate-600 mt-1">{{ book_set.description }}</p>{% endif %}
+            </div>
+            <div class="flex gap-2">
+                <a href="{% url 'books:book_set_edit' book_set.pk %}"
+                   class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors">編輯</a>
+                <a href="{% url 'books:book_set_delete' book_set.pk %}"
+                   class="px-4 py-2 bg-red-100-red-900/30 text-red-700-red-400 rounded-xl hover:bg-red-200-red-900/50 transition-colors">
+                    刪除
+                </a>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <h2 class="text-lg font-semibold text-slate-900 mb-4">套書中的書籍（{{ books|length }} 本）</h2>
+            {% if books %}
+                <div class="space-y-3" id="book-set-books">
+                    {% for book in books %}
+                        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                            <div>
+                                <a href="{% url 'books:detail' book.pk %}"
+                                   class="text-slate-900 hover:text-primary">{{ book.official_book.title }}</a>
+                                <p class="text-sm text-slate-500">{{ book.official_book.author }}</p>
+                            </div>
+                            <button hx-post="{% url 'books:book_set_remove_book' book_set.pk book.pk %}"
+                                    hx-target="#book-set-books"
+                                    hx-swap="outerHTML"
+                                    class="text-red-600-red-400 hover:text-red-800-red-300 text-sm">移除</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-slate-600 text-center py-8">此套書尚未加入任何書籍</p>
             {% endif %}
         </div>
-        <div class="flex gap-2">
-            <a href="{% url 'books:book_set_edit' book_set.pk %}"
-               class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors">
-                編輯
-            </a>
-            <a href="{% url 'books:book_set_delete' book_set.pk %}"
-               class="px-4 py-2 bg-red-100-red-900/30 text-red-700-red-400 rounded-xl hover:bg-red-200-red-900/50 transition-colors">
-                刪除
-            </a>
+        <div class="mt-4">
+            <a href="{% url 'books:book_set_list' %}"
+               class="text-primary hover:underline">← 返回套書列表</a>
         </div>
     </div>
-
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <h2 class="text-lg font-semibold text-slate-900 mb-4">
-            套書中的書籍（{{ books|length }} 本）
-        </h2>
-
-        {% if books %}
-        <div class="space-y-3" id="book-set-books">
-            {% for book in books %}
-            <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                <div>
-                    <a href="{% url 'books:detail' book.pk %}" class="text-slate-900 hover:text-primary">
-                        {{ book.official_book.title }}
-                    </a>
-                    <p class="text-sm text-slate-500">
-                        {{ book.official_book.author }}
-                    </p>
-                </div>
-                <button hx-post="{% url 'books:book_set_remove_book' book_set.pk book.pk %}"
-                        hx-target="#book-set-books"
-                        hx-swap="outerHTML"
-                        class="text-red-600-red-400 hover:text-red-800-red-300 text-sm">
-                    移除
-                </button>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p class="text-slate-600 text-center py-8">
-            此套書尚未加入任何書籍
-        </p>
-        {% endif %}
-    </div>
-
-    <div class="mt-4">
-        <a href="{% url 'books:book_set_list' %}" class="text-primary hover:underline">
-            ← 返回套書列表
-        </a>
-    </div>
-</div>
 {% endblock %}

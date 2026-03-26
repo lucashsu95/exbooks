@@ -1,155 +1,177 @@
 {% extends 'base.html' %}
-
 {% block title %}Exbooks - 首頁與探索{% endblock %}
-
 {% block content %}
-<!-- Hero Header with Gradient -->
-<div class="relative overflow-hidden">
-  <!-- Gradient Background -->
-  <div class="absolute inset-0 bg-gradient-to-br from-primary/10 via-background-light to-primary/5-primary/20-background-dark-primary/10"></div>
-  
-  <!-- Header Section -->
-  <header class="relative flex items-center p-4 justify-between">
-    <button type="button" onclick="toggleSidebar()" class="text-primary flex size-12 shrink-0 items-center justify-center cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 backdrop-blur-sm">
-      <span class="material-symbols-outlined text-3xl">menu</span>
-    </button>
-    <h2 class="text-slate-900 text-2xl font-bold leading-tight tracking-tight flex-1 text-center">Exbooks</h2>
-    <div class="flex w-12 items-center justify-end">
-      <a href="#" onclick="alert('通知功能開發中')" class="flex size-12 cursor-pointer items-center justify-center rounded-2xl bg-white text-primary backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300">
-        <span class="material-symbols-outlined">notifications</span>
-      </a>
-    </div>
-  </header>
-
-  <!-- Search Bar Section - Enhanced -->
-  <div class="relative px-4 py-6">
-    <form method="GET" action="{% url 'books:list' %}" class="relative">
-      <div class="relative flex items-center rounded-2xl h-16 shadow-2xl bg-white backdrop-blur-xl border border-white/50-slate-700/50 overflow-hidden group focus-within:ring-2 focus-within:ring-primary/50 focus-within:shadow-primary/20">
-        <div class="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
-        <button type="submit" class="relative z-10 text-slate-500 hover:text-primary flex items-center justify-center pl-5 pr-3 h-full transition-colors">
-          <span class="material-symbols-outlined text-2xl">search</span>
-        </button>
-        <input name="q" class="relative z-10 form-input flex w-full min-w-0 flex-1 border-none bg-transparent text-slate-900 focus:ring-0 h-full placeholder:text-slate-400 px-4 text-base font-medium" placeholder="搜尋 ISBN、書名、作者、出版社..." value="{{ search_query }}"/>
-        {% if current_category != '全部' %}
-        <input type="hidden" name="category" value="{{ current_category }}">
-        {% endif %}
-      </div>
-    </form>
-  </div>
-
-  <!-- Categories - Pill Design -->
-  <div class="relative px-4 pb-4">
-    <div class="flex gap-3 overflow-x-auto no-scrollbar py-2 -mx-4 px-4">
-      <a href="?category=全部{% if search_query %}&q={{ search_query }}{% endif %}" class="flex h-11 shrink-0 items-center justify-center gap-x-2 rounded-full px-6 transition-all duration-300 {% if current_category == '全部' %}bg-primary text-white shadow-lg shadow-primary/30 scale-105{% else %}bg-white backdrop-blur-md border border-white/50-slate-700/50 text-slate-700 hover:bg-white hover:scale-105{% endif %}">
-        <span class="text-sm font-semibold leading-normal">全部</span>
-      </a>
-      <a href="?category=小說{% if search_query %}&q={{ search_query }}{% endif %}" class="flex h-11 shrink-0 items-center justify-center gap-x-2 rounded-full px-6 transition-all duration-300 {% if current_category == '小說' %}bg-primary text-white shadow-lg shadow-primary/30 scale-105{% else %}bg-white backdrop-blur-md border border-white/50-slate-700/50 text-slate-700 hover:bg-white hover:scale-105{% endif %}">
-        <span class="text-sm font-medium leading-normal">小說</span>
-      </a>
-      <a href="?category=科技{% if search_query %}&q={{ search_query }}{% endif %}" class="flex h-11 shrink-0 items-center justify-center gap-x-2 rounded-full px-6 transition-all duration-300 {% if current_category == '科技' %}bg-primary text-white shadow-lg shadow-primary/30 scale-105{% else %}bg-white backdrop-blur-md border border-white/50-slate-700/50 text-slate-700 hover:bg-white hover:scale-105{% endif %}">
-        <span class="text-sm font-medium leading-normal">科技</span>
-      </a>
-      <a href="?category=藝術{% if search_query %}&q={{ search_query }}{% endif %}" class="flex h-11 shrink-0 items-center justify-center gap-x-2 rounded-full px-6 transition-all duration-300 {% if current_category == '藝術' %}bg-primary text-white shadow-lg shadow-primary/30 scale-105{% else %}bg-white backdrop-blur-md border border-white/50-slate-700/50 text-slate-700 hover:bg-white hover:scale-105{% endif %}">
-        <span class="text-sm font-medium leading-normal">藝術</span>
-      </a>
-      <a href="?category=科學{% if search_query %}&q={{ search_query }}{% endif %}" class="flex h-11 shrink-0 items-center justify-center gap-x-2 rounded-full px-6 transition-all duration-300 {% if current_category == '科學' %}bg-primary text-white shadow-lg shadow-primary/30 scale-105{% else %}bg-white backdrop-blur-md border border-white/50-slate-700/50 text-slate-700 hover:bg-white hover:scale-105{% endif %}">
-        <span class="text-sm font-medium leading-normal">科學</span>
-      </a>
-    </div>
-  </div>
-</div>
-
-<!-- New Arrivals Section - Card Design -->
-<div class="px-4 pt-6 pb-4">
-  <div class="flex items-center justify-between mb-4">
-    <h2 class="text-slate-900 text-xl font-bold leading-tight tracking-tight flex items-center gap-2">
-      <span class="material-symbols-outlined text-primary">auto_awesome</span>
-      最新上架
-    </h2>
-    <a class="text-primary text-sm font-semibold hover:underline flex items-center gap-1 group" href="{% url 'books:all' %}">
-      查看全部
-      <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
-    </a>
-  </div>
-  <div class="flex gap-4 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4">
-    {% for book in new_arrivals|default:"" %}
-    <a href="{% url 'books:detail' book.id %}" class="min-w-[170px] flex flex-col gap-3 group">
-      <div class="relative w-[170px] h-[240px] rounded-2xl overflow-hidden shadow-xl group-hover:shadow-2xl group-hover:scale-[1.02] transition-all duration-300">
-        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10"></div>
-        <img class="w-full h-full object-cover" alt="{{ book.official_book.title|default:'書本' }} 的封面" src="{% if book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuCJKGFmDT9Y9sG2zd00enOq5IY1RlA1OMkGVx6ZhngS0yiBe_gffqVnF3SU7jYslPY5BSa1ucotaqAVvoRNJL5KR5caY89J1Cgrg0Qqhr1i_htBXL-M74fSsxxAOBREe-km7XJhk8eTcKA1AU36aT3cxkXi8D1UdhmoHeVi8G-c9fBNRqr4PFzQlaepN741GIaic-Y1cA6U49u00zOIaxoJGMnH0ytJ6s5L_eGH94J3-l9BHYLjCIXV_YrfyazMItU9aRWziAXoG1Y{% endif %}"/>
-        <div class="absolute bottom-3 left-3 right-3 z-20">
-          <div class="flex items-center gap-2">
-            <span class="bg-white backdrop-blur-md rounded-full px-3 py-1 text-[10px] font-bold text-primary shadow-lg flex items-center gap-1">
-              <span class="material-symbols-outlined text-xs">fiber_new</span>
-              NEW
-            </span>
-          </div>
+    <!-- Hero Header with Gradient -->
+    <div class="relative overflow-hidden">
+        <!-- Gradient Background -->
+        <div class="absolute inset-0 bg-gradient-to-br from-primary/10 via-background-light to-primary/5-primary/20-background-dark-primary/10">
         </div>
-      </div>
-      <div class="px-1">
-        <p class="text-slate-900 text-sm font-bold line-clamp-1 group-hover:text-primary transition-colors">{{ book.official_book.title }}</p>
-        <p class="text-slate-500 text-xs mt-1">{{ book.official_book.author|default:"未知作者" }}</p>
-      </div>
-    </a>
-    {% empty %}
-    <div class="flex items-center justify-center p-8 w-full">
-      <div class="text-center text-slate-500 bg-white backdrop-blur-md rounded-2xl p-8 border border-white/50-slate-700/50 shadow-xl">
-        <span class="material-symbols-outlined text-5xl mb-3 text-slate-300">inbox</span>
-        <p class="font-medium">目前沒有資料</p>
-      </div>
+        <!-- Header Section -->
+        <header class="relative flex items-center p-4 justify-between">
+            <button type="button"
+                    onclick="toggleSidebar()"
+                    class="text-primary flex size-12 shrink-0 items-center justify-center cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 backdrop-blur-sm">
+                <span class="material-symbols-outlined text-3xl">menu</span>
+            </button>
+            <h2 class="text-slate-900 text-2xl font-bold leading-tight tracking-tight flex-1 text-center">Exbooks</h2>
+            <div class="flex w-12 items-center justify-end">
+                <a href="{% url 'accounts:profile' %}"
+                   class="flex size-12 cursor-pointer items-center justify-center rounded-2xl bg-white text-primary backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 overflow-hidden border border-white/60">
+                    {% if user.is_authenticated and user.profile.avatar %}
+                        <img src="{{ user.profile.avatar.url }}"
+                             alt="使用者頭像"
+                             class="w-full h-full object-cover" />
+                    {% elif user.is_authenticated %}
+                        <span class="material-symbols-outlined">person</span>
+                    {% else %}
+                        <span class="material-symbols-outlined">person</span>
+                    {% endif %}
+                </a>
+            </div>
+        </header>
+        <!-- Search Bar Section - Enhanced -->
+        <div class="relative px-4 py-6">
+            <form method="GET" action="{% url 'books:list' %}" class="relative">
+                <div class="relative flex items-center rounded-2xl h-16 shadow-2xl bg-white backdrop-blur-xl border border-white/50-slate-700/50 overflow-hidden group focus-within:ring-2 focus-within:ring-primary/50 focus-within:shadow-primary/20">
+                    <div class="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity">
+                    </div>
+                    <button type="submit"
+                            class="relative z-10 text-slate-500 hover:text-primary flex items-center justify-center pl-5 pr-3 h-full transition-colors">
+                        <span class="material-symbols-outlined text-2xl">search</span>
+                    </button>
+                    <input name="q"
+                           class="relative z-10 form-input flex w-full min-w-0 flex-1 border-none bg-transparent text-slate-900 focus:ring-0 h-full placeholder:text-slate-400 px-4 text-base font-medium"
+                           placeholder="搜尋 ISBN、書名、作者、出版社..."
+                           value="{{ search_query }}" />
+                    {% if current_category != '全部' %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
+                </div>
+            </form>
+        </div>
+        <!-- Categories - Pill Design -->
+        <div class="relative px-4 pb-4">
+            <div class="flex gap-3 overflow-x-auto no-scrollbar py-2 -mx-4 px-4">
+                <a href="?category=全部{% if search_query %}&q={{ search_query }}{% endif %}"
+                   class="flex h-11 shrink-0 items-center justify-center gap-x-2 rounded-full px-6 transition-all duration-300 {% if current_category == '全部' %}bg-primary text-white shadow-lg shadow-primary/30 scale-105{% else %}bg-white backdrop-blur-md border border-white/50-slate-700/50 text-slate-700 hover:bg-white hover:scale-105{% endif %}">
+                    <span class="text-sm font-semibold leading-normal">全部</span>
+                </a>
+                <a href="?category=小說{% if search_query %}&q={{ search_query }}{% endif %}"
+                   class="flex h-11 shrink-0 items-center justify-center gap-x-2 rounded-full px-6 transition-all duration-300 {% if current_category == '小說' %}bg-primary text-white shadow-lg shadow-primary/30 scale-105{% else %}bg-white backdrop-blur-md border border-white/50-slate-700/50 text-slate-700 hover:bg-white hover:scale-105{% endif %}">
+                    <span class="text-sm font-medium leading-normal">小說</span>
+                </a>
+                <a href="?category=科技{% if search_query %}&q={{ search_query }}{% endif %}"
+                   class="flex h-11 shrink-0 items-center justify-center gap-x-2 rounded-full px-6 transition-all duration-300 {% if current_category == '科技' %}bg-primary text-white shadow-lg shadow-primary/30 scale-105{% else %}bg-white backdrop-blur-md border border-white/50-slate-700/50 text-slate-700 hover:bg-white hover:scale-105{% endif %}">
+                    <span class="text-sm font-medium leading-normal">科技</span>
+                </a>
+                <a href="?category=藝術{% if search_query %}&q={{ search_query }}{% endif %}"
+                   class="flex h-11 shrink-0 items-center justify-center gap-x-2 rounded-full px-6 transition-all duration-300 {% if current_category == '藝術' %}bg-primary text-white shadow-lg shadow-primary/30 scale-105{% else %}bg-white backdrop-blur-md border border-white/50-slate-700/50 text-slate-700 hover:bg-white hover:scale-105{% endif %}">
+                    <span class="text-sm font-medium leading-normal">藝術</span>
+                </a>
+                <a href="?category=科學{% if search_query %}&q={{ search_query }}{% endif %}"
+                   class="flex h-11 shrink-0 items-center justify-center gap-x-2 rounded-full px-6 transition-all duration-300 {% if current_category == '科學' %}bg-primary text-white shadow-lg shadow-primary/30 scale-105{% else %}bg-white backdrop-blur-md border border-white/50-slate-700/50 text-slate-700 hover:bg-white hover:scale-105{% endif %}">
+                    <span class="text-sm font-medium leading-normal">科學</span>
+                </a>
+            </div>
+        </div>
     </div>
-    {% endfor %}
-  </div>
-</div>
-
-<!-- Book List Section - Enhanced Cards -->
-<div class="px-4 pt-6 pb-24">
-  <div class="flex items-center gap-2 mb-4">
-    <span class="material-symbols-outlined text-primary">menu_book</span>
-    <h2 class="text-slate-900 text-xl font-bold leading-tight tracking-tight">書籍列表</h2>
-  </div>
-  <div class="grid grid-cols-1 gap-4">
-    {% for book in nearby_books|default:"" %}
-    <a href="{% url 'books:detail' book.id %}" class="group relative flex gap-4 p-4 rounded-2xl shadow-lg bg-white backdrop-blur-xl border border-white/50-slate-700/50 hover:shadow-2xl hover:bg-white transition-all duration-300 overflow-hidden">
-      <!-- Subtle gradient overlay on hover -->
-      <div class="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-      
-      <div class="relative w-24 h-32 rounded-xl overflow-hidden shrink-0 shadow-lg group-hover:shadow-xl transition-shadow">
-        <img class="w-full h-full object-cover" alt="{{ book.official_book.title }} 的封面" src="{% if book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuBlSAm5AwcmdJLphEsyKIZJ9iWzB0otfD9IcFu5Buim2RjYBpL4w7vWD3u6qaidnqPQpx0C8g1zdJ69ceuhSRE4bJU1HB6iBJG7LSOanbVN72OFbRT_sXIuMy556iXOIt0f-rQeJZkdqRDUjRq0JZfLx7h3HCiyqqqHUvQdU95O_apLHu1S0DqUMPFWdpVBh6Bxvrty9Fc2MILIMQkOuD_4DZ71tdUDNIAki1-nczh3Sw5Bd8Nd1o3TuyJCHHn6vqgxkiBGoo6j8_0{% endif %}"/>
-      </div>
-<div class="relative flex flex-col justify-between py-1 w-full">
-<div>
-<p class="text-slate-900 text-base font-bold group-hover:text-primary transition-colors">{{ book.official_book.title }}</p>
-<p class="text-slate-500 text-xs mt-1">{{ book.official_book.author|default:"未知作者" }}</p>
-</div>
-<div class="flex items-center justify-between mt-2">
-<div class="flex items-center gap-2">
-<span class="text-primary text-xs font-bold bg-primary/10 backdrop-blur-sm px-3 py-1.5 rounded-full">{{ book.official_book.get_category_display }}</span>
-<!-- 持有者信用等級徽章 -->
-{% if book.keeper.profile %}
-{% include "partials/trust_badge_inline.html" with trust_level=book.keeper.profile.trust_level %}
-{% endif %}
-</div>
-<span class="material-symbols-outlined text-primary opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">arrow_forward</span>
-</div>
-</div>
-    </a>
-    {% empty %}
-    <div class="flex items-center justify-center p-8 w-full">
-      <div class="text-center text-slate-500 bg-white backdrop-blur-md rounded-2xl p-8 border border-white/50-slate-700/50 shadow-xl">
-        <span class="material-symbols-outlined text-5xl mb-3 text-slate-300">inbox</span>
-        <p class="font-medium">目前沒有資料</p>
-      </div>
+    <!-- New Arrivals Section - Card Design -->
+    <div class="px-4 pt-6 pb-4">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-slate-900 text-xl font-bold leading-tight tracking-tight flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">auto_awesome</span>
+                最新上架
+            </h2>
+            <a class="text-primary text-sm font-semibold hover:underline flex items-center gap-1 group"
+               href="{% url 'books:all' %}">
+                查看全部
+                <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+            </a>
+        </div>
+        <div class="flex gap-4 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4">
+            {% for book in new_arrivals|default:"" %}
+                <a href="{% url 'books:detail' book.id %}"
+                   class="min-w-[170px] flex flex-col gap-3 group">
+                    <div class="relative w-[170px] h-[240px] rounded-2xl overflow-hidden shadow-xl group-hover:shadow-2xl group-hover:scale-[1.02] transition-all duration-300">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10"></div>
+                        <img class="w-full h-full object-cover"
+                             alt="{{ book.official_book.title|default:'書本' }} 的封面"
+                             src="{% if book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuCJKGFmDT9Y9sG2zd00enOq5IY1RlA1OMkGVx6ZhngS0yiBe_gffqVnF3SU7jYslPY5BSa1ucotaqAVvoRNJL5KR5caY89J1Cgrg0Qqhr1i_htBXL-M74fSsxxAOBREe-km7XJhk8eTcKA1AU36aT3cxkXi8D1UdhmoHeVi8G-c9fBNRqr4PFzQlaepN741GIaic-Y1cA6U49u00zOIaxoJGMnH0ytJ6s5L_eGH94J3-l9BHYLjCIXV_YrfyazMItU9aRWziAXoG1Y{% endif %}" />
+                        <div class="absolute bottom-3 left-3 right-3 z-20">
+                            <div class="flex items-center gap-2">
+                                <span class="bg-white backdrop-blur-md rounded-full px-3 py-1 text-[10px] font-bold text-primary shadow-lg flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-xs">fiber_new</span>
+                                    NEW
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-1">
+                        <p class="text-slate-900 text-sm font-bold line-clamp-1 group-hover:text-primary transition-colors">
+                            {{ book.official_book.title }}
+                        </p>
+                        <p class="text-slate-500 text-xs mt-1">{{ book.official_book.author|default:"未知作者" }}</p>
+                    </div>
+                </a>
+            {% empty %}
+                <div class="flex items-center justify-center p-8 w-full">
+                    <div class="text-center text-slate-500 bg-white backdrop-blur-md rounded-2xl p-8 border border-white/50-slate-700/50 shadow-xl">
+                        <span class="material-symbols-outlined text-5xl mb-3 text-slate-300">inbox</span>
+                        <p class="font-medium">目前沒有資料</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
     </div>
-    {% endfor %}
-  </div>
-</div>
-
-{% include '_bottom_nav.html' %}
-
+    <!-- Book List Section - Enhanced Cards -->
+    <div class="px-4 pt-6 pb-24">
+        <div class="flex items-center gap-2 mb-4">
+            <span class="material-symbols-outlined text-primary">menu_book</span>
+            <h2 class="text-slate-900 text-xl font-bold leading-tight tracking-tight">書籍列表</h2>
+        </div>
+        <div class="grid grid-cols-1 gap-4">
+            {% for book in nearby_books|default:"" %}
+                <a href="{% url 'books:detail' book.id %}"
+                   class="group relative flex gap-4 p-4 rounded-2xl shadow-lg bg-white backdrop-blur-xl border border-white/50-slate-700/50 hover:shadow-2xl hover:bg-white transition-all duration-300 overflow-hidden">
+                    <!-- Subtle gradient overlay on hover -->
+                    <div class="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                    </div>
+                    <div class="relative w-24 h-32 rounded-xl overflow-hidden shrink-0 shadow-lg group-hover:shadow-xl transition-shadow">
+                        <img class="w-full h-full object-cover"
+                             alt="{{ book.official_book.title }} 的封面"
+                             src="{% if book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuBlSAm5AwcmdJLphEsyKIZJ9iWzB0otfD9IcFu5Buim2RjYBpL4w7vWD3u6qaidnqPQpx0C8g1zdJ69ceuhSRE4bJU1HB6iBJG7LSOanbVN72OFbRT_sXIuMy556iXOIt0f-rQeJZkdqRDUjRq0JZfLx7h3HCiyqqqHUvQdU95O_apLHu1S0DqUMPFWdpVBh6Bxvrty9Fc2MILIMQkOuD_4DZ71tdUDNIAki1-nczh3Sw5Bd8Nd1o3TuyJCHHn6vqgxkiBGoo6j8_0{% endif %}" />
+                    </div>
+                    <div class="relative flex flex-col justify-between py-1 w-full">
+                        <div>
+                            <p class="text-slate-900 text-base font-bold group-hover:text-primary transition-colors">
+                                {{ book.official_book.title }}
+                            </p>
+                            <p class="text-slate-500 text-xs mt-1">{{ book.official_book.author|default:"未知作者" }}</p>
+                        </div>
+                        <div class="flex items-center justify-between mt-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-primary text-xs font-bold bg-primary/10 backdrop-blur-sm px-3 py-1.5 rounded-full">{{ book.official_book.get_category_display }}</span>
+                                <!-- 持有者信用等級徽章 -->
+                                {% if book.keeper.profile %}
+                                    {% include "partials/trust_badge_inline.html" with trust_level=book.keeper.profile.trust_level %}
+                                {% endif %}
+                            </div>
+                            <span class="material-symbols-outlined text-primary opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">arrow_forward</span>
+                        </div>
+                    </div>
+                </a>
+            {% empty %}
+                <div class="flex items-center justify-center p-8 w-full">
+                    <div class="text-center text-slate-500 bg-white backdrop-blur-md rounded-2xl p-8 border border-white/50-slate-700/50 shadow-xl">
+                        <span class="material-symbols-outlined text-5xl mb-3 text-slate-300">inbox</span>
+                        <p class="font-medium">目前沒有資料</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% include '_bottom_nav.html' %}
 {% endblock %}
 {% block extra_js %}
-<script>
+    <script>
 document.addEventListener("DOMContentLoaded", function() {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('search') === 'focus') {
@@ -159,5 +181,5 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   }
 });
-</script>
+    </script>
 {% endblock %}

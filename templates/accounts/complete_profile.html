@@ -1,15 +1,14 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 {% block title %}完成個人資料 - Exbooks{% endblock %}
-
 {% block extra_head %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap"
+          rel="stylesheet">
 {% endblock %}
-
 {% block content %}
-<style>
+    <style>
 .login-page {
   --page-bg: #f6f7f8;
   --card-bg: #ffffff;
@@ -126,38 +125,37 @@
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 .shield-icon svg { width: 28px; height: 28px; color: white; }
-</style>
-
-<div class="login-page">
-  <div class="floating-pages">
-    <div class="page-shape" style="--rotation: -15deg;"></div>
-    <div class="page-shape" style="--rotation: 12deg;"></div>
-    <div class="page-shape" style="--rotation: 8deg;"></div>
-  </div>
-
-  <div class="login-container">
-    <div class="login-card">
-      <div class="brand-header">
-        <div class="shield-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-            <path d="M9 12l2 2 4-4"></path>
-          </svg>
+    </style>
+    <div class="login-page">
+        <div class="floating-pages">
+            <div class="page-shape" style="--rotation: -15deg;"></div>
+            <div class="page-shape" style="--rotation: 12deg;"></div>
+            <div class="page-shape" style="--rotation: 8deg;"></div>
         </div>
-        <h1 class="brand-title">完成個人資料</h1>
-        <p class="brand-subtitle">為了符合法規，我們需要驗證您的年齡</p>
-      </div>
-
-      <form method="post" class="login-form">
-        {% csrf_token %}
-        {% crispy form %}
-        <button type="submit" class="submit-btn">儲存並繼續</button>
-      </form>
-
-      <div class="age-notice">
-        年滿 18 歲以上才能使用本服務
-      </div>
+        <div class="login-container">
+            <div class="login-card">
+                <div class="brand-header">
+                    <div class="shield-icon">
+                        <svg viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="2"
+                             stroke-linecap="round"
+                             stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            <path d="M9 12l2 2 4-4"></path>
+                        </svg>
+                    </div>
+                    <h1 class="brand-title">完成個人資料</h1>
+                    <p class="brand-subtitle">為了符合法規，我們需要驗證您的年齡</p>
+                </div>
+                <form method="post" class="login-form">
+                    {% csrf_token %}
+                    {% crispy form %}
+                    <button type="submit" class="submit-btn">儲存並繼續</button>
+                </form>
+                <div class="age-notice">年滿 18 歲以上才能使用本服務</div>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
 {% endblock %}

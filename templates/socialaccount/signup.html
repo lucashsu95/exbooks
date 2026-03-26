@@ -2,15 +2,14 @@
 {% load socialaccount %}
 {% load crispy_forms_tags %}
 {% block title %}完成註冊 - Exbooks{% endblock %}
-
 {% block extra_head %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap"
+          rel="stylesheet">
 {% endblock %}
-
 {% block content %}
-<style>
+    <style>
 .login-page {
   --page-bg: #f6f7f8;
   --card-bg: #ffffff;
@@ -176,50 +175,44 @@
   box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
 }
 .google-icon svg { width: 28px; height: 28px; color: white; }
-</style>
-
-<div class="login-page">
-  <div class="floating-pages">
-    <div class="page-shape" style="--rotation: -15deg;"></div>
-    <div class="page-shape" style="--rotation: 12deg;"></div>
-    <div class="page-shape" style="--rotation: 8deg;"></div>
-  </div>
-
-  <div class="login-container">
-    <div class="login-card">
-      <div class="brand-header">
-        <div class="google-icon">
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C6.993,2,2.545,6.447,2.545,12s4.448,10,10,10c8.396,0,10.247-7.723,9.426-11.761L12.545,10.239z"/>
-          </svg>
+    </style>
+    <div class="login-page">
+        <div class="floating-pages">
+            <div class="page-shape" style="--rotation: -15deg;"></div>
+            <div class="page-shape" style="--rotation: 12deg;"></div>
+            <div class="page-shape" style="--rotation: 8deg;"></div>
         </div>
-        <h1 class="brand-title">完成 Google 帳號註冊</h1>
-        <p class="brand-subtitle">請填寫以下資訊以完成註冊</p>
-      </div>
-
-      <!-- 顯示 Google 帳號資訊 -->
-      <div class="google-info">
-        <svg viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-        </svg>
-        <div class="google-info-text">
-          已連結 Google 帳號<br>
-          <span class="google-info-email">{{ form.account.extra_data.email|default:email|default:"" }}</span>
+        <div class="login-container">
+            <div class="login-card">
+                <div class="brand-header">
+                    <div class="google-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C6.993,2,2.545,6.447,2.545,12s4.448,10,10,10c8.396,0,10.247-7.723,9.426-11.761L12.545,10.239z" />
+                        </svg>
+                    </div>
+                    <h1 class="brand-title">完成 Google 帳號註冊</h1>
+                    <p class="brand-subtitle">請填寫以下資訊以完成註冊</p>
+                </div>
+                <!-- 顯示 Google 帳號資訊 -->
+                <div class="google-info">
+                    <svg viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                    </svg>
+                    <div class="google-info-text">
+                        已連結 Google 帳號
+                        <br>
+                        <span class="google-info-email">{{ form.account.extra_data.email|default:email|default:"" }}</span>
+                    </div>
+                </div>
+                <form method="post" class="login-form">
+                    {% csrf_token %}
+                    {% crispy form %}
+                </form>
+                <div class="age-notice">年滿 18 歲以上才能使用本服務</div>
+            </div>
         </div>
-      </div>
-
-<form method="post" class="login-form">
-  {% csrf_token %}
-  {% crispy form %}
-</form>
-
-      <div class="age-notice">
-        年滿 18 歲以上才能使用本服務
-      </div>
     </div>
-  </div>
-</div>
 {% endblock %}
