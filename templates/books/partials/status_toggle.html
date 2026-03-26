@@ -1,9 +1,9 @@
 {% if book.owner == request.user %}
-<div id="status-toggle-container" class="mx-4 mb-6 p-4 bg-white-slate-800/50 rounded-xl border border-slate-200-slate-800">
+<div id="status-toggle-container" class="mx-4 mb-6 p-4 bg-white rounded-xl border border-slate-200">
     <div class="flex items-center justify-between">
         <div>
-            <p class="text-xs text-slate-500-slate-400 uppercase font-bold tracking-tighter">書籍狀態</p>
-            <p class="text-slate-900-slate-100 font-bold">
+            <p class="text-xs text-slate-500 uppercase font-bold tracking-tighter">書籍狀態</p>
+            <p class="text-slate-900 font-bold">
                 {% if book.status == 'S' %}
                     暫不開放借閱
                 {% elif book.status == 'T' %}

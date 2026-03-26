@@ -6,26 +6,26 @@
 
 {% block content %}
 <!-- Header -->
-<header class="sticky top-0 z-10 bg-white-slate-900 border-b border-slate-200-slate-800">
+<header class="sticky top-0 z-10 bg-white border-b border-slate-200">
 <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
 <div class="flex items-center gap-3">
-<a href="{% url 'books:list' %}" class="material-symbols-outlined text-slate-600-slate-400 cursor-pointer">arrow_back</a>
+<a href="{% url 'books:list' %}" class="material-symbols-outlined text-slate-600 cursor-pointer">arrow_back</a>
 <h1 class="text-xl font-bold tracking-tight">我的書架</h1>
 </div>
-<button type="button" class="p-2 hover:bg-slate-100-slate-800 rounded-full transition-colors">
+<button type="button" class="p-2 hover:bg-slate-100 rounded-full transition-colors">
 <span class="material-symbols-outlined">search</span>
 </button>
 </div>
 <!-- Tabs - HTMX 即時切換 -->
 <div class="max-w-xl mx-auto overflow-x-auto no-scrollbar">
 <nav class="flex px-4 gap-6 whitespace-nowrap" hx-boost="true" hx-target="#bookshelf-content" hx-select="#bookshelf-content" hx-swap="innerHTML transition:0.2s">
-<a class="flex flex-col items-center justify-center border-b-[3px] {% if current_tab == 'keeping' %}border-primary text-primary{% else %}border-transparent text-slate-500-slate-400 hover:text-primary{% endif %} py-3 transition-colors" href="?tab=keeping">
+<a class="flex flex-col items-center justify-center border-b-[3px] {% if current_tab == 'keeping' %}border-primary text-primary{% else %}border-transparent text-slate-500 hover:text-primary{% endif %} py-3 transition-colors" href="?tab=keeping">
 <span class="text-sm font-semibold">目前持有</span>
 </a>
-<a class="flex flex-col items-center justify-center border-b-[3px] {% if current_tab == 'contributions' %}border-primary text-primary{% else %}border-transparent text-slate-500-slate-400 hover:text-primary{% endif %} py-3 transition-colors" href="?tab=contributions">
+<a class="flex flex-col items-center justify-center border-b-[3px] {% if current_tab == 'contributions' %}border-primary text-primary{% else %}border-transparent text-slate-500 hover:text-primary{% endif %} py-3 transition-colors" href="?tab=contributions">
 <span class="text-sm font-semibold">我的貢獻</span>
 </a>
-<a class="flex flex-col items-center justify-center border-b-[3px] {% if current_tab == 'requests' %}border-primary text-primary{% else %}border-transparent text-slate-500-slate-400 hover:text-primary{% endif %} py-3 transition-colors" href="?tab=requests">
+<a class="flex flex-col items-center justify-center border-b-[3px] {% if current_tab == 'requests' %}border-primary text-primary{% else %}border-transparent text-slate-500 hover:text-primary{% endif %} py-3 transition-colors" href="?tab=requests">
 <span class="text-sm font-semibold">進行中的請求</span>
 </a>
 </nav>
@@ -42,15 +42,15 @@
         </div>
 
         {% for book in keeping_books %}
-        <a href="{% url 'books:detail' book.id %}" class="bg-white-slate-900 p-4 rounded-xl shadow-sm border border-slate-100-slate-800 flex gap-4 items-center {% if book.status == 'upcoming' %}opacity-75{% endif %}">
-            <div class="w-16 h-20 bg-slate-200-slate-800 rounded-lg flex-shrink-0 bg-cover bg-center overflow-hidden" style="background-image: url('{% if book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuCKwevj9vxRMG00GjNHP5Z557TWcZBTh8LK8diMQ12Aj5e9E1zG7f5UDVmaM40hFFXzRfsRvxUieNpthgKVBUn2cMvmevG_wU8MhvqWI_IIqOfRMoMCrXCS3S5v5nVSMLpmG3seSdUPq0Wr0X6PIj9lbekrXveQVgdxcxg2gYqkssXJzpqAhKId_-4DERAyn_q125xVVbJEY-BfjxSeEq9qT8SCe30vWZuQSweIfJwXwTYXooU8NUXeK3KLtJrvjxBCJ_0EhG-cUoo{% endif %}');">
+        <a href="{% url 'books:detail' book.id %}" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100-slate-800 flex gap-4 items-center {% if book.status == 'upcoming' %}opacity-75{% endif %}">
+            <div class="w-16 h-20 bg-slate-200 rounded-lg flex-shrink-0 bg-cover bg-center overflow-hidden" style="background-image: url('{% if book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuCKwevj9vxRMG00GjNHP5Z557TWcZBTh8LK8diMQ12Aj5e9E1zG7f5UDVmaM40hFFXzRfsRvxUieNpthgKVBUn2cMvmevG_wU8MhvqWI_IIqOfRMoMCrXCS3S5v5nVSMLpmG3seSdUPq0Wr0X6PIj9lbekrXveQVgdxcxg2gYqkssXJzpqAhKId_-4DERAyn_q125xVVbJEY-BfjxSeEq9qT8SCe30vWZuQSweIfJwXwTYXooU8NUXeK3KLtJrvjxBCJ_0EhG-cUoo{% endif %}');">
             </div>
             <div class="flex-1 min-w-0">
                 <h3 class="font-bold text-base truncate">{{ book.official_book.title }}</h3>
                 <p class="text-sm text-primary font-medium flex items-center gap-1">
                     <span class="material-symbols-outlined text-sm">book</span> {{ book.get_status_display }}
                 </p>
-                <p class="text-xs text-slate-500-slate-400 mt-1">擁有者：{{ book.owner.profile.nickname|default:book.owner.email }}</p>
+                <p class="text-xs text-slate-500 mt-1">擁有者：{{ book.owner.profile.nickname|default:book.owner.email }}</p>
             </div>
         </a>
         {% empty %}
@@ -68,15 +68,15 @@
             <span class="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">共 {{ contributions_books|length|default:'0' }} 本</span>
         </div>
         {% for book in contributions_books %}
-        <a href="{% url 'books:detail' book.id %}" class="bg-white-slate-900 p-4 rounded-xl shadow-sm border border-slate-100-slate-800 flex gap-4 items-center">
-            <div class="w-16 h-20 bg-slate-200-slate-800 rounded-lg flex-shrink-0 bg-cover bg-center overflow-hidden" style="background-image: url('{% if book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuCKwevj9vxRMG00GjNHP5Z557TWcZBTh8LK8diMQ12Aj5e9E1zG7f5UDVmaM40hFFXzRfsRvxUieNpthgKVBUn2cMvmevG_wU8MhvqWI_IIqOfRMoMCrXCS3S5v5nVSMLpmG3seSdUPq0Wr0X6PIj9lbekrXveQVgdxcxg2gYqkssXJzpqAhKId_-4DERAyn_q125xVVbJEY-BfjxSeEq9qT8SCe30vWZuQSweIfJwXwTYXooU8NUXeK3KLtJrvjxBCJ_0EhG-cUoo{% endif %}');">
+        <a href="{% url 'books:detail' book.id %}" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100-slate-800 flex gap-4 items-center">
+            <div class="w-16 h-20 bg-slate-200 rounded-lg flex-shrink-0 bg-cover bg-center overflow-hidden" style="background-image: url('{% if book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuCKwevj9vxRMG00GjNHP5Z557TWcZBTh8LK8diMQ12Aj5e9E1zG7f5UDVmaM40hFFXzRfsRvxUieNpthgKVBUn2cMvmevG_wU8MhvqWI_IIqOfRMoMCrXCS3S5v5nVSMLpmG3seSdUPq0Wr0X6PIj9lbekrXveQVgdxcxg2gYqkssXJzpqAhKId_-4DERAyn_q125xVVbJEY-BfjxSeEq9qT8SCe30vWZuQSweIfJwXwTYXooU8NUXeK3KLtJrvjxBCJ_0EhG-cUoo{% endif %}');">
             </div>
             <div class="flex-1 min-w-0">
                 <h3 class="font-bold text-base truncate">{{ book.official_book.title }}</h3>
 <p class="text-sm font-medium flex items-center gap-1 text-slate-600">
 <span class="material-symbols-outlined text-sm">person</span> 目前持有人：{{ book.keeper.profile.nickname|default:book.keeper.email }}
                 </p>
-                <p class="text-xs text-slate-500-slate-400 mt-1">狀態：{{ book.get_status_display }}</p>
+                <p class="text-xs text-slate-500 mt-1">狀態：{{ book.get_status_display }}</p>
             </div>
         </a>
         {% empty %}
@@ -94,16 +94,16 @@
             <span class="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">共 {{ active_requests|length|default:'0' }} 筆</span>
         </div>
         {% for deal in active_requests %}
-        <div class="bg-white-slate-900 p-4 rounded-xl shadow-sm border border-slate-100-slate-800 flex gap-4 items-center">
-            <div class="w-16 h-20 bg-slate-200-slate-800 rounded-lg flex-shrink-0 bg-cover bg-center overflow-hidden" style="background-image: url('{% if deal.shared_book.official_book.cover_image %}{{ deal.shared_book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuCKwevj9vxRMG00GjNHP5Z557TWcZBTh8LK8diMQ12Aj5e9E1zG7f5UDVmaM40hFFXzRfsRvxUieNpthgKVBUn2cMvmevG_wU8MhvqWI_IIqOfRMoMCrXCS3S5v5nVSMLpmG3seSdUPq0Wr0X6PIj9lbekrXveQVgdxcxg2gYqkssXJzpqAhKId_-4DERAyn_q125xVVbJEY-BfjxSeEq9qT8SCe30vWZuQSweIfJwXwTYXooU8NUXeK3KLtJrvjxBCJ_0EhG-cUoo{% endif %}');">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100-slate-800 flex gap-4 items-center">
+            <div class="w-16 h-20 bg-slate-200 rounded-lg flex-shrink-0 bg-cover bg-center overflow-hidden" style="background-image: url('{% if deal.shared_book.official_book.cover_image %}{{ deal.shared_book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuCKwevj9vxRMG00GjNHP5Z557TWcZBTh8LK8diMQ12Aj5e9E1zG7f5UDVmaM40hFFXzRfsRvxUieNpthgKVBUn2cMvmevG_wU8MhvqWI_IIqOfRMoMCrXCS3S5v5nVSMLpmG3seSdUPq0Wr0X6PIj9lbekrXveQVgdxcxg2gYqkssXJzpqAhKId_-4DERAyn_q125xVVbJEY-BfjxSeEq9qT8SCe30vWZuQSweIfJwXwTYXooU8NUXeK3KLtJrvjxBCJ_0EhG-cUoo{% endif %}');">
             </div>
             <div class="flex-1 min-w-0">
                 <h3 class="font-bold text-base truncate">{{ deal.shared_book.official_book.title }}</h3>
                 <p class="text-sm font-medium flex items-center gap-1 text-primary">
                     <span class="material-symbols-outlined text-sm">swap_horiz</span> {{ deal.get_deal_type_display }}
                 </p>
-                <p class="text-xs text-slate-500-slate-400 mt-1">狀態：{{ deal.get_status_display }}</p>
-                <p class="text-xs text-slate-500-slate-400 mt-1">對象：{% if deal.applicant == request.user %}{{ deal.responder.profile.nickname|default:deal.responder.email }}{% else %}{{ deal.applicant.profile.nickname|default:deal.applicant.email }}{% endif %}</p>
+                <p class="text-xs text-slate-500 mt-1">狀態：{{ deal.get_status_display }}</p>
+                <p class="text-xs text-slate-500 mt-1">對象：{% if deal.applicant == request.user %}{{ deal.responder.profile.nickname|default:deal.responder.email }}{% else %}{{ deal.applicant.profile.nickname|default:deal.applicant.email }}{% endif %}</p>
             </div>
         </div>
         {% empty %}

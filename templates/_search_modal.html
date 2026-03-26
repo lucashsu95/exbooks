@@ -3,21 +3,21 @@
 
 <!-- Search Modal -->
 <div id="search-modal" class="fixed top-0 left-0 right-0 z-50 transform -translate-y-full transition-transform duration-300">
-    <div class="bg-white-slate-900 shadow-xl">
+    <div class="bg-white shadow-xl">
         <!-- Modal Header -->
         <div class="flex items-center p-4 gap-3">
-            <button type="button" onclick="toggleSearchModal()" class="p-2 rounded-lg hover:bg-slate-100-slate-800 transition-colors">
-                <span class="material-symbols-outlined text-slate-500-slate-400">close</span>
+            <button type="button" onclick="toggleSearchModal()" class="p-2 rounded-lg hover:bg-slate-100 transition-colors">
+                <span class="material-symbols-outlined text-slate-500">close</span>
             </button>
             
             <!-- Search Form -->
             <form method="GET" action="{% url 'books:list' %}" class="flex-1">
-                <div class="flex items-center bg-slate-100-slate-800 rounded-xl">
+                <div class="flex items-center bg-slate-100 rounded-xl">
                     <input 
                         type="text" 
                         name="q" 
                         id="search-modal-input"
-                        class="w-full bg-transparent border-none focus:ring-0 px-4 py-3 text-slate-900-slate-100 placeholder:text-slate-500"
+                        class="w-full bg-transparent border-none focus:ring-0 px-4 py-3 text-slate-900 placeholder:text-slate-500"
                         placeholder="搜尋 ISBN、書名、作者..."
                         autocomplete="off"
                     >
@@ -30,7 +30,7 @@
         
         <!-- Search Tips -->
         <div class="px-4 pb-4">
-            <p class="text-xs text-slate-500-slate-400">
+            <p class="text-xs text-slate-500">
                 <span class="material-symbols-outlined text-sm align-middle mr-1">info</span>
                 輸入關鍵字搜尋書籍，支援書名、作者、ISBN
             </p>

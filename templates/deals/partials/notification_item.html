@@ -11,10 +11,10 @@
   'EXTEND_APPROVED': 'check_circle',
   'EXTEND_REJECTED': 'cancel',
 } %}
-<div class="flex items-start gap-3 p-4 hover:bg-slate-50-slate-800/50 transition-colors {% if not notification.is_read %}bg-primary/5{% endif %}"
+<div class="flex items-start gap-3 p-4 hover:bg-slate-50 transition-colors {% if not notification.is_read %}bg-primary/5{% endif %}"
      id="notification-{{ notification.id }}">
   <!-- Icon -->
-  <div class="size-10 rounded-full {% if not notification.is_read %}bg-primary/20{% else %}bg-slate-100-slate-800{% endif %} flex items-center justify-center shrink-0">
+  <div class="size-10 rounded-full {% if not notification.is_read %}bg-primary/20{% else %}bg-slate-100{% endif %} flex items-center justify-center shrink-0">
     <span class="material-symbols-outlined {% if not notification.is_read %}text-primary{% else %}text-slate-400{% endif %}">
       {{ type_icon|get_item:notification.notification_type|default:'notifications' }}
     </span>
@@ -24,11 +24,11 @@
   <div class="flex-1 min-w-0">
     <div class="flex items-start justify-between gap-2">
       <div>
-        <p class="text-sm font-medium text-slate-900-slate-100">
+        <p class="text-sm font-medium text-slate-900">
           {{ notification.title }}
         </p>
         {% if notification.message %}
-        <p class="text-xs text-slate-500-slate-400 mt-0.5 line-clamp-2">
+        <p class="text-xs text-slate-500 mt-0.5 line-clamp-2">
           {{ notification.message }}
         </p>
         {% endif %}
