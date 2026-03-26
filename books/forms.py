@@ -43,7 +43,6 @@ class BookSearchForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
-        self.helper.form_method = "get"
         self.helper.layout = Layout(
             Field("q"),
             Field("status"),
@@ -98,6 +97,7 @@ class BookAddForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.form_tag = False
         self.helper.layout = Layout(
             Field("isbn"),
             Field("title"),

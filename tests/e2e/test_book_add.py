@@ -32,7 +32,7 @@ class TestBookAdd:
             authenticated_page.locator("select[name='transferability']")
         ).to_be_visible()
         expect(
-            authenticated_page.locator("input[name='condition_description']")
+            authenticated_page.locator("textarea[name='condition_description']")
         ).to_be_visible()
         expect(
             authenticated_page.locator("input[name='loan_duration_days']")
@@ -87,7 +87,7 @@ class TestBookAdd:
         authenticated_page.locator("select[name='transferability']").select_option(
             "RETURN"
         )
-        authenticated_page.locator("input[name='condition_description']").fill(
+        authenticated_page.locator("textarea[name='condition_description']").fill(
             "書況良好，無劃記"
         )
         authenticated_page.locator("input[name='loan_duration_days']").fill("30")
@@ -116,7 +116,7 @@ class TestBookAdd:
         authenticated_page.locator("select[name='transferability']").select_option(
             "TRANSFER"
         )
-        authenticated_page.locator("input[name='condition_description']").fill(
+        authenticated_page.locator("textarea[name='condition_description']").fill(
             "附照片說明"
         )
         authenticated_page.locator("input[name='loan_duration_days']").fill("60")

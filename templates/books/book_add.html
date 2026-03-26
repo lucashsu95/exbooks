@@ -15,13 +15,14 @@
 </header>
 
 <main class="max-w-xl mx-auto p-4 pb-24">
-  <form method="POST" class="space-y-4">
+    <form method="POST" enctype="multipart/form-data" class="space-y-4">
     {% csrf_token %}
 
     <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
       {% crispy form %}
       <div id="isbn-result"></div>
       <span class="htmx-indicator text-sm text-slate-500">查詢中...</span>
+      <div id="photo-preview" class="grid grid-cols-3 gap-2 mt-3"></div>
     </div>
 
     <button type="submit" class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-transform">
