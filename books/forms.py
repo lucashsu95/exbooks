@@ -111,6 +111,41 @@ class BookAddForm(forms.ModelForm):
         )
 
 
+class BookEditForm(forms.ModelForm):
+    title = forms.CharField(max_length=200, label="書名")
+    author = forms.CharField(max_length=200, required=False, label="作者")
+    publisher = forms.CharField(max_length=100, required=False, label="出版社")
+    category = forms.ChoiceField(
+        choices=OfficialBook.Category.choices,
+        label="分類",
+        initial=OfficialBook.Category.OTHER,
+    )
+    photos = forms.FileField(
+        widget=MultipleFileInput(),
+        label="新增書況照片",
+        required=False,
+    )
+
+    class Meta:
+        model = SharedBook
+        fields = ["transferability", "condition_description", "loan_duration_days"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            Field("title"),
+            Field("author"),
+            Field("publisher"),
+            Field("category"),
+            Field("transferability"),
+            Field("condition_description"),
+            Field("loan_duration_days"),
+            Field("photos"),
+        )
+
+
 # ============================================
 # 套書相關表單
 # ============================================

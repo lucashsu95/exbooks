@@ -9,6 +9,7 @@ urlpatterns = [
     path("bookshelf/", views.my_bookshelf, name="bookshelf"),
     path("all/", views.book_all, name="all"),
     path("add/", views.book_add, name="add"),
+    path("<uuid:pk>/edit/", views.book_edit, name="edit"),
     path("<uuid:pk>/", views.book_detail, name="detail"),
     path("api/isbn-lookup/", views.isbn_lookup, name="isbn_lookup"),
     path("toggle-status/<uuid:pk>/", views.toggle_status, name="toggle_status"),

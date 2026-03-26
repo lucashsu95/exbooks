@@ -16,6 +16,7 @@
                 書籍詳情
             </h2>
             <button type="button"
+                    id="share-book-btn"
                     class="flex size-12 items-center justify-center rounded-2xl bg-white/60 dark:bg-slate-800/60 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-slate-700 dark:text-slate-300">
                 <span class="material-symbols-outlined">share</span>
             </button>
@@ -136,27 +137,23 @@
                 </p>
             </div>
             <!-- Photo Gallery -->
-            <div class="grid grid-cols-3 gap-3 mt-4">
-                <div class="aspect-square rounded-xl overflow-hidden shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
-                     aria-label="書頁特寫"
-                     style="background-image: url('{{ book.photo_1_url|default:'https://lh3.googleusercontent.com/aida-public/AB6AXuDWMZiqCK8ufrABVpkojIsI_K3jxYN-BhCzav_t229-GQDXMp_MbYIlVor1mGDpzBxtMtZUZu6Y2kxj4gCxUrHQG2YPX8NKWSyYzihiErMuNq-OhObm1UdJqSl4dC2re3U4iocofY3Of6HWiIFk4pFmhJDgxQuInq0fySP6CdEIjq5qWRq6Lae8kpUni97yGKMQKbJnnoxrs5yr0VVIsiml1iawILjPDgBnwLX37luLajbRhmFNZssNLy8yEK0i4fZIqvlU_8xjbfo' }}');
-                            background-size: cover;
-                            background-position: center"></div>
-                <div class="aspect-square rounded-xl overflow-hidden shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
-                     aria-label="書脊側面"
-                     style="background-image: url('{{ book.photo_2_url|default:'https://lh3.googleusercontent.com/aida-public/AB6AXuCziVmskchOjZ6o36p-tbcLtmakmLumgbN7X5_vsP7DFIJ4pE_NO8HaOCl1ikccCSbN64Tjzj40Gtm5NTEczBkq9cFX5UAwRr5fePqyoO4-3RRqh8D1AExC4sIkx9UgHIl0w0l68VOLJZ95fbLHJjFcCmrmV1EXPe_VXsJZbO9cPkQARe-2Zaxjm-ibXdwKDxFEJC65YVWhQaPXG7Difz3wc3bR1d7MkT9A-aWkAQCb6qEpE3eb3GuDgOO0_E5OzYbEGwv4gNlDtlw' }}');
-                            background-size: cover;
-                            background-position: center"></div>
-                <div class="relative aspect-square rounded-xl overflow-hidden shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
-                     aria-label="書籍封底"
-                     style="background-image: url('{{ book.photo_3_url|default:'https://lh3.googleusercontent.com/aida-public/AB6AXuAO_ubYJAJIpjcVYwnyWoxtQwLBwV16LYNj1Uydqk4YennZnXTq4jXK4yg30U9zb3_PoVhjjEEzwqWSYe41GGofpq-bh2rh3Bst0LxDIfdlcKI135NrpHHehaTwaNJaP1n2-DkFdakqFqsrKecLBN8xiIAvuAGFBRLkTLVwcmmfKyA3UGdm8Z-gl6VhzziiFKKQ1XHmujMByi0Bzl55g69SuvojqN_HzkIpiWv_qpdFviFURXnWuRPBVpVw9b-2PasiMf3hSIqosJE' }}');
-                            background-size: cover;
-                            background-position: center">
-                    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
-                        <span class="text-white font-bold text-xl">+2</span>
-                    </div>
+            {% if photos %}
+                <div class="grid grid-cols-3 gap-3 mt-4">
+                    {% for photo in photos %}
+                        <a href="{{ photo.photo.url }}"
+                           target="_blank"
+                           class="aspect-square rounded-xl overflow-hidden shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
+                            <img src="{{ photo.photo.url }}"
+                                 alt="書況照片"
+                                 class="w-full h-full object-cover" />
+                        </a>
+                    {% endfor %}
                 </div>
-            </div>
+            {% else %}
+                <div class="mt-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-600 p-4 text-sm text-slate-500 dark:text-slate-400">
+                    目前尚未上傳書況照片。
+                </div>
+            {% endif %}
         </div>
     </div>
     <!-- Sticky Footer Actions - Enhanced -->
@@ -205,15 +202,48 @@
                 </div>
             {% endif %}
         {% else %}
-            <div class="w-full bg-slate-200/80 dark:bg-slate-700/80 backdrop-blur-md text-slate-500 dark:text-slate-400 font-bold py-4 rounded-2xl flex items-center justify-center gap-3">
-                <span class="material-symbols-outlined">info</span>
-                這是您自己的書籍
-            </div>
+            <a href="{% url 'books:edit' book.id %}"
+               class="w-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-primary/30 text-primary font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-300 hover:bg-primary/10 hover:border-primary">
+                <span class="material-symbols-outlined">edit</span>
+                編輯書籍資訊
+            </a>
         {% endif %}
-        <button type="button"
-                class="w-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-primary/30 text-primary font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-300 hover:bg-primary/10 hover:border-primary">
-            <span class="material-symbols-outlined">favorite</span>
-            加入願望清單
-        </button>
+        {% include 'books/partials/wishlist_button.html' with official_book=book.official_book in_wishlist=in_wishlist %}
     </div>
+{% endblock %}
+{% block extra_js %}
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    var shareButton = document.getElementById('share-book-btn');
+    if (!shareButton) {
+        return;
+    }
+
+    shareButton.addEventListener('click', async function() {
+        var shareData = {
+            title: '{{ book.official_book.title|escapejs }}',
+            text: '我想分享這本書給你：{{ book.official_book.title|escapejs }}',
+            url: window.location.href
+        };
+
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+                return;
+            } catch (err) {
+                if (err && err.name === 'AbortError') {
+                    return;
+                }
+            }
+        }
+
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            alert('已複製分享連結');
+        } catch (err) {
+            alert('分享失敗，請手動複製網址');
+        }
+    });
+});
+    </script>
 {% endblock %}

@@ -1,15 +1,18 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
+from django.db import transaction
 from django.db.models import Q
 from django.contrib import messages
 from django.utils import timezone
 from django.http import HttpResponse
 from django.views.decorators.http import require_GET, require_POST
 from django.core.paginator import Paginator
+from django.core.exceptions import ValidationError
 
-from .models import SharedBook, OfficialBook
+from .models import SharedBook, OfficialBook, BookPhoto
 from .services.isbn_service import lookup_by_isbn
 from .services.book_service import list_book, suspend_book
+from .services import process_book_photo
 from .forms import BookSearchForm
 
 
@@ -171,12 +174,22 @@ def book_detail(request, pk):
     # 按時間排序（新到舊）
     timeline_events.sort(key=lambda x: x["time"], reverse=True)
 
+    photos = book.photos.all()[:6]
+    in_wishlist = False
+    if request.user.is_authenticated:
+        in_wishlist = WishListItem.objects.filter(
+            user=request.user,
+            official_book=book.official_book,
+        ).exists()
+
     return render(
         request,
         "books/book_detail.html",
         {
             "book": book,
             "timeline_events": timeline_events,
+            "photos": photos,
+            "in_wishlist": in_wishlist,
         },
     )
 
@@ -285,30 +298,137 @@ def book_add(request):
     from .forms import BookAddForm
 
     if request.method == "POST":
-        form = BookAddForm(request.POST)
+        form = BookAddForm(request.POST, request.FILES)
         if form.is_valid():
             isbn = form.cleaned_data["isbn"]
             title = form.cleaned_data["title"]
             author = form.cleaned_data["author"]
+            publisher = form.cleaned_data["publisher"]
+            category = form.cleaned_data["category"]
 
-            off_book, created = OfficialBook.objects.get_or_create(
-                isbn=isbn, defaults={"title": title, "author": author}
-            )
+            try:
+                with transaction.atomic():
+                    off_book, created = OfficialBook.objects.get_or_create(
+                        isbn=isbn,
+                        defaults={
+                            "title": title,
+                            "author": author,
+                            "publisher": publisher,
+                            "category": category,
+                        },
+                    )
 
-            shared = form.save(commit=False)
-            shared.official_book = off_book
-            shared.owner = request.user
-            shared.keeper = request.user
-            shared.status = SharedBook.Status.TRANSFERABLE
-            shared.listed_at = timezone.now()
-            shared.save()
+                    # 已存在官方書籍時，同步可更新的中繼資料。
+                    if not created:
+                        off_book.title = title
+                        off_book.author = author
+                        off_book.publisher = publisher
+                        off_book.category = category
+                        off_book.save(
+                            update_fields=[
+                                "title",
+                                "author",
+                                "publisher",
+                                "category",
+                                "updated_at",
+                            ]
+                        )
+
+                    shared = form.save(commit=False)
+                    shared.official_book = off_book
+                    shared.owner = request.user
+                    shared.keeper = request.user
+                    shared.status = SharedBook.Status.TRANSFERABLE
+                    shared.listed_at = timezone.now()
+                    shared.save()
+
+                    for image in request.FILES.getlist("photos"):
+                        processed = process_book_photo(image)
+                        BookPhoto.objects.create(
+                            shared_book=shared,
+                            uploader=request.user,
+                            photo=processed,
+                        )
+            except ValidationError as e:
+                messages.error(request, str(e))
+                return render(request, "books/book_add.html", {"form": form})
 
             messages.success(request, "書籍已成功上架分享！")
             return redirect("books:bookshelf")
+        messages.error(request, "書籍資料有誤，請檢查後再送出。")
     else:
         form = BookAddForm()
 
     return render(request, "books/book_add.html", {"form": form})
+
+
+@login_required
+def book_edit(request, pk):
+    from .forms import BookEditForm
+
+    book = get_object_or_404(SharedBook, pk=pk, owner=request.user)
+
+    initial = {
+        "title": book.official_book.title,
+        "author": book.official_book.author,
+        "publisher": book.official_book.publisher,
+        "category": book.official_book.category,
+    }
+
+    if request.method == "POST":
+        form = BookEditForm(request.POST, request.FILES, instance=book, initial=initial)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    official_book = book.official_book
+                    official_book.title = form.cleaned_data["title"]
+                    official_book.author = form.cleaned_data["author"]
+                    official_book.publisher = form.cleaned_data["publisher"]
+                    official_book.category = form.cleaned_data["category"]
+                    official_book.save(
+                        update_fields=[
+                            "title",
+                            "author",
+                            "publisher",
+                            "category",
+                            "updated_at",
+                        ]
+                    )
+
+                    form.save()
+
+                    for image in request.FILES.getlist("photos"):
+                        processed = process_book_photo(image)
+                        BookPhoto.objects.create(
+                            shared_book=book,
+                            uploader=request.user,
+                            photo=processed,
+                        )
+            except ValidationError as e:
+                messages.error(request, str(e))
+                return render(
+                    request,
+                    "books/book_edit.html",
+                    {
+                        "form": form,
+                        "book": book,
+                    },
+                )
+
+            messages.success(request, "書籍資料已更新。")
+            return redirect("books:detail", pk=book.pk)
+        messages.error(request, "更新失敗，請檢查欄位內容。")
+    else:
+        form = BookEditForm(instance=book, initial=initial)
+
+    return render(
+        request,
+        "books/book_edit.html",
+        {
+            "form": form,
+            "book": book,
+        },
+    )
 
 
 @require_GET
