@@ -13,7 +13,6 @@ from urllib.parse import urlparse
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
-from django.shortcuts import redirect
 from django.urls import reverse
 
 import requests
@@ -22,7 +21,6 @@ from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 
 from .models import UserProfile
-from .validators import calculate_age, is_adult
 
 logger = logging.getLogger(__name__)
 User = get_user_model()

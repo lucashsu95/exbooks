@@ -1,6 +1,5 @@
 from datetime import date, timedelta
 
-from django.db.models import Q
 
 from deals.models import Deal
 

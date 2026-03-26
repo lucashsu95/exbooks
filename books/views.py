@@ -160,7 +160,7 @@ def book_detail(request, pk):
                 "title": "延長借閱",
                 "description": f"延長 {ext.extra_days} 天"
                 + (
-                    f"（已核准）"
+                    "（已核准）"
                     if ext.status == "APPROVED"
                     else f"（{ext.get_status_display()}）"
                 ),
@@ -344,8 +344,8 @@ def toggle_status(request, pk):
 # 願望書車相關 Views
 # ============================================
 
-from .services.wishlist_service import add_wish, remove_wish
-from .models import WishListItem
+from .services.wishlist_service import add_wish, remove_wish  # noqa: E402
+from .models import WishListItem  # noqa: E402
 
 
 @login_required
@@ -487,8 +487,8 @@ def due_soon_list(request):
 # 套書管理 Views
 # ============================================
 
-from .models import BookSet
-from .services import (
+from .models import BookSet  # noqa: E402
+from .services import (  # noqa: E402
     create_book_set,
     add_book_to_set,
     remove_book_from_set,
@@ -496,7 +496,7 @@ from .services import (
     get_user_book_sets,
     get_book_set_detail,
 )
-from .forms import BookSetCreateForm, BookSetManageForm
+from .forms import BookSetCreateForm  # noqa: E402
 
 
 @login_required

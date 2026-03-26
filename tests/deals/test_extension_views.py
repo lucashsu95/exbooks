@@ -5,8 +5,7 @@
 import pytest
 from django.urls import reverse
 
-from books.models import SharedBook
-from deals.models import Deal, LoanExtension
+from deals.models import LoanExtension
 from tests.factories import (
     DealFactory,
     LoanExtensionFactory,

@@ -2,7 +2,6 @@
 ISBN 服務測試 — 驗證 Google Books API 查詢功能。
 """
 
-import pytest
 from unittest.mock import patch, MagicMock
 
 from books.services.isbn_service import (

@@ -118,7 +118,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("VAPID 金鑰設定完成"))
         self.stdout.write("=" * 60)
         self.stdout.write(f"\n公開金鑰 (VAPID_PUBLIC_KEY):\n{config.vapid_public_key}")
-        self.stdout.write(f"\n私有金鑰 (VAPID_PRIVATE_KEY):")
+        self.stdout.write("\n私有金鑰 (VAPID_PRIVATE_KEY):")
         self.stdout.write(self.style.WARNING("[已隱藏，請查看資料庫或環境變數]"))
         self.stdout.write(f"\nSubject: {config.subject}")
 

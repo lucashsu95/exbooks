@@ -268,7 +268,7 @@ class TestBookListView:
         """測試書籍列表頁面有分頁導航"""
         response = authenticated_client.get(reverse("books:all"), follow=True)
         assert response.status_code == 200
-        content = response.content.decode("utf-8")
+        content = response.content.decode("utf-8")  # noqa: F841
         # 應該有分頁相關元素
         assert "page_obj" in response.context or b"page" in response.content.lower()
 

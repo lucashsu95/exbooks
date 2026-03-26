@@ -10,8 +10,7 @@ from accounts.services.trust_service import (
     get_borrowing_limits,
     initialize_existing_user,
 )
-from accounts.models import UserProfile
-from deals.models import Deal, Rating
+from deals.models import Deal
 from tests.factories import DealFactory, RatingFactory, UserProfileFactory
 
 User = get_user_model()
@@ -38,7 +37,7 @@ class TrustServiceTest(TestCase):
         """測試一般用戶信用等級 (Level 1)"""
         # 建立 3 筆完成交易
         for _ in range(3):
-            deal = DealFactory(
+            deal = DealFactory(  # noqa: F841
                 applicant=self.user, responder=self.other_user, status=Deal.Status.DONE
             )
 

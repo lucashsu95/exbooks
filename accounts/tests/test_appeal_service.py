@@ -3,7 +3,6 @@
 
 import pytest
 from django.core.exceptions import ValidationError
-from django.utils import timezone
 
 from accounts.models import Appeal
 from accounts.services import appeal_service
@@ -50,7 +49,7 @@ class TestCreateAppeal:
     def test_create_appeal_sends_notification(self):
         """Test notification sent after appeal creation"""
         user = UserFactory()
-        appeal = appeal_service.create_appeal(
+        appeal = appeal_service.create_appeal(  # noqa: F841
             user=user,
             appeal_type=Appeal.AppealType.OTHER,
             title="Test Appeal",

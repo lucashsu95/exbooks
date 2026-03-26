@@ -1,5 +1,3 @@
-from django.urls import reverse
-
 from deals.models import Notification
 
 

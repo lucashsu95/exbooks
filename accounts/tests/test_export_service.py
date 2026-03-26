@@ -13,7 +13,6 @@ from accounts.services.export_service import (
 from books.models import SharedBook
 from deals.models import Deal, Rating
 from tests.factories import (
-    BookSetFactory,
     OfficialBookFactory,
     SharedBookFactory,
     UserFactory,
@@ -88,7 +87,6 @@ class TestExportUserData:
 
     def test_export_user_data_no_profile(self):
         """Test export handles user without profile"""
-        from accounts.models import UserProfile
 
         user = UserFactory()
         # Delete profile if exists
