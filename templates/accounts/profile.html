@@ -31,68 +31,17 @@
 <p class="text-sm text-slate-500-slate-400">{{ user.email }}</p>
 </div>
 
-<!-- Trust Level Card -->
-<div class="bg-white-slate-800 rounded-xl shadow-sm border border-slate-200-slate-700 p-4">
-<div class="flex items-center gap-3">
-<div class="size-12 rounded-full flex items-center justify-center shrink-0
-{% if user.profile.trust_level == 0 %}
-bg-gray-100-gray-800
-{% elif user.profile.trust_level == 1 %}
-bg-blue-100-blue-900/30
-{% elif user.profile.trust_level == 2 %}
-bg-green-100-green-900/30
-{% elif user.profile.trust_level == 3 %}
-bg-amber-100-amber-900/30
-{% endif %}">
-<span class="material-symbols-outlined text-2xl
-{% if user.profile.trust_level == 0 %}
-text-gray-400
-{% elif user.profile.trust_level == 1 %}
-text-blue-500
-{% elif user.profile.trust_level == 2 %}
-text-green-500
-{% elif user.profile.trust_level == 3 %}
-text-amber-500
-{% endif %}">
-{% if user.profile.trust_level == 0 %}new_releases
-{% elif user.profile.trust_level == 1 %}person
-{% elif user.profile.trust_level == 2 %}verified
-{% elif user.profile.trust_level == 3 %}workspace_premium
-{% endif %}
-</span>
-</div>
-<div class="flex-1">
-<div class="flex items-center gap-2">
-<p class="text-sm font-bold text-slate-900-slate-100">
-{% if user.profile.trust_level == 0 %}新手
-{% elif user.profile.trust_level == 1 %}一般
-{% elif user.profile.trust_level == 2 %}可信
-{% elif user.profile.trust_level == 3 %}優良
-{% endif %}
-</p>
-<span class="px-2 py-0.5 rounded-full text-xs font-bold
-{% if user.profile.trust_level == 0 %}
-bg-gray-100 text-gray-700-gray-800-gray-400
-{% elif user.profile.trust_level == 1 %}
-bg-blue-100 text-blue-700-blue-900/30-blue-400
-{% elif user.profile.trust_level == 2 %}
-bg-green-100 text-green-700-green-900/30-green-400
-{% elif user.profile.trust_level == 3 %}
-bg-amber-100 text-amber-700-amber-900/30-amber-400
-{% endif %}">
-Lv.{{ user.profile.trust_level }}
-</span>
-</div>
-<p class="text-xs text-slate-500-slate-400 mt-1">
-{% if borrowing_limits.max_books == 999 %}
-無借閱限制
-{% else %}
-最多借 {{ borrowing_limits.max_books }} 本，最長 {{ borrowing_limits.max_days }} 天
-{% endif %}
-</p>
-</div>
-</div>
-</div>
+  <!-- Trust Level Card -->
+  <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+    {% include "partials/trust_badge.html" with trust_level=user.profile.trust_level %}
+    <p class="text-xs text-slate-500-slate-400 mt-1">
+      {% if borrowing_limits.max_books == 999 %}
+      無借閱限制
+      {% else %}
+      最多借 {{ borrowing_limits.max_books }} 本，最長 {{ borrowing_limits.max_days }} 天
+      {% endif %}
+    </p>
+  </div>
 
 <!-- Activity Stats Card -->
 <div class="bg-white-slate-800 rounded-xl shadow-sm border border-slate-200-slate-700 p-4">

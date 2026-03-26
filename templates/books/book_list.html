@@ -127,18 +127,7 @@
 <span class="text-primary text-xs font-bold bg-primary/10 backdrop-blur-sm px-3 py-1.5 rounded-full">{{ book.official_book.get_category_display }}</span>
 <!-- 持有者信用等級徽章 -->
 {% if book.keeper.profile %}
-<span class="text-xs font-medium px-2 py-1 rounded-full
-{% if book.keeper.profile.trust_level == 0 %}bg-gray-100 text-gray-600-gray-800-gray-400
-{% elif book.keeper.profile.trust_level == 1 %}bg-blue-100 text-blue-600-blue-900/30-blue-400
-{% elif book.keeper.profile.trust_level == 2 %}bg-green-100 text-green-600-green-900/30-green-400
-{% elif book.keeper.profile.trust_level == 3 %}bg-amber-100 text-amber-600-amber-900/30-amber-400
-{% endif %}">
-{% if book.keeper.profile.trust_level == 0 %}新手
-{% elif book.keeper.profile.trust_level == 1 %}一般
-{% elif book.keeper.profile.trust_level == 2 %}可信
-{% elif book.keeper.profile.trust_level == 3 %}優良
-{% endif %}
-</span>
+{% include "partials/trust_badge_inline.html" with trust_level=book.keeper.profile.trust_level %}
 {% endif %}
 </div>
 <span class="material-symbols-outlined text-primary opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">arrow_forward</span>

@@ -1,0 +1,60 @@
+{# templates/partials/trust_badge.html #}
+{# Full trust level badge with icon circle, label, and Lv indicator #}
+{# Usage: {% include "partials/trust_badge.html" with trust_level=user.profile.trust_level %} #}
+{# Or: {% include "partials/trust_badge.html" with trust_level=profile.trust_level prefix="信用等級：" %} #}
+
+<div class="flex items-center gap-3">
+  {# Icon Circle #}
+  <div class="size-12 rounded-full flex items-center justify-center shrink-0
+    {% if trust_level == 0 %}
+    bg-gray-100
+    {% elif trust_level == 1 %}
+    bg-blue-100
+    {% elif trust_level == 2 %}
+    bg-green-100
+    {% elif trust_level == 3 %}
+    bg-amber-100
+    {% endif %}">
+    <span class="material-symbols-outlined text-2xl
+      {% if trust_level == 0 %}
+      text-gray-400
+      {% elif trust_level == 1 %}
+      text-blue-500
+      {% elif trust_level == 2 %}
+      text-green-500
+      {% elif trust_level == 3 %}
+      text-amber-500
+      {% endif %}">
+      {% if trust_level == 0 %}new_releases
+      {% elif trust_level == 1 %}person
+      {% elif trust_level == 2 %}verified
+      {% elif trust_level == 3 %}workspace_premium
+      {% endif %}
+    </span>
+  </div>
+  {# Label and Lv Badge #}
+  <div class="flex-1">
+    <div class="flex items-center gap-2">
+      <p class="text-sm font-bold text-slate-900">
+        {% if prefix %}{{ prefix }}{% endif %}
+        {% if trust_level == 0 %}新手
+        {% elif trust_level == 1 %}一般
+        {% elif trust_level == 2 %}可信
+        {% elif trust_level == 3 %}優良
+        {% endif %}
+      </p>
+      <span class="px-2 py-0.5 rounded-full text-xs font-bold
+        {% if trust_level == 0 %}
+        bg-gray-100 text-gray-700
+        {% elif trust_level == 1 %}
+        bg-blue-100 text-blue-700
+        {% elif trust_level == 2 %}
+        bg-green-100 text-green-700
+        {% elif trust_level == 3 %}
+        bg-amber-100 text-amber-700
+        {% endif %}">
+        Lv.{{ trust_level }}
+      </span>
+    </div>
+  </div>
+</div>

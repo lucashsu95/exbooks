@@ -11,15 +11,17 @@ from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
-from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator
 
 from books.models import SharedBook
+from books.services import declare_exception, resolve_exception
 from .forms import (
     DealApplicationForm,
     RatingForm,
-    DealMessageForm,
     ExtensionRequestForm,
+    ExceptionDealForm,
+    ExceptionResolveForm,
 )
 from .models import (
     Deal,
@@ -477,7 +479,7 @@ def extension_request(request, deal_pk):
         form = ExtensionRequestForm(request.POST)
         if form.is_valid():
             try:
-                extension = extension_service.request_extension(
+                extension_service.request_extension(
                     deal=deal,
                     applicant=request.user,
                     extra_days=form.cleaned_data["extra_days"],
@@ -698,9 +700,6 @@ def deal_confirm_return(request, pk):
 # ============================================
 # 例外處理 Views
 # ============================================
-
-from books.services import declare_exception, resolve_exception
-from .forms import ExceptionDealForm, ExceptionResolveForm
 
 
 @login_required
