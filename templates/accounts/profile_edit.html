@@ -18,6 +18,16 @@
   <form method="post" enctype="multipart/form-data" class="space-y-4">
     {% csrf_token %}
     {% crispy form %}
+    <div class="flex gap-3">
+      <button type="submit"
+        class="flex-1 bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-transform">
+        儲存變更
+      </button>
+      <a href="{% url 'accounts:profile' %}"
+        class="flex-1 text-center bg-white text-slate-700 font-bold py-4 rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-colors">
+        取消
+      </a>
+    </div>
   </form>
 </main>
 

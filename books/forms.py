@@ -145,6 +145,7 @@ class BookSetCreateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.form_tag = False
         self.helper.layout = Layout(
             Field("name"),
             Field("description"),
@@ -155,7 +156,7 @@ class BookSetManageForm(forms.Form):
     """管理套書書籍表單"""
 
     book_ids = forms.ModelMultipleChoiceField(
-        queryset=SharedBook.objects.none(),
+        queryset=SharedBook.objects.none(),  # type: ignore[attr-defined]
         required=False,
         label="選擇書籍",
         widget=forms.CheckboxSelectMultiple(
@@ -170,13 +171,14 @@ class BookSetManageForm(forms.Form):
         self.user = user
         self.book_set = book_set
         self.helper = FormHelper()
+        self.helper.form_tag = False
         self.helper.layout = Layout(
             Field("book_ids"),
         )
 
         # 只顯示用戶擁有的書籍
         if user:
-            queryset = SharedBook.objects.filter(owner=user).select_related(
+            queryset = SharedBook.objects.filter(owner=user).select_related(  # type: ignore[attr-defined]
                 "official_book"
             )
             # 如果是編輯現有套書，排除已屬於其他套書的書籍

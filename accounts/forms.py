@@ -96,6 +96,7 @@ class CustomSignupForm(AllauthSignupForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.form_tag = False
         self.helper.layout = Layout(
             Field("email"),
             Field("password1"),
@@ -119,7 +120,7 @@ class CustomSignupForm(AllauthSignupForm):
         user = super().save(request)
 
         # 更新 UserProfile
-        profile, created = UserProfile.objects.get_or_create(
+        profile, created = UserProfile.objects.get_or_create(  # type: ignore[attr-defined]
             user=user,
             defaults={
                 "nickname": self.cleaned_data.get("nickname", user.email.split("@")[0]),
@@ -170,6 +171,7 @@ class CustomSocialSignupForm(SocialSignupForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.form_tag = False
         self.helper.layout = Layout(
             Field("email"),
             Field("nickname"),
@@ -192,7 +194,7 @@ class CustomSocialSignupForm(SocialSignupForm):
         user = super().save(request)
 
         # 更新 UserProfile
-        profile, created = UserProfile.objects.get_or_create(
+        profile, created = UserProfile.objects.get_or_create(  # type: ignore[attr-defined]
             user=user,
             defaults={
                 "nickname": self.cleaned_data.get("nickname", user.email.split("@")[0]),
@@ -244,6 +246,7 @@ class CompleteProfileForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.form_tag = False
         self.helper.layout = Layout(
             Field("nickname"),
             Field("birth_date"),
@@ -282,6 +285,7 @@ class ProfileForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.form_tag = False
         self.helper.layout = Layout(
             Field("nickname"),
             Field("birth_date"),

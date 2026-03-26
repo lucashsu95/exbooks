@@ -92,6 +92,7 @@ class RatingForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.form_tag = False
         self.helper.layout = Layout(
             Field("integrity_score", template="forms/widgets/rating_slider.html"),
             Field("punctuality_score", template="forms/widgets/rating_slider.html"),
@@ -144,6 +145,7 @@ class ExtensionRequestForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.form_tag = False
         self.helper.layout = Layout(
             Field("extra_days"),
         )
@@ -189,6 +191,7 @@ class ExceptionDealForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.form_tag = False
         self.helper.layout = Layout(
             Field("reason"),
             Field("description"),
@@ -229,6 +232,7 @@ class ExceptionResolveForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.form_tag = False
         self.helper.layout = Layout(
             Field("resolution"),
             Field("note"),
