@@ -89,6 +89,7 @@ class TestExportUserData:
     def test_export_user_data_no_profile(self):
         """Test export handles user without profile"""
         from accounts.models import UserProfile
+
         user = UserFactory()
         # Delete profile if exists
         if hasattr(user, "profile"):

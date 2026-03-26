@@ -168,9 +168,9 @@ def collect_deals_history(user):
     """
     from django.db.models import Q
 
-    deals = Deal.objects.filter(
-        Q(applicant=user) | Q(responder=user)
-    ).select_related("shared_book__official_book", "applicant", "responder")
+    deals = Deal.objects.filter(Q(applicant=user) | Q(responder=user)).select_related(
+        "shared_book__official_book", "applicant", "responder"
+    )
 
     return [
         {
@@ -185,7 +185,9 @@ def collect_deals_history(user):
             "applicant_email": deal.applicant.email if deal.applicant else None,
             "responder_email": deal.responder.email if deal.responder else None,
             "meeting_location": deal.meeting_location,
-            "meeting_time": deal.meeting_time.isoformat() if deal.meeting_time else None,
+            "meeting_time": deal.meeting_time.isoformat()
+            if deal.meeting_time
+            else None,
             "due_date": deal.due_date.isoformat() if deal.due_date else None,
             "created_at": deal.created_at.isoformat() if deal.created_at else None,
             "updated_at": deal.updated_at.isoformat() if deal.updated_at else None,
@@ -218,7 +220,9 @@ def collect_ratings_received(user):
             "comment": rating.comment,
             "book_title": (
                 rating.deal.shared_book.official_book.title
-                if rating.deal and rating.deal.shared_book and rating.deal.shared_book.official_book
+                if rating.deal
+                and rating.deal.shared_book
+                and rating.deal.shared_book.official_book
                 else None
             ),
             "created_at": rating.created_at.isoformat() if rating.created_at else None,

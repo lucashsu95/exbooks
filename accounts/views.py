@@ -260,4 +260,6 @@ def export_user_data(request):
 def get_export_status(request):
     """取得今日剩餘匯出次數"""
     remaining = export_service.get_remaining_exports(request.user)
-    return JsonResponse({"remaining": remaining, "limit": export_service.EXPORT_LIMIT_PER_DAY})
+    return JsonResponse(
+        {"remaining": remaining, "limit": export_service.EXPORT_LIMIT_PER_DAY}
+    )
