@@ -171,6 +171,33 @@ def book_detail(request, pk):
             }
         )
 
+    # 4. 書況照片上傳事件
+    from books.models import BookPhoto
+
+    book_photos = (
+        BookPhoto.objects.filter(shared_book=book)
+        .select_related("uploader__profile", "deal")
+        .order_by("-created_at")
+    )
+
+    for photo in book_photos:
+        description = f"{photo.uploader.profile.nickname if hasattr(photo.uploader, 'profile') else photo.uploader.email} 上傳了書況照片"
+        if photo.caption:
+            description += f"：{photo.caption}"
+        if photo.deal:
+            description += f"（{photo.deal.get_deal_type_display()}）"
+        timeline_events.append(
+            {
+                "type": "photo_upload",
+                "time": photo.created_at,
+                "title": "書況照片",
+                "description": description,
+                "user": photo.uploader,
+                "photo": photo,
+                "deal": photo.deal,
+            }
+        )
+
     # 按時間排序（新到舊）
     timeline_events.sort(key=lambda x: x["time"], reverse=True)
 

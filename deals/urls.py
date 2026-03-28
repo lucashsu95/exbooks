@@ -72,4 +72,6 @@ urlpatterns = [
         views.exception_resolve,
         name="exception_resolve",
     ),
+    # 書況照片上傳
+    path("<uuid:pk>/photos/upload/", views.deal_upload_photos, name="upload_photos"),
 ]

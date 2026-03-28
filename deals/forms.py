@@ -237,3 +237,59 @@ class ExceptionResolveForm(forms.Form):
             Field("resolution"),
             Field("note"),
         )
+
+
+class MultipleFileInput(forms.ClearableFileInput):
+    """支援多檔案上傳的 Widget。"""
+
+    allow_multiple_selected = True
+
+    def __init__(self, attrs=None):
+        if attrs is None:
+            attrs = {}
+        attrs.setdefault("multiple", True)
+        super().__init__(attrs=attrs)
+
+    def value_from_datadict(self, data, files, name):
+        if hasattr(files, "getlist"):
+            return files.getlist(name)
+        return files.get(name)
+
+    def use_required_attribute(self, initial):
+        return False
+
+
+class DealPhotoUploadForm(forms.Form):
+    """面交後書況照片上傳表單。"""
+
+    photos = forms.FileField(
+        widget=MultipleFileInput(
+            attrs={
+                "class": "block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20",
+                "accept": "image/jpeg,image/png",
+            }
+        ),
+        required=True,
+        label="書況照片",
+        help_text="上傳 JPG 或 PNG 格式，每張最大 5MB",
+    )
+    caption = forms.CharField(
+        widget=forms.Textarea(
+            attrs={
+                "rows": 2,
+                "class": "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
+                "placeholder": "照片說明（選填）",
+            }
+        ),
+        required=False,
+        label="照片說明",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            Field("photos"),
+            Field("caption"),
+        )

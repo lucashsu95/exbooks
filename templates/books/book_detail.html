@@ -177,7 +177,7 @@
                     <span class="material-symbols-outlined">assignment_return</span>
                     申請返還
                 </a>
-            {% elif book.status == 'O' and book.owner == request.user %}
+            {% elif book.status == 'T' and book.transferability == 'TRANSFER' and book.owner == request.user and book.keeper != book.owner %}
                 <a href="{% url 'deals:create' book.id 'RG' %}"
                    class="w-full bg-gradient-to-r from-primary to-primary/80 text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all duration-300 hover:shadow-xl hover:shadow-primary/40">
                     <span class="material-symbols-outlined">home</span>

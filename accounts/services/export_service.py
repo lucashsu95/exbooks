@@ -79,6 +79,10 @@ def increment_export_count(user):
 def collect_user_data(user):
     """收集用戶資料
 
+    根據 3.15 需求規格：
+    - 匯出範圍：交易評價歷史、活動統計
+    - 不在匯出範圍：書籍資料、書況照片、交易留言內容
+
     Args:
         user: 用戶實例
 
@@ -88,18 +92,60 @@ def collect_user_data(user):
     # 獲取用戶 profile
     profile = getattr(user, "profile", None)
 
-    # 收集各類資料
+    # 收集各類資料（依 3.15 需求，不包含 books_contributed）
     user_profile_data = collect_user_profile(user, profile)
-    books_contributed = collect_books_contributed(user)
-    deals_history = collect_deals_history(user)
+    activity_stats = collect_activity_stats(user)
     ratings_received = collect_ratings_received(user)
 
     return {
         "exported_at": timezone.now().isoformat(),
         "user_profile": user_profile_data,
-        "books_contributed": books_contributed,
-        "deals_history": deals_history,
+        "activity_stats": activity_stats,
         "ratings_received": ratings_received,
+    }
+
+
+def collect_activity_stats(user):
+    """收集用戶活動統計
+
+    根據 3.15 需求，活動統計包含：
+    - 貢獻書籍總數
+    - 成功借入次數
+    - 成功借出次數
+    - 逾期次數
+
+    Args:
+        user: 用戶實例
+
+    Returns:
+        dict: 活動統計資料
+    """
+    from django.db.models import Q
+
+    # 貢獻書籍總數（用戶擁有的書籍數量）
+    books_contributed_count = SharedBook.objects.filter(owner=user).count()
+
+    # 成功借入次數（作為申請者完成的交易）
+    borrow_count = Deal.objects.filter(
+        applicant=user,
+        status=Deal.Status.DONE,
+    ).count()
+
+    # 成功借出次數（作為回應者完成的交易）
+    lend_count = Deal.objects.filter(
+        responder=user,
+        status=Deal.Status.DONE,
+    ).count()
+
+    # 逾期次數（從 profile 獲取）
+    profile = getattr(user, "profile", None)
+    overdue_count = profile.overdue_count if profile else 0
+
+    return {
+        "books_contributed_count": books_contributed_count,
+        "successful_borrows": borrow_count,
+        "successful_lends": lend_count,
+        "overdue_count": overdue_count,
     }
 
 

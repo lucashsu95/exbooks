@@ -14,13 +14,14 @@
                     <div class="relative flex items-start gap-3 pl-10">
                         <!-- Event Icon -->
                         <div class="absolute left-0 size-8 rounded-full bg-white border-2 border-primary flex items-center justify-center z-10">
-                            <span class="material-symbols-outlined text-primary text-sm">
-                                {% if event.type == 'listed' %}upload{% endif %}
-                                {% if event.type == 'deal_created' %}swap_horiz{% endif %}
-                                {% if event.type == 'deal_meeted' %}handshake{% endif %}
-                                {% if event.type == 'deal_done' %}check_circle{% endif %}
-                                {% if event.type == 'extension' %}more_time{% endif %}
-                            </span>
+                <span class="material-symbols-outlined text-primary text-sm">
+                {% if event.type == 'listed' %}upload{% endif %}
+                {% if event.type == 'deal_created' %}swap_horiz{% endif %}
+                {% if event.type == 'deal_meeted' %}handshake{% endif %}
+                {% if event.type == 'deal_done' %}check_circle{% endif %}
+                {% if event.type == 'extension' %}more_time{% endif %}
+                {% if event.type == 'photo_upload' %}photo_camera{% endif %}
+                </span>
                         </div>
                         <!-- Event Content -->
                         <div class="flex-1 min-w-0">
@@ -28,12 +29,19 @@
                                 <p class="text-sm font-medium text-slate-900">{{ event.title }}</p>
                                 <span class="text-xs text-slate-400">{{ event.time|timesince }}前</span>
                             </div>
-                            {% if event.description %}<p class="text-xs text-slate-500">{{ event.description }}</p>{% endif %}
-                            {% if event.deal %}
-                                <a href="{% url 'deals:detail' event.deal.id %}"
-                                   class="text-xs text-primary hover:underline mt-1 inline-block">查看詳情</a>
-                            {% endif %}
-                        </div>
+        {% if event.description %}<p class="text-xs text-slate-500">{{ event.description }}</p>{% endif %}
+        {% if event.deal %}
+        <a href="{% url 'deals:detail' event.deal.id %}"
+           class="text-xs text-primary hover:underline mt-1 inline-block">查看詳情</a>
+        {% endif %}
+        {% if event.type == 'photo_upload' and event.photo %}
+        <a href="{{ event.photo.photo.url }}" target="_blank" class="inline-block mt-2">
+            <img src="{{ event.photo.photo.url }}"
+                 alt="書況照片"
+                 class="w-20 h-20 rounded-lg object-cover shadow-sm hover:shadow-md transition-shadow" />
+        </a>
+        {% endif %}
+        </div>
                     </div>
                 {% endfor %}
             </div>

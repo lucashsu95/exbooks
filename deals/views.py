@@ -22,6 +22,7 @@ from .forms import (
     ExtensionRequestForm,
     ExceptionDealForm,
     ExceptionResolveForm,
+    DealPhotoUploadForm,
 )
 from .models import (
     Deal,
@@ -794,4 +795,65 @@ def exception_resolve(request, pk):
         request,
         "deals/exception_resolve.html",
         {"form": form, "deal": deal},
+    )
+
+
+# ============================================
+# 書況照片上傳 Views
+# ============================================
+
+
+@login_required
+def deal_upload_photos(request, pk):
+    """面交後上傳書況照片。
+
+    條件：
+    - 交易狀態為 M（已面交）
+    - 申請者可上傳照片
+    """
+    deal = get_object_or_404(
+        Deal.objects.select_related("shared_book", "shared_book__official_book"),
+        pk=pk,
+    )
+
+    # 權限檢查：只有申請者可上傳
+    if request.user != deal.applicant:
+        messages.error(request, "只有申請者可以上傳照片。")
+        return redirect("deals:detail", pk)
+
+    # 狀態檢查：必須是已面交狀態
+    if deal.status != Deal.Status.MEETED:
+        messages.error(request, "此交易狀態無法上傳照片。")
+        return redirect("deals:detail", pk)
+
+    if request.method == "POST":
+        form = DealPhotoUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            from books.models import BookPhoto
+
+            photos = request.FILES.getlist("photos")
+            caption = form.cleaned_data.get("caption", "")
+
+            # 處理每張照片
+            for photo_file in photos:
+                BookPhoto.objects.create(
+                    shared_book=deal.shared_book,
+                    deal=deal,
+                    uploader=request.user,
+                    photo=photo_file,
+                    caption=caption,
+                )
+
+            messages.success(request, f"已上傳 {len(photos)} 張照片。")
+            return redirect("deals:detail", pk)
+    else:
+        form = DealPhotoUploadForm()
+
+    return render(
+        request,
+        "deals/deal_upload_photos.html",
+        {
+            "form": form,
+            "deal": deal,
+        },
     )

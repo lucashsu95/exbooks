@@ -67,7 +67,7 @@ class Command(BaseCommand):
         for deal in upcoming_deals:
             # 檢查是否已發送過同一天的提醒
             existing = Notification.objects.filter(
-                user=deal.applicant,
+                recipient=deal.applicant,
                 notification_type=Notification.NotificationType.BOOK_DUE_SOON,
                 created_at__date=timezone.now().date(),
             ).exists()

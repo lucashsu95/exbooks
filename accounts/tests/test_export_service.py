@@ -41,9 +41,12 @@ class TestExportUserData:
 
         assert "exported_at" in data
         assert "user_profile" in data
-        assert "books_contributed" in data
-        assert "deals_history" in data
+        assert "activity_stats" in data
         assert "ratings_received" in data
+        # 根據 3.15 需求，不應包含 books_contributed
+        assert "books_contributed" not in data
+        # 根據 3.15 需求，不應包含 deals_history（只包含評價歷史）
+        assert "deals_history" not in data
 
     def test_export_user_data_increments_count(self):
         """Test export increments cache count"""
@@ -156,86 +159,36 @@ class TestIncrementExportCount:
         assert cache.get(cache_key) == 3
 
 
-class TestCollectBooksContributed:
-    """Test collect books contributed functionality"""
+class TestCollectActivityStats:
+    """Test collect activity stats functionality"""
 
-    def test_collect_books_contributed(self):
-        """Test collect user's contributed books"""
+    def test_collect_activity_stats(self):
+        """Test collect user's activity statistics"""
         user = UserFactory()
-        official_book = OfficialBookFactory(
-            title="測試書籍",
-            isbn="9781234567890",
-            author="測試作者",
-            publisher="測試出版社",
-        )
-        SharedBookFactory(
-            official_book=official_book,
-            owner=user,
-            keeper=user,
-            condition_description="書況良好",
-            loan_duration_days=30,
-            status=SharedBook.Status.TRANSFERABLE,
-        )
-
-        data = export_service.collect_user_data(user)
-        books = data["books_contributed"]
-
-        assert len(books) == 1
-        assert books[0]["title"] == "測試書籍"
-        assert books[0]["isbn"] == "9781234567890"
-        assert books[0]["author"] == "測試作者"
-        assert books[0]["publisher"] == "測試出版社"
-        assert books[0]["condition_description"] == "書況良好"
-
-    def test_collect_books_empty(self):
-        """Test collect books when user has no books"""
-        user = UserFactory()
-
-        data = export_service.collect_user_data(user)
-        books = data["books_contributed"]
-
-        assert len(books) == 0
-
-
-class TestCollectDealsHistory:
-    """Test collect deals history functionality"""
-
-    def test_collect_deals_history(self):
-        """Test collect user's deals history"""
-        user1 = UserFactory()
-        user2 = UserFactory()
         official_book = OfficialBookFactory(title="測試書籍")
-        shared_book = SharedBookFactory(
-            official_book=official_book,
-            owner=user1,
-            keeper=user1,
-        )
-        Deal.objects.create(
-            shared_book=shared_book,
-            deal_type=Deal.DealType.LOAN,
-            status=Deal.Status.DONE,
-            applicant=user2,
-            responder=user1,
-            meeting_location="測試地點",
-            due_date=timezone.now().date(),
-        )
+        # Create some books owned by user
+        SharedBookFactory(official_book=official_book, owner=user, keeper=user)
 
-        data = export_service.collect_user_data(user1)
-        deals = data["deals_history"]
+        data = export_service.collect_user_data(user)
+        stats = data["activity_stats"]
 
-        assert len(deals) == 1
-        assert deals[0]["deal_type"] == "借用交易"
-        assert deals[0]["book_title"] == "測試書籍"
-        assert deals[0]["meeting_location"] == "測試地點"
+        assert "books_contributed_count" in stats
+        assert "successful_borrows" in stats
+        assert "successful_lends" in stats
+        assert "overdue_count" in stats
+        assert stats["books_contributed_count"] == 1
 
-    def test_collect_deals_empty(self):
-        """Test collect deals when user has no deals"""
+    def test_collect_activity_stats_empty(self):
+        """Test collect activity stats when user has no activity"""
         user = UserFactory()
 
         data = export_service.collect_user_data(user)
-        deals = data["deals_history"]
+        stats = data["activity_stats"]
 
-        assert len(deals) == 0
+        assert stats["books_contributed_count"] == 0
+        assert stats["successful_borrows"] == 0
+        assert stats["successful_lends"] == 0
+        assert stats["overdue_count"] == 0
 
 
 class TestCollectRatingsReceived:
