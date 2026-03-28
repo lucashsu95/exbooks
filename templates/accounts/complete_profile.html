@@ -6,137 +6,110 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap"
           rel="stylesheet">
+    <style>
+    /* 登入頁面 CSS 變數 */
+    .login-page {
+        --accent: #136dec;
+        --accent-hover: #0d5bb8;
+        --border: #e5e7eb;
+        --text-secondary: #6b7280;
+        --input-bg: #f9fafb;
+    }
+
+    /* 動畫定義 */
+    @keyframes floatPage {
+        0%, 100% {
+            transform: translateY(0) rotate(var(--rotation, -15deg));
+            opacity: 0.6;
+        }
+        50% {
+            transform: translateY(-30px) rotate(calc(var(--rotation, -15deg) + 5deg));
+            opacity: 0.9;
+        }
+    }
+
+    @keyframes cardEnter {
+        from {
+            opacity: 0;
+            transform: translateY(30px) scale(0.98);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    /* 浮動書頁背景 */
+    .page-shape {
+        position: absolute;
+        background: linear-gradient(135deg, rgba(19, 109, 236, 0.08) 0%, rgba(19, 109, 236, 0.02) 100%);
+        border-radius: 8px;
+        animation: floatPage 20s ease-in-out infinite;
+    }
+
+    .page-shape:nth-child(1) {
+        width: 300px;
+        height: 400px;
+        top: -100px;
+        left: 10%;
+        transform: rotate(-15deg);
+        animation-delay: 0s;
+    }
+
+    .page-shape:nth-child(2) {
+        width: 200px;
+        height: 280px;
+        top: 20%;
+        right: 5%;
+        transform: rotate(12deg);
+        animation-delay: -5s;
+    }
+
+    .page-shape:nth-child(3) {
+        width: 180px;
+        height: 240px;
+        bottom: 10%;
+        left: 5%;
+        transform: rotate(8deg);
+        animation-delay: -10s;
+    }
+
+    /* 登入卡片動畫 */
+    .login-card {
+        animation: cardEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* 盾牌圖標漸層背景 */
+    .shield-icon {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    /* 提交按鈕漸層覆蓋 */
+    .submit-btn::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 100%);
+        pointer-events: none;
+    }
+    </style>
 {% endblock %}
 {% block content %}
-    <style>
-.login-page {
-  --page-bg: #f6f7f8;
-  --card-bg: #ffffff;
-  --text-primary: #1a1a2e;
-  --text-secondary: #6b7280;
-  --accent: #136dec;
-  --accent-hover: #0d5bb8;
-  --border: #e5e7eb;
-  --input-bg: #f9fafb;
-  font-family: 'Work Sans', sans-serif;
-}
-
-.floating-pages {
-  position: fixed;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.page-shape {
-  position: absolute;
-  background: linear-gradient(135deg, rgba(19, 109, 236, 0.08) 0%, rgba(19, 109, 236, 0.02) 100%);
-  border-radius: 8px;
-  animation: floatPage 20s ease-in-out infinite;
-}
-
-.page-shape:nth-child(1) { width: 300px; height: 400px; top: -100px; left: 10%; transform: rotate(-15deg); animation-delay: 0s; }
-.page-shape:nth-child(2) { width: 200px; height: 280px; top: 20%; right: 5%; transform: rotate(12deg); animation-delay: -5s; }
-.page-shape:nth-child(3) { width: 180px; height: 240px; bottom: 10%; left: 5%; transform: rotate(8deg); animation-delay: -10s; }
-
-@keyframes floatPage {
-  0%, 100% { transform: translateY(0) rotate(var(--rotation, -15deg)); opacity: 0.6; }
-  50% { transform: translateY(-30px) rotate(calc(var(--rotation, -15deg) + 5deg)); opacity: 0.9; }
-}
-
-.login-container {
-  position: relative;
-  z-index: 1;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1rem;
-}
-
-.login-card {
-  background: var(--card-bg);
-  border-radius: 24px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 20px 50px -12px rgba(19, 109, 236, 0.15);
-  padding: 2.5rem;
-  width: 100%;
-  max-width: 460px;
-  animation: cardEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes cardEnter {
-  from { opacity: 0; transform: translateY(30px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.brand-header { text-align: center; margin-bottom: 2rem; }
-
-.brand-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-  letter-spacing: -0.02em;
-}
-
-.brand-subtitle { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; }
-
-.submit-btn {
-  width: 100%;
-  padding: 1rem;
-  background: var(--accent);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
-  margin-top: 0.5rem;
-}
-
-.submit-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 100%); }
-.submit-btn:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 8px 20px -4px rgba(19, 109, 236, 0.4); }
-.submit-btn:active { transform: translateY(0); }
-
-.age-notice {
-  text-align: center;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-top: 1.5rem;
-  padding: 0.75rem;
-  background: var(--input-bg);
-  border-radius: 8px;
-  border-left: 3px solid var(--accent);
-}
-
-.shield-icon {
-  width: 56px; height: 56px;
-  margin: 0 auto 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-.shield-icon svg { width: 28px; height: 28px; color: white; }
-    </style>
-    <div class="login-page">
-        <div class="floating-pages">
+    <div class="login-page font-['Work_Sans',sans-serif]">
+        <!-- 浮動書頁背景 -->
+        <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
             <div class="page-shape" style="--rotation: -15deg;"></div>
             <div class="page-shape" style="--rotation: 12deg;"></div>
             <div class="page-shape" style="--rotation: 8deg;"></div>
         </div>
-        <div class="login-container">
-            <div class="login-card">
-                <div class="brand-header">
-                    <div class="shield-icon">
-                        <svg viewBox="0 0 24 24"
+        <!-- 登入容器 -->
+        <div class="relative z-10 min-h-screen flex items-center justify-center px-4 py-8">
+            <div class="login-card bg-white rounded-3xl shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_20px_50px_-12px_rgba(19,109,236,0.15)] p-6 sm:p-10 w-full max-w-[460px]">
+                <!-- 品牌標題 -->
+                <div class="text-center mb-8">
+                    <div class="shield-icon w-14 h-14 mx-auto mb-4 rounded-2xl shadow-[0_4px_12px_rgba(16,185,129,0.3)] flex items-center justify-center">
+                        <svg class="w-7 h-7 text-white"
+                             viewBox="0 0 24 24"
                              fill="none"
                              stroke="currentColor"
                              stroke-width="2"
@@ -146,15 +119,24 @@
                             <path d="M9 12l2 2 4-4"></path>
                         </svg>
                     </div>
-                    <h1 class="brand-title">完成個人資料</h1>
-                    <p class="brand-subtitle">為了符合法規，我們需要驗證您的年齡</p>
+                    <h1 class="font-['Playfair_Display',serif] text-xl sm:text-2xl font-semibold text-slate-900 mb-2 tracking-tight">
+                        完成個人資料
+                    </h1>
+                    <p class="text-sm text-slate-500 leading-relaxed">為了符合法規，我們需要驗證您的年齡</p>
                 </div>
-                <form method="post" class="login-form">
+                <!-- 個人資料表單 -->
+                <form method="post" class="flex flex-col gap-4">
                     {% csrf_token %}
                     {% crispy form %}
-                    <button type="submit" class="submit-btn">儲存並繼續</button>
+                    <button type="submit"
+                            class="submit-btn relative w-full py-4 bg-primary text-white border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 overflow-hidden hover:bg-primary-hover hover:-translate-y-0.5 hover:shadow-[0_8px_20px_-4px_rgba(19,109,236,0.4)] active:translate-y-0">
+                        儲存並繼續
+                    </button>
                 </form>
-                <div class="age-notice">年滿 18 歲以上才能使用本服務</div>
+                <!-- 年齡提示 -->
+                <div class="text-center text-xs text-slate-500 mt-6 p-3 bg-slate-50 rounded-lg border-l-[3px] border-primary">
+                    年滿 18 歲以上才能使用本服務
+                </div>
             </div>
         </div>
     </div>
