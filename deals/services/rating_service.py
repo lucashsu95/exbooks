@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django_fsm import can_proceed
 
 from deals.models import Deal, Rating
 
@@ -52,9 +53,10 @@ def create_rating(
         deal.responder_rated = True
     deal.save(update_fields=["applicant_rated", "responder_rated", "updated_at"])
 
-    # BR-9: 雙方均完成評價 → 交易完成
+    # BR-9: 雙方均完成評價 → 交易完成（使用 FSM transition）
     if deal.applicant_rated and deal.responder_rated:
-        deal.status = Deal.Status.DONE
-        deal.save(update_fields=["status", "updated_at"])
+        if can_proceed(deal.complete):
+            deal.complete()
+            deal.save()
 
     return rating

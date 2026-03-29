@@ -1,11 +1,12 @@
 from django.conf import settings
 from django.db import models
+from django_fsm import FSMField, FSMModelMixin, transition
 
 from books.models.shared_book import SharedBook
 from core.models import UpdatableModel
 
 
-class Deal(UpdatableModel):
+class Deal(FSMModelMixin, UpdatableModel):
     """
     交易記錄。涵蓋 Loan、Restore、Transfer、Regress、Except 五種類別。
     每筆交易由申請者發起、回應者回應，經面交後雙方互評完成。
@@ -45,11 +46,12 @@ class Deal(UpdatableModel):
         choices=DealType.choices,
         verbose_name="交易類別",
     )
-    status = models.CharField(
+    status = FSMField(
         max_length=1,
         choices=Status.choices,
         default=Status.REQUESTED,
         verbose_name="交易狀態",
+        protected=True,  # 禁止直接賦值
     )
     previous_book_status = models.CharField(
         max_length=1,
@@ -108,3 +110,112 @@ class Deal(UpdatableModel):
 
     def __str__(self):
         return f"{self.get_deal_type_display()} - {self.shared_book} ({self.get_status_display()})"
+
+    # ========================================================================
+    # FSM 狀態轉換方法
+    # ========================================================================
+
+    @transition(
+        field=status,
+        source=Status.REQUESTED,
+        target=Status.RESPONDED,
+    )
+    def accept(self):
+        """
+        回應者接受交易申請。
+
+        狀態轉換：REQUESTED → RESPONDED
+        副作用（由 signal 處理）：
+        - BR-15: 取消同一冊書的其他申請
+        - 更新書籍狀態為 RESERVED（V）
+        - 發送通知
+        """
+        pass
+
+    @transition(
+        field=status,
+        source=Status.REQUESTED,
+        target=Status.CANCELLED,
+    )
+    def decline(self):
+        """
+        回應者拒絕交易申請。
+
+        狀態轉換：REQUESTED → CANCELLED
+        副作用（由 signal 處理）：
+        - 發送拒絕通知
+        """
+        pass
+
+    @transition(
+        field=status,
+        source=Status.REQUESTED,
+        target=Status.CANCELLED,
+    )
+    def cancel_request(self):
+        """
+        申請者取消交易申請。
+
+        狀態轉換：REQUESTED → CANCELLED
+        副作用（由 signal 處理）：
+        - BR-14: 恢復書籍狀態
+        - 發送取消通知
+        """
+        pass
+
+    @transition(
+        field=status,
+        source=Status.RESPONDED,
+        target=Status.MEETED,
+    )
+    def complete_meeting(self):
+        """
+        確認面交完成。
+
+        狀態轉換：RESPONDED → MEETED
+        副作用（由 signal 處理）：
+        - BR-8: 變更 SharedBook.keeper
+        - 書籍狀態依交易類別轉移
+        - 重新計算到期日
+        - 發送面交完成通知
+        """
+        pass
+
+    @transition(
+        field=status,
+        source=Status.MEETED,
+        target=Status.DONE,
+    )
+    def complete(self):
+        """
+        交易完成（雙方評價後）。
+
+        狀態轉換：MEETED → DONE
+        前置條件：申請者和回應者都已評價
+        副作用（由 signal 處理）：
+        - 更新信用等級
+        - 發送完成通知
+        """
+        pass
+
+    @transition(
+        field=status,
+        source=[Status.REQUESTED, Status.RESPONDED, Status.MEETED],
+        target=Status.CANCELLED,
+    )
+    def cancel(self):
+        """
+        通用取消方法。
+
+        狀態轉換：REQUESTED/RESPONDED/MEETED → CANCELLED
+        副作用由 signal 根據來源狀態處理。
+        """
+        pass
+
+    # ========================================================================
+    # FSM 條件檢查方法
+    # ========================================================================
+
+    def _both_parties_rated(self):
+        """檢查雙方是否都已評價。"""
+        return self.applicant_rated and self.responder_rated

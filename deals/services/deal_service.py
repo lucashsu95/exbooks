@@ -1,21 +1,35 @@
+"""
+交易狀態轉換服務。
+
+此模組封裝 Deal 的狀態轉換邏輯，使用 django-fSM。
+Service 層負責：
+- 權限檢查
+- 跨 Model 事務協調
+- 觸發 FSM 狀態轉換
+
+副作用（通知、書籍狀態更新）由 Signal 處理。
+"""
+
 from datetime import timedelta
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
+from django_fsm import can_proceed, TransitionNotAllowed
 
 from accounts.services.trust_service import get_borrowing_limits
 from books.models import SharedBook
 from books.services.book_service import validate_book_set_completeness
 from deals.models import Deal
 from deals.services.notification_service import (
-    notify_deal_cancelled,
-    notify_deal_meeted,
     notify_deal_requested,
-    notify_deal_responded,
     notify_book_overdue,
 )
 
+
+# ============================================================================
+# 配置常數（保持向後相容）
+# ============================================================================
 
 # --- 交易類別與書籍流通性的合法對應 ---
 DEAL_TYPE_TRANSFERABILITY = {
@@ -45,6 +59,11 @@ MEET_STATUS_MAP = {
 }
 
 
+# ============================================================================
+# 內部輔助函式
+# ============================================================================
+
+
 def _get_responder(shared_book, deal_type):
     """
     根據交易類別自動判定回應者。
@@ -55,10 +74,19 @@ def _get_responder(shared_book, deal_type):
     RG → Keeper（交回 Revert）
     EX → Owner（處置 Resolve）
     """
-    if deal_type in (Deal.DealType.LOAN, Deal.DealType.RESTORE, Deal.DealType.EXCEPT):
+    if deal_type in (
+        Deal.DealType.LOAN,
+        Deal.DealType.RESTORE,
+        Deal.DealType.EXCEPT,
+    ):
         return shared_book.owner
     else:  # TF, RG
         return shared_book.keeper
+
+
+# ============================================================================
+# 交易建立
+# ============================================================================
 
 
 def create_deal(
@@ -170,88 +198,76 @@ def create_deal(
     return deal
 
 
+# ============================================================================
+# FSM 狀態轉換封裝
+# ============================================================================
+
+
 @transaction.atomic
 def accept_deal(deal):
     """
     回應者接受交易申請。
 
-    - 交易狀態：Q → P
-    - 書籍狀態：→ V（已被預約）
+    使用 FSM 狀態轉換：REQUESTED → RESPONDED
+
+    副作用（由 Signal 處理）：
     - BR-15: 同一冊書其餘 Q 狀態申請自動取消
+    - 書籍狀態變更為 V（已被預約）
+    - 發送通知
+
+    Raises:
+        ValidationError: 如果狀態轉換不允許
     """
-    if deal.status != Deal.Status.REQUESTED:
+    if not can_proceed(deal.accept):
         raise ValidationError("只有「已請求」狀態的交易可以接受")
 
-    shared_book = deal.shared_book
+    deal.accept()
+    deal.save()
 
-    # BR-15: 取消同一冊書的其他申請
-    auto_cancelled = list(
-        Deal.objects.filter(
-            shared_book=shared_book,
-            status=Deal.Status.REQUESTED,
-        ).exclude(pk=deal.pk)
-    )
-    Deal.objects.filter(
-        shared_book=shared_book,
-        status=Deal.Status.REQUESTED,
-    ).exclude(pk=deal.pk).update(status=Deal.Status.CANCELLED)
-
-    # 更新交易狀態
-    deal.status = Deal.Status.RESPONDED
-    deal.save(update_fields=["status", "updated_at"])
-
-    # 更新書籍狀態為 V（已被預約）
-    shared_book.status = SharedBook.Status.RESERVED
-    shared_book.save(update_fields=["status", "updated_at"])
-
-    # 通知申請者交易已被接受
-    notify_deal_responded(deal)
-
-    # 通知被自動取消的申請者
-    for cancelled_deal in auto_cancelled:
-        notify_deal_cancelled(cancelled_deal, deal.responder)
+    return deal
 
 
 def decline_deal(deal):
     """
     回應者拒絕交易申請。
 
-    - 交易狀態：Q → X
-    - 書籍狀態不變
+    使用 FSM 狀態轉換：REQUESTED → CANCELLED
+
+    副作用（由 Signal 處理）：
+    - 發送拒絕通知
+
+    Raises:
+        ValidationError: 如果狀態轉換不允許
     """
-    if deal.status != Deal.Status.REQUESTED:
+    if not can_proceed(deal.decline):
         raise ValidationError("只有「已請求」狀態的交易可以拒絕")
 
-    deal.status = Deal.Status.CANCELLED
-    deal.save(update_fields=["status", "updated_at"])
+    deal.decline()
+    deal.save()
 
-    # 通知申請者交易被拒絕
-    notify_deal_cancelled(deal, deal.responder)
+    return deal
 
 
 def cancel_deal(deal):
     """
-    申請者取消交易申請（CancelRequest）。
+    申請者取消交易申請。
 
-    - BR-13: 交易狀態為 Q 時可取消
+    使用 FSM 狀態轉換：REQUESTED → CANCELLED
+
+    副作用（由 Signal 處理）：
     - BR-14: 取消後書籍狀態恢復為取消前的狀態
-    - 交易狀態：Q → X
+    - 發送取消通知
+
+    Raises:
+        ValidationError: 如果狀態轉換不允許
     """
-    if deal.status != Deal.Status.REQUESTED:
+    if not can_proceed(deal.cancel_request):
         raise ValidationError("只有「已請求」狀態的交易可以取消")
 
-    with transaction.atomic():
-        deal.status = Deal.Status.CANCELLED
-        deal.save(update_fields=["status", "updated_at"])
+    deal.cancel_request()
+    deal.save()
 
-        # BR-14: 恢復書籍狀態
-        if deal.previous_book_status:
-            shared_book = deal.shared_book
-            shared_book.status = deal.previous_book_status
-            shared_book.save(update_fields=["status", "updated_at"])
-
-    # 通知回應者交易已被取消
-    notify_deal_cancelled(deal, deal.applicant)
+    return deal
 
 
 @transaction.atomic
@@ -259,44 +275,55 @@ def complete_meeting(deal):
     """
     確認面交完成。
 
-    - 交易狀態：P → M
+    使用 FSM 狀態轉換：RESPONDED → MEETED
+
+    副作用（由 Signal 處理）：
     - BR-8: 變更 SharedBook.keeper
     - 書籍狀態依交易類別轉移（見 MEET_STATUS_MAP）
-    - 重新計算到期日（從面交日起算）
+    - 重新計算到期日
+    - 發送面交完成通知
+
+    Raises:
+        ValidationError: 如果狀態轉換不允許
     """
-    if deal.status != Deal.Status.RESPONDED:
+    if not can_proceed(deal.complete_meeting):
         raise ValidationError("只有「已回應」狀態的交易可以確認面交")
 
-    shared_book = deal.shared_book
+    deal.complete_meeting()
+    deal.save()
 
-    # 更新交易狀態
-    deal.status = Deal.Status.MEETED
-    deal.save(update_fields=["status", "updated_at"])
+    return deal
 
-    # BR-8: 變更持有人
-    if deal.deal_type in (Deal.DealType.LOAN, Deal.DealType.TRANSFER):
-        # 書從回應者手中到申請者手中
-        shared_book.keeper = deal.applicant
-    elif deal.deal_type in (Deal.DealType.RESTORE, Deal.DealType.REGRESS):
-        # 書從申請者手中到回應者手中（Owner 取回）
-        shared_book.keeper = deal.responder
 
-    # 更新書籍狀態
-    new_status = MEET_STATUS_MAP.get(deal.deal_type)
-    if new_status:
-        shared_book.status = new_status
+@transaction.atomic
+def complete_deal(deal):
+    """
+    完成交易（雙方評價後）。
 
-    shared_book.save(update_fields=["keeper", "status", "updated_at"])
+    使用 FSM 狀態轉換：MEETED → DONE
 
-    # 重新計算到期日（從面交日起算）
-    if deal.deal_type in (Deal.DealType.LOAN, Deal.DealType.TRANSFER):
-        deal.due_date = timezone.now().date() + timedelta(
-            days=shared_book.loan_duration_days
-        )
-        deal.save(update_fields=["due_date"])
+    前置條件：
+    - 申請者和回應者都已評價
 
-    # 通知雙方面交完成
-    notify_deal_meeted(deal)
+    副作用（由 Signal 處理）：
+    - 更新信用等級
+    - 發送完成通知
+
+    Raises:
+        ValidationError: 如果狀態轉換不允許或條件未滿足
+    """
+    if not can_proceed(deal.complete):
+        raise ValidationError("此交易目前無法完成。請確認雙方都已評價。")
+
+    deal.complete()
+    deal.save()
+
+    return deal
+
+
+# ============================================================================
+# 非狀態轉換的業務邏輯
+# ============================================================================
 
 
 def process_book_due(deal):
@@ -306,6 +333,8 @@ def process_book_due(deal):
     - 「閱畢即還」書籍到期 → 狀態變 R（應返還）
     - 「開放傳遞」書籍到期 → 狀態變 T（可移轉）
     - BR-12: 「閱畢即還」到期前未提出還書申請即視為逾期
+
+    Note: 此函式不變更 Deal 狀態，只更新 SharedBook 狀態。
     """
     if deal.status != Deal.Status.MEETED:
         return  # 僅處理已面交的交易
@@ -344,6 +373,9 @@ def confirm_return(deal, confirmed_by):
 
     Raises:
         ValidationError: 如果交易狀態不符或權限不足
+
+    Note: Deal 狀態保持 MEETED，等待雙方評價後才會變成 DONE。
+    評價流程由 rating_service.create_rating 處理。
     """
     # 狀態檢查：只有 MEETED 狀態可以確認歸還
     if deal.status != Deal.Status.MEETED:
@@ -361,8 +393,5 @@ def confirm_return(deal, confirmed_by):
     # 更新書籍狀態為可移轉（重新上架）
     shared_book.status = SharedBook.Status.TRANSFERABLE
     shared_book.save(update_fields=["status", "updated_at"])
-
-    # 注意：Deal 狀態保持 MEETED，等待雙方評價後才會變成 DONE
-    # 評價流程由 rating_service.create_rating 處理
 
     return deal
