@@ -1,7 +1,118 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 from core.models import UpdatableModel
+
+
+class Violation(UpdatableModel):
+    """
+    違規處分模型。
+    管理員可對違規用戶執行警告、暫時停權、永久停權等處分。
+    """
+
+    class Severity(models.TextChoices):
+        MINOR = "minor", "輕微"
+        MODERATE = "moderate", "中等"
+        SEVERE = "severe", "嚴重"
+
+    class ActionType(models.TextChoices):
+        WARNING = "warning", "警告"
+        TEMPORARY_SUSPENSION = "temporary_suspension", "暫時停權"
+        PERMANENT_SUSPENSION = "permanent_suspension", "永久停權"
+
+    class ViolationType(models.TextChoices):
+        MISSED_MEETING = "missed_meeting", "未依約定面交"
+        LATE_RETURN = "late_return", "延遲歸還"
+        CONDITION_MISMATCH = "condition_mismatch", "書況描述不符"
+        UNJUSTIFIED_CANCELLATION = "unjustified_cancellation", "無正當理由取消"
+        FRAUD = "fraud", "詐欺"
+        HARASSMENT = "harassment", "騷擾"
+        MALICIOUS_DAMAGE = "malicious_damage", "惡意破壞"
+        IDENTITY_THEFT = "identity_theft", "冒用身份"
+        OTHER = "other", "其他"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="violations",
+        verbose_name="違規用戶",
+    )
+    action_type = models.CharField(
+        max_length=30,
+        choices=ActionType.choices,
+        verbose_name="處分類型",
+    )
+    severity = models.CharField(
+        max_length=20,
+        choices=Severity.choices,
+        verbose_name="違規等級",
+    )
+    violation_type = models.CharField(
+        max_length=30,
+        choices=ViolationType.choices,
+        verbose_name="違規行為",
+    )
+    description = models.TextField(verbose_name="違規描述")
+    suspension_days = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="停權天數",
+        help_text="暫時停權時必填，7-30 天",
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="是否生效中",
+        help_text="警告永遠生效；停權在期滿或解除後設為 False",
+    )
+    related_appeal = models.ForeignKey(
+        "Appeal",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="violations",
+        verbose_name="相關申訴",
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="issued_violations",
+        verbose_name="處分者",
+    )
+    lifted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="解除時間",
+    )
+    lifted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="lifted_violations",
+        verbose_name="解除者",
+    )
+
+    class Meta:
+        db_table = "exbook_violation"
+        verbose_name = "違規處分"
+        verbose_name_plural = "違規處分"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["user", "is_active"]),
+            models.Index(fields=["action_type", "is_active"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user} - {self.get_action_type_display()}"
+
+    def lift(self, lifted_by):
+        """解除處分（提前解權）"""
+        self.is_active = False
+        self.lifted_at = timezone.now()
+        self.lifted_by = lifted_by
+        self.save(update_fields=["is_active", "lifted_at", "lifted_by", "updated_at"])
 
 
 class Appeal(UpdatableModel):
@@ -147,6 +258,22 @@ class UserProfile(UpdatableModel):
         default=0,
         verbose_name="逾期次數",
     )
+    # 停權相關欄位
+    is_suspended = models.BooleanField(
+        default=False,
+        verbose_name="是否停權中",
+        help_text="用戶目前是否處於停權狀態",
+    )
+    suspension_end_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="停權結束時間",
+        help_text="暫時停權的結束時間，null 表示永久停權",
+    )
+    suspension_reason = models.TextField(
+        blank=True,
+        verbose_name="停權原因",
+    )
 
     class Meta:
         db_table = "exbook_user_profile"
@@ -174,3 +301,19 @@ class UserProfile(UpdatableModel):
     def is_adult(self):
         """檢查是否年滿 18 歲"""
         return self.age is not None and self.age >= 18
+
+    @property
+    def is_currently_suspended(self):
+        """
+        檢查用戶目前是否處於停權狀態。
+        考慮停權結束時間，自動判斷是否仍有效。
+        """
+        if not self.is_suspended:
+            return False
+        # 永久停權（無結束時間）
+        if self.suspension_end_date is None:
+            return True
+        # 暫時停權，檢查是否已期滿
+        from django.utils import timezone
+
+        return timezone.now() < self.suspension_end_date
