@@ -33,6 +33,10 @@ class WishListItem(BaseModel):
                 name="unique_user_official_book",
             ),
         ]
+        indexes = [
+            models.Index(fields=["user", "-created_at"], name="idx_user_created"),
+            models.Index(fields=["official_book"], name="idx_official_book"),
+        ]
 
     def __str__(self):
         return f"{self.user} → {self.official_book}"

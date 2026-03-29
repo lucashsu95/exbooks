@@ -95,6 +95,7 @@ class SharedBook(FSMModelMixin, UpdatableModel):
             models.Index(fields=["status"]),
             models.Index(fields=["owner", "status"]),
             models.Index(fields=["keeper", "status"]),
+            models.Index(fields=["-listed_at"], name="idx_listed_at_desc"),
         ]
 
     def __str__(self):

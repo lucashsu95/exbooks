@@ -106,6 +106,7 @@ class Deal(FSMModelMixin, UpdatableModel):
             models.Index(fields=["responder", "status"]),
             models.Index(fields=["shared_book", "status"]),
             models.Index(fields=["due_date"]),
+            models.Index(fields=["-created_at"], name="idx_created_at_desc"),
         ]
 
     def __str__(self):

@@ -69,14 +69,15 @@ def _send_push_notification(
         shared_book: 相關書籍（可選）
         notification_type: 通知類型（可選）
     """
+    from django.urls import reverse
     from deals.services.push_service import send_push_to_user
 
-    # 構建跳轉 URL
+    # 構建跳轉 URL（使用 reverse 避免硬編碼）
     url = "/"
     if deal:
-        url = f"/deals/{deal.id}/"
+        url = reverse("deals:detail", kwargs={"pk": deal.id})
     elif shared_book:
-        url = f"/books/{shared_book.id}/"
+        url = reverse("books:detail", kwargs={"pk": shared_book.id})
 
     # 發送 Push
     send_push_to_user(

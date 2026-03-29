@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.contrib import messages
 from django.utils import timezone
 from django.http import HttpResponse
@@ -498,25 +498,26 @@ from .models import WishListItem  # noqa: E402
 @login_required
 def wishlist_list(request):
     """願望書車列表頁"""
+    # 使用 annotation 一次性計算可借閱冊數，避免 N+1 查詢
     wishlist_items = (
         WishListItem.objects.filter(user=request.user)
         .select_related("official_book")
+        .annotate(
+            available_count=Count(
+                "official_book__shared_books",
+                filter=Q(
+                    official_book__shared_books__status=SharedBook.Status.TRANSFERABLE
+                ),
+            )
+        )
         .order_by("-created_at")
     )
 
-    # 計算每本書的可借閱冊數
-    items_with_count = []
-    for item in wishlist_items:
-        available_count = SharedBook.objects.filter(
-            official_book=item.official_book,
-            status=SharedBook.Status.TRANSFERABLE,
-        ).count()
-        items_with_count.append(
-            {
-                "item": item,
-                "available_count": available_count,
-            }
-        )
+    # 建立分頁資料
+    items_with_count = [
+        {"item": item, "available_count": item.available_count}
+        for item in wishlist_items
+    ]
 
     # 分頁
     paginator = Paginator(items_with_count, 12)
