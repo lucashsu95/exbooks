@@ -1,7 +1,14 @@
+"""
+借閱延長申請服務。
+
+此模組封裝 LoanExtension 的狀態轉換邏輯，使用 django-fSM。
+"""
+
 from datetime import timedelta
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django_fsm import can_proceed
 
 from books.models import SharedBook
 from deals.models import LoanExtension
@@ -47,20 +54,25 @@ def approve_extension(extension, reviewer):
     """
     核准延長申請。
 
+    使用 FSM 狀態轉換：PENDING → APPROVED
+
     - 審核者為 Deal 的 responder
     - 核准後自動延長 Deal.due_date
-    """
-    if extension.status != LoanExtension.Status.PENDING:
-        raise ValidationError("只有「待審核」的申請可以核准")
 
+    副作用（由 signal 處理）：
+    - 發送通知
+    """
     deal = extension.deal
 
     if reviewer != deal.responder:
         raise ValidationError("只有交易回應者可以審核延長申請")
 
-    extension.status = LoanExtension.Status.APPROVED
+    if not can_proceed(extension.approve):
+        raise ValidationError("只有「待審核」的申請可以核准")
+
+    extension.approve()
     extension.approved_by = reviewer
-    extension.save(update_fields=["status", "approved_by", "updated_at"])
+    extension.save()
 
     # 延長到期日
     if deal.due_date:
@@ -73,18 +85,20 @@ def approve_extension(extension, reviewer):
 def reject_extension(extension, reviewer):
     """
     拒絕延長申請。
-    """
-    if extension.status != LoanExtension.Status.PENDING:
-        raise ValidationError("只有「待審核」的申請可以拒絕")
 
+    使用 FSM 狀態轉換：PENDING → REJECTED
+    """
     deal = extension.deal
 
     if reviewer != deal.responder:
         raise ValidationError("只有交易回應者可以審核延長申請")
 
-    extension.status = LoanExtension.Status.REJECTED
+    if not can_proceed(extension.reject):
+        raise ValidationError("只有「待審核」的申請可以拒絕")
+
+    extension.reject()
     extension.approved_by = reviewer
-    extension.save(update_fields=["status", "approved_by", "updated_at"])
+    extension.save()
 
     notify_extend_result(extension)
 
@@ -94,12 +108,14 @@ def cancel_extension(extension, applicant):
     取消延長申請。
 
     BR-16: 延長申請狀態為 PENDING 時，申請者可取消。
-    """
-    if extension.status != LoanExtension.Status.PENDING:
-        raise ValidationError("只有「待審核」的申請可以取消")
 
+    使用 FSM 狀態轉換：PENDING → REJECTED
+    """
     if applicant != extension.requested_by:
         raise ValidationError("只有申請者可以取消延長申請")
 
-    extension.status = LoanExtension.Status.REJECTED
-    extension.save(update_fields=["status", "updated_at"])
+    if not can_proceed(extension.reject):
+        raise ValidationError("只有「待審核」的申請可以取消")
+
+    extension.reject()
+    extension.save()

@@ -63,8 +63,10 @@ class TestAppeal:
         )
         assert "測試申訴" in str(appeal)
 
-    def test_can_transition_to_valid_status(self):
-        """測試狀態轉換驗證方法"""
+    def test_appeal_fsm_transitions(self):
+        """測試 FSM 狀態轉換"""
+        from django_fsm import can_proceed
+
         user = UserFactory()
         appeal = Appeal.objects.create(
             user=user,
@@ -73,9 +75,11 @@ class TestAppeal:
             description="這是一個測試申訴的詳細描述內容，至少需要五十個字元才能通過驗證。",
         )
         # SUBMITTED can transition to UNDER_REVIEW or CLOSED
-        assert appeal.can_transition_to(Appeal.Status.UNDER_REVIEW) is True
-        assert appeal.can_transition_to(Appeal.Status.CLOSED) is True
-        assert appeal.can_transition_to(Appeal.Status.APPROVED) is False
+        assert can_proceed(appeal.start_review) is True
+        assert can_proceed(appeal.close) is True
+        assert (
+            can_proceed(appeal.approve) is False
+        )  # Cannot approve directly from SUBMITTED
 
     def test_appeal_user_cascade_delete(self):
         """測試刪除用戶時申訴一併刪除"""

@@ -1,11 +1,13 @@
 """申訴服務層
 
 處理申訴的建立、審核、取消等業務邏輯。
+使用 django-fsm 管理狀態轉換。
 """
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
+from django_fsm import can_proceed
 
 from accounts.models import Appeal
 from deals.models import Notification
@@ -58,6 +60,8 @@ def create_appeal(user, appeal_type, title, description, evidence=None):
 def submit_for_review(appeal_id):
     """提交審核（管理員開始處理）
 
+    使用 FSM 狀態轉換：SUBMITTED → UNDER_REVIEW
+
     Args:
         appeal_id: 申訴 ID
 
@@ -69,10 +73,10 @@ def submit_for_review(appeal_id):
     """
     appeal = Appeal.objects.select_for_update().get(id=appeal_id)
 
-    if appeal.status != Appeal.Status.SUBMITTED:
+    if not can_proceed(appeal.start_review):
         raise ValidationError("申訴狀態無法執行此操作")
 
-    appeal.status = Appeal.Status.UNDER_REVIEW
+    appeal.start_review()
     appeal.save()
 
     return appeal
@@ -81,6 +85,10 @@ def submit_for_review(appeal_id):
 @transaction.atomic
 def review_appeal(appeal_id, reviewer, decision, notes=""):
     """審核申訴
+
+    使用 FSM 狀態轉換：
+    - UNDER_REVIEW → APPROVED（核准）
+    - UNDER_REVIEW → REJECTED（駁回）
 
     Args:
         appeal_id: 申訴 ID
@@ -96,13 +104,17 @@ def review_appeal(appeal_id, reviewer, decision, notes=""):
     """
     appeal = Appeal.objects.select_for_update().get(id=appeal_id)
 
-    if appeal.status != Appeal.Status.UNDER_REVIEW:
-        raise ValidationError("申訴狀態無法執行此操作")
+    # 選擇對應的 FSM 轉換方法
+    if decision == "approve":
+        if not can_proceed(appeal.approve):
+            raise ValidationError("申訴狀態無法執行此操作")
+        appeal.approve()
+    else:
+        if not can_proceed(appeal.reject):
+            raise ValidationError("申訴狀態無法執行此操作")
+        appeal.reject()
 
-    new_status = (
-        Appeal.Status.APPROVED if decision == "approve" else Appeal.Status.REJECTED
-    )
-    appeal.status = new_status
+    # 更新審核相關欄位
     appeal.resolution_notes = notes
     appeal.resolved_by = reviewer
     appeal.resolved_at = timezone.now()
@@ -156,6 +168,8 @@ def get_appeal_by_id(appeal_id):
 def cancel_appeal(appeal_id, user):
     """取消申訴
 
+    使用 FSM 狀態轉換：SUBMITTED → CLOSED
+
     Args:
         appeal_id: 申訴 ID
         user: 取消者
@@ -171,10 +185,10 @@ def cancel_appeal(appeal_id, user):
     if appeal.user != user:
         raise ValidationError("無權限修改此申訴")
 
-    if appeal.status not in [Appeal.Status.SUBMITTED]:
+    if not can_proceed(appeal.close):
         raise ValidationError("申訴狀態無法取消")
 
-    appeal.status = Appeal.Status.CLOSED
+    appeal.close()
     appeal.save()
 
     return appeal

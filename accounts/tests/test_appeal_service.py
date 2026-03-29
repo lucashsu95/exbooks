@@ -231,14 +231,14 @@ class TestCancelAppeal:
             appeal_service.cancel_appeal(appeal.id, user2)
 
     def test_cancel_appeal_invalid_status(self):
-        """Test cannot cancel appeal with invalid status"""
+        """Test cannot cancel appeal with CLOSED status (no valid transition)"""
         user = UserFactory()
         appeal = Appeal.objects.create(
             user=user,
             appeal_type=Appeal.AppealType.OTHER,
             title="Test",
             description=LONG_DESCRIPTION,
-            status=Appeal.Status.APPROVED,
+            status=Appeal.Status.CLOSED,
         )
         with pytest.raises(ValidationError):
             appeal_service.cancel_appeal(appeal.id, user)

@@ -1,11 +1,12 @@
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django_fsm import FSMField, FSMModelMixin, transition
 
 from core.models import UpdatableModel
 
 
-class LoanExtension(UpdatableModel):
+class LoanExtension(FSMModelMixin, UpdatableModel):
     """
     借閱延長申請與核准。
     同一筆交易可多次申請延長，每次需重新審核。
@@ -46,11 +47,12 @@ class LoanExtension(UpdatableModel):
         verbose_name="延長天數",
         help_text="最少 7 天，最多 30 天",
     )
-    status = models.CharField(
+    status = FSMField(
         max_length=10,
         choices=Status.choices,
         default=Status.PENDING,
         verbose_name="申請狀態",
+        protected=True,
     )
 
     class Meta:
@@ -61,3 +63,38 @@ class LoanExtension(UpdatableModel):
 
     def __str__(self):
         return f"{self.deal} 延長 {self.extra_days} 天 ({self.get_status_display()})"
+
+    # ========================================================================
+    # FSM 狀態轉換方法
+    # ========================================================================
+
+    @transition(
+        field=status,
+        source=Status.PENDING,
+        target=Status.APPROVED,
+    )
+    def approve(self):
+        """
+        核准延長申請。
+
+        狀態轉換：PENDING → APPROVED
+        副作用（由 signal 處理）：
+        - 更新 Deal.due_date
+        - 發送通知
+        """
+        pass
+
+    @transition(
+        field=status,
+        source=Status.PENDING,
+        target=Status.REJECTED,
+    )
+    def reject(self):
+        """
+        拒絕延長申請。
+
+        狀態轉換：PENDING → REJECTED
+        副作用（由 signal 處理）：
+        - 發送通知
+        """
+        pass

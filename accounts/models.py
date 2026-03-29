@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django_fsm import FSMField, FSMModelMixin, transition
 
 from core.models import UpdatableModel
 
@@ -115,10 +116,19 @@ class Violation(UpdatableModel):
         self.save(update_fields=["is_active", "lifted_at", "lifted_by", "updated_at"])
 
 
-class Appeal(UpdatableModel):
+class Appeal(FSMModelMixin, UpdatableModel):
     """
     用戶申訴模型。
     用戶可對帳號停權、評價爭議、逾期爭議等提出申訴。
+
+    狀態機（django-fsm）：
+    SUBMITTED ──[start_review]──> UNDER_REVIEW ──[approve]──> APPROVED
+        │                               │
+        │                               └──[reject]──> REJECTED
+        │
+        └──[cancel]──> CLOSED
+
+    APPROVED/REJECTED ──[close]──> CLOSED
     """
 
     class Status(models.TextChoices):
@@ -152,12 +162,13 @@ class Appeal(UpdatableModel):
         blank=True,
         verbose_name="證據文件",
     )
-    status = models.CharField(
+    status = FSMField(
         max_length=20,
         choices=Status.choices,
         default=Status.SUBMITTED,
         db_index=True,
         verbose_name="狀態",
+        protected=True,
     )
     resolution_notes = models.TextField(blank=True, verbose_name="審核備註")
     resolved_by = models.ForeignKey(
@@ -183,16 +194,74 @@ class Appeal(UpdatableModel):
     def __str__(self):
         return f"{self.title} - {self.get_status_display()}"
 
-    def can_transition_to(self, new_status: str) -> bool:
-        """檢查狀態轉換是否有效"""
-        valid_transitions = {
-            self.Status.SUBMITTED: [self.Status.UNDER_REVIEW, self.Status.CLOSED],
-            self.Status.UNDER_REVIEW: [self.Status.APPROVED, self.Status.REJECTED],
-            self.Status.APPROVED: [self.Status.CLOSED],
-            self.Status.REJECTED: [self.Status.CLOSED],
-            self.Status.CLOSED: [],
-        }
-        return new_status in valid_transitions.get(self.status, [])
+    # ========================================================================
+    # FSM 狀態轉換方法
+    # ========================================================================
+
+    @transition(
+        field=status,
+        source=Status.SUBMITTED,
+        target=Status.UNDER_REVIEW,
+    )
+    def start_review(self):
+        """
+        開始審核申訴。
+
+        狀態轉換：SUBMITTED → UNDER_REVIEW
+        副作用（由 service 層處理）：
+        - 發送通知
+        """
+        pass
+
+    @transition(
+        field=status,
+        source=Status.UNDER_REVIEW,
+        target=Status.APPROVED,
+    )
+    def approve(self):
+        """
+        核准申訴。
+
+        狀態轉換：UNDER_REVIEW → APPROVED
+        副作用（由 service 層處理）：
+        - 更新 resolution_notes, resolved_by, resolved_at
+        - 發送審核結果通知
+        """
+        pass
+
+    @transition(
+        field=status,
+        source=Status.UNDER_REVIEW,
+        target=Status.REJECTED,
+    )
+    def reject(self):
+        """
+        駁回申訴。
+
+        狀態轉換：UNDER_REVIEW → REJECTED
+        副作用（由 service 層處理）：
+        - 更新 resolution_notes, resolved_by, resolved_at
+        - 發送審核結果通知
+        """
+        pass
+
+    @transition(
+        field=status,
+        source=[Status.SUBMITTED, Status.APPROVED, Status.REJECTED],
+        target=Status.CLOSED,
+    )
+    def close(self):
+        """
+        結案申訴。
+
+        狀態轉換：SUBMITTED/APPROVED/REJECTED → CLOSED
+        - SUBMITTED → CLOSED：用戶取消申訴
+        - APPROVED/REJECTED → CLOSED：管理員結案
+
+        副作用（由 service 層處理）：
+        - 發送通知（如適用）
+        """
+        pass
 
 
 class UserProfile(UpdatableModel):
