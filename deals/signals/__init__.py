@@ -76,8 +76,11 @@ def _handle_accept(deal):
         status=Deal.Status.REQUESTED,
     ).exclude(pk=deal.pk).update(status=Deal.Status.CANCELLED)
 
-    # 更新書籍狀態為 V（已被預約）
-    shared_book.status = "V"
+    # 更新書籍狀態為 V（已被預約）- 使用 FSM 方法
+    if hasattr(shared_book, "reserve"):
+        shared_book.reserve()
+    else:
+        shared_book.status = "V"
     shared_book.save(update_fields=["status", "updated_at"])
 
     # 通知申請者交易已被接受
@@ -106,7 +109,7 @@ def _handle_cancel_request(deal):
     """
     shared_book = deal.shared_book
 
-    # BR-14: 恢復書籍狀態
+    # BR-14: 恢復書籍狀態（繞過 FSM，因為狀態可能是任意值）
     if deal.previous_book_status:
         shared_book.status = deal.previous_book_status
         shared_book.save(update_fields=["status", "updated_at"])
@@ -136,10 +139,19 @@ def _handle_complete_meeting(deal):
         # 書從申請者手中到回應者手中（Owner 取回）
         shared_book.keeper = deal.responder
 
-    # 更新書籍狀態
+    # 更新書籍狀態 - 使用 FSM 方法（如果可用）
     new_status = MEET_STATUS_MAP.get(deal.deal_type)
     if new_status:
-        shared_book.status = new_status
+        # 根據目標狀態選擇 FSM 方法
+        if new_status == "O" and hasattr(shared_book, "mark_as_borrowed"):
+            shared_book.mark_as_borrowed()
+        elif new_status == "S":
+            # RESTORE/REGRESS 導向 SUSPENDED，這裡直接設定
+            shared_book.status = new_status
+        elif new_status == "E":
+            shared_book.status = new_status
+        else:
+            shared_book.status = new_status
 
     shared_book.save(update_fields=["keeper", "status", "updated_at"])
 
