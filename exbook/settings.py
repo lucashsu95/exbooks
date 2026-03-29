@@ -237,3 +237,24 @@ LOGOUT_REDIRECT_URL = "account_login"
 # Crispy Forms configuration
 CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
 CRISPY_TEMPLATE_PACK = "tailwind"
+
+# ============================================================================
+# 信用等級配置
+# ============================================================================
+
+# 信用等級門檻（從高到低排序，計算時依序檢查）
+# 每個等級需滿足：完成交易數、評價均分、逾期次數
+TRUST_THRESHOLDS = {
+    3: {"min_deals": 30, "min_rating": 4.5, "max_overdue": 0},  # 優良
+    2: {"min_deals": 10, "min_rating": 4.0, "max_overdue": 1},  # 可信
+    1: {"min_deals": 3, "min_rating": 0.0, "max_overdue": 2},  # 一般
+    0: {"min_deals": 0, "min_rating": 0.0, "max_overdue": float("inf")},  # 新手
+}
+
+# 借閱限制（根據信用等級）
+BORROWING_LIMITS = {
+    0: {"max_books": 1, "max_days": 30},
+    1: {"max_books": 3, "max_days": 60},
+    2: {"max_books": 5, "max_days": 90},
+    3: {"max_books": float("inf"), "max_days": float("inf")},
+}

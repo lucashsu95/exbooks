@@ -2,17 +2,19 @@
 信用等級計算服務。
 
 根據用戶的交易紀錄、評價分數和逾期次數計算信用等級。
+配置可在 Django settings 中覆寫。
 """
 
 from dataclasses import dataclass
 
+from django.conf import settings
 from django.db.models import Avg, Q
 
 from deals.models import Deal, Rating
 
 
 # ============================================================================
-# 信用等級門檻配置
+# 信用等級門檻配置（從 settings 讀取，提供預設值）
 # ============================================================================
 
 
@@ -22,20 +24,25 @@ class TrustThreshold:
 
     min_deals: int
     min_rating: float
-    max_overdue: int
+    max_overdue: int | float
 
 
-# 從高到低排序，計算時依序檢查
-TRUST_THRESHOLDS: dict[int, TrustThreshold] = {
-    3: TrustThreshold(min_deals=30, min_rating=4.5, max_overdue=0),
-    2: TrustThreshold(min_deals=10, min_rating=4.0, max_overdue=1),
-    1: TrustThreshold(min_deals=3, min_rating=0.0, max_overdue=2),
-    0: TrustThreshold(min_deals=0, min_rating=0.0, max_overdue=float("inf")),
-}
+def _get_trust_thresholds() -> dict[int, TrustThreshold]:
+    """從 settings 取得信用等級門檻配置。"""
+    config = getattr(settings, "TRUST_THRESHOLDS", None)
+    if config is None:
+        # 預設值（向後相容）
+        config = {
+            3: {"min_deals": 30, "min_rating": 4.5, "max_overdue": 0},
+            2: {"min_deals": 10, "min_rating": 4.0, "max_overdue": 1},
+            1: {"min_deals": 3, "min_rating": 0.0, "max_overdue": 2},
+            0: {"min_deals": 0, "min_rating": 0.0, "max_overdue": float("inf")},
+        }
+    return {k: TrustThreshold(**v) for k, v in config.items()}
 
 
 # ============================================================================
-# 借閱限制配置
+# 借閱限制配置（從 settings 讀取，提供預設值）
 # ============================================================================
 
 
@@ -47,12 +54,18 @@ class BorrowingLimit:
     max_days: int | float
 
 
-BORROWING_LIMITS: dict[int, BorrowingLimit] = {
-    0: BorrowingLimit(max_books=1, max_days=30),
-    1: BorrowingLimit(max_books=3, max_days=60),
-    2: BorrowingLimit(max_books=5, max_days=90),
-    3: BorrowingLimit(max_books=float("inf"), max_days=float("inf")),
-}
+def _get_borrowing_limits() -> dict[int, BorrowingLimit]:
+    """從 settings 取得借閱限制配置。"""
+    config = getattr(settings, "BORROWING_LIMITS", None)
+    if config is None:
+        # 預設值（向後相容）
+        config = {
+            0: {"max_books": 1, "max_days": 30},
+            1: {"max_books": 3, "max_days": 60},
+            2: {"max_books": 5, "max_days": 90},
+            3: {"max_books": float("inf"), "max_days": float("inf")},
+        }
+    return {k: BorrowingLimit(**v) for k, v in config.items()}
 
 
 # ============================================================================
@@ -90,8 +103,9 @@ def compute_trust_level(metrics: UserMetrics) -> int:
     Returns:
         int: 0-3 的信用等級
     """
+    thresholds = _get_trust_thresholds()
     for level in [3, 2, 1]:
-        threshold = TRUST_THRESHOLDS[level]
+        threshold = thresholds[level]
         if (
             metrics.completed_deals >= threshold.min_deals
             and metrics.avg_rating >= threshold.min_rating
@@ -111,7 +125,8 @@ def compute_borrowing_limits(trust_level: int) -> BorrowingLimit:
     Returns:
         BorrowingLimit: 借閱限制
     """
-    return BORROWING_LIMITS.get(trust_level, BORROWING_LIMITS[0])
+    limits = _get_borrowing_limits()
+    return limits.get(trust_level, limits[0])
 
 
 # ============================================================================
