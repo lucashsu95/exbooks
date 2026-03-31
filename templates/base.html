@@ -63,6 +63,15 @@ min-height: max(884px, 100dvh);
 --safe-area-inset-right: env(safe-area-inset-right, 0px);
 }
 
+/* Safe Area padding classes */
+.safe-area-pb {
+padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+.safe-area-pt {
+padding-top: max(12px, env(safe-area-inset-top));
+}
+
 /* HTMX loading indicator */
 .htmx-indicator { opacity: 0; transition: opacity 300ms ease-in; }
 .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { opacity: 1; }

@@ -57,38 +57,50 @@ class="p-2 hover:bg-slate-100 rounded-full transition-colors relative">
                         <p class="text-xs font-bold uppercase tracking-wider text-slate-500">需要您處理的申請</p>
                         <span class="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">{{ pending_responder.count }} 筆</span>
                     </div>
-                    {% for deal in pending_responder %}
-                        <a href="{% url 'deals:detail' deal.id %}"
-                           class="block bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                            <div class="flex gap-4 items-center">
-                                <div class="w-16 h-20 bg-slate-200 rounded-lg flex-shrink-0 bg-cover bg-center overflow-hidden"
-                                     style="{% if deal.shared_book.official_book.cover_image %}background-image: url('{{ deal.shared_book.official_book.cover_image.url }}');
-                                            {% endif %}"></div>
-                                <div class="flex-1 min-w-0">
-                                    <h3 class="font-bold text-base truncate">{{ deal.shared_book.official_book.title }}</h3>
-                                    <div class="flex items-center gap-2 mt-1">
-                                        <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">{{ deal.get_deal_type_display }}</span>
-                                        <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">待回應</span>
-                                    </div>
-                                    <div class="flex items-center gap-2 mt-2">
-                                        <div class="size-6 rounded-full bg-primary/20 overflow-hidden">
-                                            {% if deal.applicant.profile.avatar %}
-                                                <img src="{{ deal.applicant.profile.avatar.url }}"
-                                                     alt="申請者頭像"
-                                                     class="w-full h-full object-cover" />
-                                            {% endif %}
-                                        </div>
-                                        <span class="text-sm text-slate-600">{{ deal.applicant.profile.nickname|default:deal.applicant.email
-                                        }}</span>
-                                    </div>
-                                </div>
-                                <div class="text-right flex-shrink-0">
-                                    <p class="text-xs text-slate-500">{{ deal.created_at|timesince }}</p>
-                                    <span class="material-symbols-outlined text-slate-400 mt-2">chevron_right</span>
-                                </div>
-                            </div>
-                        </a>
-                    {% endfor %}
+{% for deal in pending_responder %}
+<a href="{% url 'deals:detail' deal.id %}"
+class="block bg-white p-4 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-transform">
+<div class="flex gap-4 items-center">
+<!-- 書籍封面 - 統一尺寸 -->
+<div class="w-20 h-28 rounded-xl overflow-hidden shrink-0 shadow-md bg-slate-200">
+{% if deal.shared_book.official_book.cover_image %}
+<img src="{{ deal.shared_book.official_book.cover_image.url }}"
+alt="{{ deal.shared_book.official_book.title }}"
+class="w-full h-full object-cover" />
+{% else %}
+<div class="w-full h-full flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-400 text-3xl">menu_book</span>
+</div>
+{% endif %}
+</div>
+<!-- 內容區域 -->
+<div class="flex-1 min-w-0">
+<h3 class="font-bold text-base text-slate-900 line-clamp-2">{{ deal.shared_book.official_book.title }}</h3>
+<div class="flex items-center gap-2 mt-2">
+<span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">{{ deal.get_deal_type_display }}</span>
+<span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">待回應</span>
+</div>
+<div class="flex items-center gap-2 mt-2">
+<div class="size-7 rounded-full bg-primary/10 overflow-hidden border border-primary/20">
+{% if deal.applicant.profile.avatar %}
+<img src="{{ deal.applicant.profile.avatar.url }}"
+alt="申請者頭像"
+class="w-full h-full object-cover" />
+{% else %}
+<span class="material-symbols-outlined text-primary text-sm">person</span>
+{% endif %}
+</div>
+<span class="text-sm text-slate-600 font-medium">{{ deal.applicant.profile.nickname|default:deal.applicant.email }}</span>
+</div>
+</div>
+<!-- 時間與箭頭 -->
+<div class="text-right flex-shrink-0">
+<p class="text-xs text-slate-500">{{ deal.created_at|timesince }}</p>
+<span class="material-symbols-outlined text-primary mt-2">chevron_right</span>
+</div>
+</div>
+</a>
+{% endfor %}
                 {% else %}
                     <div class="bg-white rounded-xl p-8 text-center">
                         <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">inbox</span>
