@@ -15,7 +15,7 @@ from datetime import timedelta
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
-from django_fsm import can_proceed, TransitionNotAllowed
+from django_fsm import can_proceed
 
 from accounts.services.trust_service import get_borrowing_limits
 from books.models import SharedBook
