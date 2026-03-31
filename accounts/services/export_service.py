@@ -120,7 +120,6 @@ def collect_activity_stats(user):
     Returns:
         dict: 活動統計資料
     """
-    from django.db.models import Q
 
     # 貢獻書籍總數（用戶擁有的書籍數量）
     books_contributed_count = SharedBook.objects.filter(owner=user).count()

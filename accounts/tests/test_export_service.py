@@ -3,14 +3,12 @@
 
 import pytest
 from django.core.cache import cache
-from django.utils import timezone
 
 from accounts.services import export_service
 from accounts.services.export_service import (
     EXPORT_LIMIT_PER_DAY,
     ExportLimitExceededError,
 )
-from books.models import SharedBook
 from deals.models import Deal, Rating
 from tests.factories import (
     OfficialBookFactory,
