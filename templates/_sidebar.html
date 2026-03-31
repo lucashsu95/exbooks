@@ -1,138 +1,137 @@
 <!-- Sidebar Overlay -->
 <div id="sidebar-overlay"
-     class="fixed inset-0 bg-black/50 z-40 opacity-0 pointer-events-none transition-opacity duration-300"
-     onclick="toggleSidebar()"></div>
+class="fixed inset-0 bg-black/50 z-40 opacity-0 pointer-events-none transition-opacity duration-300"
+onclick="toggleSidebar()"></div>
 <!-- Sidebar -->
 <aside id="sidebar"
-       class="fixed top-0 left-0 h-full w-72 bg-white dark:bg-slate-900 z-50 transform -translate-x-full transition-transform duration-300 shadow-xl flex flex-col">
-    <!-- Header -->
-    <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-        <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">選單</h2>
-        <button onclick="toggleSidebar()"
-                class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-            <span class="material-symbols-outlined text-slate-500 dark:text-slate-400">close</span>
-        </button>
-    </div>
-    <!-- User Info (if logged in) -->
-    {% if user.is_authenticated %}
-        <div class="p-4 border-b border-slate-200 dark:border-slate-800">
-            <div class="flex items-center gap-3">
-                <div class="size-12 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border-2 border-primary">
-                    {% if user.profile.avatar %}
-                        <img src="{{ user.profile.avatar.url }}"
-                             alt="頭像"
-                             class="w-full h-full object-cover" />
-                    {% elif user.socialaccount_set.all.0.extra_data.picture %}
-                        <img src="{{ user.socialaccount_set.all.0.extra_data.picture }}"
-                             alt="Google 頭像"
-                             class="w-full h-full object-cover" />
-                    {% else %}
-                        <span class="text-primary font-bold text-lg">{{ user.profile.nickname|default:user.email|truncatechars:1 }}</span>
-                    {% endif %}
-                </div>
-                <div>
-                    <p class="font-bold text-slate-900 dark:text-slate-100">{{ user.profile.nickname|default:user.email }}</p>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">{{ user.email }}</p>
-                </div>
-            </div>
-        </div>
-    {% endif %}
-    <!-- Menu Items -->
-    <nav class="flex-1 overflow-y-auto py-2">
-        {% if user.is_authenticated %}
-            <a href="{% url 'books:bookshelf' %}"
-               class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                <span class="material-symbols-outlined text-primary">auto_stories</span>
-                <span class="text-slate-900 dark:text-slate-100">我的書架</span>
-            </a>
-        {% endif %}
-        <a href="{% url 'books:wishlist' %}"
-           class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-            <span class="material-symbols-outlined text-slate-500 dark:text-slate-400">favorite</span>
-            <span class="text-slate-900 dark:text-slate-100">願望書車</span>
-        </a>
-        <a href="{% url 'deals:notification_list' %}"
-           class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative">
-            <span class="material-symbols-outlined text-slate-500 dark:text-slate-400">notifications</span>
-            <span class="text-slate-900 dark:text-slate-100">通知中心</span>
-            {% if user.is_authenticated %}
-                <span id="notification-badge-sidebar"
-                      hx-get="{% url 'deals:notification_count' %}"
-                      hx-trigger="load"
-                      hx-swap="innerHTML">
-                    {% include 'deals/partials/notification_badge.html' with unread_count=0
-                    %}
-                </span>
+class="fixed top-0 left-0 h-full w-72 bg-white z-50 transform -translate-x-full transition-transform duration-300 shadow-xl flex flex-col">
+<!-- Header -->
+<div class="p-4 border-b border-slate-200 flex items-center justify-between">
+    <h2 class="text-lg font-bold text-slate-900">選單</h2>
+    <button type="button" onclick="toggleSidebar()"
+    class="p-2 rounded-lg hover:bg-slate-100 transition-colors">
+        <span class="material-symbols-outlined text-slate-500">close</span>
+    </button>
+</div>
+<!-- User Info (if logged in) -->
+{% if user.is_authenticated %}
+<div class="p-4 border-b border-slate-200">
+    <div class="flex items-center gap-3">
+        <div class="size-12 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border-2 border-primary">
+            {% if user.profile.avatar %}
+            <img src="{{ user.profile.avatar.url }}"
+            alt="頭像"
+            class="w-full h-full object-cover" />
+            {% elif user.socialaccount_set.all.0.extra_data.picture %}
+            <img src="{{ user.socialaccount_set.all.0.extra_data.picture }}"
+            alt="Google 頭像"
+            class="w-full h-full object-cover" />
+            {% else %}
+            <span class="text-primary font-bold text-lg">{{ user.profile.nickname|default:user.email|truncatechars:1 }}</span>
             {% endif %}
-        </a>
-        <a href="{% url 'deals:list' %}"
-           class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-            <span class="material-symbols-outlined text-slate-500 dark:text-slate-400">swap_horiz</span>
-            <span class="text-slate-900 dark:text-slate-100">交易紀錄</span>
-        </a>
-        {% if user.is_authenticated %}
-            <a href="{% url 'accounts:profile_edit' %}"
-               class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                <span class="material-symbols-outlined text-slate-500 dark:text-slate-400">settings</span>
-                <span class="text-slate-900 dark:text-slate-100">設定</span>
-            </a>
-        {% endif %}
-        <a href="#"
-           onclick=" alert('關於與幫助功能開發中'); return false; "
-           class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-            <span class="material-symbols-outlined text-slate-500 dark:text-slate-400">help</span>
-            <span class="text-slate-900 dark:text-slate-100">關於與幫助</span>
-            <span class="ml-auto text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">開發中</span>
-        </a>
-        {% if user.is_authenticated %}
-            <form method="post" action="{% url 'account_logout' %}" class="block">
-                {% csrf_token %}
-                <button type="submit"
-                        class="w-full flex items-center gap-3 px-4 py-3 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors text-rose-600 dark:text-rose-400">
-                    <span class="material-symbols-outlined">logout</span>
-                    <span>登出</span>
-                </button>
-            </form>
-        {% else %}
-            <a href="{% url 'account_login' %}"
-               class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                <span class="material-symbols-outlined text-primary">login</span>
-                <span class="text-slate-900 dark:text-slate-100">登入 / 註冊</span>
-            </a>
-        {% endif %}
-    </nav>
-    <!-- Footer -->
-    <div class="p-4 border-t border-slate-200 dark:border-slate-800 text-center">
-        <p class="text-xs text-slate-400 dark:text-slate-500">Exbooks 共享書籍 v1.0</p>
+        </div>
+        <div>
+            <p class="font-bold text-slate-900">{{ user.profile.nickname|default:user.email }}</p>
+            <p class="text-xs text-slate-500">{{ user.email }}</p>
+        </div>
     </div>
+</div>
+{% endif %}
+<!-- Menu Items -->
+<nav class="flex-1 overflow-y-auto py-2">
+    {% if user.is_authenticated %}
+    <a href="{% url 'books:bookshelf' %}"
+    class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 transition-colors">
+        <span class="material-symbols-outlined text-primary">auto_stories</span>
+        <span class="text-slate-900">我的書架</span>
+    </a>
+    {% endif %}
+    <a href="{% url 'books:wishlist' %}"
+    class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 transition-colors">
+        <span class="material-symbols-outlined text-slate-500">favorite</span>
+        <span class="text-slate-900">願望書車</span>
+    </a>
+    <a href="{% url 'deals:notification_list' %}"
+    class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 transition-colors relative">
+        <span class="material-symbols-outlined text-slate-500">notifications</span>
+        <span class="text-slate-900">通知中心</span>
+        {% if user.is_authenticated %}
+        <span id="notification-badge-sidebar"
+        hx-get="{% url 'deals:notification_count' %}"
+        hx-trigger="load"
+        hx-swap="innerHTML">
+            {% include 'deals/partials/notification_badge.html' with unread_count=0 %}
+        </span>
+        {% endif %}
+    </a>
+    <a href="{% url 'deals:list' %}"
+    class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 transition-colors">
+        <span class="material-symbols-outlined text-slate-500">swap_horiz</span>
+        <span class="text-slate-900">交易紀錄</span>
+    </a>
+    {% if user.is_authenticated %}
+    <a href="{% url 'accounts:profile_edit' %}"
+    class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 transition-colors">
+        <span class="material-symbols-outlined text-slate-500">settings</span>
+        <span class="text-slate-900">設定</span>
+    </a>
+    {% endif %}
+    <a href="#"
+    onclick="alert('關於與幫助功能開發中'); return false;"
+    class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 transition-colors">
+        <span class="material-symbols-outlined text-slate-500">help</span>
+        <span class="text-slate-900">關於與幫助</span>
+        <span class="ml-auto text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">開發中</span>
+    </a>
+    {% if user.is_authenticated %}
+    <form method="post" action="{% url 'account_logout' %}" class="block">
+        {% csrf_token %}
+        <button type="submit"
+        class="w-full flex items-center gap-3 px-4 py-3 hover:bg-rose-50 transition-colors text-rose-600">
+            <span class="material-symbols-outlined">logout</span>
+            <span>登出</span>
+        </button>
+    </form>
+    {% else %}
+    <a href="{% url 'account_login' %}"
+    class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 transition-colors">
+        <span class="material-symbols-outlined text-primary">login</span>
+        <span class="text-slate-900">登入 / 註冊</span>
+    </a>
+    {% endif %}
+</nav>
+<!-- Footer -->
+<div class="p-4 border-t border-slate-200 text-center">
+    <p class="text-xs text-slate-400">Exbooks 共享書籍 v1.0</p>
+</div>
 </aside>
 <script>
-  function toggleSidebar() {
+function toggleSidebar() {
     const sidebar = document.getElementById("sidebar");
     const overlay = document.getElementById("sidebar-overlay");
 
     if (sidebar.classList.contains("-translate-x-full")) {
-      sidebar.classList.remove("-translate-x-full");
-      sidebar.classList.add("translate-x-0");
-      overlay.classList.remove("opacity-0", "pointer-events-none");
-      overlay.classList.add("opacity-100", "pointer-events-auto");
-      document.body.style.overflow = "hidden";
+        sidebar.classList.remove("-translate-x-full");
+        sidebar.classList.add("translate-x-0");
+        overlay.classList.remove("opacity-0", "pointer-events-none");
+        overlay.classList.add("opacity-100", "pointer-events-auto");
+        document.body.style.overflow = "hidden";
     } else {
-      sidebar.classList.remove("translate-x-0");
-      sidebar.classList.add("-translate-x-full");
-      overlay.classList.remove("opacity-100", "pointer-events-auto");
-      overlay.classList.add("opacity-0", "pointer-events-none");
-      document.body.style.overflow = "";
+        sidebar.classList.remove("translate-x-0");
+        sidebar.classList.add("-translate-x-full");
+        overlay.classList.remove("opacity-100", "pointer-events-auto");
+        overlay.classList.add("opacity-0", "pointer-events-none");
+        document.body.style.overflow = "";
     }
-  }
+}
 
-  // Close sidebar on Escape key
-  document.addEventListener("keydown", function (e) {
+// Close sidebar on Escape key
+document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") {
-      const sidebar = document.getElementById("sidebar");
-      if (!sidebar.classList.contains("-translate-x-full")) {
-        toggleSidebar();
-      }
+        const sidebar = document.getElementById("sidebar");
+        if (!sidebar.classList.contains("-translate-x-full")) {
+            toggleSidebar();
+        }
     }
-  });
+});
 </script>

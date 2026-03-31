@@ -55,6 +55,14 @@ body {
 min-height: max(884px, 100dvh);
 }
 
+/* Safe Area 變數 - iPhone X+ 全面屏適配 */
+:root {
+--safe-area-inset-top: env(safe-area-inset-top, 0px);
+--safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+--safe-area-inset-left: env(safe-area-inset-left, 0px);
+--safe-area-inset-right: env(safe-area-inset-right, 0px);
+}
+
 /* HTMX loading indicator */
 .htmx-indicator { opacity: 0; transition: opacity 300ms ease-in; }
 .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { opacity: 1; }
@@ -196,21 +204,28 @@ font-variation-settings: 'FILL' 1;
   {% endif %}
 })();
         </script>
-        <!-- Sidebar -->
-        {% include '_sidebar.html' %}
+<!-- Sidebar (已廢除 - 手機版使用 Bottom Nav) -->
+<!-- {% include '_sidebar.html' %} -->
         <!-- Search Modal -->
         {% include '_search_modal.html' %}
-        <!-- Messages (Toast) -->
-        {% if messages %}
-            <div class="fixed top-4 right-4 z-50 flex flex-col gap-2"
-                 id="toast-container">
-                {% for message in messages %}
-                    <div class="toast rounded-lg border px-4 py-3 text-sm shadow-md {% if message.tags == 'success' %}border-green-200 bg-green-50 text-green-800-green-900/30-green-800-green-400 {% elif message.tags == 'error' %}border-red-200 bg-red-50 text-red-800-red-900/30-red-800-red-400 {% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-800-amber-900/30-amber-800-amber-400 {% else %}border-blue-200 bg-blue-50 text-blue-800-blue-900/30-blue-800-blue-400{% endif %}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
+<!-- Messages (Toast) - Safe Area 適配 -->
+{% if messages %}
+<div class="fixed top-4 right-4 z-50 flex flex-col gap-2 toast-safe"
+id="toast-container">
+{% for message in messages %}
+<div class="toast rounded-lg border px-4 py-3 text-sm shadow-md {% if message.tags == 'success' %}border-green-200 bg-green-50 text-green-800 {% elif message.tags == 'error' %}border-red-200 bg-red-50 text-red-800 {% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-800 {% else %}border-blue-200 bg-blue-50 text-blue-800{% endif %}">
+{{ message }}
+</div>
+{% endfor %}
+</div>
+<style>
+/* Toast 位置 - 考慮劉海螢幕 */
+.toast-safe {
+top: max(16px, env(safe-area-inset-top, 0px));
+right: max(16px, env(safe-area-inset-right, 0px));
+}
+</style>
+{% endif %}
         <!-- Main Content Wrapper -->
         <div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light-background-dark overflow-x-hidden fade-in">
             {% block content %}{% endblock %}

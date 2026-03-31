@@ -1,279 +1,278 @@
 {% extends 'base.html' %}
 {% block title %}Exbooks - 交易詳情{% endblock %}
 {% block content %}
-    <!-- Top Navigation -->
-    <div class="flex items-center bg-white p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200">
-        <a href="{% url 'deals:list' %}"
-           class="text-slate-900 flex size-12 shrink-0 items-center cursor-pointer">
-            <span class="material-symbols-outlined">arrow_back</span>
-        </a>
-        <h2 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">交易詳情</h2>
-        <div class="flex w-12 items-center justify-end">
-            <button type="button"
-                    class="flex items-center justify-center rounded-lg h-12 bg-transparent text-slate-900 p-0">
-                <span class="material-symbols-outlined">more_horiz</span>
-            </button>
-        </div>
-    </div>
-    <!-- Status Badge -->
-    <div class="px-4 py-4">
-        <div class="flex items-center justify-center">
-            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full {% if deal.status == 'Q' %}bg-amber-100 text-amber-700 {% elif deal.status == 'P' %}bg-blue-100 dark:bg-blue-900/30 text-blue-700 {% elif deal.status == 'M' %}bg-green-100 text-green-700 {% elif deal.status == 'D' %}bg-slate-100 text-slate-700 {% elif deal.status == 'X' %}bg-rose-100 dark:bg-rose-900/30 text-rose-700{% endif %}">
-                <span class="material-symbols-outlined text-lg">
-                    {% if deal.status == 'Q' %}
-                        schedule
-                    {% elif deal.status == 'P' %}
-                        how_to_reg
-                    {% elif deal.status == 'M' %}
-                        handshake
-                    {% elif deal.status == 'D' %}
-                        done_all
-                    {% elif deal.status == 'X' %}
-                        cancel
-                    {% endif %}
-                </span>
-                <span class="font-bold">{{ deal.get_status_display }}</span>
-            </div>
-        </div>
-    </div>
-    <!-- Status Timeline -->
-    <div class="px-4 pb-4">
-        <div class="bg-white rounded-xl p-4 border border-slate-200">
-            <div class="flex items-center justify-between">
-                <!-- 已請求 -->
-                <div class="flex flex-col items-center gap-1">
-                    <div class="size-8 rounded-full bg-primary flex items-center justify-center text-white">
-                        <span class="material-symbols-outlined text-sm">check</span>
-                    </div>
-                    <span class="text-xs font-medium text-slate-600">已請求</span>
-                </div>
-                <div class="flex-1 h-[2px] bg-slate-200 mx-2"></div>
-                <!-- 已回應 -->
-                <div class="flex flex-col items-center gap-1 {% if deal.status == 'Q' %}opacity-50{% endif %}">
-                    <div class="size-8 rounded-full {% if deal.status != 'Q' %}bg-primary text-white{% else %}border-2 border-slate-300 dark:border-slate-600{% endif %} flex items-center justify-center">
-                        <span class="material-symbols-outlined text-sm">how_to_reg</span>
-                    </div>
-                    <span class="text-xs font-medium {% if deal.status == 'Q' %}text-slate-400{% else %}text-slate-600{% endif %}">已回應</span>
-                </div>
-                <div class="flex-1 h-[2px] bg-slate-200 mx-2"></div>
-                <!-- 已面交 -->
-                <div class="flex flex-col items-center gap-1 {% if deal.status in 'QP' %}opacity-50{% endif %}">
-                    <div class="size-8 rounded-full {% if deal.status in 'MD' %}bg-primary text-white{% else %}border-2 border-slate-300 dark:border-slate-600{% endif %} flex items-center justify-center">
-                        <span class="material-symbols-outlined text-sm">handshake</span>
-                    </div>
-                    <span class="text-xs font-medium {% if deal.status in 'QP' %}text-slate-400{% else %}text-slate-600{% endif %}">已面交</span>
-                </div>
-                <div class="flex-1 h-[2px] bg-slate-200 mx-2"></div>
-                <!-- 已完成 -->
-                <div class="flex flex-col items-center gap-1 {% if deal.status in 'QPMD' %}{% if deal.status != 'D' %}opacity-50{% endif %}{% endif %}">
-                    <div class="size-8 rounded-full {% if deal.status == 'D' %}bg-primary text-white{% else %}border-2 border-slate-300 dark:border-slate-600{% endif %} flex items-center justify-center">
-                        <span class="material-symbols-outlined text-sm">done_all</span>
-                    </div>
-                    <span class="text-xs font-medium {% if deal.status == 'D' %}text-slate-600{% else %}text-slate-400{% endif %}">已完成</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Book Info Card -->
-    <div class="px-4 mb-4">
-        <div class="bg-white rounded-xl border border-slate-200 p-4">
-            <div class="flex gap-4">
-                <div class="w-20 h-28 rounded-lg bg-slate-200 overflow-hidden shrink-0 bg-cover bg-center"
-                     style="{% if deal.shared_book.official_book.cover_image %}background-image: url('{{ deal.shared_book.official_book.cover_image.url }}');
-                            {% endif %}"></div>
-                <div class="flex-1">
-                    <h3 class="text-slate-900 font-bold text-lg mb-1">{{ deal.shared_book.official_book.title }}</h3>
-                    <p class="text-slate-600 text-sm mb-2">{{ deal.shared_book.official_book.author }}</p>
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">{{ deal.get_deal_type_display }}</span>
-                    </div>
-                    <p class="text-xs text-slate-500">
-                        <span class="material-symbols-outlined text-sm align-middle">schedule</span>
-                        建立於 {{ deal.created_at|date:"Y/n/j H:i" }}
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Participants Section -->
-    <div class="px-4 mb-4">
-        <h4 class="text-slate-900 font-bold mb-3 flex items-center gap-2">
-            <span class="material-symbols-outlined text-primary">people</span>
-            交易雙方
-        </h4>
-        <div class="grid grid-cols-2 gap-3">
-            <!-- Applicant -->
-            <div class="bg-white rounded-xl border border-slate-200 p-3">
-                <p class="text-xs text-slate-500 uppercase font-bold tracking-tighter mb-2">申請者</p>
-                <div class="flex items-center gap-2">
-                    <div class="size-10 rounded-full bg-primary/20 overflow-hidden border-2 border-primary">
-                        {% if deal.applicant.profile.avatar %}
-                            <img src="{{ deal.applicant.profile.avatar.url }}"
-                                 alt="申請者頭像"
-                                 class="w-full h-full object-cover" />
-                        {% endif %}
-                    </div>
-                    <div>
-                        <p class="text-slate-900 font-bold text-sm">{{ deal.applicant.profile.nickname|default:deal.applicant.email }}</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Responder -->
-            <div class="bg-white rounded-xl border border-slate-200 p-3">
-                <p class="text-xs text-slate-500 uppercase font-bold tracking-tighter mb-2">回應者</p>
-                <div class="flex items-center gap-2">
-                    <div class="size-10 rounded-full bg-primary/20 overflow-hidden border-2 border-slate-300">
-                        {% if deal.responder.profile.avatar %}
-                            <img src="{{ deal.responder.profile.avatar.url }}"
-                                 alt="回應者頭像"
-                                 class="w-full h-full object-cover" />
-                        {% endif %}
-                    </div>
-                    <div>
-                        <p class="text-slate-900 font-bold text-sm">{{ deal.responder.profile.nickname|default:deal.responder.email }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Message Section (留言協商區) -->
-    {% if deal.status in 'QP' %}
-        <div class="px-4 mb-32">
-            <h4 class="text-slate-900 font-bold mb-3 flex items-center gap-2">
-                <span class="material-symbols-outlined text-primary">chat</span>
-                留言協商
-            </h4>
-            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                <!-- Messages List -->
-                <div id="message-list" class="p-4 space-y-4 max-h-64 overflow-y-auto">
-                    {% include 'deals/partials/message_list.html' with messages=messages %}
-                </div>
-                <!-- Message Input -->
-                <div class="border-t border-slate-200 p-3">
-                    <form hx-post="{% url 'deals:message_send' deal.id %}"
-                          hx-target="#message-list"
-                          hx-swap="innerHTML"
-                          hx-on-htmx-after-request="this.reset()"
-                          class="flex items-center gap-2">
-                        {% csrf_token %}
-                        <input type="text"
-                               name="content"
-                               class="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                               placeholder="輸入訊息..."
-                               autocomplete="off"
-                               required>
-                        <button type="submit"
-                                class="size-10 rounded-xl bg-primary text-white flex items-center justify-center active:scale-[0.95] transition-transform">
-                            <span class="material-symbols-outlined">send</span>
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    {% endif %}
-    <!-- Action Buttons -->
-    {% if deal.status == 'Q' and is_responder %}
-        <div class="px-4 mb-32">
-            <div class="bg-white rounded-xl border border-slate-200 p-4">
-                <p class="text-sm text-slate-600 mb-3">您是此交易的回應者，請選擇是否接受申請：</p>
-                <div class="flex gap-3">
-                    <form method="post"
-                          action="{% url 'deals:accept' deal.id %}"
-                          class="flex-1">
-                        {% csrf_token %}
-                        <button type="submit"
-                                class="w-full bg-primary text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-                            <span class="material-symbols-outlined">check</span>
-                            接受
-                        </button>
-                    </form>
-                    <form method="post"
-                          action="{% url 'deals:reject' deal.id %}"
-                          class="flex-1">
-                        {% csrf_token %}
-                        <button type="submit"
-                                class="w-full bg-rose-50 text-rose-600 font-bold py-3 rounded-xl border border-rose-200 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-                            <span class="material-symbols-outlined">close</span>
-                            拒絕
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    {% elif deal.status == 'Q' and is_applicant %}
-        <div class="px-4 mb-32">
-            <div class="bg-white rounded-xl border border-slate-200 p-4">
-                <p class="text-sm text-slate-600 mb-3">您是此交易的申請者：</p>
-                <form method="post" action="{% url 'deals:cancel' deal.id %}">
-                    {% csrf_token %}
-                    <button type="submit"
-                            class="w-full bg-rose-50 text-rose-600 font-bold py-3 rounded-xl border border-rose-200 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-                        <span class="material-symbols-outlined">cancel</span>
-                        取消申請
-                    </button>
-                </form>
-            </div>
-        </div>
-    {% elif deal.status == 'P' %}
-        <div class="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md p-4 border-t border-slate-200 dark:border-slate-800">
-            <form method="post" action="{% url 'deals:complete' deal.id %}">
-                {% csrf_token %}
-                <button type="submit"
-                        class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-                    <span class="material-symbols-outlined">check_circle</span>
-                    確認面交完成
-                </button>
-            </form>
-        </div>
-{% elif deal.status == 'M' %}
-<div class="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md p-4 border-t border-slate-200 dark:border-slate-800">
-    <div class="space-y-3">
-        {% if deal.shared_book.transferability == 'RETURN' and is_responder %}
-        <!-- 確認歸還按鈕（僅「閱畢即還」模式且為持有者可見） -->
-        <form method="post" action="{% url 'deals:confirm_return' deal.id %}">
-            {% csrf_token %}
-            <button type="submit"
-                    class="w-full bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-green-600/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-                <span class="material-symbols-outlined">check_circle</span>
-                確認歸還並重新上架
-            </button>
-        </form>
+<!-- Top Navigation -->
+<div class="flex items-center bg-white p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200">
+<a href="{% url 'deals:list' %}"
+    class="text-slate-900 flex size-12 shrink-0 items-center cursor-pointer">
+    <span class="material-symbols-outlined">arrow_back</span>
+</a>
+<h2 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">交易詳情</h2>
+<div class="flex w-12 items-center justify-end">
+    <button type="button"
+    class="flex items-center justify-center rounded-lg h-12 bg-transparent text-slate-900 p-0">
+    <span class="material-symbols-outlined">more_horiz</span>
+    </button>
+</div>
+</div>
+<!-- Status Badge -->
+<div class="px-4 py-4">
+<div class="flex items-center justify-center">
+    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full {% if deal.status == 'Q' %}bg-amber-100 text-amber-700 {% elif deal.status == 'P' %}bg-blue-100 text-blue-700 {% elif deal.status == 'M' %}bg-green-100 text-green-700 {% elif deal.status == 'D' %}bg-slate-100 text-slate-700 {% elif deal.status == 'X' %}bg-rose-100 text-rose-700{% endif %}">
+    <span class="material-symbols-outlined text-lg">
+        {% if deal.status == 'Q' %}
+        schedule
+        {% elif deal.status == 'P' %}
+        how_to_reg
+        {% elif deal.status == 'M' %}
+        handshake
+        {% elif deal.status == 'D' %}
+        done_all
+        {% elif deal.status == 'X' %}
+        cancel
         {% endif %}
-        {% if is_applicant %}
-        <!-- 上傳書況照片按鈕（僅申請者可見） -->
-        <a href="{% url 'deals:upload_photos' deal.id %}"
-           class="block w-full bg-amber-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-            <span class="material-symbols-outlined">photo_camera</span>
-            上傳書況照片
-        </a>
-        {% endif %}
-        <a href="{% url 'deals:rating_create' deal.id %}"
-           class="block w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-            <span class="material-symbols-outlined">star</span>
-            前往評價
-        </a>
+    </span>
+    <span class="font-bold">{{ deal.get_status_display }}</span>
     </div>
 </div>
-{% endif %}
-    <!-- Extension Section -->
-    {% if deal.status == 'O' or extensions %}
-        <div class="px-4 mb-4">
-            <div class="flex items-center justify-between mb-3">
-                <h4 class="text-slate-900 font-bold flex items-center gap-2">
-                    <span class="material-symbols-outlined text-primary">more_time</span>
-                    延長申請
-                </h4>
-                {% if deal.status == 'O' and is_applicant %}
-                    <a href="{% url 'deals:extension_request' deal.id %}"
-                       class="text-sm text-primary font-bold flex items-center gap-1">
-                        <span class="material-symbols-outlined text-sm">add</span>
-                        申請延長
-                    </a>
-                {% endif %}
-            </div>
-            <div id="extension-list" class="space-y-3">
-                {% include 'deals/partials/extension_list.html' with extensions=extensions %}
-            </div>
+</div>
+<!-- Status Timeline -->
+<div class="px-4 pb-4">
+<div class="bg-white rounded-xl p-4 border border-slate-200">
+    <div class="flex items-center justify-between">
+    <!-- 已請求 -->
+    <div class="flex flex-col items-center gap-1">
+        <div class="size-8 rounded-full bg-primary flex items-center justify-center text-white">
+        <span class="material-symbols-outlined text-sm">check</span>
         </div>
+        <span class="text-xs font-medium text-slate-600">已請求</span>
+    </div>
+    <div class="flex-1 h-[2px] bg-slate-200 mx-2"></div>
+    <!-- 已回應 -->
+    <div class="flex flex-col items-center gap-1 {% if deal.status == 'Q' %}opacity-50{% endif %}">
+        <div class="size-8 rounded-full {% if deal.status != 'Q' %}bg-primary text-white{% else %}border-2 border-slate-300{% endif %} flex items-center justify-center">
+        <span class="material-symbols-outlined text-sm">how_to_reg</span>
+        </div>
+        <span class="text-xs font-medium {% if deal.status == 'Q' %}text-slate-400{% else %}text-slate-600{% endif %}">已回應</span>
+    </div>
+    <div class="flex-1 h-[2px] bg-slate-200 mx-2"></div>
+    <!-- 已面交 -->
+    <div class="flex flex-col items-center gap-1 {% if deal.status in 'QP' %}opacity-50{% endif %}">
+        <div class="size-8 rounded-full {% if deal.status in 'MD' %}bg-primary text-white{% else %}border-2 border-slate-300{% endif %} flex items-center justify-center">
+        <span class="material-symbols-outlined text-sm">handshake</span>
+        </div>
+        <span class="text-xs font-medium {% if deal.status in 'QP' %}text-slate-400{% else %}text-slate-600{% endif %}">已面交</span>
+    </div>
+    <div class="flex-1 h-[2px] bg-slate-200 mx-2"></div>
+    <!-- 已完成 -->
+    <div class="flex flex-col items-center gap-1 {% if deal.status in 'QPMD' %}{% if deal.status != 'D' %}opacity-50{% endif %}{% endif %}">
+        <div class="size-8 rounded-full {% if deal.status == 'D' %}bg-primary text-white{% else %}border-2 border-slate-300{% endif %} flex items-center justify-center">
+        <span class="material-symbols-outlined text-sm">done_all</span>
+        </div>
+        <span class="text-xs font-medium {% if deal.status == 'D' %}text-slate-600{% else %}text-slate-400{% endif %}">已完成</span>
+    </div>
+    </div>
+</div>
+</div>
+<!-- Book Info Card -->
+<div class="px-4 mb-4">
+<div class="bg-white rounded-xl border border-slate-200 p-4">
+    <div class="flex gap-4">
+    <div class="w-20 h-28 rounded-lg bg-slate-200 overflow-hidden shrink-0 bg-cover bg-center"
+        style="{% if deal.shared_book.official_book.cover_image %}background-image: url('{{ deal.shared_book.official_book.cover_image.url }}');{% endif %}"></div>
+    <div class="flex-1">
+        <h3 class="text-slate-900 font-bold text-lg mb-1">{{ deal.shared_book.official_book.title }}</h3>
+        <p class="text-slate-600 text-sm mb-2">{{ deal.shared_book.official_book.author }}</p>
+        <div class="flex items-center gap-2 mb-2">
+        <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">{{ deal.get_deal_type_display }}</span>
+        </div>
+        <p class="text-xs text-slate-500">
+        <span class="material-symbols-outlined text-sm align-middle">schedule</span>
+        建立於 {{ deal.created_at|date:"Y/n/j H:i" }}
+        </p>
+    </div>
+    </div>
+</div>
+</div>
+<!-- Participants Section -->
+<div class="px-4 mb-4">
+<h4 class="text-slate-900 font-bold mb-3 flex items-center gap-2">
+    <span class="material-symbols-outlined text-primary">people</span>
+    交易雙方
+</h4>
+<div class="grid grid-cols-2 gap-3">
+    <!-- Applicant -->
+    <div class="bg-white rounded-xl border border-slate-200 p-3">
+    <p class="text-xs text-slate-500 uppercase font-bold tracking-tighter mb-2">申請者</p>
+    <div class="flex items-center gap-2">
+        <div class="size-10 rounded-full bg-primary/20 overflow-hidden border-2 border-primary">
+        {% if deal.applicant.profile.avatar %}
+        <img src="{{ deal.applicant.profile.avatar.url }}"
+            alt="申請者頭像"
+            class="w-full h-full object-cover" />
+        {% endif %}
+        </div>
+        <div>
+        <p class="text-slate-900 font-bold text-sm">{{ deal.applicant.profile.nickname|default:deal.applicant.email }}</p>
+        </div>
+    </div>
+    </div>
+    <!-- Responder -->
+    <div class="bg-white rounded-xl border border-slate-200 p-3">
+    <p class="text-xs text-slate-500 uppercase font-bold tracking-tighter mb-2">回應者</p>
+    <div class="flex items-center gap-2">
+        <div class="size-10 rounded-full bg-primary/20 overflow-hidden border-2 border-slate-300">
+        {% if deal.responder.profile.avatar %}
+        <img src="{{ deal.responder.profile.avatar.url }}"
+            alt="回應者頭像"
+            class="w-full h-full object-cover" />
+        {% endif %}
+        </div>
+        <div>
+        <p class="text-slate-900 font-bold text-sm">{{ deal.responder.profile.nickname|default:deal.responder.email }}</p>
+        </div>
+    </div>
+    </div>
+</div>
+</div>
+<!-- Message Section (留言協商區) -->
+{% if deal.status in 'QP' %}
+<div class="px-4 mb-32">
+<h4 class="text-slate-900 font-bold mb-3 flex items-center gap-2">
+    <span class="material-symbols-outlined text-primary">chat</span>
+    留言協商
+</h4>
+<div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <!-- Messages List -->
+    <div id="message-list" class="p-4 space-y-4 max-h-64 overflow-y-auto">
+    {% include 'deals/partials/message_list.html' with messages=messages %}
+    </div>
+    <!-- Message Input -->
+    <div class="border-t border-slate-200 p-3">
+    <form hx-post="{% url 'deals:message_send' deal.id %}"
+        hx-target="#message-list"
+        hx-swap="innerHTML"
+        hx-on-htmx-after-request="this.reset()"
+        class="flex items-center gap-2">
+        {% csrf_token %}
+        <input type="text"
+        name="content"
+        class="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+        placeholder="輸入訊息..."
+        autocomplete="off"
+        required>
+        <button type="submit"
+        class="size-10 rounded-xl bg-primary text-white flex items-center justify-center active:scale-[0.95] transition-transform">
+        <span class="material-symbols-outlined">send</span>
+        </button>
+    </form>
+    </div>
+</div>
+</div>
+{% endif %}
+<!-- Action Buttons -->
+{% if deal.status == 'Q' and is_responder %}
+<div class="px-4 mb-32">
+<div class="bg-white rounded-xl border border-slate-200 p-4">
+    <p class="text-sm text-slate-600 mb-3">您是此交易的回應者，請選擇是否接受申請：</p>
+    <div class="flex gap-3">
+    <form method="post"
+        action="{% url 'deals:accept' deal.id %}"
+        class="flex-1">
+        {% csrf_token %}
+        <button type="submit"
+        class="w-full bg-primary text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+        <span class="material-symbols-outlined">check</span>
+        接受
+        </button>
+    </form>
+    <form method="post"
+        action="{% url 'deals:reject' deal.id %}"
+        class="flex-1">
+        {% csrf_token %}
+        <button type="submit"
+        class="w-full bg-rose-50 text-rose-600 font-bold py-3 rounded-xl border border-rose-200 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+        <span class="material-symbols-outlined">close</span>
+        拒絕
+        </button>
+    </form>
+    </div>
+</div>
+</div>
+{% elif deal.status == 'Q' and is_applicant %}
+<div class="px-4 mb-32">
+<div class="bg-white rounded-xl border border-slate-200 p-4">
+    <p class="text-sm text-slate-600 mb-3">您是此交易的申請者：</p>
+    <form method="post" action="{% url 'deals:cancel' deal.id %}">
+    {% csrf_token %}
+    <button type="submit"
+        class="w-full bg-rose-50 text-rose-600 font-bold py-3 rounded-xl border border-rose-200 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+        <span class="material-symbols-outlined">cancel</span>
+        取消申請
+    </button>
+    </form>
+</div>
+</div>
+{% elif deal.status == 'P' %}
+<div class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md p-4 border-t border-slate-200">
+<form method="post" action="{% url 'deals:complete' deal.id %}">
+    {% csrf_token %}
+    <button type="submit"
+    class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+    <span class="material-symbols-outlined">check_circle</span>
+    確認面交完成
+    </button>
+</form>
+</div>
+{% elif deal.status == 'M' %}
+<div class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md p-4 border-t border-slate-200">
+<div class="space-y-3">
+    {% if deal.shared_book.transferability == 'RETURN' and is_responder %}
+    <!-- 確認歸還按鈕（僅「閱畢即還」模式且為持有者可見） -->
+    <form method="post" action="{% url 'deals:confirm_return' deal.id %}">
+        {% csrf_token %}
+        <button type="submit"
+        class="w-full bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-green-600/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+        <span class="material-symbols-outlined">check_circle</span>
+        確認歸還並重新上架
+        </button>
+    </form>
     {% endif %}
+    {% if is_applicant %}
+    <!-- 上傳書況照片按鈕（僅申請者可見） -->
+    <a href="{% url 'deals:upload_photos' deal.id %}"
+        class="block w-full bg-amber-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+        <span class="material-symbols-outlined">photo_camera</span>
+        上傳書況照片
+    </a>
+    {% endif %}
+    <a href="{% url 'deals:rating_create' deal.id %}"
+    class="block w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+    <span class="material-symbols-outlined">star</span>
+    前往評價
+    </a>
+</div>
+</div>
+{% endif %}
+<!-- Extension Section -->
+{% if deal.status == 'O' or extensions %}
+<div class="px-4 mb-4">
+<div class="flex items-center justify-between mb-3">
+    <h4 class="text-slate-900 font-bold flex items-center gap-2">
+    <span class="material-symbols-outlined text-primary">more_time</span>
+    延長申請
+    </h4>
+    {% if deal.status == 'O' and is_applicant %}
+    <a href="{% url 'deals:extension_request' deal.id %}"
+    class="text-sm text-primary font-bold flex items-center gap-1">
+        <span class="material-symbols-outlined text-sm">add</span>
+        申請延長
+    </a>
+    {% endif %}
+</div>
+<div id="extension-list" class="space-y-3">
+    {% include 'deals/partials/extension_list.html' with extensions=extensions %}
+</div>
+</div>
+{% endif %}
 {% endblock %}
