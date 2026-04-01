@@ -8,12 +8,7 @@
             <span class="material-symbols-outlined">arrow_back</span>
         </a>
         <h2 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">交易詳情</h2>
-        <div class="flex w-12 items-center justify-end">
-            <button type="button"
-                    class="flex items-center justify-center rounded-lg h-12 bg-transparent text-slate-900 p-0">
-                <span class="material-symbols-outlined">more_horiz</span>
-            </button>
-        </div>
+        <div></div>
     </div>
     <!-- Status Badge -->
     <div class="px-4 py-4">
@@ -247,11 +242,13 @@
                         上傳書況照片
                     </a>
                 {% endif %}
-                <a href="{% url 'deals:rating_create' deal.id %}"
-                   class="block w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-                    <span class="material-symbols-outlined">star</span>
-                    前往評價
-                </a>
+                {% if is_applicant and not deal.applicant_rated or is_responder and not deal.responder_rated %}
+                    <a href="{% url 'deals:rating_create' deal.id %}"
+                       class="block w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+                        <span class="material-symbols-outlined">star</span>
+                        前往評價
+                    </a>
+                {% endif %}
             </div>
         </div>
     {% endif %}

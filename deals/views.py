@@ -151,16 +151,18 @@ def deal_list(request):
     )
 
     # 待評價
-    pending_rating = base_qs.filter(
-        Q(applicant=user) | Q(responder=user),
-        status=Deal.Status.MEETED,
+    pending_rating = base_qs.filter(status=Deal.Status.MEETED).filter(
+        Q(applicant=user, applicant_rated=False)
+        | Q(responder=user, responder_rated=False)
     )
 
-    # 歷史紀錄
+    # 歷史紀錄（加上我已評價但對方未評價的）
     history = base_qs.filter(
-        Q(applicant=user) | Q(responder=user),
-        status__in=[Deal.Status.DONE, Deal.Status.CANCELLED],
-    )
+        Q(applicant=user, status__in=[Deal.Status.DONE, Deal.Status.CANCELLED])
+        | Q(responder=user, status__in=[Deal.Status.DONE, Deal.Status.CANCELLED])
+        | Q(applicant=user, status=Deal.Status.MEETED, applicant_rated=True)
+        | Q(responder=user, status=Deal.Status.MEETED, responder_rated=True)
+    ).distinct()
 
     return render(
         request,
