@@ -277,9 +277,10 @@ def book_all(request):
     # 使用 BookSearchForm 處理 GET 參數
     form = BookSearchForm(request.GET)
 
-    # 基礎查詢
+    # 基礎查詢：只顯示可移轉 (T)
     all_books = (
         SharedBook.objects.select_related("official_book", "keeper__profile")
+        .filter(status=SharedBook.Status.TRANSFERABLE)
         .exclude(keeper=request.user)
         .order_by("-updated_at")
     )
@@ -293,11 +294,6 @@ def book_all(request):
             | Q(official_book__isbn__icontains=q)
             | Q(official_book__publisher__icontains=q)
         )
-
-    # 狀態篩選
-    status = request.GET.get("status", "").strip()
-    if status:
-        all_books = all_books.filter(status=status)
 
     # 流通性篩選
     transferability = request.GET.get("transferability", "").strip()
@@ -320,7 +316,6 @@ def book_all(request):
         {
             "page_obj": page_obj,
             "search_query": q,
-            "current_status": status,
             "current_transferability": transferability,
             "current_category": category,
             "form": form,

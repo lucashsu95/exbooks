@@ -28,26 +28,11 @@
                        value="{{ search_query }}" />
             </div>
             <!-- Retain filters when searching -->
-            {% if current_status %}<input type="hidden" name="status" value="{{ current_status }}">{% endif %}
             {% if current_transferability %}<input type="hidden" name="transferability" value="{{ current_transferability }}">{% endif %}
             {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
         </form>
         <!-- Filter Pills -->
         <div class="flex flex-wrap gap-2 mb-4">
-            <!-- Status Filter -->
-            <div class="relative">
-                <select name="status"
-                        form="filter-form"
-                        onchange="this.form.submit()"
-                        class="appearance-none bg-white border border-slate-200 text-slate-700 text-sm rounded-full px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer">
-                    <option value="" {% if not current_status %}selected{% endif %}>全部狀態</option>
-                    <option value="T" {% if current_status == 'T' %}selected{% endif %}>可移轉</option>
-                    <option value="R" {% if current_status == 'R' %}selected{% endif %}>應返還</option>
-                    <option value="V" {% if current_status == 'V' %}selected{% endif %}>已被預約</option>
-                    <option value="O" {% if current_status == 'O' %}selected{% endif %}>借閱中</option>
-                </select>
-                <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">expand_more</span>
-            </div>
             <!-- Transferability Filter -->
             <div class="relative">
                 <select name="transferability"
@@ -125,7 +110,7 @@
         <div class="flex items-center justify-center gap-2 px-4 py-6 max-w-xl mx-auto">
             <!-- Previous Page -->
             {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
+                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
                    class="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
                     <span class="material-symbols-outlined text-sm">chevron_left</span>
                 </a>
@@ -139,10 +124,10 @@
                 {% if num == page_obj.number %}
                     <span class="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white font-semibold text-sm">{{ num }}</span>
                 {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                    <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
+                    <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
                        class="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors font-medium text-sm">{{ num }}</a>
                 {% elif num == 1 or num == page_obj.paginator.num_pages %}
-                    <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
+                    <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
                        class="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors font-medium text-sm">{{ num }}</a>
                 {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
                     <span class="flex items-center justify-center w-10 h-10 text-slate-400 text-sm">...</span>
@@ -150,7 +135,7 @@
             {% endfor %}
             <!-- Next Page -->
             {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
+                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
                    class="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
                     <span class="material-symbols-outlined text-sm">chevron_right</span>
                 </a>
