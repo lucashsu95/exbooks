@@ -4,12 +4,8 @@
     <div id="deal-list-page">
         <!-- Header -->
         <header class="sticky top-0 z-10 bg-white border-b border-slate-200">
-            <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
+            <div class="flex items-center p-4 justify-start max-w-xl mx-auto">
                 <h1 class="text-xl font-bold tracking-tight">交易管理</h1>
-                <button type="button"
-                        class="p-2 hover:bg-slate-100 rounded-full transition-colors relative">
-                    <span class="material-symbols-outlined">notifications</span>
-                </button>
             </div>
             <!-- Tabs -->
             <div class="max-w-xl mx-auto overflow-x-auto no-scrollbar">
@@ -63,15 +59,9 @@
                             <div class="flex gap-4 items-center">
                                 <!-- 書籍封面 - 統一尺寸 -->
                                 <div class="w-20 h-28 rounded-xl overflow-hidden shrink-0 shadow-md bg-slate-200">
-                                    {% if deal.shared_book.official_book.cover_image %}
-                                        <img src="{{ deal.shared_book.official_book.cover_image.url }}"
-                                             alt="{{ deal.shared_book.official_book.title }}"
-                                             class="w-full h-full object-cover" />
-                                    {% else %}
-                                        <div class="w-full h-full flex items-center justify-center">
-                                            <span class="material-symbols-outlined text-slate-400 text-3xl">menu_book</span>
-                                        </div>
-                                    {% endif %}
+                                    <img src="{% if deal.shared_book.official_book.cover_image %}{{ deal.shared_book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuBlSAm5AwcmdJLphEsyKIZJ9iWzB0otfD9IcFu5Buim2RjYBpL4w7vWD3u6qaidnqPQpx0C8g1zdJ69ceuhSRE4bJU1HB6iBJG7LSOanbVN72OFbRT_sXIuMy556iXOIt0f-rQeJZkdqRDUjRq0JZfLx7h3HCiyqqqHUvQdU95O_apLHu1S0DqUMPFWdpVBh6Bxvrty9Fc2MILIMQkOuD_4DZ71tdUDNIAki1-nczh3Sw5Bd8Nd1o3TuyJCHHn6vqgxkiBGoo6j8_0{% endif %}"
+                                         alt="{{ deal.shared_book.official_book.title }}"
+                                         class="w-full h-full object-cover" />
                                 </div>
                                 <!-- 內容區域 -->
                                 <div class="flex-1 min-w-0">
@@ -111,16 +101,19 @@
             {% elif current_tab == 'pending_applicant' %}
                 {% for deal in pending_applicant %}
                     <a href="{% url 'deals:detail' deal.id %}"
-                       class="block bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                       class="block bg-white p-4 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-transform">
                         <div class="flex gap-4 items-center">
-                            <div class="w-16 h-20 bg-slate-200 rounded-lg flex-shrink-0 bg-cover bg-center overflow-hidden"
-                                 style="{% if deal.shared_book.official_book.cover_image %}background-image: url('{{ deal.shared_book.official_book.cover_image.url }}');
-                                        {% endif %}"></div>
+                            <!-- 書籍封面 - 統一尺寸 -->
+                            <div class="w-20 h-28 rounded-xl overflow-hidden shrink-0 shadow-md bg-slate-200">
+                                <img src="{% if deal.shared_book.official_book.cover_image %}{{ deal.shared_book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuBlSAm5AwcmdJLphEsyKIZJ9iWzB0otfD9IcFu5Buim2RjYBpL4w7vWD3u6qaidnqPQpx0C8g1zdJ69ceuhSRE4bJU1HB6iBJG7LSOanbVN72OFbRT_sXIuMy556iXOIt0f-rQeJZkdqRDUjRq0JZfLx7h3HCiyqqqHUvQdU95O_apLHu1S0DqUMPFWdpVBh6Bxvrty9Fc2MILIMQkOuD_4DZ71tdUDNIAki1-nczh3Sw5Bd8Nd1o3TuyJCHHn6vqgxkiBGoo6j8_0{% endif %}"
+                                     alt="{{ deal.shared_book.official_book.title }}"
+                                     class="w-full h-full object-cover" />
+                            </div>
                             <div class="flex-1 min-w-0">
-                                <h3 class="font-bold text-base truncate">{{ deal.shared_book.official_book.title }}</h3>
-                                <div class="flex items-center gap-2 mt-1">
-                                    <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">{{ deal.get_deal_type_display }}</span>
-                                    <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">等待回應</span>
+                                <h3 class="font-bold text-base text-slate-900 line-clamp-2">{{ deal.shared_book.official_book.title }}</h3>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">{{ deal.get_deal_type_display }}</span>
+                                    <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium">等待回應</span>
                                 </div>
                             </div>
                             <span class="material-symbols-outlined text-slate-400">chevron_right</span>
@@ -136,16 +129,19 @@
             {% elif current_tab == 'meeting' %}
                 {% for deal in pending_meeting %}
                     <a href="{% url 'deals:detail' deal.id %}"
-                       class="block bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                       class="block bg-white p-4 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-transform">
                         <div class="flex gap-4 items-center">
-                            <div class="w-16 h-20 bg-slate-200 rounded-lg flex-shrink-0 bg-cover bg-center overflow-hidden"
-                                 style="{% if deal.shared_book.official_book.cover_image %}background-image: url('{{ deal.shared_book.official_book.cover_image.url }}');
-                                        {% endif %}"></div>
+                            <!-- 書籍封面 - 統一尺寸 -->
+                            <div class="w-20 h-28 rounded-xl overflow-hidden shrink-0 shadow-md bg-slate-200">
+                                <img src="{% if deal.shared_book.official_book.cover_image %}{{ deal.shared_book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuBlSAm5AwcmdJLphEsyKIZJ9iWzB0otfD9IcFu5Buim2RjYBpL4w7vWD3u6qaidnqPQpx0C8g1zdJ69ceuhSRE4bJU1HB6iBJG7LSOanbVN72OFbRT_sXIuMy556iXOIt0f-rQeJZkdqRDUjRq0JZfLx7h3HCiyqqqHUvQdU95O_apLHu1S0DqUMPFWdpVBh6Bxvrty9Fc2MILIMQkOuD_4DZ71tdUDNIAki1-nczh3Sw5Bd8Nd1o3TuyJCHHn6vqgxkiBGoo6j8_0{% endif %}"
+                                     alt="{{ deal.shared_book.official_book.title }}"
+                                     class="w-full h-full object-cover" />
+                            </div>
                             <div class="flex-1 min-w-0">
-                                <h3 class="font-bold text-base truncate">{{ deal.shared_book.official_book.title }}</h3>
-                                <div class="flex items-center gap-2 mt-1">
-                                    <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">{{ deal.get_deal_type_display }}</span>
-                                    <span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold">待面交</span>
+                                <h3 class="font-bold text-base text-slate-900 line-clamp-2">{{ deal.shared_book.official_book.title }}</h3>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">{{ deal.get_deal_type_display }}</span>
+                                    <span class="px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">待面交</span>
                                 </div>
                             </div>
                             <span class="material-symbols-outlined text-slate-400">chevron_right</span>
@@ -161,16 +157,19 @@
             {% elif current_tab == 'rating' %}
                 {% for deal in pending_rating %}
                     <a href="{% url 'deals:rating_create' deal.id %}"
-                       class="block bg-white p-4 rounded-xl shadow-sm border border-slate-100-slate-800 hover:shadow-md transition-shadow">
+                       class="block bg-white p-4 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-transform">
                         <div class="flex gap-4 items-center">
-                            <div class="w-16 h-20 bg-slate-200 rounded-lg flex-shrink-0 bg-cover bg-center overflow-hidden"
-                                 style="{% if deal.shared_book.official_book.cover_image %}background-image: url('{{ deal.shared_book.official_book.cover_image.url }}');
-                                        {% endif %}"></div>
+                            <!-- 書籍封面 - 統一尺寸 -->
+                            <div class="w-20 h-28 rounded-xl overflow-hidden shrink-0 shadow-md bg-slate-200">
+                                <img src="{% if deal.shared_book.official_book.cover_image %}{{ deal.shared_book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuBlSAm5AwcmdJLphEsyKIZJ9iWzB0otfD9IcFu5Buim2RjYBpL4w7vWD3u6qaidnqPQpx0C8g1zdJ69ceuhSRE4bJU1HB6iBJG7LSOanbVN72OFbRT_sXIuMy556iXOIt0f-rQeJZkdqRDUjRq0JZfLx7h3HCiyqqqHUvQdU95O_apLHu1S0DqUMPFWdpVBh6Bxvrty9Fc2MILIMQkOuD_4DZ71tdUDNIAki1-nczh3Sw5Bd8Nd1o3TuyJCHHn6vqgxkiBGoo6j8_0{% endif %}"
+                                     alt="{{ deal.shared_book.official_book.title }}"
+                                     class="w-full h-full object-cover" />
+                            </div>
                             <div class="flex-1 min-w-0">
-                                <h3 class="font-bold text-base truncate">{{ deal.shared_book.official_book.title }}</h3>
-                                <div class="flex items-center gap-2 mt-1">
-                                    <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">{{ deal.get_deal_type_display }}</span>
-                                    <span class="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-xs font-bold">待評價</span>
+                                <h3 class="font-bold text-base text-slate-900 line-clamp-2">{{ deal.shared_book.official_book.title }}</h3>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">{{ deal.get_deal_type_display }}</span>
+                                    <span class="px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-medium">待評價</span>
                                 </div>
                             </div>
                             <span class="material-symbols-outlined text-primary">star</span>
@@ -186,16 +185,19 @@
             {% elif current_tab == 'history' %}
                 {% for deal in history %}
                     <a href="{% url 'deals:detail' deal.id %}"
-                       class="block bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow opacity-75">
+                       class="block bg-white p-4 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-transform opacity-75">
                         <div class="flex gap-4 items-center">
-                            <div class="w-16 h-20 bg-slate-200 rounded-lg flex-shrink-0 bg-cover bg-center overflow-hidden"
-                                 style="{% if deal.shared_book.official_book.cover_image %}background-image: url('{{ deal.shared_book.official_book.cover_image.url }}');
-                                        {% endif %}"></div>
+                            <!-- 書籍封面 - 統一尺寸 -->
+                            <div class="w-20 h-28 rounded-xl overflow-hidden shrink-0 shadow-md bg-slate-200">
+                                <img src="{% if deal.shared_book.official_book.cover_image %}{{ deal.shared_book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuBlSAm5AwcmdJLphEsyKIZJ9iWzB0otfD9IcFu5Buim2RjYBpL4w7vWD3u6qaidnqPQpx0C8g1zdJ69ceuhSRE4bJU1HB6iBJG7LSOanbVN72OFbRT_sXIuMy556iXOIt0f-rQeJZkdqRDUjRq0JZfLx7h3HCiyqqqHUvQdU95O_apLHu1S0DqUMPFWdpVBh6Bxvrty9Fc2MILIMQkOuD_4DZ71tdUDNIAki1-nczh3Sw5Bd8Nd1o3TuyJCHHn6vqgxkiBGoo6j8_0{% endif %}"
+                                     alt="{{ deal.shared_book.official_book.title }}"
+                                     class="w-full h-full object-cover" />
+                            </div>
                             <div class="flex-1 min-w-0">
-                                <h3 class="font-bold text-base truncate">{{ deal.shared_book.official_book.title }}</h3>
+                                <h3 class="font-bold text-base text-slate-900 line-clamp-2">{{ deal.shared_book.official_book.title }}</h3>
                                 <div class="flex items-center gap-2 mt-1">
-                                    <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">{{ deal.get_deal_type_display }}</span>
-                                    <span class="px-2 py-0.5 rounded-full {% if deal.status == 'D' %}bg-slate-100 text-slate-700{% else %}bg-rose-100 text-rose-700{% endif %} text-xs font-bold">{{ deal.get_status_display }}</span>
+                                    <span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">{{ deal.get_deal_type_display }}</span>
+                                    <span class="px-2.5 py-1 rounded-full {% if deal.status == 'D' %}bg-slate-100 text-slate-700{% else %}bg-rose-100 text-rose-700{% endif %} text-xs font-medium">{{ deal.get_status_display }}</span>
                                 </div>
                             </div>
                             <span class="material-symbols-outlined text-slate-400">chevron_right</span>

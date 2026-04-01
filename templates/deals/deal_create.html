@@ -17,9 +17,11 @@
         <div class="bg-white rounded-xl border border-slate-200 p-4 mb-4">
             <div class="flex gap-4">
                 <!-- Book Cover -->
-                <div class="w-24 h-32 rounded-lg bg-slate-200 overflow-hidden shrink-0 bg-cover bg-center"
-                     style="{% if book.official_book.cover_image %}background-image: url('{{ book.official_book.cover_image.url }}');
-                            {% endif %}"></div>
+                <div class="w-24 h-32 rounded-lg bg-slate-200 overflow-hidden shrink-0 shadow-md">
+                    <img class="w-full h-full object-cover"
+                         alt="{{ book.official_book.title }} 的封面"
+                         src="{% if book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuCJKGFmDT9Y9sG2zd00enOq5IY1RlA1OMkGVx6ZhngS0yiBe_gffqVnF3SU7jYslPY5BSa1ucotaqAVvoRNJL5KR5caY89J1Cgrg0Qqhr1i_htBXL-M74fSsxxAOBREe-km7XJhk8eTcKA1AU36aT3cxkXi8D1UdhmoHeVi8G-c9fBNRqr4PFzQlaepN741GIaic-Y1cA6U49u00zOIaxoJGMnH0ytJ6s5L_eGH94J3-l9BHYLjCIXV_YrfyazMItU9aRWziAXoG1Y{% endif %}" />
+                </div>
                 <!-- Book Details -->
                 <div class="flex-1 flex flex-col justify-center">
                     <h3 class="text-slate-900 text-lg font-bold leading-tight mb-1">{{ book.official_book.title }}</h3>

@@ -103,7 +103,7 @@ def deal_detail(request, pk):
         "deals/deal_detail.html",
         {
             "deal": deal,
-            "messages": messages_list,
+            "deal_messages": messages_list,
             "extensions": extensions_list,
             "is_applicant": request.user == deal.applicant,
             "is_responder": request.user == deal.responder,
@@ -122,7 +122,7 @@ def deal_list(request):
         "shared_book__official_book",
         "applicant",
         "responder",
-    )
+    ).prefetch_related("shared_book__photos")
 
     # 待回應（我是回應者）
     pending_responder = base_qs.filter(
@@ -277,7 +277,7 @@ def rating_create(request, pk):
             "shared_book__official_book",
             "applicant__profile",
             "responder__profile",
-        ),
+        ).prefetch_related("shared_book__photos"),
         pk=pk,
     )
 

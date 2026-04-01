@@ -49,6 +49,23 @@ class TestCreateDeal:
         assert deal.previous_book_status == "T"
         assert deal.due_date == timezone.now().date() + timedelta(days=30)
 
+    def test_loan_with_note_success(self):
+        """建立交易時填寫備註 → 成功建立並存為 DealMessage"""
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(
+            owner=owner,
+            status="T",
+            transferability="RETURN",
+        )
+        note_content = "我想在捷運站面交"
+        deal = create_deal(applicant, book, Deal.DealType.LOAN, note=note_content)
+
+        assert deal.messages.count() == 1
+        message = deal.messages.first()
+        assert message.sender == applicant
+        assert message.content == note_content
+
     def test_transfer_success(self):
         """TF: TRANSFER 流通性 + T 狀態 → responder 為 Keeper"""
         owner = UserFactory()

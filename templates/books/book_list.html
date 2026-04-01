@@ -132,9 +132,7 @@
                     <div class="flex gap-4">
                         <!-- 封面圖片 - 增大尺寸 -->
                         <div class="w-20 h-28 rounded-xl overflow-hidden shrink-0 shadow-md">
-                            <img class="w-full h-full object-cover"
-                                 alt="{{ book.official_book.title }} 的封面"
-                                 src="{% if book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuBlSAm5AwcmdJLphEsyKIZJ9iWzB0otfD9IcFu5Buim2RjYBpL4w7vWD3u6qaidnqPQpx0C8g1zdJ69ceuhSRE4bJU1HB6iBJG7LSOanbVN72OFbRT_sXIuMy556iXOIt0f-rQeJZkdqRDUjRq0JZfLx7h3HCiyqqqHUvQdU95O_apLHu1S0DqUMPFWdpVBh6Bxvrty9Fc2MILIMQkOuD_4DZ71tdUDNIAki1-nczh3Sw5Bd8Nd1o3TuyJCHHn6vqgxkiBGoo6j8_0{% endif %}" />
+                            {% include 'partials/book_cover.html' with book=book %}
                         </div>
                         <!-- 內容區域 -->
                         <div class="flex-1 min-w-0 py-1">

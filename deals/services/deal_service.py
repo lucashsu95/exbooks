@@ -20,7 +20,7 @@ from django_fsm import can_proceed
 from accounts.services.trust_service import get_borrowing_limits
 from books.models import SharedBook
 from books.services.book_service import validate_book_set_completeness
-from deals.models import Deal
+from deals.models import Deal, DealMessage
 from deals.services.notification_service import (
     notify_deal_requested,
     notify_book_overdue,
@@ -90,7 +90,12 @@ def _get_responder(shared_book, deal_type):
 
 
 def create_deal(
-    applicant, shared_book, deal_type, book_set=None, loan_duration_days=None
+    applicant,
+    shared_book,
+    deal_type,
+    book_set=None,
+    loan_duration_days=None,
+    note=None,
 ):
     """
     建立交易申請。
@@ -192,6 +197,10 @@ def create_deal(
         responder=responder,
         due_date=due_date,
     )
+
+    # 如果有填寫備註，存入第一條交易留言
+    if note:
+        DealMessage.objects.create(deal=deal, sender=applicant, content=note)
 
     notify_deal_requested(deal)
 

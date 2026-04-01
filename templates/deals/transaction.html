@@ -66,16 +66,14 @@
                             {{ message.content|default:"我剛到，在木椅這邊！" }}
                         </p>
                     </div>
-                    <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-10 shrink-0 border border-slate-200"
-                         aria-label="使用者的頭像"
-                         style="background-image: url('{% if request.user.profile.avatar_url %}{{ request.user.profile.avatar_url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuDojUq0WTv5D6pymWNmlhwK-83aMoYR_ktYitiw8gMAzHNLRukd2JeGRGRObPmU7qs6ntatuXtIWkZSPkNmnj6o0dqSY5ps1yHEdAlYAa6Mrti8lHR9VdWBpivLmjrr384ORVmlguT5ETC6h5EAr1J_X2C-gOgalH_WQY9LM7HutuuHT8U8y6Kyl9dwvCOLrhYEC4vwxqDzqwjex4n0j0k-KSoA9pGkrWYFA-5RtB7doscuo0r6K2HIZ5N4B2aVhMNBeksxQvEw-gI{% endif %}')">
+                    <div class="rounded-full w-10 h-10 shrink-0 border border-slate-200 overflow-hidden bg-slate-100">
+                        {% include 'partials/avatar.html' with user=request.user %}
                     </div>
                 </div>
             {% else %}
                 <div class="flex items-end gap-3 p-4">
-                    <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-10 shrink-0 border border-slate-200"
-                         aria-label="書主的頭像"
-                         style="background-image: url('{% if message.sender.profile.avatar_url %}{{ message.sender.profile.avatar_url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuA4o4mQga9VyWMJWs4P2pLYtw50l-PD_wHvnr5ybr6eSFATLE6EaxKZyy0IzTmblUDuT13XC3zlHeZ5Y_ccsWmJSP1YB8pVjGaiaL3dFVOvUp8pa2Dnd_KF_kDIGc9vkrs8H2f7NCiH7b8Ut2stmGNUOCPRuoWLNyuo2K9P0nxWywx3TnCD2angWiHC8wq1xkDcWKtgCqhjyJn6bGRuKBhDQvqsNoUqmsdcIpQPWHvxB6irSyqm_tSs1fWQNFvsLjz4olQWUhb6A5g{% endif %}')">
+                    <div class="rounded-full w-10 h-10 shrink-0 border border-slate-200 overflow-hidden bg-slate-100">
+                        {% include 'partials/avatar.html' with user=message.sender %}
                     </div>
                     <div class="flex flex-1 flex-col gap-1 items-start">
                         <p class="text-slate-500 text-[13px] font-normal leading-normal">{{ message.sender.name|default:'Alex（書主）' }}</p>

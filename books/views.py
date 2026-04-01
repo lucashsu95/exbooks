@@ -24,6 +24,7 @@ def book_list(request):
 
     new_query = (
         SharedBook.objects.select_related("official_book", "keeper__profile")
+        .prefetch_related("photos")
         .filter(status=SharedBook.Status.TRANSFERABLE)
         .exclude(keeper=request.user)
     )
@@ -67,6 +68,10 @@ def book_list(request):
         "search_query": q,
         "current_category": category or "全部",
     }
+
+    if request.headers.get("HX-Request"):
+        return render(request, "books/partials/book_list_results.html", context)
+
     return render(request, "books/book_list.html", context)
 
 
@@ -78,7 +83,7 @@ def book_detail(request, pk):
     book = get_object_or_404(
         SharedBook.objects.select_related(
             "official_book", "keeper__profile", "owner__profile"
-        ),
+        ).prefetch_related("photos"),
         pk=pk,
     )
 

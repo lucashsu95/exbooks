@@ -37,8 +37,8 @@
                     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
                         <div class="flex gap-4">
                             <!-- Book Cover -->
-                            <div class="w-20 h-28 bg-slate-200 rounded-lg bg-cover bg-center flex-shrink-0"
-                                 style="background-image: url('{% if item.deal.shared_book.official_book.cover_image %}{{ item.deal.shared_book.official_book.cover_image.url }}{% else %}https://placehold.co/80x112/e2e8f0/64748b?text=No+Cover{% endif %}')">
+                            <div class="w-20 h-28 bg-slate-200 rounded-lg overflow-hidden flex-shrink-0 shadow-sm">
+                                {% include 'partials/book_cover.html' with book=item.deal.shared_book %}
                             </div>
                             <!-- Book Info -->
                             <div class="flex-1 min-w-0">

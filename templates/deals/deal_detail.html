@@ -78,11 +78,11 @@
     <div class="px-4 mb-4">
         <div class="bg-white rounded-xl border border-slate-200 p-4">
             <div class="flex gap-4">
-                <div class="w-20 h-28 rounded-lg bg-slate-200 overflow-hidden shrink-0 bg-cover bg-center"
-                     style="{% if deal.shared_book.official_book.cover_image %}background-image: url('{{ deal.shared_book.official_book.cover_image.url }}');
-                            {% endif %}"></div>
+                <div class="w-20 h-28 rounded-lg bg-slate-200 overflow-hidden shrink-0 shadow-md">
+                    {% include 'partials/book_cover.html' with book=deal.shared_book %}
+                </div>
                 <div class="flex-1">
-                    <h3 class="text-slate-900 font-bold text-lg mb-1">{{ deal.shared_book.official_book.title }}</h3>
+                    <h3 class="text-slate-900 font-bold text-lg mb-1 leading-tight">{{ deal.shared_book.official_book.title }}</h3>
                     <p class="text-slate-600 text-sm mb-2">{{ deal.shared_book.official_book.author }}</p>
                     <div class="flex items-center gap-2 mb-2">
                         <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">{{ deal.get_deal_type_display }}</span>
@@ -146,7 +146,7 @@
             <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <!-- Messages List -->
                 <div id="message-list" class="p-4 space-y-4 max-h-64 overflow-y-auto">
-                    {% include 'deals/partials/message_list.html' with messages=messages %}
+                    {% include 'deals/partials/message_list.html' with messages=deal_messages %}
                 </div>
                 <!-- Message Input -->
                 <div class="border-t border-slate-200 p-3">

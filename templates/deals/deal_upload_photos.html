@@ -17,9 +17,9 @@
         <div class="bg-white rounded-xl border border-slate-200 p-4 mb-6">
             <div class="flex gap-4 items-center">
                 <!-- Book Cover -->
-                <div class="w-16 h-22 rounded-lg bg-slate-200 overflow-hidden shrink-0 bg-cover bg-center"
-                     style="{% if deal.shared_book.official_book.cover_image %}background-image: url('{{ deal.shared_book.official_book.cover_image.url }}');
-                            {% endif %}"></div>
+                <div class="w-16 h-22 rounded-lg bg-slate-200 overflow-hidden shrink-0 shadow-md">
+                    {% include 'partials/book_cover.html' with book=deal.shared_book %}
+                </div>
                 <!-- Book Info -->
                 <div class="flex-1">
                     <h3 class="text-slate-900 font-bold text-lg mb-1">{{ deal.shared_book.official_book.title }}</h3>

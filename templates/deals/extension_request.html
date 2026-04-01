@@ -17,9 +17,11 @@
         <div class="bg-white rounded-xl border border-slate-200 p-4 mb-4">
             <div class="flex gap-4">
                 <!-- Book Cover -->
-                <div class="w-24 h-32 rounded-lg bg-slate-200 overflow-hidden shrink-0 bg-cover bg-center"
-                     style="{% if deal.shared_book.official_book.cover_image %}background-image: url('{{ deal.shared_book.official_book.cover_image.url }}');
-                            {% endif %}"></div>
+                <div class="w-24 h-32 rounded-lg bg-slate-200 overflow-hidden shrink-0 shadow-md">
+                    <img src="{% if deal.shared_book.official_book.cover_image %}{{ deal.shared_book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuBlSAm5AwcmdJLphEsyKIZJ9iWzB0otfD9IcFu5Buim2RjYBpL4w7vWD3u6qaidnqPQpx0C8g1zdJ69ceuhSRE4bJU1HB6iBJG7LSOanbVN72OFbRT_sXIuMy556iXOIt0f-rQeJZkdqRDUjRq0JZfLx7h3HCiyqqqHUvQdU95O_apLHu1S0DqUMPFWdpVBh6Bxvrty9Fc2MILIMQkOuD_4DZ71tdUDNIAki1-nczh3Sw5Bd8Nd1o3TuyJCHHn6vqgxkiBGoo6j8_0{% endif %}"
+                         alt="{{ deal.shared_book.official_book.title }}"
+                         class="w-full h-full object-cover" />
+                </div>
                 <!-- Book Details -->
                 <div class="flex-1 flex flex-col justify-center">
                     <h3 class="text-slate-900 text-lg font-bold leading-tight mb-1">{{ deal.shared_book.official_book.title }}</h3>

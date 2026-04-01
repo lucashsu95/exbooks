@@ -220,8 +220,6 @@ font-variation-settings: 'FILL' 1;
                  class="h-full bg-primary transition-all duration-300"
                  style="width: 0%"></div>
         </div>
-        <!-- Sidebar (已廢除 - 手機版使用 Bottom Nav) -->
-        <!-- {% include '_sidebar.html' %} -->
         <!-- Search Modal -->
         {% include '_search_modal.html' %}
         <!-- Messages (Toast) - Safe Area 適配 -->
@@ -235,11 +233,10 @@ font-variation-settings: 'FILL' 1;
                 {% endfor %}
             </div>
             <style>
-/* Toast 位置 - 考慮劉海螢幕 */
-.toast-safe {
-top: max(16px, env(safe-area-inset-top, 0px));
-right: max(16px, env(safe-area-inset-right, 0px));
-}
+            .toast-safe {
+                top: max(16px, env(safe-area-inset-top, 0px));
+                right: max(16px, env(safe-area-inset-right, 0px));
+            }
             </style>
         {% endif %}
         <!-- Main Content Wrapper -->

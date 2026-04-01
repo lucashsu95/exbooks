@@ -46,16 +46,18 @@
                 </div>
                 {% for book in keeping_books %}
                     <a href="{% url 'books:detail' book.id %}"
-                       class="bg-white p-4 rounded-xl shadow-sm border border-slate-100-slate-800 flex gap-4 items-center {% if book.status == 'upcoming' %}opacity-75{% endif %}">
-                        <div class="w-16 h-20 bg-slate-200 rounded-lg flex-shrink-0 bg-cover bg-center overflow-hidden"
-                             style="background-image: url('{% if book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuCKwevj9vxRMG00GjNHP5Z557TWcZBTh8LK8diMQ12Aj5e9E1zG7f5UDVmaM40hFFXzRfsRvxUieNpthgKVBUn2cMvmevG_wU8MhvqWI_IIqOfRMoMCrXCS3S5v5nVSMLpmG3seSdUPq0Wr0X6PIj9lbekrXveQVgdxcxg2gYqkssXJzpqAhKId_-4DERAyn_q125xVVbJEY-BfjxSeEq9qT8SCe30vWZuQSweIfJwXwTYXooU8NUXeK3KLtJrvjxBCJ_0EhG-cUoo{% endif %}')">
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <h3 class="font-bold text-base truncate">{{ book.official_book.title }}</h3>
-                            <p class="text-sm text-primary font-medium flex items-center gap-1">
-                                <span class="material-symbols-outlined text-sm">book</span> {{ book.get_status_display }}
-                            </p>
-                            <p class="text-xs text-slate-500 mt-1">擁有者：{{ book.owner.profile.nickname|default:book.owner.email }}</p>
+                       class="block bg-white p-4 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-transform">
+                        <div class="flex gap-4 items-center">
+                            <div class="w-16 h-20 bg-slate-200 rounded-lg flex-shrink-0 overflow-hidden shadow-sm">
+                                {% include 'partials/book_cover.html' with book=book %}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-bold text-base truncate">{{ book.official_book.title }}</h3>
+                                <p class="text-sm text-primary font-medium flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-sm">book</span> {{ book.get_status_display }}
+                                </p>
+                                <p class="text-xs text-slate-500 mt-1">擁有者：{{ book.owner.profile.nickname|default:book.owner.email }}</p>
+                            </div>
                         </div>
                     </a>
                 {% empty %}
@@ -73,16 +75,18 @@
                 </div>
                 {% for book in contributions_books %}
                     <a href="{% url 'books:detail' book.id %}"
-                       class="bg-white p-4 rounded-xl shadow-sm border border-slate-100-slate-800 flex gap-4 items-center">
-                        <div class="w-16 h-20 bg-slate-200 rounded-lg flex-shrink-0 bg-cover bg-center overflow-hidden"
-                             style="background-image: url('{% if book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuCKwevj9vxRMG00GjNHP5Z557TWcZBTh8LK8diMQ12Aj5e9E1zG7f5UDVmaM40hFFXzRfsRvxUieNpthgKVBUn2cMvmevG_wU8MhvqWI_IIqOfRMoMCrXCS3S5v5nVSMLpmG3seSdUPq0Wr0X6PIj9lbekrXveQVgdxcxg2gYqkssXJzpqAhKId_-4DERAyn_q125xVVbJEY-BfjxSeEq9qT8SCe30vWZuQSweIfJwXwTYXooU8NUXeK3KLtJrvjxBCJ_0EhG-cUoo{% endif %}')">
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <h3 class="font-bold text-base truncate">{{ book.official_book.title }}</h3>
-                            <p class="text-sm font-medium flex items-center gap-1 text-slate-600">
-                                <span class="material-symbols-outlined text-sm">person</span> 目前持有人：{{ book.keeper.profile.nickname|default:book.keeper.email }}
-                            </p>
-                            <p class="text-xs text-slate-500 mt-1">狀態：{{ book.get_status_display }}</p>
+                       class="block bg-white p-4 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-transform">
+                        <div class="flex gap-4 items-center">
+                            <div class="w-16 h-20 bg-slate-200 rounded-lg flex-shrink-0 overflow-hidden shadow-sm">
+                                {% include 'partials/book_cover.html' with book=book %}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-bold text-base truncate">{{ book.official_book.title }}</h3>
+                                <p class="text-sm font-medium flex items-center gap-1 text-slate-600">
+                                    <span class="material-symbols-outlined text-sm">person</span> 目前持有人：{{ book.keeper.profile.nickname|default:book.keeper.email }}
+                                </p>
+                                <p class="text-xs text-slate-500 mt-1">狀態：{{ book.get_status_display }}</p>
+                            </div>
                         </div>
                     </a>
                 {% empty %}
@@ -99,24 +103,28 @@
                     <span class="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">共 {{ active_requests|length|default:'0' }} 筆</span>
                 </div>
                 {% for deal in active_requests %}
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100-slate-800 flex gap-4 items-center">
-                        <div class="w-16 h-20 bg-slate-200 rounded-lg flex-shrink-0 bg-cover bg-center overflow-hidden"
-                             style="background-image: url('{% if deal.shared_book.official_book.cover_image %}{{ deal.shared_book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuCKwevj9vxRMG00GjNHP5Z557TWcZBTh8LK8diMQ12Aj5e9E1zG7f5UDVmaM40hFFXzRfsRvxUieNpthgKVBUn2cMvmevG_wU8MhvqWI_IIqOfRMoMCrXCS3S5v5nVSMLpmG3seSdUPq0Wr0X6PIj9lbekrXveQVgdxcxg2gYqkssXJzpqAhKId_-4DERAyn_q125xVVbJEY-BfjxSeEq9qT8SCe30vWZuQSweIfJwXwTYXooU8NUXeK3KLtJrvjxBCJ_0EhG-cUoo{% endif %}')">
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <h3 class="font-bold text-base truncate">{{ deal.shared_book.official_book.title }}</h3>
-                            <p class="text-sm font-medium flex items-center gap-1 text-primary">
-                                <span class="material-symbols-outlined text-sm">swap_horiz</span> {{ deal.get_deal_type_display }}
-                            </p>
-                            <p class="text-xs text-slate-500 mt-1">狀態：{{ deal.get_status_display }}</p>
-                            <p class="text-xs text-slate-500 mt-1">
-                                對象：
-                                {% if deal.applicant == request.user %}
-                                    {{ deal.responder.profile.nickname|default:deal.responder.email }}
-                                {% else %}
-                                    {{ deal.applicant.profile.nickname|default:deal.applicant.email }}
-                                {% endif %}
-                            </p>
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-transform">
+                        <div class="flex gap-4 items-center">
+                            <div class="w-16 h-20 bg-slate-200 rounded-lg flex-shrink-0 overflow-hidden shadow-sm">
+                                <img src="{% if deal.shared_book.official_book.cover_image %}{{ deal.shared_book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuBlSAm5AwcmdJLphEsyKIZJ9iWzB0otfD9IcFu5Buim2RjYBpL4w7vWD3u6qaidnqPQpx0C8g1zdJ69ceuhSRE4bJU1HB6iBJG7LSOanbVN72OFbRT_sXIuMy556iXOIt0f-rQeJZkdqRDUjRq0JZfLx7h3HCiyqqqHUvQdU95O_apLHu1S0DqUMPFWdpVBh6Bxvrty9Fc2MILIMQkOuD_4DZ71tdUDNIAki1-nczh3Sw5Bd8Nd1o3TuyJCHHn6vqgxkiBGoo6j8_0{% endif %}"
+                                     alt="{{ deal.shared_book.official_book.title }}"
+                                     class="w-full h-full object-cover" />
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-bold text-base truncate">{{ deal.shared_book.official_book.title }}</h3>
+                                <p class="text-sm font-medium flex items-center gap-1 text-primary">
+                                    <span class="material-symbols-outlined text-sm">swap_horiz</span> {{ deal.get_deal_type_display }}
+                                </p>
+                                <p class="text-xs text-slate-500 mt-1">狀態：{{ deal.get_status_display }}</p>
+                                <p class="text-xs text-slate-500 mt-1">
+                                    對象：
+                                    {% if deal.applicant == request.user %}
+                                        {{ deal.responder.profile.nickname|default:deal.responder.email }}
+                                    {% else %}
+                                        {{ deal.applicant.profile.nickname|default:deal.applicant.email }}
+                                    {% endif %}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 {% empty %}
