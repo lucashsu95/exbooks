@@ -27,6 +27,10 @@
                        placeholder="搜尋 ISBN、書名、作者、出版社"
                        value="{{ search_query }}" />
             </div>
+            <!-- Retain filters when searching -->
+            {% if current_status %}<input type="hidden" name="status" value="{{ current_status }}">{% endif %}
+            {% if current_transferability %}<input type="hidden" name="transferability" value="{{ current_transferability }}">{% endif %}
+            {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
         </form>
         <!-- Filter Pills -->
         <div class="flex flex-wrap gap-2 mb-4">
@@ -77,13 +81,7 @@
         <!-- Hidden Filter Form -->
         <form id="filter-form" method="GET" action="{% url 'books:all' %}">
             <input type="hidden" name="q" value="{{ search_query }}">
-            {% if current_status %}<input type="hidden" name="status" value="{{ current_status }}">{% endif %}
-            {% if current_transferability %}
-                <input type="hidden"
-                       name="transferability"
-                       value="{{ current_transferability }}">
-            {% endif %}
-            {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
+            <!-- Note: <select> elements are bound to this form via form="filter-form" attribute -->
         </form>
     </div>
     <!-- Book List -->
