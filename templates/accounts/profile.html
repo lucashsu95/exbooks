@@ -134,6 +134,11 @@
         </div>
         <!-- Actions -->
         <div class="space-y-3">
+            <a href="{% url 'books:wishlist' %}"
+               class="w-full bg-white text-slate-900 font-bold py-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+                <span class="material-symbols-outlined">favorite</span>
+                願望清單
+            </a>
             <a href="{% url 'accounts:profile_edit' %}"
                class="w-full bg-white text-slate-900 font-bold py-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
                 <span class="material-symbols-outlined">settings</span>

@@ -1,17 +1,17 @@
 <div class="rating-slider"
-     x-data="{ value: {{ widget.value|default:3 }} }"
+     x-data="{ value: {{ field.value|default:3 }} }"
      x-init="$refs.rangeInput.value = value">
     <div class="flex items-center justify-between mb-2">
         <label class="flex items-center gap-2 text-sm font-medium text-slate-700"
-               for="{{ widget.attrs.id }}">
+               for="{{ field.id_for_label }}">
             <span class="material-symbols-outlined text-primary">star</span>
-            評分
+            {{ field.label }}
         </label>
         <span class="text-lg font-bold text-primary" x-text="value"></span>
     </div>
     <input type="range"
-           name="{{ widget.name }}"
-           id="{{ widget.attrs.id }}"
+           name="{{ field.html_name }}"
+           id="{{ field.id_for_label }}"
            min="1"
            max="5"
            step="1"

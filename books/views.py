@@ -836,3 +836,18 @@ def book_set_remove_book(request, pk, book_id):
         "books/partials/book_set_books.html",
         {"book_set": book_set, "books": books},
     )
+
+
+@login_required
+@require_POST
+def book_photo_delete(request, pk):
+    """刪除書況照片（HTMX）。僅上傳者或書籍擁有者可刪除。"""
+    photo = get_object_or_404(BookPhoto.objects.select_related("shared_book"), pk=pk)
+
+    if request.user != photo.uploader and request.user != photo.shared_book.owner:
+        return HttpResponse(status=403)
+
+    photo.photo.delete(save=False)
+    photo.delete()
+
+    return HttpResponse(status=200)

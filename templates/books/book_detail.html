@@ -119,13 +119,26 @@
             {% if photos %}
                 <div class="grid grid-cols-3 gap-3 mt-4">
                     {% for photo in photos %}
-                        <a href="{{ photo.photo.url }}"
-                           target="_blank"
-                           class="aspect-square rounded-xl overflow-hidden shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
-                            <img src="{{ photo.photo.url }}"
-                                 alt="書況照片"
-                                 class="w-full h-full object-cover" />
-                        </a>
+                        <div id="photo-{{ photo.pk }}"
+                             class="relative aspect-square rounded-xl overflow-hidden shadow-lg group">
+                            <a href="{{ photo.photo.url }}"
+                               target="_blank"
+                               class="block w-full h-full">
+                                <img src="{{ photo.photo.url }}"
+                                     alt="書況照片"
+                                     class="w-full h-full object-cover hover:scale-[1.02] transition-all duration-300" />
+                            </a>
+                            {% if request.user == photo.uploader or request.user == book.owner %}
+                                <button hx-post="{% url 'books:photo_delete' photo.pk %}"
+                                        hx-target="#photo-{{ photo.pk }}"
+                                        hx-swap="outerHTML"
+                                        hx-confirm="確定要刪除這張照片嗎？"
+                                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                        class="absolute top-1.5 right-1.5 size-7 bg-black/60 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200">
+                                    <span class="material-symbols-outlined text-sm">close</span>
+                                </button>
+                            {% endif %}
+                        </div>
                     {% endfor %}
                 </div>
             {% else %}
@@ -133,7 +146,7 @@
             {% endif %}
         </div>
     </div>
-    <div class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-2xl p-4 border-t border-white/50 flex flex-col gap-3 shadow-2xl">
+    <div class="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-2xl p-4 border-t border-white/50 flex flex-col gap-3 shadow-2xl">
         {% if book.keeper != request.user %}
             {% if book.status == 'T' and book.transferability == 'RETURN' %}
                 <a href="{% url 'deals:create' book.id 'LN' %}"

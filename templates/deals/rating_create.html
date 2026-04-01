@@ -110,25 +110,8 @@ box-shadow: 0 2px 6px rgba(19, 109, 236, 0.3);
 {% block extra_js %}
     <script>
 document.addEventListener('DOMContentLoaded', function() {
-const form = document.querySelector('form');
-form.id = 'rating-form';
-
-const sliders = [
-    { id: 'id_integrity_score', valueId: 'integrity-value' },
-    { id: 'id_punctuality_score', valueId: 'punctuality-value' },
-    { id: 'id_accuracy_score', valueId: 'accuracy-value' }
-];
-
-sliders.forEach(function(slider) {
-    const input = document.getElementById(slider.id);
-    const valueDisplay = document.getElementById(slider.valueId);
-    if (input && valueDisplay) {
-        valueDisplay.textContent = input.value;
-        input.addEventListener('input', function() {
-            valueDisplay.textContent = this.value;
-        });
-    }
-});
+    const form = document.querySelector('form');
+    if (form) form.id = 'rating-form';
 });
     </script>
 {% endblock %}

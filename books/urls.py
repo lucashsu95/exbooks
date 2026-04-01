@@ -31,4 +31,6 @@ urlpatterns = [
         views.book_set_remove_book,
         name="book_set_remove_book",
     ),
+    # 書況照片
+    path("photos/<uuid:pk>/delete/", views.book_photo_delete, name="photo_delete"),
 ]
