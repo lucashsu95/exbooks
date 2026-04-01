@@ -4,10 +4,7 @@ from core.models import UpdatableModel
 
 
 class OfficialBook(UpdatableModel):
-    """
-    官方書籍資料，以 ISBN 為唯一鍵。
-    多位用戶可分享同一本書的不同冊。
-    """
+    """官方書目資料，以 ISBN 為唯一鍵。多位用戶可分享同一本書的不同冊。"""
 
     class Category(models.TextChoices):
         FICTION = "小說", "小說"
@@ -42,8 +39,8 @@ class OfficialBook(UpdatableModel):
 
     class Meta:
         db_table = "exbook_official_book"
-        verbose_name = "官方書籍"
-        verbose_name_plural = "官方書籍"
+        verbose_name = "官方書目"
+        verbose_name_plural = "官方書目"
         indexes = [
             models.Index(fields=["title"]),
             models.Index(fields=["author"]),

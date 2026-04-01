@@ -124,15 +124,7 @@
                             <a href="{% url 'books:detail' book.id %}"
                                class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                                 <div class="aspect-[3/4] bg-slate-100">
-                                    {% if book.official_book.cover_url %}
-                                        <img src="{{ book.official_book.cover_url }}"
-                                             alt="{{ book.official_book.title }}"
-                                             class="w-full h-full object-cover">
-                                    {% else %}
-                                        <div class="w-full h-full flex items-center justify-center">
-                                            <span class="material-symbols-outlined text-slate-400 text-4xl">menu_book</span>
-                                        </div>
-                                    {% endif %}
+                                    {% include 'partials/official_book_cover.html' with book=book.official_book %}
                                 </div>
                                 <div class="p-2">
                                     <p class="text-sm font-medium text-slate-900 truncate">{{ book.official_book.title }}</p>
@@ -163,15 +155,7 @@
                             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3">
                                 <div class="flex items-center gap-3">
                                     <div class="size-12 rounded-lg bg-slate-100 overflow-hidden shrink-0">
-                                        {% if deal.shared_book.official_book.cover_url %}
-                                            <img src="{{ deal.shared_book.official_book.cover_url }}"
-                                                 alt=""
-                                                 class="w-full h-full object-cover">
-                                        {% else %}
-                                            <div class="w-full h-full flex items-center justify-center">
-                                                <span class="material-symbols-outlined text-slate-400">menu_book</span>
-                                            </div>
-                                        {% endif %}
+                                        {% include 'partials/official_book_cover.html' with book=deal.shared_book.official_book %}
                                     </div>
                                     <div class="flex-1 min-w-0">
                                         <p class="text-sm font-medium text-slate-900 truncate">{{ deal.shared_book.official_book.title }}</p>
@@ -205,7 +189,6 @@
                 {% endif %}
             {% endif %}
         </div>
-        <!-- Back Button -->
         <a href="javascript:history.back()"
            class="w-full bg-white text-slate-900 font-bold py-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
             <span class="material-symbols-outlined">arrow_back</span>

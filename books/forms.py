@@ -2,7 +2,7 @@ from django import forms
 from django.db.models import Q
 from django.forms.widgets import Input
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Field
+from crispy_forms.layout import Layout, Field, Div
 
 from .models import SharedBook, OfficialBook, BookSet
 
@@ -84,6 +84,11 @@ class BookAddForm(forms.ModelForm):
         label="分類",
         initial=OfficialBook.Category.OTHER,
     )
+    cover_image = forms.ImageField(
+        label="封面圖片",
+        required=False,
+        help_text="若 ISBN 查詢無封面，可手動上傳（JPG / PNG）",
+    )
     photos = forms.FileField(
         widget=MultipleFileInput(),
         label="書況照片",
@@ -104,6 +109,7 @@ class BookAddForm(forms.ModelForm):
             Field("author"),
             Field("publisher"),
             Field("category"),
+            Div(Field("cover_image"), css_id="cover-image-wrapper"),
             Field("transferability"),
             Field("condition_description"),
             Field("loan_duration_days"),

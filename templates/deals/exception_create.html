@@ -2,30 +2,43 @@
 {% load crispy_forms_tags %}
 {% block title %}申請例外處理 - Exbooks{% endblock %}
 {% block content %}
-    <div class="max-w-2xl mx-auto px-4 py-8">
-        <h1 class="text-2xl font-bold text-slate-900 mb-6">申請例外處理</h1>
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
-            <h2 class="text-lg font-semibold text-slate-900 mb-2">書籍資訊</h2>
-            <p class="text-slate-600">{{ book.official_book.title }}</p>
+    <!-- Sticky top bar -->
+    <div class="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3">
+        <a href="{% url 'books:detail' book.pk %}"
+           class="text-slate-500 hover:text-primary flex items-center justify-center"
+           aria-label="返回">
+            <span class="material-symbols-outlined text-xl">arrow_back</span>
+        </a>
+        <h1 class="text-lg font-semibold text-slate-900">申請例外處理</h1>
+    </div>
+    <!-- Scrollable content -->
+    <main class="px-4 py-4 pb-24 space-y-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+            <h2 class="text-sm font-semibold text-slate-500 mb-1">書籍資訊</h2>
+            <p class="text-base font-bold text-slate-900">{{ book.official_book.title }}</p>
             <p class="text-sm text-slate-500">{{ book.official_book.author }}</p>
         </div>
         <form method="post"
-              class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              id="exception-create-form"
+              class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
             {% csrf_token %}
-            <div class="space-y-6">{% crispy form %}</div>
-            <div class="mt-6 flex gap-3">
-                <button type="submit"
-                        class="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors">
-                    送出申請
-                </button>
-                <a href="{% url 'books:detail' book.pk %}"
-                   class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors">取消</a>
-            </div>
+            <div class="space-y-4">{% crispy form %}</div>
         </form>
-        <div class="mt-4 p-4 bg-yellow-50 rounded-xl">
-            <p class="text-sm text-yellow-800">
-                <strong>注意：</strong>申請例外處理後，書籍狀態將變更為「例外狀況」，需等待貢獻者審核處置。
-            </p>
+        <div class="bg-amber-50 rounded-2xl p-4 flex gap-3 border border-amber-100">
+            <span class="material-symbols-outlined text-amber-500 shrink-0">warning</span>
+            <div>
+                <p class="text-sm text-amber-800">
+                    <strong class="font-bold">注意：</strong>申請例外處理後，書籍狀態將變更為「例外狀況」，需等待貢獻者審核處置。
+                </p>
+            </div>
         </div>
+    </main>
+    <!-- Fixed bottom bar -->
+    <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-slate-200 safe-area-pb z-20">
+        <button type="submit"
+                form="exception-create-form"
+                class="w-full py-3.5 bg-red-600 text-white font-bold rounded-2xl shadow-lg shadow-red-600/30 hover:bg-red-700 active:scale-[0.98] transition-all">
+            送出申請
+        </button>
     </div>
 {% endblock %}

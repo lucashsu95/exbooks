@@ -30,7 +30,7 @@ class SharedBook(FSMModelMixin, UpdatableModel):
         "books.OfficialBook",
         on_delete=models.PROTECT,
         related_name="shared_books",
-        verbose_name="官方書籍",
+        verbose_name="官方書目",
     )
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,

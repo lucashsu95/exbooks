@@ -32,6 +32,22 @@
 {% block extra_js %}
     <script>
 document.addEventListener('DOMContentLoaded', function() {
+  // 封面上傳欄位顯示控制
+  // 初始顯示（還沒查 ISBN），查到封面後隱藏
+  window.setCoverFieldVisibility = function(hasCover) {
+    var wrapper = document.getElementById('cover-image-wrapper');
+    if (!wrapper) return;
+    if (hasCover) {
+      wrapper.style.display = 'none';
+      // 清空已選的檔案（避免舊選擇被送出）
+      var input = wrapper.querySelector('input[name="cover_image"]');
+      if (input) input.value = '';
+    } else {
+      wrapper.style.display = '';
+    }
+  };
+
+  // 書況照片預覽
   var photoInput = document.querySelector('input[name="photos"]');
   var previewContainer = document.getElementById('photo-preview');
   if (photoInput && previewContainer) {

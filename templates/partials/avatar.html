@@ -1,6 +1,5 @@
 {# 統一的使用者大頭貼顯示組件 #}
 {# 傳入參數: user (User 物件), class (自定義 CSS 類別, 預設為 'w-full h-full object-cover') #}
-
 {% if user.profile.avatar %}
     <img src="{{ user.profile.avatar.url }}"
          alt="{{ user.profile.nickname|default:user.email }} 的頭像"

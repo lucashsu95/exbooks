@@ -2,7 +2,6 @@
 {% load crispy_forms_tags %}
 {% block title %}Exbooks - 申請延長借閱{% endblock %}
 {% block content %}
-    <!-- Top Navigation -->
     <div class="flex items-center bg-white p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200">
         <a href="{% url 'deals:detail' deal.id %}"
            class="text-slate-900 flex size-12 shrink-0 items-center cursor-pointer">
@@ -11,18 +10,12 @@
         <h2 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">申請延長借閱</h2>
         <div class="flex w-12 items-center justify-end"></div>
     </div>
-    <!-- Main Content -->
     <main class="flex-1 px-4 py-4 pb-32">
-        <!-- Book Info Card -->
         <div class="bg-white rounded-xl border border-slate-200 p-4 mb-4">
             <div class="flex gap-4">
-                <!-- Book Cover -->
                 <div class="w-24 h-32 rounded-lg bg-slate-200 overflow-hidden shrink-0 shadow-md">
-                    <img src="{% if deal.shared_book.official_book.cover_image %}{{ deal.shared_book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuBlSAm5AwcmdJLphEsyKIZJ9iWzB0otfD9IcFu5Buim2RjYBpL4w7vWD3u6qaidnqPQpx0C8g1zdJ69ceuhSRE4bJU1HB6iBJG7LSOanbVN72OFbRT_sXIuMy556iXOIt0f-rQeJZkdqRDUjRq0JZfLx7h3HCiyqqqHUvQdU95O_apLHu1S0DqUMPFWdpVBh6Bxvrty9Fc2MILIMQkOuD_4DZ71tdUDNIAki1-nczh3Sw5Bd8Nd1o3TuyJCHHn6vqgxkiBGoo6j8_0{% endif %}"
-                         alt="{{ deal.shared_book.official_book.title }}"
-                         class="w-full h-full object-cover" />
+                    {% include 'partials/official_book_cover.html' with book=deal.shared_book.official_book %}
                 </div>
-                <!-- Book Details -->
                 <div class="flex-1 flex flex-col justify-center">
                     <h3 class="text-slate-900 text-lg font-bold leading-tight mb-1">{{ deal.shared_book.official_book.title }}</h3>
                     <p class="text-slate-600 text-sm mb-2">{{ deal.shared_book.official_book.author }}</p>
@@ -32,7 +25,6 @@
                 </div>
             </div>
         </div>
-        <!-- Current Due Date -->
         <div class="bg-white rounded-xl border border-slate-200 p-4 mb-4">
             <h4 class="text-slate-900 font-bold mb-3 flex items-center gap-2">
                 <span class="material-symbols-outlined text-primary">event</span>
@@ -48,7 +40,6 @@
                 </p>
             </div>
         </div>
-        <!-- Extension Form -->
         <form method="post" action="" id="extension-form">
             {% csrf_token %}
             <div class="bg-white rounded-xl border border-slate-200 p-4 mb-4">
@@ -58,7 +49,6 @@
                 </h4>
                 <div class="space-y-3">{% crispy form %}</div>
             </div>
-            <!-- Error Messages -->
             {% if form.non_field_errors %}
                 <div class="bg-rose-50 border border-rose-200 rounded-xl p-4 mb-4">
                     <div class="flex items-center gap-2 text-rose-600">
@@ -69,7 +59,6 @@
                     </div>
                 </div>
             {% endif %}
-            <!-- Info Box -->
             <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
                 <div class="flex items-start gap-3">
                     <span class="material-symbols-outlined text-primary">info</span>
@@ -86,7 +75,6 @@
             </div>
         </form>
     </main>
-    <!-- Sticky Footer Actions -->
     <div class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md p-4 border-t border-slate-200 safe-area-pb">
         <button type="submit"
                 form="extension-form"

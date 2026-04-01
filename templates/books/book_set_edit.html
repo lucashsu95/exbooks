@@ -1,14 +1,20 @@
 {% extends "base.html" %}
 {% block title %}編輯套書 - Exbooks{% endblock %}
 {% block content %}
-    <div class="max-w-4xl mx-auto px-4 py-8">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold text-slate-900">編輯套書</h1>
-            <a href="{% url 'books:book_set_detail' book_set.pk %}"
-               class="text-slate-600 hover:text-primary">取消</a>
-        </div>
+    <!-- Sticky top bar -->
+    <div class="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3">
+        <a href="{% url 'books:book_set_detail' book_set.pk %}"
+           class="text-slate-500 hover:text-primary flex items-center justify-center"
+           aria-label="返回">
+            <span class="material-symbols-outlined text-xl">arrow_back</span>
+        </a>
+        <h1 class="text-lg font-semibold text-slate-900">編輯套書</h1>
+    </div>
+    <!-- Scrollable content -->
+    <main class="px-4 py-4 pb-24 space-y-4">
         <form method="post"
-              class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              id="book-set-edit-form"
+              class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
             {% csrf_token %}
             <div class="space-y-4">
                 <div>
@@ -24,62 +30,77 @@
                     {% if form.description.errors %}<p class="text-red-500 text-sm mt-1">{{ form.description.errors.0 }}</p>{% endif %}
                 </div>
             </div>
-            <div class="mt-6 flex justify-end gap-3">
-                <a href="{% url 'books:book_set_detail' book_set.pk %}"
-                   class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors">取消</a>
-                <button type="submit"
-                        class="px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors">
-                    儲存變更
-                </button>
-            </div>
         </form>
         <!-- 已加入的書籍 -->
-        <div class="mt-8 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-            <h2 class="text-lg font-semibold text-slate-900 mb-4">套書中的書籍（{{ books_in_set|length }} 本）</h2>
-            {% if books_in_set %}
-                <div class="space-y-3" id="book-set-books">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-lg">auto_stories</span>
+                <h2 class="text-sm font-bold text-slate-700">
+                    套書中的書籍 <span class="text-primary ml-1">({{ books_in_set|length }})</span>
+                </h2>
+            </div>
+            <div id="book-set-books" class="divide-y divide-slate-100">
+                {% csrf_token %}
+                {% if books_in_set %}
                     {% for book in books_in_set %}
-                        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                            <div>
+                        <div class="flex justify-between items-center p-4">
+                            <div class="flex-1 min-w-0 pr-4">
                                 <a href="{% url 'books:detail' book.pk %}"
-                                   class="text-slate-900 hover:text-primary">{{ book.official_book.title }}</a>
-                                <p class="text-sm text-slate-500">{{ book.official_book.author }}</p>
+                                   class="text-base font-semibold text-slate-900 hover:text-primary block truncate mb-1">
+                                    {{ book.official_book.title }}
+                                </a>
+                                <p class="text-sm text-slate-500 truncate">{{ book.official_book.author }}</p>
                             </div>
                             <button hx-post="{% url 'books:book_set_remove_book' book_set.pk book.pk %}"
                                     hx-target="#book-set-books"
                                     hx-swap="outerHTML"
-                                    class="text-red-600 hover:text-red-800 text-sm">移除</button>
+                                    class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-xl">remove_circle_outline</span>
+                            </button>
                         </div>
                     {% endfor %}
-                </div>
-            {% else %}
-                <p class="text-slate-600 text-center py-8">此套書尚未加入任何書籍</p>
-            {% endif %}
+                {% else %}
+                    <div class="p-8 text-center text-slate-500">
+                        <span class="material-symbols-outlined text-3xl mb-2 text-slate-300">inbox</span>
+                        <p class="text-sm">此套書尚未加入任何書籍</p>
+                    </div>
+                {% endif %}
+            </div>
         </div>
         <!-- 可加入的書籍 -->
         {% if available_books %}
-            <div class="mt-6 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h2 class="text-lg font-semibold text-slate-900 mb-4">可加入的書籍</h2>
-                <div class="space-y-3">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div class="px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-slate-500 text-lg">add_circle</span>
+                    <h2 class="text-sm font-bold text-slate-700">可加入的書籍</h2>
+                </div>
+                <div class="divide-y divide-slate-100">
                     {% for book in available_books %}
-                        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                            <div>
-                                <span class="text-slate-900">{{ book.official_book.title }}</span>
-                                <p class="text-sm text-slate-500">{{ book.official_book.author }}</p>
+                        <div class="flex justify-between items-center p-4">
+                            <div class="flex-1 min-w-0 pr-4">
+                                <span class="text-base font-semibold text-slate-900 block truncate mb-1">{{ book.official_book.title }}</span>
+                                <p class="text-sm text-slate-500 truncate">{{ book.official_book.author }}</p>
                             </div>
                             <button hx-post="{% url 'books:book_set_add_book' book_set.pk %}"
                                     hx-vals='{"book_id": "{{ book.pk }}"}'
                                     hx-target="#book-set-books"
                                     hx-swap="outerHTML"
-                                    class="text-primary hover:text-primary/80 text-sm font-medium">加入</button>
+                                    class="text-primary hover:text-primary/80 hover:bg-primary/5 p-2 rounded-lg text-sm font-medium transition-colors shrink-0 flex items-center gap-1">
+                                <span class="material-symbols-outlined text-xl">add</span>
+                                加入
+                            </button>
                         </div>
                     {% endfor %}
                 </div>
             </div>
         {% endif %}
-        <div class="mt-4">
-            <a href="{% url 'books:book_set_list' %}"
-               class="text-primary hover:underline">← 返回套書列表</a>
-        </div>
+    </main>
+    <!-- Fixed bottom bar -->
+    <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-slate-200 safe-area-pb z-20">
+        <button type="submit"
+                form="book-set-edit-form"
+                class="w-full py-3.5 bg-primary text-white font-bold rounded-2xl shadow-lg shadow-primary/30 hover:bg-primary/90 active:scale-[0.98] transition-all">
+            儲存變更
+        </button>
     </div>
 {% endblock %}

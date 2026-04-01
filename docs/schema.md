@@ -16,7 +16,7 @@
 | #   | 實體     | 英文          | 說明                                           | 來源           |
 | --- | -------- | ------------- | ---------------------------------------------- | -------------- |
 | 1   | 用戶資料 | UserProfile   | 擴展 Django User，存放暱稱、偏好設定等         | 3.2 使用者註冊 |
-| 2   | 官方書籍 | OfficialBook  | 以 ISBN 為鍵的書籍元資料（書名、作者、出版社） | 3.2 書籍上架   |
+| 2   | 官方書目 | OfficialBook  | 以 ISBN 為鍵的書籍元資料（書名、作者、出版社） | 3.2 書籍上架   |
 | 3   | 分享書籍 | SharedBook    | 用戶貢獻的特定書冊（書況、流通性、狀態）       | 3.2 書籍上架   |
 | 4   | 套書     | BookSet       | 書籍套組，綁定後限制整套借出                   | 規則 #7        |
 | 5   | 交易     | Deal          | 借用/傳遞/返還/回歸/例外等交易記錄             | 5.2 交易類別   |
@@ -113,7 +113,7 @@ erDiagram
 
     SharedBook {
         UUID id PK "主鍵"
-        INT official_book_id FK "關聯官方書籍"
+        INT official_book_id FK "關聯官方書目"
         INT owner_id FK "書籍貢獻者"
         INT keeper_id FK "當前持有者"
         INT book_set_id FK "所屬套書（可空）"
@@ -398,7 +398,7 @@ stateDiagram-v2
 
 ### DR-3: WishListItem 關聯 OfficialBook 而非 SharedBook
 
-**問題**：願望書車應關聯官方書籍或分享書冊？
+**問題**：願望書車應關聯官方書目或分享書冊？
 
 **決策**：關聯 `OfficialBook`。
 
@@ -427,9 +427,9 @@ stateDiagram-v2
 
 **問題**：刪除 OfficialBook 時如何處理關聯的 SharedBook？
 
-**決策**：使用 `on_delete=models.PROTECT`，禁止刪除仍有分享書冊的官方書籍。
+**決策**：使用 `on_delete=models.PROTECT`，禁止刪除仍有分享書冊的官方書目。
 
-**原因**：官方書籍是參考資料，不應輕易刪除。若需下架，應先處理所有關聯的 SharedBook。
+**原因**：官方書目是參考資料，不應輕易刪除。若需下架，應先處理所有關聯的 SharedBook。
 
 ### DR-7: 評價維度設計
 

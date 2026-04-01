@@ -1,6 +1,12 @@
-{# 統一的書籍封面顯示組件 #}
-{# 傳入參數: book (SharedBook 物件), class (自定義 CSS 類別) #}
-
-<img class="{{ class|default:'w-full h-full object-cover' }}"
-     alt="{{ book.official_book.title|default:'書籍封面' }}"
-     src="{% if book.photos.exists %}{{ book.photos.first.photo.url }}{% elif book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuBlSAm5AwcmdJLphEsyKIZJ9iWzB0otfD9IcFu5Buim2RjYBpL4w7vWD3u6qaidnqPQpx0C8g1zdJ69ceuhSRE4bJU1HB6iBJG7LSOanbVN72OFbRT_sXIuMy556iXOIt0f-rQeJZkdqRDUjRq0JZfLx7h3HCiyqqqHUvQdU95O_apLHu1S0DqUMPFWdpVBh6Bxvrty9Fc2MILIMQkOuD_4DZ71tdUDNIAki1-nczh3Sw5Bd8Nd1o3TuyJCHHn6vqgxkiBGoo6j8_0{% endif %}" />
+{% load static %}
+{# 傳入: book (SharedBook), class (CSS) #}
+{# 優先順序：官方封面 cover_image > 預設封面圖 #}
+{% if book.official_book.cover_image %}
+    <img class="{{ class|default:'w-full h-full object-cover' }}"
+         alt="{{ book.official_book.title }}"
+         src="{{ book.official_book.cover_image.url }}" />
+{% else %}
+    <img class="{{ class|default:'w-full h-full object-cover' }}"
+         alt="預設封面"
+         src="{% static 'book-placeholder.jpg' %}" />
+{% endif %}

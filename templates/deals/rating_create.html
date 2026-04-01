@@ -44,18 +44,12 @@ box-shadow: 0 2px 6px rgba(19, 109, 236, 0.3);
         <h2 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">評價交易</h2>
         <div class="flex w-12 items-center justify-end"></div>
     </div>
-    <!-- Main Content -->
     <main class="flex-1 px-4 py-4 pb-32">
-        <!-- Transaction Summary -->
         <div class="bg-white rounded-xl border border-slate-200 p-4 mb-6">
             <div class="flex gap-4 items-center">
-                <!-- Book Cover -->
                 <div class="w-16 h-22 rounded-lg bg-slate-200 overflow-hidden shrink-0 shadow-md">
-                    <img src="{% if deal.shared_book.official_book.cover_image %}{{ deal.shared_book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuBlSAm5AwcmdJLphEsyKIZJ9iWzB0otfD9IcFu5Buim2RjYBpL4w7vWD3u6qaidnqPQpx0C8g1zdJ69ceuhSRE4bJU1HB6iBJG7LSOanbVN72OFbRT_sXIuMy556iXOIt0f-rQeJZkdqRDUjRq0JZfLx7h3HCiyqqqHUvQdU95O_apLHu1S0DqUMPFWdpVBh6Bxvrty9Fc2MILIMQkOuD_4DZ71tdUDNIAki1-nczh3Sw5Bd8Nd1o3TuyJCHHn6vqgxkiBGoo6j8_0{% endif %}"
-                         alt="{{ deal.shared_book.official_book.title }}"
-                         class="w-full h-full object-cover" />
+                    {% include 'partials/official_book_cover.html' with book=deal.shared_book.official_book %}
                 </div>
-                <!-- Book Info -->
                 <div class="flex-1">
                     <h3 class="text-slate-900 font-bold text-lg mb-1">{{ deal.shared_book.official_book.title }}</h3>
                     <div class="flex items-center gap-2 mb-2">
@@ -63,7 +57,6 @@ box-shadow: 0 2px 6px rgba(19, 109, 236, 0.3);
                     </div>
                 </div>
             </div>
-            <!-- Partner Info -->
             <div class="mt-4 pt-4 border-t border-slate-200">
                 <p class="text-xs text-slate-500 uppercase font-bold tracking-tighter mb-2">交易對象</p>
                 <div class="flex items-center gap-3">
@@ -87,11 +80,9 @@ box-shadow: 0 2px 6px rgba(19, 109, 236, 0.3);
                 </div>
             </div>
         </div>
-        <!-- Rating Form -->
         <form method="post" action="">
             {% csrf_token %}
             {% crispy form %}
-            <!-- Info Box -->
             <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
                 <div class="flex items-start gap-3">
                     <span class="material-symbols-outlined text-primary">info</span>
@@ -107,7 +98,6 @@ box-shadow: 0 2px 6px rgba(19, 109, 236, 0.3);
             </div>
         </form>
     </main>
-    <!-- Sticky Footer Actions -->
     <div class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md p-4 border-t border-slate-200">
         <button type="submit"
                 form="rating-form"
@@ -119,12 +109,10 @@ box-shadow: 0 2px 6px rgba(19, 109, 236, 0.3);
 {% endblock %}
 {% block extra_js %}
     <script>
-// Move form outside main for proper submission
 document.addEventListener('DOMContentLoaded', function() {
 const form = document.querySelector('form');
 form.id = 'rating-form';
 
-// Slider value display
 const sliders = [
     { id: 'id_integrity_score', valueId: 'integrity-value' },
     { id: 'id_punctuality_score', valueId: 'punctuality-value' },
@@ -134,15 +122,11 @@ const sliders = [
 sliders.forEach(function(slider) {
     const input = document.getElementById(slider.id);
     const valueDisplay = document.getElementById(slider.valueId);
-
     if (input && valueDisplay) {
-    // Set initial value
-    valueDisplay.textContent = input.value;
-
-    // Update on change
-    input.addEventListener('input', function() {
-        valueDisplay.textContent = this.value;
-    });
+        valueDisplay.textContent = input.value;
+        input.addEventListener('input', function() {
+            valueDisplay.textContent = this.value;
+        });
     }
 });
 });

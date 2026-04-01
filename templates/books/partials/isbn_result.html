@@ -1,13 +1,57 @@
 {% if result %}
-    <div class="bg-green-50-green-900/20 p-3 rounded-lg border border-green-200-green-800 mt-2">
-        <p class="font-medium text-green-800-green-200">{{ result.title }}</p>
-        <p class="text-sm text-green-600-green-400">{{ result.author }}</p>
-        {% if result.publisher %}<p class="text-xs text-green-500-green-500">{{ result.publisher }}</p>{% endif %}
-        <input type="hidden" name="title" value="{{ result.title }}">
-        <input type="hidden" name="author" value="{{ result.author }}">
+    <div class="bg-green-50 p-3 rounded-lg border border-green-200 mt-2">
+        <div class="flex gap-3 items-start">
+            {% if result.cover_url %}
+                <img src="{{ result.cover_url }}"
+                     alt="{{ result.title }}"
+                     class="w-12 h-16 object-cover rounded shadow-sm flex-shrink-0" />
+            {% endif %}
+            <div class="flex-1 min-w-0">
+                <p class="font-medium text-green-800 truncate">{{ result.title }}</p>
+                <p class="text-sm text-green-600">{{ result.author }}</p>
+                {% if result.publisher %}<p class="text-xs text-green-500 mt-0.5">{{ result.publisher }}</p>{% endif %}
+            </div>
+        </div>
+        {# 用 JS 填入可見欄位，避免重複 hidden input 衝突 #}
+        <script>
+        (function() {
+          var data = {
+            title: "{{ result.title|escapejs }}",
+            author: "{{ result.author|escapejs }}",
+            publisher: "{{ result.publisher|default:''|escapejs }}",
+            cover_url: "{{ result.cover_url|default:''|escapejs }}",
+          };
+          function fill(name, val) {
+            var el = document.querySelector('input[name="' + name + '"], textarea[name="' + name + '"]');
+            if (el && !el.value) el.value = val;
+          }
+          fill('title', data.title);
+          fill('author', data.author);
+          fill('publisher', data.publisher);
+          // 存封面 URL 供後端使用
+          var coverInput = document.getElementById('id_cover_url');
+          if (!coverInput) {
+            coverInput = document.createElement('input');
+            coverInput.type = 'hidden';
+            coverInput.name = 'cover_url';
+            coverInput.id = 'id_cover_url';
+            document.querySelector('form').appendChild(coverInput);
+          }
+          coverInput.value = data.cover_url;
+          // 有封面 URL → 隱藏手動上傳欄位；沒有 → 顯示
+          if (typeof window.setCoverFieldVisibility === 'function') {
+            window.setCoverFieldVisibility(!!data.cover_url);
+          }
+        })();
+        </script>
     </div>
 {% elif isbn %}
-    <div class="bg-yellow-50-yellow-900/20 p-3 rounded-lg border border-yellow-200-yellow-800 mt-2">
-        <p class="text-sm text-yellow-700-yellow-300">查無此 ISBN，請手動輸入書籍資訊</p>
+    <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200 mt-2">
+        <p class="text-sm text-yellow-700">查無此 ISBN，請手動輸入書籍資訊</p>
     </div>
+    <script>
+    if (typeof window.setCoverFieldVisibility === 'function') {
+      window.setCoverFieldVisibility(false);
+    }
+    </script>
 {% endif %}

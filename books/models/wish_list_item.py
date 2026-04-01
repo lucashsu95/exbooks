@@ -20,7 +20,7 @@ class WishListItem(BaseModel):
         "books.OfficialBook",
         on_delete=models.CASCADE,
         related_name="wished_by",
-        verbose_name="官方書籍",
+        verbose_name="官方書目",
     )
 
     class Meta:

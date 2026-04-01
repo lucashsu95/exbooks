@@ -239,6 +239,7 @@ def my_bookshelf(request):
     if tab == "contributions":
         contributions_books = (
             SharedBook.objects.select_related("official_book", "keeper__profile")
+            .prefetch_related("photos")
             .filter(owner=request.user)
             .order_by("-updated_at")
         )
@@ -247,6 +248,7 @@ def my_bookshelf(request):
             Deal.objects.select_related(
                 "shared_book__official_book", "applicant", "responder"
             )
+            .prefetch_related("shared_book__photos")
             .filter(Q(applicant=request.user) | Q(responder=request.user))
             .exclude(status__in=[Deal.Status.DONE, Deal.Status.CANCELLED])
             .order_by("-updated_at")
@@ -255,6 +257,7 @@ def my_bookshelf(request):
         tab = "keeping"
         keeping_books = (
             SharedBook.objects.select_related("official_book", "owner__profile")
+            .prefetch_related("photos")
             .filter(keeper=request.user)
             .order_by("-updated_at")
         )
@@ -337,6 +340,7 @@ def book_add(request):
             author = form.cleaned_data["author"]
             publisher = form.cleaned_data["publisher"]
             category = form.cleaned_data["category"]
+            cover_url = request.POST.get("cover_url", "").strip()
 
             try:
                 with transaction.atomic():
@@ -350,7 +354,7 @@ def book_add(request):
                         },
                     )
 
-                    # 已存在官方書籍時，同步可更新的中繼資料。
+                    # 已存在官方書目時，同步可更新的中繼資料。
                     if not created:
                         off_book.title = title
                         off_book.author = author
@@ -365,6 +369,33 @@ def book_add(request):
                                 "updated_at",
                             ]
                         )
+
+                    # 封面圖：優先用戶手動上傳，其次用 Google Books URL，都沒有就跳過
+                    uploaded_cover = request.FILES.get("cover_image")
+                    if uploaded_cover:
+                        # 用戶手動上傳封面（無論 OfficialBook 是否已有封面都覆蓋）
+                        off_book.cover_image.save(
+                            uploaded_cover.name, uploaded_cover, save=True
+                        )
+                    elif cover_url and not off_book.cover_image:
+                        # Google Books 有封面 URL 且 OfficialBook 尚無封面，自動下載儲存
+                        try:
+                            import httpx
+                            from django.core.files.base import ContentFile
+                            import os
+
+                            resp = httpx.get(
+                                cover_url, timeout=10, follow_redirects=True
+                            )
+                            resp.raise_for_status()
+                            ext = os.path.splitext(cover_url.split("?")[0])[1] or ".jpg"
+                            filename = f"{off_book.pk}{ext}"
+                            off_book.cover_image.save(
+                                filename, ContentFile(resp.content), save=True
+                            )
+                        except Exception:
+                            # 封面下載失敗不影響上架流程
+                            pass
 
                     shared = form.save(commit=False)
                     shared.official_book = off_book

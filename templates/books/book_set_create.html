@@ -2,26 +2,37 @@
 {% load crispy_forms_tags %}
 {% block title %}建立套書 - Exbooks{% endblock %}
 {% block content %}
-    <div class="max-w-2xl mx-auto px-4 py-8">
-        <h1 class="text-2xl font-bold text-slate-900 mb-6">建立套書</h1>
-        <form method="post"
-              class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+    <!-- Sticky top bar -->
+    <div class="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3">
+        <a href="{% url 'books:book_set_list' %}"
+           class="text-slate-500 hover:text-primary flex items-center justify-center"
+           aria-label="返回">
+            <span class="material-symbols-outlined text-xl">arrow_back</span>
+        </a>
+        <h1 class="text-lg font-semibold text-slate-900">建立套書</h1>
+    </div>
+    <!-- Scrollable content -->
+    <main class="px-4 py-4 pb-24 space-y-4">
+        <form method="post" id="book-set-form" class="space-y-6">
             {% csrf_token %}
-            <div class="space-y-4">{% crispy form %}</div>
-            {% if available_books %}
-                <div class="mt-6">
-                    <h2 class="text-lg font-semibold text-slate-900 mb-3">選擇書籍加入套書</h2>
-                    <p class="text-sm text-slate-600 mb-4">建立套書後，您可以在詳情頁面加入書籍</p>
-                </div>
-            {% endif %}
-            <div class="mt-6 flex gap-3">
-                <button type="submit"
-                        class="px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors">
-                    建立套書
-                </button>
-                <a href="{% url 'books:book_set_list' %}"
-                   class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors">取消</a>
-            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">{% crispy form %}</div>
         </form>
+        {% if available_books %}
+            <div class="bg-blue-50 rounded-2xl p-4 flex gap-3">
+                <span class="material-symbols-outlined text-blue-500">info</span>
+                <div>
+                    <h2 class="text-sm font-semibold text-blue-900 mb-1">選擇書籍加入套書</h2>
+                    <p class="text-xs text-blue-700">建立套書後，您可以在詳情頁面加入書籍</p>
+                </div>
+            </div>
+        {% endif %}
+    </main>
+    <!-- Fixed bottom bar -->
+    <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-slate-200 safe-area-pb z-20">
+        <button type="submit"
+                form="book-set-form"
+                class="w-full py-3.5 bg-primary text-white font-bold rounded-2xl shadow-lg shadow-primary/30 hover:bg-primary/90 active:scale-[0.98] transition-all">
+            建立套書
+        </button>
     </div>
 {% endblock %}
