@@ -811,16 +811,22 @@ def deal_upload_photos(request, pk):
 
     條件：
     - 交易狀態為 M（已面交）
-    - 申請者可上傳照片
+    - 只有「開放傳遞」書籍可上傳照片（記錄流轉書況）
+    - 新持有者（keeper）可上傳照片
     """
     deal = get_object_or_404(
         Deal.objects.select_related("shared_book", "shared_book__official_book"),
         pk=pk,
     )
 
-    # 權限檢查：只有申請者可上傳
-    if request.user != deal.applicant:
-        messages.error(request, "只有申請者可以上傳照片。")
+    # 權限檢查：只有新持有者可上傳
+    if request.user != deal.shared_book.keeper:
+        messages.error(request, "只有持有者可以上傳照片。")
+        return redirect("deals:detail", pk)
+
+    # 流通性檢查：只有「開放傳遞」可上傳照片
+    if deal.shared_book.transferability != SharedBook.Transferability.TRANSFER:
+        messages.error(request, "只有「開放傳遞」的書籍可以上傳書況照片。")
         return redirect("deals:detail", pk)
 
     # 狀態檢查：必須是已面交狀態
