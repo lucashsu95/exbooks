@@ -2,72 +2,71 @@
 {% load crispy_forms_tags %}
 {% block title %}Exbooks - 上傳書況照片{% endblock %}
 {% block content %}
-<!-- Top Navigation -->
-<div class="flex items-center bg-white p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200">
-    <a href="{% url 'deals:detail' deal.id %}"
-       class="text-slate-900 flex size-12 shrink-0 items-center cursor-pointer">
-        <span class="material-symbols-outlined">arrow_back</span>
-    </a>
-    <h2 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">
-        上傳書況照片
-    </h2>
-    <div class="flex w-12 items-center justify-end"></div>
-</div>
-<!-- Main Content -->
-<main class="flex-1 px-4 py-4 pb-32">
-    <!-- Transaction Summary -->
-    <div class="bg-white rounded-xl border border-slate-200 p-4 mb-6">
-        <div class="flex gap-4 items-center">
-            <!-- Book Cover -->
-            <div class="w-16 h-22 rounded-lg bg-slate-200 overflow-hidden shrink-0 bg-cover bg-center"
-                 style="{% if deal.shared_book.official_book.cover_image %}background-image: url('{{ deal.shared_book.official_book.cover_image.url }}');{% endif %}"></div>
-            <!-- Book Info -->
-            <div class="flex-1">
-                <h3 class="text-slate-900 font-bold text-lg mb-1">{{ deal.shared_book.official_book.title }}</h3>
-                <p class="text-slate-600 text-sm mb-2">{{ deal.shared_book.official_book.author }}</p>
-                <div class="flex items-center gap-2">
-                    <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">{{ deal.get_deal_type_display }}</span>
+    <!-- Top Navigation -->
+    <div class="flex items-center bg-white p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200">
+        <a href="{% url 'deals:detail' deal.id %}"
+           class="text-slate-900 flex size-12 shrink-0 items-center cursor-pointer">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <h2 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">上傳書況照片</h2>
+        <div class="flex w-12 items-center justify-end"></div>
+    </div>
+    <!-- Main Content -->
+    <main class="flex-1 px-4 py-4 pb-32">
+        <!-- Transaction Summary -->
+        <div class="bg-white rounded-xl border border-slate-200 p-4 mb-6">
+            <div class="flex gap-4 items-center">
+                <!-- Book Cover -->
+                <div class="w-16 h-22 rounded-lg bg-slate-200 overflow-hidden shrink-0 bg-cover bg-center"
+                     style="{% if deal.shared_book.official_book.cover_image %}background-image: url('{{ deal.shared_book.official_book.cover_image.url }}');
+                            {% endif %}"></div>
+                <!-- Book Info -->
+                <div class="flex-1">
+                    <h3 class="text-slate-900 font-bold text-lg mb-1">{{ deal.shared_book.official_book.title }}</h3>
+                    <p class="text-slate-600 text-sm mb-2">{{ deal.shared_book.official_book.author }}</p>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">{{ deal.get_deal_type_display }}</span>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    <!-- Info Box -->
-    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-        <div class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-amber-600">photo_camera</span>
-            <div>
-                <h4 class="font-bold text-slate-900 text-sm mb-1">面交照片說明</h4>
-                <ul class="text-sm text-slate-600 space-y-1 list-disc ml-4">
-                    <li>請上傳面交時拍攝的書況照片，作為交易紀錄</li>
-                    <li>支援 JPG、PNG 格式，每張最大 5MB</li>
-                    <li>照片將顯示於書籍時間線，供雙方查看</li>
-                </ul>
+        <!-- Info Box -->
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+            <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-amber-600">photo_camera</span>
+                <div>
+                    <h4 class="font-bold text-slate-900 text-sm mb-1">面交照片說明</h4>
+                    <ul class="text-sm text-slate-600 space-y-1 list-disc ml-4">
+                        <li>請上傳面交時拍攝的書況照片，作為交易紀錄</li>
+                        <li>支援 JPG、PNG 格式，每張最大 5MB</li>
+                        <li>照片將顯示於書籍時間線，供雙方查看</li>
+                    </ul>
+                </div>
             </div>
         </div>
+        <!-- Upload Form -->
+        <form method="post" action="" enctype="multipart/form-data" id="photo-form">
+            {% csrf_token %}
+            {% crispy form %}
+        </form>
+        <!-- Preview Area -->
+        <div id="preview-area" class="mt-4 hidden">
+            <h4 class="text-slate-900 font-bold mb-2">預覽照片</h4>
+            <div id="preview-grid" class="grid grid-cols-3 gap-2"></div>
+        </div>
+    </main>
+    <!-- Sticky Footer Actions -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md p-4 border-t border-slate-200">
+        <button type="submit"
+                form="photo-form"
+                class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+            <span class="material-symbols-outlined">upload</span>
+            上傳照片
+        </button>
     </div>
-    <!-- Upload Form -->
-    <form method="post" action="" enctype="multipart/form-data" id="photo-form">
-        {% csrf_token %}
-        {% crispy form %}
-    </form>
-    <!-- Preview Area -->
-    <div id="preview-area" class="mt-4 hidden">
-        <h4 class="text-slate-900 font-bold mb-2">預覽照片</h4>
-        <div id="preview-grid" class="grid grid-cols-3 gap-2"></div>
-    </div>
-</main>
-<!-- Sticky Footer Actions -->
-<div class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md p-4 border-t border-slate-200">
-    <button type="submit"
-            form="photo-form"
-            class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-        <span class="material-symbols-outlined">upload</span>
-        上傳照片
-    </button>
-</div>
 {% endblock %}
 {% block extra_js %}
-<script>
+    <script>
 document.addEventListener('DOMContentLoaded', function() {
     const photoInput = document.getElementById('id_photos');
     const previewArea = document.getElementById('preview-area');
@@ -101,5 +100,5 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-</script>
+    </script>
 {% endblock %}

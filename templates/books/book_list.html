@@ -6,11 +6,11 @@
         <!-- Gradient Background -->
         <div class="absolute inset-0 bg-gradient-to-br from-primary/10 via-background-light to-primary/5-primary/20-background-dark-primary/10">
         </div>
-<!-- Header Section -->
-<header class="relative flex items-center p-4 justify-between">
-<!-- 左側留空（對齊用） -->
-<div class="w-12"></div>
-<h2 class="text-slate-900 text-2xl font-bold leading-tight tracking-tight flex-1 text-center">Exbooks</h2>
+        <!-- Header Section -->
+        <header class="relative flex items-center p-4 justify-between">
+            <!-- 左側留空（對齊用） -->
+            <div class="w-12"></div>
+            <h2 class="text-slate-900 text-2xl font-bold leading-tight tracking-tight flex-1 text-center">Exbooks</h2>
             <div class="flex w-12 items-center justify-end">
                 <a href="{% url 'accounts:profile' %}"
                    class="flex size-12 cursor-pointer items-center justify-center rounded-2xl bg-white text-primary backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 overflow-hidden border border-white/60">
@@ -118,55 +118,53 @@
             {% endfor %}
         </div>
     </div>
-<!-- Book List Section - 改善後的卡片設計（方案 G） -->
-<div class="px-4 pt-6 pb-24">
-<div class="flex items-center gap-2 mb-4">
-<span class="material-symbols-outlined text-primary">menu_book</span>
-<h2 class="text-slate-900 text-xl font-bold leading-tight tracking-tight">書籍列表</h2>
-</div>
-<div class="grid grid-cols-1 gap-4">
-{% for book in nearby_books|default:"" %}
-<a href="{% url 'books:detail' book.id %}"
-class="block bg-white rounded-2xl p-4 shadow-sm border border-slate-100 active:scale-[0.98] transition-transform">
-<!-- 擴大點擊區域到整個卡片 -->
-<div class="flex gap-4">
-<!-- 封面圖片 - 增大尺寸 -->
-<div class="w-20 h-28 rounded-xl overflow-hidden shrink-0 shadow-md">
-<img class="w-full h-full object-cover"
-alt="{{ book.official_book.title }} 的封面"
-src="{% if book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuBlSAm5AwcmdJLphEsyKIZJ9iWzB0otfD9IcFu5Buim2RjYBpL4w7vWD3u6qaidnqPQpx0C8g1zdJ69ceuhSRE4bJU1HB6iBJG7LSOanbVN72OFbRT_sXIuMy556iXOIt0f-rQeJZkdqRDUjRq0JZfLx7h3HCiyqqqHUvQdU95O_apLHu1S0DqUMPFWdpVBh6Bxvrty9Fc2MILIMQkOuD_4DZ71tdUDNIAki1-nczh3Sw5Bd8Nd1o3TuyJCHHn6vqgxkiBGoo6j8_0{% endif %}" />
-</div>
-<!-- 內容區域 -->
-<div class="flex-1 min-w-0 py-1">
-<!-- 標題完整顯示，使用 line-clamp-2 -->
-<h3 class="font-bold text-base text-slate-900 line-clamp-2 leading-snug">
-{{ book.official_book.title }}
-</h3>
-<!-- 作者 -->
-<p class="text-sm text-slate-500 mt-1">{{ book.official_book.author|default:"未知作者" }}</p>
-<!-- 標籤移到底部 -->
-<div class="mt-2 flex items-center gap-2 flex-wrap">
-<span class="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium">
-{{ book.official_book.get_category_display }}
-</span>
-<!-- 持有者信用等級徽章 -->
-{% if book.keeper.profile %}
-{% include "partials/trust_badge_inline.html" with trust_level=book.keeper.profile.trust_level %}
-{% endif %}
-</div>
-</div>
-</div>
-</a>
-{% empty %}
-<div class="flex items-center justify-center p-8 w-full">
-<div class="text-center text-slate-500 bg-white rounded-2xl p-8 border border-slate-100 shadow-sm">
-<span class="material-symbols-outlined text-5xl mb-3 text-slate-300">inbox</span>
-<p class="font-medium">目前沒有資料</p>
-</div>
-</div>
-{% endfor %}
-</div>
-</div>
+    <!-- Book List Section - 改善後的卡片設計（方案 G） -->
+    <div class="px-4 pt-6 pb-24">
+        <div class="flex items-center gap-2 mb-4">
+            <span class="material-symbols-outlined text-primary">menu_book</span>
+            <h2 class="text-slate-900 text-xl font-bold leading-tight tracking-tight">書籍列表</h2>
+        </div>
+        <div class="grid grid-cols-1 gap-4">
+            {% for book in nearby_books|default:"" %}
+                <a href="{% url 'books:detail' book.id %}"
+                   class="block bg-white rounded-2xl p-4 shadow-sm border border-slate-100 active:scale-[0.98] transition-transform">
+                    <!-- 擴大點擊區域到整個卡片 -->
+                    <div class="flex gap-4">
+                        <!-- 封面圖片 - 增大尺寸 -->
+                        <div class="w-20 h-28 rounded-xl overflow-hidden shrink-0 shadow-md">
+                            <img class="w-full h-full object-cover"
+                                 alt="{{ book.official_book.title }} 的封面"
+                                 src="{% if book.official_book.cover_image %}{{ book.official_book.cover_image.url }}{% else %}https://lh3.googleusercontent.com/aida-public/AB6AXuBlSAm5AwcmdJLphEsyKIZJ9iWzB0otfD9IcFu5Buim2RjYBpL4w7vWD3u6qaidnqPQpx0C8g1zdJ69ceuhSRE4bJU1HB6iBJG7LSOanbVN72OFbRT_sXIuMy556iXOIt0f-rQeJZkdqRDUjRq0JZfLx7h3HCiyqqqHUvQdU95O_apLHu1S0DqUMPFWdpVBh6Bxvrty9Fc2MILIMQkOuD_4DZ71tdUDNIAki1-nczh3Sw5Bd8Nd1o3TuyJCHHn6vqgxkiBGoo6j8_0{% endif %}" />
+                        </div>
+                        <!-- 內容區域 -->
+                        <div class="flex-1 min-w-0 py-1">
+                            <!-- 標題完整顯示，使用 line-clamp-2 -->
+                            <h3 class="font-bold text-base text-slate-900 line-clamp-2 leading-snug">{{ book.official_book.title }}</h3>
+                            <!-- 作者 -->
+                            <p class="text-sm text-slate-500 mt-1">{{ book.official_book.author|default:"未知作者" }}</p>
+                            <!-- 標籤移到底部 -->
+                            <div class="mt-2 flex items-center gap-2 flex-wrap">
+                                <span class="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium">
+                                    {{ book.official_book.get_category_display }}
+                                </span>
+                                <!-- 持有者信用等級徽章 -->
+                                {% if book.keeper.profile %}
+                                    {% include "partials/trust_badge_inline.html" with trust_level=book.keeper.profile.trust_level %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            {% empty %}
+                <div class="flex items-center justify-center p-8 w-full">
+                    <div class="text-center text-slate-500 bg-white rounded-2xl p-8 border border-slate-100 shadow-sm">
+                        <span class="material-symbols-outlined text-5xl mb-3 text-slate-300">inbox</span>
+                        <p class="font-medium">目前沒有資料</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
     {% include '_bottom_nav.html' %}
 {% endblock %}
 {% block extra_js %}

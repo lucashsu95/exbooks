@@ -2,30 +2,30 @@
 {% load crispy_forms_tags %}
 {% block title %}申請例外處理 - Exbooks{% endblock %}
 {% block content %}
-<div class="max-w-2xl mx-auto px-4 py-8">
-<h1 class="text-2xl font-bold text-slate-900 mb-6">申請例外處理</h1>
-<div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
-    <h2 class="text-lg font-semibold text-slate-900 mb-2">書籍資訊</h2>
-    <p class="text-slate-600">{{ book.official_book.title }}</p>
-    <p class="text-sm text-slate-500">{{ book.official_book.author }}</p>
-</div>
-<form method="post"
-    class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-    {% csrf_token %}
-    <div class="space-y-6">{% crispy form %}</div>
-    <div class="mt-6 flex gap-3">
-    <button type="submit"
-        class="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors">
-        送出申請
-    </button>
-    <a href="{% url 'books:detail' book.pk %}"
-        class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors">取消</a>
+    <div class="max-w-2xl mx-auto px-4 py-8">
+        <h1 class="text-2xl font-bold text-slate-900 mb-6">申請例外處理</h1>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+            <h2 class="text-lg font-semibold text-slate-900 mb-2">書籍資訊</h2>
+            <p class="text-slate-600">{{ book.official_book.title }}</p>
+            <p class="text-sm text-slate-500">{{ book.official_book.author }}</p>
+        </div>
+        <form method="post"
+              class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            {% csrf_token %}
+            <div class="space-y-6">{% crispy form %}</div>
+            <div class="mt-6 flex gap-3">
+                <button type="submit"
+                        class="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors">
+                    送出申請
+                </button>
+                <a href="{% url 'books:detail' book.pk %}"
+                   class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors">取消</a>
+            </div>
+        </form>
+        <div class="mt-4 p-4 bg-yellow-50 rounded-xl">
+            <p class="text-sm text-yellow-800">
+                <strong>注意：</strong>申請例外處理後，書籍狀態將變更為「例外狀況」，需等待貢獻者審核處置。
+            </p>
+        </div>
     </div>
-</form>
-<div class="mt-4 p-4 bg-yellow-50 rounded-xl">
-    <p class="text-sm text-yellow-800">
-    <strong>注意：</strong>申請例外處理後，書籍狀態將變更為「例外狀況」，需等待貢獻者審核處置。
-    </p>
-</div>
-</div>
 {% endblock %}

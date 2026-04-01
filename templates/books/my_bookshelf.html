@@ -2,19 +2,19 @@
 {% block title %}Exbooks - 我的書架{% endblock %}
 {% block body_class %}pb-24{% endblock %}
 {% block content %}
-<div id="bookshelf-page">
-<!-- Header -->
-<header class="sticky top-0 z-10 bg-white border-b border-slate-200">
-<div class="flex items-center p-4 justify-between max-w-xl mx-auto">
-<h1 class="text-xl font-bold tracking-tight">我的書架</h1>
-<!-- 套書管理入口 -->
-<a href="{% url 'books:book_set_list' %}"
-class="flex items-center gap-1 text-sm text-primary font-medium hover:underline"
-title="管理套書">
-<span class="material-symbols-outlined text-lg">library_books</span>
-套書
-</a>
-</div>
+    <div id="bookshelf-page">
+        <!-- Header -->
+        <header class="sticky top-0 z-10 bg-white border-b border-slate-200">
+            <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
+                <h1 class="text-xl font-bold tracking-tight">我的書架</h1>
+                <!-- 套書管理入口 -->
+                <a href="{% url 'books:book_set_list' %}"
+                   class="flex items-center gap-1 text-sm text-primary font-medium hover:underline"
+                   title="管理套書">
+                    <span class="material-symbols-outlined text-lg">library_books</span>
+                    套書
+                </a>
+            </div>
             <!-- Tabs - HTMX 即時切換 -->
             <div class="max-w-xl mx-auto overflow-x-auto no-scrollbar">
                 <nav class="flex px-4 gap-6 whitespace-nowrap"
@@ -130,16 +130,16 @@ title="管理套書">
             {% endif %}
         </main>
     </div>
-<!-- Floating Action Button -->
-<a href="{% url 'books:add' %}"
-class="fixed right-4 fab-safe-bottom bg-primary text-white size-14 rounded-full shadow-lg flex items-center justify-center hover:scale-105 transition-transform active:scale-95">
-<span class="material-symbols-outlined text-3xl">add</span>
-</a>
-<style>
+    <!-- Floating Action Button -->
+    <a href="{% url 'books:add' %}"
+       class="fixed right-4 fab-safe-bottom bg-primary text-white size-14 rounded-full shadow-lg flex items-center justify-center hover:scale-105 transition-transform active:scale-95">
+        <span class="material-symbols-outlined text-3xl">add</span>
+    </a>
+    <style>
 /* FAB 按鈕位置 - 考慮 Bottom Nav 和 Safe Area */
 .fab-safe-bottom {
 bottom: calc(72px + env(safe-area-inset-bottom, 0px));
 }
-</style>
+    </style>
     {% include '_bottom_nav.html' %}
 {% endblock %}

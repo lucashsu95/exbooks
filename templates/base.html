@@ -213,40 +213,42 @@ font-variation-settings: 'FILL' 1;
   {% endif %}
 })();
         </script>
-<!-- Global Loading Indicator - 頁面頂部進度條 -->
-<div id="global-loader" class="fixed top-0 left-0 right-0 h-1 z-[100] opacity-0 transition-opacity duration-200 pointer-events-none">
-<div id="global-loader-bar" class="h-full bg-primary transition-all duration-300" style="width: 0%"></div>
-</div>
-
-<!-- Sidebar (已廢除 - 手機版使用 Bottom Nav) -->
-<!-- {% include '_sidebar.html' %} -->
-<!-- Search Modal -->
-{% include '_search_modal.html' %}
-<!-- Messages (Toast) - Safe Area 適配 -->
-{% if messages %}
-<div class="fixed top-4 right-4 z-50 flex flex-col gap-2 toast-safe"
-id="toast-container">
-{% for message in messages %}
-<div class="toast rounded-lg border px-4 py-3 text-sm shadow-md {% if message.tags == 'success' %}border-green-200 bg-green-50 text-green-800 {% elif message.tags == 'error' %}border-red-200 bg-red-50 text-red-800 {% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-800 {% else %}border-blue-200 bg-blue-50 text-blue-800{% endif %}">
-{{ message }}
-</div>
-{% endfor %}
-</div>
-<style>
+        <!-- Global Loading Indicator - 頁面頂部進度條 -->
+        <div id="global-loader"
+             class="fixed top-0 left-0 right-0 h-1 z-[100] opacity-0 transition-opacity duration-200 pointer-events-none">
+            <div id="global-loader-bar"
+                 class="h-full bg-primary transition-all duration-300"
+                 style="width: 0%"></div>
+        </div>
+        <!-- Sidebar (已廢除 - 手機版使用 Bottom Nav) -->
+        <!-- {% include '_sidebar.html' %} -->
+        <!-- Search Modal -->
+        {% include '_search_modal.html' %}
+        <!-- Messages (Toast) - Safe Area 適配 -->
+        {% if messages %}
+            <div class="fixed top-4 right-4 z-50 flex flex-col gap-2 toast-safe"
+                 id="toast-container">
+                {% for message in messages %}
+                    <div class="toast rounded-lg border px-4 py-3 text-sm shadow-md {% if message.tags == 'success' %}border-green-200 bg-green-50 text-green-800 {% elif message.tags == 'error' %}border-red-200 bg-red-50 text-red-800 {% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-800 {% else %}border-blue-200 bg-blue-50 text-blue-800{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+            <style>
 /* Toast 位置 - 考慮劉海螢幕 */
 .toast-safe {
 top: max(16px, env(safe-area-inset-top, 0px));
 right: max(16px, env(safe-area-inset-right, 0px));
 }
-</style>
-{% endif %}
+            </style>
+        {% endif %}
         <!-- Main Content Wrapper -->
         <div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light-background-dark overflow-x-hidden fade-in">
             {% block content %}{% endblock %}
         </div>
-{% block extra_js %}{% endblock %}
-<!-- Global Loading Indicator & Virtual Keyboard Handling -->
-<script>
+        {% block extra_js %}{% endblock %}
+        <!-- Global Loading Indicator & Virtual Keyboard Handling -->
+        <script>
 (function() {
   // === 方案 C: 全域 Loading Indicator ===
   const globalLoader = document.getElementById('global-loader');
@@ -322,6 +324,6 @@ right: max(16px, env(safe-area-inset-right, 0px));
     }
   });
 })();
-</script>
-</body>
+        </script>
+    </body>
 </html>
