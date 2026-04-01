@@ -108,7 +108,7 @@ class TestLookupByISBN:
         mock_get.side_effect = TimeoutException("Timeout")
 
         result = lookup_by_isbn("9789861234567")
-        assert result is None
+        assert result == {"error": "timeout"}
 
     @patch("books.services.isbn_service.cache")
     @patch("books.services.isbn_service.httpx.get")
@@ -120,7 +120,7 @@ class TestLookupByISBN:
         mock_get.side_effect = RequestError("Network error")
 
         result = lookup_by_isbn("9789861234567")
-        assert result is None
+        assert result == {"error": "network_error"}
 
     @patch("books.services.isbn_service.cache")
     @patch("books.services.isbn_service.httpx.get")
@@ -130,7 +130,7 @@ class TestLookupByISBN:
         mock_get.side_effect = Exception("Unexpected error")
 
         result = lookup_by_isbn("9789861234567")
-        assert result is None
+        assert result == {"error": "unknown"}
 
     def test_lookup_invalid_isbn(self):
         """測試無效 ISBN。"""

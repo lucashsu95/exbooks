@@ -489,6 +489,17 @@ def book_edit(request, pk):
     )
 
 
+@login_required
+@require_POST
+def book_delete(request, pk):
+    """刪除書籍（僅 owner 可刪除）"""
+    book = get_object_or_404(SharedBook, pk=pk, owner=request.user)
+    title = book.official_book.title
+    book.delete()
+    messages.success(request, f"已刪除「{title}」")
+    return redirect("books:bookshelf")
+
+
 @require_GET
 def isbn_lookup(request):
     """HTMX endpoint: ISBN 查詢"""

@@ -64,7 +64,6 @@ class MultipleFileInput(Input):
 
 
 class BookAddForm(forms.ModelForm):
-    # For simplicity, combine OfficialBook and SharedBook fields
     isbn = forms.CharField(
         max_length=13,
         label="ISBN",
@@ -93,6 +92,15 @@ class BookAddForm(forms.ModelForm):
         widget=MultipleFileInput(),
         label="書況照片",
         required=False,
+    )
+    transferability = forms.ChoiceField(
+        choices=SharedBook.Transferability.choices,
+        label="流通性",
+        widget=forms.Select(
+            attrs={
+                "class": "appearance-none bg-white border border-slate-200 text-slate-700 text-sm rounded-full px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+            }
+        ),
     )
 
     class Meta:
@@ -130,6 +138,15 @@ class BookEditForm(forms.ModelForm):
         widget=MultipleFileInput(),
         label="新增書況照片",
         required=False,
+    )
+    transferability = forms.ChoiceField(
+        choices=SharedBook.Transferability.choices,
+        label="流通性",
+        widget=forms.Select(
+            attrs={
+                "class": "appearance-none bg-white border border-slate-200 text-slate-700 text-sm rounded-full px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+            }
+        ),
     )
 
     class Meta:

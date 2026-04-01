@@ -1,4 +1,16 @@
-{% if result %}
+{% if result and result.error %}
+    <div class="bg-orange-50 p-3 rounded-lg border border-orange-200 mt-2">
+        <p class="text-sm text-orange-700">
+            {% if result.error == 'rate_limit' %}
+                查詢次數過多，請稍後再試，或手動輸入書籍資訊
+            {% elif result.error == 'timeout' %}
+                查詢逾時，請稍後再試
+            {% else %}
+                查詢發生錯誤，請手動輸入書籍資訊
+            {% endif %}
+        </p>
+    </div>
+{% elif result %}
     <div class="bg-green-50 p-3 rounded-lg border border-green-200 mt-2">
         <div class="flex gap-3 items-start">
             {% if result.cover_url %}

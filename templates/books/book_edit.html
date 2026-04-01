@@ -18,12 +18,25 @@
                 {% crispy form %}
                 <div id="photo-preview" class="grid grid-cols-3 gap-2 mt-3"></div>
             </div>
+        <button type="submit"
+                class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-transform">
+            儲存變更
+        </button>
+    </form>
+    <!-- 刪除按鈕（僅 owner 可見） -->
+    {% if book.owner == request.user %}
+        <form method="POST"
+              action="{% url 'books:delete' book.id %}"
+              onsubmit="return confirm('確定要刪除這本書嗎？此操作無法復原。');">
+            {% csrf_token %}
             <button type="submit"
-                    class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-transform">
-                儲存變更
+                    class="w-full bg-rose-100 text-rose-600 font-bold py-3 rounded-xl mt-4 hover:bg-rose-200 active:scale-[0.98] transition-transform">
+                <span class="material-symbols-outlined align-middle text-sm mr-1">delete</span>
+                刪除書籍
             </button>
         </form>
-    </main>
+    {% endif %}
+</main>
     {% include '_bottom_nav.html' %}
 {% endblock %}
 {% block extra_js %}

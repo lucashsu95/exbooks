@@ -227,14 +227,13 @@ class TestBookPagination:
         # 使用 page=1 來確保有結果和分頁
         response = authenticated_client.get(
             reverse("books:all"),
-            {"status": "T", "transferability": "TRANSFER"},
+            {"transferability": "TRANSFER"},
             follow=True,
         )
         assert response.status_code == 200
         # 檢查隱藏表單欄位是否保留篩選參數
         content = response.content.decode("utf-8")
-        # 檢查隱藏 input 欄位
-        assert 'name="status"' in content
+        # 檢查隱藏 input 欄位（status 已移除）
         assert 'name="transferability"' in content
 
 

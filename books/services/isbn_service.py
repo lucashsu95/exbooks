@@ -110,14 +110,24 @@ def lookup_by_isbn(isbn: str) -> Optional[Dict[str, Any]]:
         logger.error(
             f"Timeout when querying Google Books API for ISBN: {normalized_isbn}"
         )
-        return None
+        return {"error": "timeout"}
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 429:
+            logger.warning(
+                f"Rate limited by Google Books API for ISBN: {normalized_isbn}"
+            )
+            return {"error": "rate_limit"}
+        logger.error(
+            f"HTTP error when querying Google Books API for ISBN {normalized_isbn}: {e}"
+        )
+        return {"error": "http_error"}
     except httpx.RequestError as e:
         logger.error(
             f"Network error when querying Google Books API for ISBN {normalized_isbn}: {e}"
         )
-        return None
+        return {"error": "network_error"}
     except Exception as e:
         logger.error(
             f"Unexpected error when querying Google Books API for ISBN {normalized_isbn}: {e}"
         )
-        return None
+        return {"error": "unknown"}
