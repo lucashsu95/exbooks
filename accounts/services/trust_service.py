@@ -261,3 +261,103 @@ def initialize_existing_user(user) -> int:
     user.profile.trust_level = 1
     user.profile.save(update_fields=["trust_level"])
     return 1
+
+
+def get_upgrade_progress(user) -> dict:
+    """
+    計算用戶升級進度。
+
+    Returns:
+        dict: {
+            'current_level': 當前等級,
+            'next_level': 下一等級 (None 表示已達最高),
+            'progress': {
+                'deals': {'current': X, 'required': Y, 'percentage': Z},
+                'rating': {'current': X, 'required': Y, 'percentage': Z},
+                'overdue': {'current': X, 'max_allowed': Y, 'ok': True/False},
+            },
+            'summary': '整體進度百分比',
+            'requirements': ['需要完成 X 筆交易', '評價均分需達 Y', ...],
+        }
+    """
+    metrics = get_user_metrics(user)
+    current_level = compute_trust_level(metrics)
+    thresholds = _get_trust_thresholds()
+
+    # 找出下一個等級
+    next_level = current_level + 1 if current_level < 3 else None
+
+    result = {
+        "current_level": current_level,
+        "next_level": next_level,
+        "progress": {},
+        "summary": 100 if next_level is None else 0,
+        "requirements": [],
+    }
+
+    # 已達最高等級
+    if next_level is None:
+        result["requirements"].append("已達最高等級")
+        return result
+
+    # 取得下一等級門檻
+    threshold = thresholds[next_level]
+
+    # 計算交易進度
+    deals_progress = min(100, (metrics.completed_deals / threshold.min_deals) * 100)
+    result["progress"]["deals"] = {
+        "current": metrics.completed_deals,
+        "required": threshold.min_deals,
+        "percentage": round(deals_progress, 1),
+    }
+
+    # 計算評價進度（假設最高 5 分）
+    rating_progress = min(100, (metrics.avg_rating / threshold.min_rating) * 100)
+    result["progress"]["rating"] = {
+        "current": round(metrics.avg_rating, 2),
+        "required": threshold.min_rating,
+        "percentage": round(rating_progress, 1),
+    }
+
+    # 計算逾期狀態
+    overdue_ok = metrics.overdue_count <= threshold.max_overdue
+    result["progress"]["overdue"] = {
+        "current": metrics.overdue_count,
+        "max_allowed": int(threshold.max_overdue),
+        "ok": overdue_ok,
+    }
+
+    # 計算整體進度（取三項最小值）
+    progress_values = [deals_progress, rating_progress]
+    if not overdue_ok:
+        progress_values.append(0)  # 逾期超標則進度為 0
+    result["summary"] = round(min(progress_values), 1)
+
+    # 生成升級條件說明
+    remaining_deals = max(0, threshold.min_deals - metrics.completed_deals)
+    if remaining_deals > 0:
+        result["requirements"].append(
+            f"需再完成 {remaining_deals} 筆交易（達 {threshold.min_deals} 筆）"
+        )
+    else:
+        result["requirements"].append(f"✓ 已完成 {threshold.min_deals} 筆交易")
+
+    if metrics.avg_rating < threshold.min_rating:
+        gap = round(threshold.min_rating - metrics.avg_rating, 1)
+        result["requirements"].append(
+            f"評價均分需提升 {gap} 分（達 {threshold.min_rating} 分）"
+        )
+    else:
+        result["requirements"].append(f"✓ 評價均分已達 {threshold.min_rating} 分")
+
+    if overdue_ok:
+        result["requirements"].append(
+            f"✓ 逾期次數未超過 {int(threshold.max_overdue)} 次"
+        )
+    else:
+        excess = metrics.overdue_count - int(threshold.max_overdue)
+        result["requirements"].append(
+            f"逾期次數超標 {excess} 次（需 ≤ {int(threshold.max_overdue)} 次）"
+        )
+
+    return result

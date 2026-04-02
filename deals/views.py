@@ -650,8 +650,7 @@ def notification_mark_read(request, pk):
         pk=pk,
         recipient=request.user,
     )
-    notification.is_read = True
-    notification.save(update_fields=["is_read"])
+    notification_service.mark_as_read(notification)
 
     # 返回更新後的通知項目
     return render(

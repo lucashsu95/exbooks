@@ -539,3 +539,94 @@ class TestProcessBookDue:
             ).count()
             == 2
         )  # keeper + owner
+
+    # ============================================================
+    # BR-4.2: 逾期次數遞增
+    # ============================================================
+    def test_overdue_count_increments_for_return_book(self):
+        """BR-4.2: 閱畢即還書籍到期 → 遞增持有者逾期次數"""
+        from accounts.models import UserProfile
+
+        owner = UserFactory()
+        keeper = UserFactory()
+        # 確保 keeper 有 profile
+        UserProfile.objects.get_or_create(user=keeper)
+
+        book = SharedBookFactory(
+            owner=owner,
+            keeper=keeper,
+            status="O",
+            transferability="RETURN",
+        )
+        deal = DealFactory(
+            shared_book=book,
+            deal_type="LN",
+            status="M",
+            due_date=timezone.now().date() - timedelta(days=1),
+        )
+
+        # 初始逾期次數
+        initial_count = keeper.profile.overdue_count
+
+        process_book_due(deal)
+
+        # 驗證逾期次數 +1
+        keeper.profile.refresh_from_db()
+        assert keeper.profile.overdue_count == initial_count + 1
+
+    def test_overdue_count_no_increment_for_transfer_book(self):
+        """BR-4.2: 開放傳遞書籍到期 → 不遞增逾期次數"""
+        from accounts.models import UserProfile
+
+        owner = UserFactory()
+        keeper = UserFactory()
+        UserProfile.objects.get_or_create(user=keeper)
+
+        book = SharedBookFactory(
+            owner=owner,
+            keeper=keeper,
+            status="O",
+            transferability="TRANSFER",
+        )
+        deal = DealFactory(
+            shared_book=book,
+            deal_type="TF",
+            status="M",
+            due_date=timezone.now().date() - timedelta(days=1),
+        )
+
+        initial_count = keeper.profile.overdue_count
+
+        process_book_due(deal)
+
+        # 驗證逾期次數不變
+        keeper.profile.refresh_from_db()
+        assert keeper.profile.overdue_count == initial_count
+
+    def test_overdue_count_no_increment_when_not_due(self):
+        """BR-4.2: 未到期 → 不遞增逾期次數"""
+        from accounts.models import UserProfile
+
+        owner = UserFactory()
+        keeper = UserFactory()
+        UserProfile.objects.get_or_create(user=keeper)
+
+        book = SharedBookFactory(
+            owner=owner,
+            keeper=keeper,
+            status="O",
+            transferability="RETURN",
+        )
+        deal = DealFactory(
+            shared_book=book,
+            deal_type="LN",
+            status="M",
+            due_date=timezone.now().date() + timedelta(days=10),  # 未到期
+        )
+
+        initial_count = keeper.profile.overdue_count
+
+        process_book_due(deal)
+
+        keeper.profile.refresh_from_db()
+        assert keeper.profile.overdue_count == initial_count

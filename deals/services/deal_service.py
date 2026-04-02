@@ -304,34 +304,12 @@ def complete_meeting(deal):
     return deal
 
 
-@transaction.atomic
-def complete_deal(deal):
-    """
-    完成交易（雙方評價後）。
-
-    使用 FSM 狀態轉換：MEETED → DONE
-
-    前置條件：
-    - 申請者和回應者都已評價
-
-    副作用（由 Signal 處理）：
-    - 更新信用等級
-    - 發送完成通知
-
-    Raises:
-        ValidationError: 如果狀態轉換不允許或條件未滿足
-    """
-    if not can_proceed(deal.complete):
-        raise ValidationError("此交易目前無法完成。請確認雙方都已評價。")
-
-    deal.complete()
-    deal.save()
-
-    return deal
-
-
 # ============================================================================
 # 非狀態轉換的業務邏輯
+# ============================================================================
+#
+# Note: BR-9（雙方評價後自動完成交易）的邏輯已在 rating_service.create_rating
+# 內部實作，因此不再需要獨立的 complete_deal 公開函數。
 # ============================================================================
 
 
@@ -339,7 +317,7 @@ def process_book_due(deal):
     """
     處理借閱到期（由排程任務呼叫）。
 
-    - 「閱畢即還」書籍到期 → 狀態變 R（應返還）
+    - 「閱畢即還」書籍到期 → 狀態變 R（應返還）+ 遞增逾期次數
     - 「開放傳遞」書籍到期 → 狀態變 T（可移轉）
     - BR-12: 「閱畢即還」到期前未提出還書申請即視為逾期
 
@@ -354,7 +332,14 @@ def process_book_due(deal):
     shared_book = deal.shared_book
 
     if shared_book.transferability == SharedBook.Transferability.RETURN:
+        # BR-12: 「閱畢即還」書籍到期 = 逾期
         shared_book.status = SharedBook.Status.RESTORABLE
+
+        # BR-4.2: 遞增持有者的逾期次數
+        keeper = shared_book.keeper
+        if hasattr(keeper, "profile"):
+            keeper.profile.overdue_count += 1
+            keeper.profile.save(update_fields=["overdue_count", "updated_at"])
     else:  # TRANSFER
         shared_book.status = SharedBook.Status.TRANSFERABLE
 

@@ -16,6 +16,27 @@ from .services import process_book_photo
 from .forms import BookSearchForm
 
 
+def overdue_list(request):
+    """公開逾期書籍展示頁面。"""
+    from deals.services import overdue_service
+
+    # 取得逾期 7 天以上的交易
+    overdue_deals = overdue_service.get_overdue_books(days=7)
+
+    # 格式化公開資訊
+    overdue_info_list = [
+        overdue_service.get_public_overdue_info(deal) for deal in overdue_deals
+    ]
+
+    return render(
+        request,
+        "books/overdue_list.html",
+        {
+            "overdue_info_list": overdue_info_list,
+        },
+    )
+
+
 @login_required
 def book_list(request):
     """首頁：探索與最新上架 (支援搜尋與分類)"""
@@ -78,7 +99,7 @@ def book_list(request):
 @login_required
 def book_detail(request, pk):
     """書籍詳情"""
-    from deals.models import Deal, LoanExtension
+    from books.services.book_timeline_service import BookTimelineService
 
     book = get_object_or_404(
         SharedBook.objects.select_related(
@@ -87,132 +108,12 @@ def book_detail(request, pk):
         pk=pk,
     )
 
-    # 建立時間線事件
-    timeline_events = []
-
-    # 1. 書籍上架事件
-    if book.listed_at:
-        timeline_events.append(
-            {
-                "type": "listed",
-                "time": book.listed_at,
-                "title": "書籍上架",
-                "description": f"{book.owner.profile.nickname if hasattr(book.owner, 'profile') else book.owner.email} 分享了這本書",
-                "user": book.owner,
-            }
-        )
-
-    # 2. 交易記錄事件
-    deals = (
-        Deal.objects.filter(shared_book=book)
-        .select_related("applicant__profile", "responder__profile")
-        .order_by("created_at")
+    # 使用服務層處理時間線邏輯
+    timeline_events = BookTimelineService.get_timeline_events(book)
+    photos = BookTimelineService.get_book_photos(book)
+    in_wishlist = BookTimelineService.check_wishlist_status(
+        request.user, book.official_book.id
     )
-
-    for deal in deals:
-        # 交易申請
-        if deal.status in [
-            Deal.Status.REQUESTED,
-            Deal.Status.RESPONDED,
-            Deal.Status.MEETED,
-            Deal.Status.DONE,
-        ]:
-            timeline_events.append(
-                {
-                    "type": "deal_created",
-                    "time": deal.created_at,
-                    "title": f"{deal.get_deal_type_display()}申請",
-                    "description": f"{deal.applicant.profile.nickname if hasattr(deal.applicant, 'profile') else deal.applicant.email} 發起了{deal.get_deal_type_display()}",
-                    "user": deal.applicant,
-                    "deal": deal,
-                }
-            )
-
-        # 面交完成
-        if deal.status in [Deal.Status.MEETED, Deal.Status.DONE]:
-            timeline_events.append(
-                {
-                    "type": "deal_meeted",
-                    "time": deal.updated_at,
-                    "title": "面交完成",
-                    "description": f"書籍已交給 {deal.applicant.profile.nickname if hasattr(deal.applicant, 'profile') else deal.applicant.email}",
-                    "user": deal.applicant,
-                    "deal": deal,
-                }
-            )
-
-        # 交易完成（評價後）
-        if deal.status == Deal.Status.DONE:
-            timeline_events.append(
-                {
-                    "type": "deal_done",
-                    "time": deal.updated_at,
-                    "title": "交易完成",
-                    "description": "雙方已完成評價",
-                    "deal": deal,
-                }
-            )
-
-    # 3. 延長借閱事件
-    extensions = (
-        LoanExtension.objects.filter(deal__shared_book=book)
-        .select_related("requested_by__profile", "approved_by__profile")
-        .order_by("created_at")
-    )
-
-    for ext in extensions:
-        timeline_events.append(
-            {
-                "type": "extension",
-                "time": ext.created_at,
-                "title": "延長借閱",
-                "description": f"延長 {ext.extra_days} 天"
-                + (
-                    "（已核准）"
-                    if ext.status == "APPROVED"
-                    else f"（{ext.get_status_display()}）"
-                ),
-                "user": ext.requested_by,
-            }
-        )
-
-    # 4. 書況照片上傳事件
-    from books.models import BookPhoto
-
-    book_photos = (
-        BookPhoto.objects.filter(shared_book=book)
-        .select_related("uploader__profile", "deal")
-        .order_by("-created_at")
-    )
-
-    for photo in book_photos:
-        description = f"{photo.uploader.profile.nickname if hasattr(photo.uploader, 'profile') else photo.uploader.email} 上傳了書況照片"
-        if photo.caption:
-            description += f"：{photo.caption}"
-        if photo.deal:
-            description += f"（{photo.deal.get_deal_type_display()}）"
-        timeline_events.append(
-            {
-                "type": "photo_upload",
-                "time": photo.created_at,
-                "title": "書況照片",
-                "description": description,
-                "user": photo.uploader,
-                "photo": photo,
-                "deal": photo.deal,
-            }
-        )
-
-    # 按時間排序（新到舊）
-    timeline_events.sort(key=lambda x: x["time"], reverse=True)
-
-    photos = book.photos.all()[:6]
-    in_wishlist = False
-    if request.user.is_authenticated:
-        in_wishlist = WishListItem.objects.filter(
-            user=request.user,
-            official_book=book.official_book,
-        ).exists()
 
     return render(
         request,

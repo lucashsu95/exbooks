@@ -27,16 +27,23 @@ def profile(request):
     activity_stats = user_stats_service.get_user_activity_stats(request.user)
 
     # 信用等級借閱限制
-    from accounts.services.trust_service import get_borrowing_limits
+    from accounts.services.trust_service import (
+        get_borrowing_limits,
+        get_upgrade_progress,
+    )
 
     borrowing_limits = get_borrowing_limits(
         profile_obj.trust_level if profile_obj else 1
     )
 
+    # 升級進度
+    upgrade_progress = get_upgrade_progress(request.user)
+
     context = {
         "profile": profile_obj,
         "activity_stats": activity_stats,
         "borrowing_limits": borrowing_limits,
+        "upgrade_progress": upgrade_progress,
     }
     return render(request, "accounts/profile.html", context)
 

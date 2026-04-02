@@ -3,10 +3,18 @@
 處理用戶違規處分的建立、查詢、解除等業務邏輯。
 """
 
+from typing import Optional, TYPE_CHECKING
 from django.utils import timezone
 from django.db import transaction
+from django.db.models import QuerySet
+from django.contrib.auth import get_user_model
 
 from accounts.models import UserProfile, Violation
+
+if TYPE_CHECKING:
+    from accounts.models import Appeal
+
+User = get_user_model()
 
 
 class ViolationService:
@@ -14,15 +22,15 @@ class ViolationService:
 
     @staticmethod
     def create_violation(
-        user,
-        action_type,
-        severity,
-        violation_type,
-        description,
-        created_by,
-        suspension_days=None,
-        related_appeal=None,
-    ):
+        user: User,
+        action_type: str,
+        severity: str,
+        violation_type: str,
+        description: str,
+        created_by: User,
+        suspension_days: Optional[int] = None,
+        related_appeal: Optional["Appeal"] = None,
+    ) -> Violation:
         """
         建立違規處分。
 
@@ -79,7 +87,7 @@ class ViolationService:
             return violation
 
     @staticmethod
-    def lift_violation(violation, lifted_by):
+    def lift_violation(violation: Violation, lifted_by: User) -> None:
         """
         解除處分（提前解權）。
 
@@ -116,7 +124,9 @@ class ViolationService:
                 )
 
     @staticmethod
-    def get_user_violations(user, is_active=None):
+    def get_user_violations(
+        user: User, is_active: Optional[bool] = None
+    ) -> "QuerySet[Violation]":
         """
         取得用戶的違規處分列表。
 
@@ -137,7 +147,7 @@ class ViolationService:
         return queryset.order_by("-created_at")
 
     @staticmethod
-    def get_active_suspensions():
+    def get_active_suspensions() -> QuerySet[Violation]:
         """
         取得所有生效中的停權處分。
 
@@ -153,7 +163,7 @@ class ViolationService:
         ).select_related("user", "created_by")
 
     @staticmethod
-    def check_and_lift_expired_suspensions():
+    def check_and_lift_expired_suspensions() -> int:
         """
         檢查並解除已期滿的暫時停權。
         系統定時任務可呼叫此方法。

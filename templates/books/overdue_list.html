@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Exbooks - 公開逾期名單{% endblock %}
+{% block content %}
+<!-- Header -->
+<header class="flex items-center bg-background-light-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
+    <div class="flex size-12 shrink-0 items-center justify-start">
+        <a href="{% url 'books:list' %}"
+           class="flex size-10 cursor-pointer items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+    </div>
+    <h2 class="text-slate-900 text-xl font-bold leading-tight tracking-tight flex-1 text-center">公開逾期名單</h2>
+    <div class="w-12"></div>
+</header>
+
+<main class="px-4 py-6 max-w-lg mx-auto w-full pb-24">
+    <!-- Intro Card -->
+    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+        <div class="flex items-start gap-3">
+            <span class="material-symbols-outlined text-amber-500 mt-0.5">info</span>
+            <div class="text-sm text-amber-800">
+                <p class="font-bold mb-1">社群信用提醒</p>
+                <p>為維護共享書籍社群品質，系統將公開顯示逾期超過 7 天尚未歸還的書籍資訊。請持有者儘速歸還或申請延期。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overdue List -->
+    <div class="space-y-4">
+        {% for info in overdue_info_list %}
+        <div class="bg-white rounded-xl shadow-sm border {% if info.is_severe %}border-rose-200 bg-rose-50{% else %}border-slate-200{% endif %} p-4 flex flex-col gap-3">
+            <div class="flex justify-between items-start">
+                <div class="flex items-center gap-2">
+                    <div class="size-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                        <span class="material-symbols-outlined text-xl">person</span>
+                    </div>
+                    <span class="font-bold text-slate-900">{{ info.nickname }}</span>
+                </div>
+                <span class="px-2 py-1 rounded-full text-xs font-bold {% if info.is_severe %}bg-rose-100 text-rose-700{% else %}bg-amber-100 text-amber-700{% endif %}">
+                    逾期 {{ info.overdue_days }} 天
+                </span>
+            </div>
+            
+            <div class="flex items-start gap-3">
+                <div class="size-12 rounded bg-slate-100 flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-2xl text-slate-400">menu_book</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-bold text-slate-900 line-clamp-2">《{{ info.book_title }}》</p>
+                    <p class="text-xs text-slate-500 mt-1">
+                        狀態：{% if info.is_severe %}嚴重逾期{% else %}逾期未還{% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            {% if info.is_severe %}
+            <div class="flex items-center gap-1.5 text-xs text-rose-600 font-medium">
+                <span class="material-symbols-outlined text-sm">warning</span>
+                <span>已影響信用等級且進入公開追蹤名單</span>
+            </div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="flex flex-col items-center justify-center py-12 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+            <div class="size-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
+                <span class="material-symbols-outlined text-4xl text-green-500">check_circle</span>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900">目前沒有嚴重逾期紀錄</h3>
+            <p class="text-sm text-slate-500 mt-1 px-8">社群成員都非常準時歸還書籍，感謝大家的配合！</p>
+        </div>
+        {% endfor %}
+    </div>
+</main>
+{% include '_bottom_nav.html' %}
+{% endblock %}

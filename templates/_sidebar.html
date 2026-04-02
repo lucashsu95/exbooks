@@ -80,6 +80,11 @@
       <span class="material-symbols-outlined text-slate-500" aria-hidden="true">swap_horiz</span>
       <span class="text-slate-900">交易紀錄</span>
     </a>
+    <a href="{% url 'books:overdue_list' %}"
+       class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 transition-colors">
+      <span class="material-symbols-outlined text-amber-600" aria-hidden="true">event_busy</span>
+      <span class="text-slate-900">公開逾期名單</span>
+    </a>
     {% if user.is_authenticated %}
     <a href="{% url 'accounts:profile_edit' %}"
        class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 transition-colors">

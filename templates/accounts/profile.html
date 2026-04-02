@@ -35,17 +35,17 @@
             <h2 class="text-2xl font-bold text-slate-900 mb-1">{{ user.profile.nickname|default:"未設定暱稱" }}</h2>
             <p class="text-sm text-slate-500">{{ user.email }}</p>
         </div>
-        <!-- Trust Level Card -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-            {% include "partials/trust_badge.html" with trust_level=user.profile.trust_level %}
-            <p class="text-xs text-slate-500 mt-1">
-                {% if borrowing_limits.max_books == 999 %}
-                    無借閱限制
-                {% else %}
-                    最多借 {{ borrowing_limits.max_books }} 本，最長 {{ borrowing_limits.max_days }} 天
-                {% endif %}
-            </p>
-        </div>
+<!-- Trust Level Card -->
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+    {% include "partials/trust_progress.html" with upgrade_progress=upgrade_progress %}
+    <p class="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
+        {% if borrowing_limits.max_books == 999 %}
+        無借閱限制
+        {% else %}
+        最多借 {{ borrowing_limits.max_books }} 本，最長 {{ borrowing_limits.max_days }} 天
+        {% endif %}
+    </p>
+</div>
         <!-- Activity Stats Card -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
             <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">活動統計</h3>
