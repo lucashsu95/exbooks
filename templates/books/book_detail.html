@@ -1,57 +1,60 @@
 {% extends 'base.html' %}
 {% block title %}Exbooks - {{ book.official_book.title|default:'大亨小傳' }}{% endblock %}
 {% block content %}
-    <div class="relative">
-        <div class="absolute inset-0 bg-gradient-to-br from-primary/10 via-background-light to-primary/5 h-72"></div>
-        <div class="relative flex items-center p-4 justify-between">
-            <a href="{% url 'books:list' %}"
-               class="flex size-12 items-center justify-center rounded-2xl bg-white/60 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-slate-700">
-                <span class="material-symbols-outlined">arrow_back</span>
-            </a>
-            <h2 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">書籍詳情</h2>
-            <button type="button"
-                    id="share-book-btn"
-                    class="flex size-12 items-center justify-center rounded-2xl bg-white/60 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-slate-700">
-                <span class="material-symbols-outlined">share</span>
-            </button>
+<article class="relative">
+  <div class="absolute inset-0 bg-gradient-to-br from-primary/10 via-background-light to-primary/5 h-72"></div>
+  <header class="relative flex items-center p-4 justify-between">
+    <nav aria-label="返回">
+      <a href="{% url 'books:list' %}"
+         aria-label="返回首頁"
+         class="flex size-12 items-center justify-center rounded-2xl bg-white/60 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary">
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+      </a>
+    </nav>
+    <h1 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">書籍詳情</h1>
+    <button type="button"
+            id="share-book-btn"
+            aria-label="分享書籍"
+            class="flex size-12 items-center justify-center rounded-2xl bg-white/60 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary">
+      <span class="material-symbols-outlined" aria-hidden="true">share</span>
+    </button>
+  </header>
+  <div class="relative px-4 pb-6">
+    <div class="flex flex-col md:flex-row gap-6 items-center md:items-start">
+      <div class="w-48 md:w-56 shrink-0">
+        <div class="relative aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl hover:shadow-primary/30 transition-all duration-500 group">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+          </div>
+          {% include 'partials/official_book_cover.html' with book=book.official_book %}
         </div>
-        <div class="relative px-4 pb-6">
-            <div class="flex flex-col md:flex-row gap-6 items-center md:items-start">
-                <div class="w-48 md:w-56 shrink-0">
-                    <div class="relative aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl hover:shadow-primary/30 transition-all duration-500 group">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                        </div>
-                        {% include 'partials/official_book_cover.html' with book=book.official_book %}
-                    </div>
-                </div>
-                <div class="flex-1 flex flex-col justify-center text-center md:text-left">
-                    <div class="flex items-center gap-2 mb-3 justify-center md:justify-start flex-wrap">
-                        <span class="px-3 py-1.5 rounded-full bg-green-100/80 text-green-700 text-xs font-bold uppercase tracking-wider backdrop-blur-sm shadow-sm">{{ book.get_status_display|default:'可流通 (T)' }}</span>
-                        <span class="px-3 py-1.5 rounded-full bg-primary/15 text-primary text-xs font-bold uppercase tracking-wider backdrop-blur-sm shadow-sm">{{ book.get_transferability_display|default:'開放傳遞' }}</span>
-                    </div>
-                    <h1 class="text-slate-900 text-2xl md:text-3xl font-bold leading-tight mb-2">
-                        {{ book.official_book.title|default:'無名' }}
-                    </h1>
-                    <h2 class="text-slate-600 text-lg md:text-xl font-medium mb-4">
-                        {{ book.official_book.author|default:'無名作者' }}
-                    </h2>
-                    <div class="flex flex-col gap-2 items-center md:items-start">
-                        <div class="flex items-center gap-2 text-slate-500 bg-white/50 backdrop-blur-md rounded-xl px-4 py-2 shadow-sm">
-                            <span class="material-symbols-outlined text-sm text-primary">barcode</span>
-                            <p class="text-sm font-medium">ISBN: {{ book.official_book.isbn|default:'9780743273565' }}</p>
-                        </div>
-                        <div class="flex items-center gap-2 text-slate-500 bg-white/50 backdrop-blur-md rounded-xl px-4 py-2 shadow-sm">
-                            <span class="material-symbols-outlined text-sm text-primary">location_on</span>
-                            <p class="text-sm font-medium"
-                               data-location="{{ book.keeper.profile.default_location|default:'台北市' }}">
-                                {{ book.keeper.profile.default_location|default:'台灣台北市' }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+      </div>
+      <div class="flex-1 flex flex-col justify-center text-center md:text-left">
+        <div class="flex items-center gap-2 mb-3 justify-center md:justify-start flex-wrap">
+          <span class="px-3 py-1.5 rounded-full bg-green-100/80 text-green-700 text-xs font-bold uppercase tracking-wider backdrop-blur-sm shadow-sm">{{ book.get_status_display|default:'可流通 (T)' }}</span>
+          <span class="px-3 py-1.5 rounded-full bg-primary/15 text-primary text-xs font-bold uppercase tracking-wider backdrop-blur-sm shadow-sm">{{ book.get_transferability_display|default:'開放傳遞' }}</span>
         </div>
+        <h2 class="text-slate-900 text-2xl md:text-3xl font-bold leading-tight mb-2">
+          {{ book.official_book.title|default:'無名' }}
+        </h2>
+        <h3 class="text-slate-600 text-lg md:text-xl font-medium mb-4">
+          {{ book.official_book.author|default:'無名作者' }}
+        </h3>
+        <div class="flex flex-col gap-2 items-center md:items-start">
+          <div class="flex items-center gap-2 text-slate-500 bg-white/50 backdrop-blur-md rounded-xl px-4 py-2 shadow-sm">
+            <span class="material-symbols-outlined text-sm text-primary" aria-hidden="true">barcode</span>
+            <p class="text-sm font-medium">ISBN: {{ book.official_book.isbn|default:'9780743273565' }}</p>
+          </div>
+          <div class="flex items-center gap-2 text-slate-500 bg-white/50 backdrop-blur-md rounded-xl px-4 py-2 shadow-sm">
+            <span class="material-symbols-outlined text-sm text-primary" aria-hidden="true">location_on</span>
+            <p class="text-sm font-medium"
+               data-location="{{ book.keeper.profile.default_location|default:'台北市' }}">
+              {{ book.keeper.profile.default_location|default:'台灣台北市' }}
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
     <div class="px-4 -mt-2">
         <div class="p-4 bg-white/70 backdrop-blur-xl rounded-2xl border border-white/50 flex items-center justify-between shadow-xl">
             <div class="flex items-center gap-4">
@@ -197,8 +200,9 @@
                 編輯書籍資訊
             </a>
         {% endif %}
-        {% include 'books/partials/wishlist_button.html' with official_book=book.official_book in_wishlist=in_wishlist %}
-    </div>
+  {% include 'books/partials/wishlist_button.html' with official_book=book.official_book in_wishlist=in_wishlist %}
+  </div>
+</article>
 {% endblock %}
 {% block extra_js %}
     <script>

@@ -1,62 +1,76 @@
-<!-- Search Modal Overlay - 手機版全螢幕遮罩 -->
-<div id="search-modal-overlay"
-     class="fixed inset-0 bg-black/50 z-50 opacity-0 pointer-events-none transition-opacity duration-300"
-     onclick="toggleSearchModal()"></div>
-<!-- Search Modal - 從底部滑入（手機版友善設計） -->
-<div id="search-modal"
-     class="fixed bottom-0 left-0 right-0 z-50 transform translate-y-full transition-transform duration-300 ease-out safe-area-pb">
-    <div class="bg-white rounded-t-3xl shadow-2xl max-h-[90vh] overflow-hidden">
-        <!-- Drag Indicator（可拖曳指示器） -->
-        <div class="flex justify-center pt-3 pb-2">
-            <div class="w-10 h-1 bg-slate-300 rounded-full"></div>
-        </div>
-        <!-- Modal Header -->
-        <div class="flex items-center px-4 pb-3 gap-3">
-            <button type="button"
-                    onclick="toggleSearchModal()"
-                    class="p-2 -ml-2 rounded-full hover:bg-slate-100 active:bg-slate-200 transition-colors">
-                <span class="material-symbols-outlined text-slate-500">close</span>
-            </button>
-            <!-- Search Form with HTMX 即時搜尋 -->
-            <form method="GET"
-                  action="{% url 'books:list' %}"
-                  class="flex-1"
-                  hx-get="{% url 'books:list' %}"
-                  hx-trigger="input changed delay:300ms, search"
-                  hx-target="#search-results"
-                  hx-indicator="#search-loading"
-                  hx-push-url="false">
-                <div class="flex items-center bg-slate-100 rounded-2xl">
-                    <span class="material-symbols-outlined text-slate-400 pl-4">search</span>
-                    <input type="text"
-                           name="q"
-                           id="search-modal-input"
-                           class="w-full bg-transparent border-none focus:ring-0 px-3 py-3 text-slate-900 placeholder:text-slate-400"
-                           placeholder="搜尋 ISBN、書名、作者..."
-                           autocomplete="off"
-                           hx-sync="true">
-                    <button type="submit"
-                            class="px-4 py-3 text-primary hover:bg-primary/10 rounded-r-2xl transition-colors font-medium">
-                        搜尋
-                    </button>
-                </div>
-            </form>
-        </div>
-        <!-- Search Results Area（即時搜尋結果） -->
-        <div id="search-results" class="px-4 pb-4 max-h-[60vh] overflow-y-auto">
-            <!-- Loading Indicator -->
-            <div id="search-loading" class="htmx-indicator flex justify-center py-8">
-                <span class="material-symbols-outlined animate-spin text-primary text-3xl">sync</span>
-            </div>
-            <!-- Initial State - 搜尋提示 -->
-            <div id="search-initial" class="py-8 text-center">
-                <span class="material-symbols-outlined text-slate-300 text-5xl mb-3">search</span>
-                <p class="text-sm text-slate-500">輸入關鍵字搜尋書籍</p>
-                <p class="text-xs text-slate-400 mt-2">支援書名、作者、ISBN</p>
-            </div>
-        </div>
+<!-- Search Modal Overlay - 使用 button 以支援鍵盤互動 -->
+<button type="button"
+        id="search-modal-overlay"
+        aria-label="關閉搜尋"
+        class="fixed inset-0 bg-black/50 z-50 opacity-0 pointer-events-none transition-opacity duration-300 cursor-default"
+        onclick="toggleSearchModal()"></button>
+<!-- Search Modal - 從底部滑入（手機版友善設計）- 使用 aside 語義標籤 -->
+<aside id="search-modal"
+       role="dialog"
+       aria-modal="true"
+       aria-label="搜尋書籍"
+       class="fixed bottom-0 left-0 right-0 z-50 transform translate-y-full transition-transform duration-300 ease-out safe-area-pb overscroll-contain">
+  <div class="bg-white rounded-t-3xl shadow-2xl max-h-[90vh] overflow-hidden">
+    <!-- Drag Indicator（可拖曳指示器）- 裝飾性 -->
+    <div class="flex justify-center pt-3 pb-2" aria-hidden="true">
+      <div class="w-10 h-1 bg-slate-300 rounded-full"></div>
     </div>
-</div>
+    <!-- Modal Header - 使用 header 語義標籤 -->
+    <header class="flex items-center px-4 pb-3 gap-3">
+      <button type="button"
+              onclick="toggleSearchModal()"
+              aria-label="關閉搜尋"
+              class="p-2 -ml-2 rounded-full hover:bg-slate-100 active:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
+        <span class="material-symbols-outlined text-slate-500" aria-hidden="true">close</span>
+      </button>
+      <!-- Search Form with HTMX 即時搜尋 -->
+      <form method="GET"
+            action="{% url 'books:list' %}"
+            class="flex-1"
+            hx-get="{% url 'books:list' %}"
+            hx-trigger="input changed delay:300ms, search"
+            hx-target="#search-results"
+            hx-indicator="#search-loading"
+            hx-push-url="false"
+            hx-include="[name='category']"
+            role="search">
+        <div class="flex items-center bg-slate-100 rounded-2xl">
+          <span class="material-symbols-outlined text-slate-400 pl-4" aria-hidden="true">search</span>
+          <label for="search-modal-input" class="sr-only">搜尋書籍</label>
+          <input type="text"
+                 name="q"
+                 id="search-modal-input"
+                 aria-label="搜尋 ISBN、書名、作者"
+                 class="w-full bg-transparent border-none focus:ring-0 px-3 py-3 text-slate-900 placeholder:text-slate-400"
+                 placeholder="搜尋 ISBN、書名、作者…"
+                 autocomplete="off"
+                 hx-sync="true">
+          <button type="submit"
+                  class="px-4 py-3 text-primary hover:bg-primary/10 rounded-r-2xl transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+            搜尋
+          </button>
+        </div>
+      </form>
+    </header>
+    <!-- Search Results Area（即時搜尋結果）- 使用 section -->
+    <section id="search-results"
+             class="px-4 pb-4 max-h-[60vh] overflow-y-auto overscroll-contain"
+             aria-label="搜尋結果"
+             aria-live="polite">
+      <!-- Loading Indicator -->
+      <div id="search-loading" class="htmx-indicator flex justify-center py-8">
+        <span class="material-symbols-outlined animate-spin text-primary text-3xl" aria-hidden="true">sync</span>
+        <span class="sr-only">載入中…</span>
+      </div>
+      <!-- Initial State - 搜尋提示 -->
+      <div id="search-initial" class="py-8 text-center">
+        <span class="material-symbols-outlined text-slate-300 text-5xl mb-3" aria-hidden="true">search</span>
+        <p class="text-sm text-slate-500">輸入關鍵字搜尋書籍</p>
+        <p class="text-xs text-slate-400 mt-2">支援書名、作者、ISBN</p>
+      </div>
+    </section>
+  </div>
+</aside>
 <script>
 function toggleSearchModal() {
   const modal = document.getElementById('search-modal');
@@ -108,6 +122,7 @@ document.addEventListener('keydown', function(e) {
   const pullIndicator = document.createElement('div');
   pullIndicator.id = 'pull-refresh-indicator';
   pullIndicator.className = 'fixed top-0 left-0 right-0 flex justify-center items-center py-4 z-40 opacity-0 transition-opacity duration-200 pointer-events-none';
+  pullIndicator.setAttribute('aria-hidden', 'true');
   pullIndicator.innerHTML = '<span class="material-symbols-outlined animate-spin text-primary text-2xl">sync</span>';
   document.body.appendChild(pullIndicator);
 

@@ -1,0 +1,43 @@
+<!-- HTMX 即時搜尋結果 - 用於搜尋 Modal -->
+{% load static %}
+<div class="space-y-3">
+  {% for book in nearby_books %}
+  <!-- 改善後的卡片設計（方案 G） -->
+  <a href="{% url 'books:detail' book.id %}"
+     class="block bg-white rounded-2xl p-4 shadow-sm border border-slate-100 active:scale-[0.98] transition-transform">
+    <div class="flex gap-4">
+      <!-- 書籍封面 -->
+      <div class="w-20 h-28 rounded-xl overflow-hidden shrink-0 shadow-md bg-slate-100">
+        {% include 'partials/book_cover.html' with book=book %}
+      </div>
+      <!-- 書籍資訊 -->
+      <div class="flex-1 min-w-0 py-1">
+        <!-- 標題 - 最多兩行 -->
+        <h3 class="font-bold text-base text-slate-900 line-clamp-2 leading-snug">
+          {{ book.official_book.title }}
+        </h3>
+        <!-- 作者 -->
+        <p class="text-sm text-slate-500 mt-1">{{ book.official_book.author|default:"未知作者" }}</p>
+        <!-- 分類標籤 -->
+        <div class="mt-2 flex items-center gap-2 flex-wrap">
+          <span class="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium">
+            {{ book.official_book.get_category_display }}
+          </span>
+          {% if book.keeper.profile %}
+          {% include "partials/trust_badge_inline.html" with trust_level=book.keeper.profile.trust_level %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </a>
+  {% empty %}
+  <!-- 空狀態 -->
+  <div class="flex items-center justify-center p-8 w-full">
+    <div class="text-center text-slate-500 bg-white rounded-2xl p-8 border border-slate-100 shadow-sm">
+      <span class="material-symbols-outlined text-5xl mb-3 text-slate-300">search</span>
+      <p class="font-medium">沒有找到符合的書籍</p>
+      <p class="text-sm text-slate-400 mt-1">試試其他關鍵字？</p>
+    </div>
+  </div>
+  {% endfor %}
+</div>
