@@ -74,7 +74,7 @@ class TestBookAdd:
         expect(isbn_input).to_have_value("")
 
     def test_book_add_without_isbn_manual_input(
-        self, authenticated_page: Page, live_server, db
+        self, authenticated_page: Page, live_server, db, tmp_path
     ):
         """測試手動輸入書籍資訊（無 ISBN 查詢）"""
         authenticated_page.goto(f"{live_server.url}/books/add/")
@@ -91,6 +91,20 @@ class TestBookAdd:
             "書況良好，無劃記"
         )
         authenticated_page.locator("input[name='loan_duration_days']").fill("30")
+
+        # 建立測試圖片檔案（至少一張照片）
+        test_image = tmp_path / "test_book.jpg"
+        test_image.write_bytes(
+            b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00"
+            b"\xff\xd9"
+        )
+
+        # 上傳照片
+        file_input = authenticated_page.locator("input[name='photos']")
+        file_input.set_input_files(str(test_image))
+
+        # 等待文件上傳完成
+        authenticated_page.wait_for_timeout(500)
 
         # 提交表單
         authenticated_page.get_by_role("button", name="確認新增").click()
@@ -138,3 +152,34 @@ class TestBookAdd:
         expect(authenticated_page.locator("#photo-preview img")).to_be_visible()
 
         # 註：由於後端尚未完整實作照片處理，此測試僅驗證前端互動
+
+    def test_book_add_without_photos_shows_error(
+        self, authenticated_page: Page, live_server, db
+    ):
+        """測試未上傳照片時顯示錯誤訊息"""
+        authenticated_page.goto(f"{live_server.url}/books/add/")
+
+        # 手動輸入書籍資訊（不上傳照片）
+        authenticated_page.locator("input[name='isbn']").fill("9789876543210")
+        authenticated_page.locator("input[name='title']").fill("測試書籍")
+        authenticated_page.locator("input[name='author']").fill("測試作者")
+        authenticated_page.locator("select[name='category']").select_option("小說")
+        authenticated_page.locator("select[name='transferability']").select_option(
+            "RETURN"
+        )
+        authenticated_page.locator("textarea[name='condition_description']").fill(
+            "書況良好"
+        )
+        authenticated_page.locator("input[name='loan_duration_days']").fill("30")
+
+        # 提交表單（不上傳照片）
+        authenticated_page.get_by_role("button", name="確認新增").click()
+
+        # 驗證仍在新增頁面（因為表單驗證失敗）
+        authenticated_page.wait_for_timeout(1000)
+        expect(authenticated_page).to_have_url(f"{live_server.url}/books/add/")
+
+        # 驗證錯誤訊息出現
+        expect(authenticated_page.locator("body")).to_contain_text(
+            "請至少上傳一張書況照片"
+        )
