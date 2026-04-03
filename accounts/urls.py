@@ -18,5 +18,6 @@ urlpatterns = [
     path("appeals/<uuid:appeal_id>/cancel/", views.appeal_cancel, name="appeal_cancel"),
     # 資料匯出路由
     path("export-data/", views.export_user_data, name="export_user_data"),
+    path("download/<str:format>/", views.download_user_data, name="download_user_data"),
     path("export-status/", views.get_export_status, name="export_status"),
 ]

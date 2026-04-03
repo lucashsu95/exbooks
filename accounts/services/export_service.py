@@ -317,7 +317,7 @@ def convert_to_csv(data, user):
         str: CSV 格式的字串
     """
     output = io.StringIO()
-    writer = csv.writer(output, encoding="utf-8")
+    writer = csv.writer(output)
 
     # 標題行
     writer.writerow(["Exbooks 個人資料匯出"])

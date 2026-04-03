@@ -293,3 +293,136 @@ class TestGetRemainingExports:
         remaining = export_service.get_remaining_exports(user)
 
         assert remaining == EXPORT_LIMIT_PER_DAY
+
+
+class TestConvertToCSV:
+    """Test CSV conversion functionality"""
+
+    def test_convert_to_csv_success(self):
+        """Test successful CSV conversion"""
+        user = UserFactory(email="test@example.com")
+        profile = user.profile
+        profile.nickname = "測試用戶"
+        profile.trust_level = 2
+        profile.successful_returns = 5
+        profile.overdue_count = 1
+        profile.save()
+
+        data = export_service.collect_user_data(user)
+        csv_content = export_service.convert_to_csv(data, user)
+
+        assert isinstance(csv_content, str)
+        assert "Exbooks 個人資料匯出" in csv_content
+        assert "電子信箱" in csv_content
+        assert "test@example.com" in csv_content
+        assert "測試用戶" in csv_content
+        assert "等級 2" in csv_content
+        assert "活動統計" in csv_content
+
+    def test_csv_contains_profile_info(self):
+        """Test CSV contains user profile information"""
+        user = UserFactory(email="user@example.com")
+        data = export_service.collect_user_data(user)
+        csv_content = export_service.convert_to_csv(data, user)
+
+        assert "user@example.com" in csv_content
+        assert "用戶基本資訊" in csv_content
+        assert "暱稱" in csv_content
+
+    def test_csv_contains_activity_stats(self):
+        """Test CSV contains activity statistics"""
+        user = UserFactory()
+        official_book = OfficialBookFactory(title="測試書籍")
+        SharedBookFactory(official_book=official_book, owner=user, keeper=user)
+
+        data = export_service.collect_user_data(user)
+        csv_content = export_service.convert_to_csv(data, user)
+
+        assert "活動統計" in csv_content
+        assert "貢獻書籍總數" in csv_content
+        assert "1" in csv_content  # One book contributed
+
+    def test_csv_contains_ratings(self):
+        """Test CSV contains ratings information"""
+        user1 = UserFactory()
+        user2 = UserFactory()
+        official_book = OfficialBookFactory(title="測試書籍")
+        shared_book = SharedBookFactory(
+            official_book=official_book,
+            owner=user1,
+            keeper=user1,
+        )
+        deal = Deal.objects.create(
+            shared_book=shared_book,
+            deal_type=Deal.DealType.LOAN,
+            status=Deal.Status.DONE,
+            applicant=user2,
+            responder=user1,
+        )
+        Rating.objects.create(
+            deal=deal,
+            rater=user2,
+            ratee=user1,
+            friendliness_score=5,
+            punctuality_score=4,
+            accuracy_score=5,
+            comment="很棒的交易！",
+        )
+
+        data = export_service.collect_user_data(user1)
+        csv_content = export_service.convert_to_csv(data, user1)
+
+        assert "評價統計" in csv_content
+        assert "評價詳情" in csv_content
+        assert user2.email in csv_content
+        assert "很棒的交易！" in csv_content
+
+    def test_export_user_data_csv_format(self):
+        """Test export with CSV format"""
+        user = UserFactory()
+
+        result = export_service.export_user_data(user, format="csv")
+
+        assert isinstance(result, str)
+        assert "Exbooks 個人資料匯出" in result
+        assert "用戶基本資訊" in result
+
+    def test_export_user_data_json_format(self):
+        """Test export with JSON format (default)"""
+        user = UserFactory()
+
+        result = export_service.export_user_data(user, format="json")
+
+        assert isinstance(result, dict)
+        assert "exported_at" in result
+        assert "user_profile" in result
+
+    def test_export_user_data_invalid_format(self):
+        """Test export with invalid format raises ValueError"""
+        user = UserFactory()
+
+        with pytest.raises(ValueError) as exc_info:
+            export_service.export_user_data(user, format="xml")
+
+        assert "無效的匯出格式" in str(exc_info.value)
+
+    def test_csv_export_respects_frequency_limit(self):
+        """Test CSV export respects frequency limit"""
+        user = UserFactory()
+        cache_key = f"export_limit_{user.id}"
+        cache.set(cache_key, EXPORT_LIMIT_PER_DAY, 86400)
+
+        with pytest.raises(ExportLimitExceededError):
+            export_service.export_user_data(user, format="csv")
+
+    def test_csv_format_no_profile(self):
+        """Test CSV export for user with no profile"""
+        user = UserFactory()
+        if hasattr(user, "profile"):
+            user.profile.delete()
+
+        data = export_service.collect_user_data(user)
+        csv_content = export_service.convert_to_csv(data, user)
+
+        assert "用戶基本資訊" in csv_content
+        assert "活動統計" in csv_content

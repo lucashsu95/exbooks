@@ -35,17 +35,17 @@
             <h2 class="text-2xl font-bold text-slate-900 mb-1">{{ user.profile.nickname|default:"未設定暱稱" }}</h2>
             <p class="text-sm text-slate-500">{{ user.email }}</p>
         </div>
-<!-- Trust Level Card -->
-<div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-    {% include "partials/trust_progress.html" with upgrade_progress=upgrade_progress %}
-    <p class="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
-        {% if borrowing_limits.max_books == 999 %}
-        無借閱限制
-        {% else %}
-        最多借 {{ borrowing_limits.max_books }} 本，最長 {{ borrowing_limits.max_days }} 天
-        {% endif %}
-    </p>
-</div>
+        <!-- Trust Level Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+            {% include "partials/trust_progress.html" with upgrade_progress=upgrade_progress %}
+            <p class="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
+                {% if borrowing_limits.max_books == 999 %}
+                    無借閱限制
+                {% else %}
+                    最多借 {{ borrowing_limits.max_books }} 本，最長 {{ borrowing_limits.max_days }} 天
+                {% endif %}
+            </p>
+        </div>
         <!-- Activity Stats Card -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
             <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">活動統計</h3>
@@ -61,6 +61,45 @@
                 <div class="text-center">
                     <p class="text-2xl font-bold text-primary">{{ activity_stats.books_lent }}</p>
                     <p class="text-xs text-slate-500">出借次數</p>
+                </div>
+            </div>
+        </div>
+        <!-- Credit & Transaction Stats Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+            <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">交易與信用統計</h3>
+            <div class="grid grid-cols-2 gap-4 border-b border-slate-100 pb-4 mb-4">
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-emerald-600">{{ completed_deals }}</p>
+                    <p class="text-xs text-slate-500">完成交易</p>
+                </div>
+                <div class="text-center">
+                    <div class="flex items-center justify-center gap-1 text-amber-500">
+                        <span class="text-2xl font-bold">{{ rating_stats.average_rating|default:"0.0"|floatformat:1 }}</span>
+                        <span class="material-symbols-outlined text-sm">star</span>
+                    </div>
+                    <p class="text-xs text-slate-500">平均評價</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-4 gap-2">
+                <div class="text-center">
+                    <p class="text-lg font-bold text-slate-700">{{ rating_stats.ratings_given }}</p>
+                    <p class="text-xs text-slate-500">給出評價</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-lg font-bold text-slate-700">{{ rating_stats.ratings_received }}</p>
+                    <p class="text-xs text-slate-500">收到評價</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-lg font-bold {% if overdue_count > 0 %}text-rose-500{% else %}text-slate-700{% endif %}">
+                        {{ overdue_count }}
+                    </p>
+                    <p class="text-xs text-slate-500">逾期次數</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-lg font-bold {% if violation_count > 0 %}text-rose-500{% else %}text-slate-700{% endif %}">
+                        {{ violation_count }}
+                    </p>
+                    <p class="text-xs text-slate-500">違規次數</p>
                 </div>
             </div>
         </div>
@@ -109,27 +148,38 @@
         </div>
         <!-- Data Export Section -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-            <div class="flex items-center justify-between">
+            <div class="space-y-4">
                 <div class="flex items-center gap-3">
                     <div class="size-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                         <span class="material-symbols-outlined text-primary">download</span>
                     </div>
-                    <div>
+                    <div class="flex-1">
                         <p class="text-sm font-bold text-slate-900">下載我的資料</p>
                         <p class="text-xs text-slate-500">
                             今日剩餘 <span id="remaining-exports">--</span> 次
                         </p>
                     </div>
                 </div>
-                <form method="post"
-                      action="{% url 'accounts:export_user_data' %}"
-                      class="inline">
-                    {% csrf_token %}
-                    <button type="submit"
-                            class="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition-colors">
-                        下載
-                    </button>
-                </form>
+                <div class="grid grid-cols-2 gap-2">
+                    <form method="post"
+                          action="{% url 'accounts:download_user_data' format='json' %}"
+                          class="inline">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="w-full px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition-colors">
+                            JSON
+                        </button>
+                    </form>
+                    <form method="post"
+                          action="{% url 'accounts:download_user_data' format='csv' %}"
+                          class="inline">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="w-full px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700 transition-colors">
+                            CSV
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
         <!-- Actions -->

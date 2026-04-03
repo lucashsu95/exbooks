@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from accounts.models import Appeal
 from accounts.services import appeal_service, export_service
@@ -25,6 +26,10 @@ def profile(request):
 
     # 統計資料
     activity_stats = user_stats_service.get_user_activity_stats(request.user)
+    completed_deals = user_stats_service.get_completed_deals_count(request.user)
+    rating_stats = user_stats_service.get_rating_stats(request.user)
+    overdue_count = user_stats_service.get_overdue_count(request.user)
+    violation_count = user_stats_service.get_violation_count(request.user)
 
     # 信用等級借閱限制
     from accounts.services.trust_service import (
@@ -40,8 +45,11 @@ def profile(request):
     upgrade_progress = get_upgrade_progress(request.user)
 
     context = {
-        "profile": profile_obj,
         "activity_stats": activity_stats,
+        "completed_deals": completed_deals,
+        "rating_stats": rating_stats,
+        "overdue_count": overdue_count,
+        "violation_count": violation_count,
         "borrowing_limits": borrowing_limits,
         "upgrade_progress": upgrade_progress,
     }
@@ -104,6 +112,7 @@ def public_profile(request, user_id):
     # 統計資料
     activity_stats = user_stats_service.get_user_activity_stats(user)
     rating_summary = user_stats_service.get_user_rating_summary(user)
+    overdue_count = user_stats_service.get_overdue_count(user)
 
     context = {
         "viewed_user": user,
@@ -114,6 +123,7 @@ def public_profile(request, user_id):
         "ratings_received": ratings_received,
         "activity_stats": activity_stats,
         "rating_summary": rating_summary,
+        "overdue_count": overdue_count,
     }
     return render(request, "accounts/public_profile.html", context)
 
@@ -257,6 +267,49 @@ def export_user_data(request):
         return response
 
     except export_service.ExportLimitExceededError as e:
+        messages.error(request, str(e))
+        return redirect("accounts:profile")
+
+
+@login_required
+def download_user_data(request, format="json"):
+    """匯出用戶個人資料（支援 JSON 和 CSV 格式）
+
+    Args:
+        format: 匯出格式，'json' 或 'csv'
+    """
+    if format not in ("json", "csv"):
+        messages.error(request, "無效的匯出格式")
+        return redirect("accounts:profile")
+
+    if request.method != "POST":
+        messages.error(request, "請使用 POST 請求")
+        return redirect("accounts:profile")
+
+    try:
+        # 執行匯出
+        data = export_service.export_user_data(request.user, format=format)
+
+        if format == "json":
+            # JSON 格式
+            filename = f"exbook_data_{request.user.id}_{data['exported_at'][:10]}.json"
+            response = HttpResponse(
+                json.dumps(data, ensure_ascii=False, indent=2),
+                content_type="application/json",
+            )
+        else:  # csv
+            # CSV 格式
+            filename = f"exbook_data_{request.user.id}_{timezone.now().strftime('%Y-%m-%d')}.csv"
+            response = HttpResponse(data, content_type="text/csv; charset=utf-8-sig")
+
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        messages.success(request, f"{format.upper()} 資料匯出成功")
+        return response
+
+    except export_service.ExportLimitExceededError as e:
+        messages.error(request, str(e))
+        return redirect("accounts:profile")
+    except ValueError as e:
         messages.error(request, str(e))
         return redirect("accounts:profile")
 
