@@ -1,10 +1,11 @@
 """
-信用等級計算服務。
+信用積分計算服務。
 
-根據用戶的交易紀錄、評價分數和逾期次數計算信用等級。
+根據用戶的交易紀錄、評價分數和逾期次數計算信用積分和星等。
 配置可在 Django settings 中覆寫。
 """
 
+import math
 from dataclasses import dataclass
 
 from django.conf import settings
@@ -14,31 +15,32 @@ from deals.models import Deal, Rating
 
 
 # ============================================================================
-# 信用等級門檻配置（從 settings 讀取，提供預設值）
+# 積分配置（從 settings 讀取，提供預設值）
 # ============================================================================
 
 
 @dataclass
-class TrustThreshold:
-    """信用等級門檻定義。"""
+class ScoreConfig:
+    """積分配置"""
 
-    min_deals: int
-    min_rating: float
-    max_overdue: int | float
+    base_score: int  # 基礎分數
+    per_deal: int  # 每筆完成交易加分
+    per_overdue: int  # 每次逾期扣分（負數）
+    per_rating_point: int  # 每評價分加分
 
 
-def _get_trust_thresholds() -> dict[int, TrustThreshold]:
-    """從 settings 取得信用等級門檻配置。"""
-    config = getattr(settings, "TRUST_THRESHOLDS", None)
+def _get_score_config() -> ScoreConfig:
+    """從 settings 取得積分配置"""
+    config = getattr(settings, "TRUST_SCORE_CONFIG", None)
     if config is None:
-        # 預設值（向後相容）
+        # 預設值（符合 BR-4.3）
         config = {
-            3: {"min_deals": 30, "min_rating": 4.5, "max_overdue": 0},
-            2: {"min_deals": 10, "min_rating": 4.0, "max_overdue": 1},
-            1: {"min_deals": 3, "min_rating": 0.0, "max_overdue": 2},
-            0: {"min_deals": 0, "min_rating": 0.0, "max_overdue": float("inf")},
+            "base_score": 0,
+            "per_deal": 10,  # 完成交易 +10
+            "per_overdue": -10,  # 逾期 -10
+            "per_rating_point": 5,  # 每評價分 +5
         }
-    return {k: TrustThreshold(**v) for k, v in config.items()}
+    return ScoreConfig(**config)
 
 
 # ============================================================================
@@ -48,14 +50,14 @@ def _get_trust_thresholds() -> dict[int, TrustThreshold]:
 
 @dataclass
 class BorrowingLimit:
-    """借閱限制定義。"""
+    """借閱限制定義"""
 
     max_books: int | float
     max_days: int | float
 
 
 def _get_borrowing_limits() -> dict[int, BorrowingLimit]:
-    """從 settings 取得借閱限制配置。"""
+    """從 settings 取得借閱限制配置"""
     config = getattr(settings, "BORROWING_LIMITS", None)
     if config is None:
         # 預設值（向後相容）
@@ -75,7 +77,7 @@ def _get_borrowing_limits() -> dict[int, BorrowingLimit]:
 
 @dataclass
 class UserMetrics:
-    """用戶信用計算所需的原始數據。"""
+    """用戶信用計算所需的原始數據"""
 
     completed_deals: int
     overdue_count: int
@@ -87,32 +89,70 @@ class UserMetrics:
 # ============================================================================
 
 
-def compute_trust_level(metrics: UserMetrics) -> int:
+def compute_trust_score(metrics: UserMetrics) -> int:
     """
-    純函式：根據用戶指標計算信用等級。
+    純函式：根據用戶指標計算信用積分。
 
-    規則（依序檢查，符合即返回）：
-    - Level 3 (優良): 完成交易 ≥ 30 + 評價均分 ≥ 4.5 且 逾期 = 0
-    - Level 2 (可信): 完成交易 ≥ 10 + 評價均分 ≥ 4 且 逾期 ≤ 1
-    - Level 1 (一般): 完成交易 ≥ 3 且 逾期 ≤ 2
-    - Level 0 (新手): 其餘情況
+    公式：base_score + (交易數 × 10) - (逾期次數 × 10) + (評價平均分 × 5)
 
     Args:
         metrics: 用戶指標資料
 
     Returns:
-        int: 0-3 的信用等級
+        int: 信用積分
     """
-    thresholds = _get_trust_thresholds()
-    for level in [3, 2, 1]:
-        threshold = thresholds[level]
-        if (
-            metrics.completed_deals >= threshold.min_deals
-            and metrics.avg_rating >= threshold.min_rating
-            and metrics.overdue_count <= threshold.max_overdue
-        ):
-            return level
-    return 0
+    config = _get_score_config()
+    score = (
+        config.base_score
+        + (metrics.completed_deals * config.per_deal)
+        + (metrics.overdue_count * config.per_overdue)
+        + (metrics.avg_rating * config.per_rating_point)
+    )
+    return max(0, int(score))  # 最低0分
+
+
+def compute_trust_stars(score: int) -> int:
+    """
+    純函式：根據積分計算星等（1-5星）。
+
+    公式：floor(sqrt(score))
+
+    Args:
+        score: 信用積分
+
+    Returns:
+        int: 星等（1-5星）
+    """
+    if score <= 0:
+        return 1  # 最低1星
+    stars = int(math.floor(math.sqrt(score)))
+    return min(max(stars, 1), 5)  # 限制在1-5星
+
+
+def compute_trust_level_from_stars(stars: int) -> int:
+    """
+    純函式：根據星等計算信用等級（向後相容）。
+
+    映射關係：
+    - 1星: Level 0 (新手)
+    - 2星: Level 1 (一般)
+    - 3星: Level 2 (可信)
+    - 4-5星: Level 3 (優良)
+
+    Args:
+        stars: 星等（1-5）
+
+    Returns:
+        int: 信用等級（0-3）
+    """
+    if stars <= 1:
+        return 0
+    elif stars == 2:
+        return 1
+    elif stars == 3:
+        return 2
+    else:  # 4-5星
+        return 3
 
 
 def compute_borrowing_limits(trust_level: int) -> BorrowingLimit:
@@ -177,7 +217,7 @@ def _calculate_avg_rating(user) -> float:
         return 0.0
 
     avg_scores = ratings.aggregate(
-        avg_integrity=Avg("integrity_score"),
+        avg_integrity=Avg("friendliness_score"),
         avg_punctuality=Avg("punctuality_score"),
         avg_accuracy=Avg("accuracy_score"),
     )
@@ -195,11 +235,37 @@ def _calculate_avg_rating(user) -> float:
 # ============================================================================
 
 
+def calculate_trust_score(user) -> int:
+    """
+    計算用戶信用積分（對外介面）。
+
+    Args:
+        user: 用戶實例
+
+    Returns:
+        int: 信用積分
+    """
+    metrics = get_user_metrics(user)
+    return compute_trust_score(metrics)
+
+
+def calculate_trust_stars(user) -> int:
+    """
+    計算用戶信用星等。
+
+    Args:
+        user: 用戶實例
+
+    Returns:
+        int: 星等（1-5星）
+    """
+    score = calculate_trust_score(user)
+    return compute_trust_stars(score)
+
+
 def calculate_trust_level(user) -> int:
     """
-    計算用戶信用等級（對外介面）。
-
-    此函式保持原有簽名，內部調用重構後的函式。
+    計算用戶信用等級（向後相容）。
 
     Args:
         user: 用戶實例
@@ -207,24 +273,30 @@ def calculate_trust_level(user) -> int:
     Returns:
         int: 0-3 的信用等級
     """
-    metrics = get_user_metrics(user)
-    return compute_trust_level(metrics)
+    stars = calculate_trust_stars(user)
+    return compute_trust_level_from_stars(stars)
 
 
-def update_trust_level(user) -> int:
+def update_trust_score(user) -> int:
     """
-    更新用戶信用等級。
+    更新用戶信用積分和等級。
 
     Args:
         user: 用戶實例
 
     Returns:
-        int: 新的信用等級
+        int: 新的信用積分
     """
-    new_level = calculate_trust_level(user)
+    new_score = calculate_trust_score(user)
+    new_stars = compute_trust_stars(new_score)
+    new_level = compute_trust_level_from_stars(new_stars)
+
+    # 更新資料庫
+    user.profile.trust_score = new_score
     user.profile.trust_level = new_level
-    user.profile.save(update_fields=["trust_level"])
-    return new_level
+    user.profile.save(update_fields=["trust_score", "trust_level", "updated_at"])
+
+    return new_score
 
 
 def get_borrowing_limits(trust_level: int) -> dict:
@@ -248,118 +320,92 @@ def get_borrowing_limits(trust_level: int) -> dict:
 
 def initialize_existing_user(user) -> int:
     """
-    初始化現有用戶的信用等級。
+    初始化現有用戶的信用積分。
 
-    根據計劃，現有用戶上線時給 Level 1。
+    根據計劃，現有用戶上線時給基礎分數。
 
     Args:
         user: 用戶實例
 
     Returns:
-        int: 初始化的信用等級 (1)
+        int: 初始化的信用積分
     """
+    config = _get_score_config()
+    user.profile.trust_score = config.base_score
     user.profile.trust_level = 1
-    user.profile.save(update_fields=["trust_level"])
-    return 1
+    user.profile.save(update_fields=["trust_score", "trust_level", "updated_at"])
+    return config.base_score
 
 
 def get_upgrade_progress(user) -> dict:
     """
-    計算用戶升級進度。
+    計算用戶升級進度（向後相容）。
 
     Returns:
         dict: {
+            'current_score': 當前積分,
+            'current_stars': 當前星等,
             'current_level': 當前等級,
             'next_level': 下一等級 (None 表示已達最高),
+            'next_stars': 下一星等,
             'progress': {
-                'deals': {'current': X, 'required': Y, 'percentage': Z},
-                'rating': {'current': X, 'required': Y, 'percentage': Z},
-                'overdue': {'current': X, 'max_allowed': Y, 'ok': True/False},
+                'score': {'current': X, 'required': Y, 'remaining': Z, 'percentage': W},
             },
             'summary': '整體進度百分比',
-            'requirements': ['需要完成 X 筆交易', '評價均分需達 Y', ...],
+            'requirements': ['需要 X 積分', ...],
         }
     """
-    metrics = get_user_metrics(user)
-    current_level = compute_trust_level(metrics)
-    thresholds = _get_trust_thresholds()
+    # 獲取當前積分和星等
+    current_score = calculate_trust_score(user)
+    current_stars = compute_trust_stars(current_score)
+    current_level = compute_trust_level_from_stars(current_stars)
 
-    # 找出下一個等級
+    # 獲取下一級所需積分
+    next_stars = current_stars + 1 if current_stars < 5 else None
     next_level = current_level + 1 if current_level < 3 else None
 
     result = {
+        "current_score": current_score,
+        "current_stars": current_stars,
         "current_level": current_level,
         "next_level": next_level,
+        "next_stars": next_stars,
         "progress": {},
-        "summary": 100 if next_level is None else 0,
+        "summary": 100 if next_stars is None else 0,
         "requirements": [],
     }
 
-    # 已達最高等級
-    if next_level is None:
-        result["requirements"].append("已達最高等級")
+    # 已達最高星等
+    if next_stars is None:
+        result["requirements"].append("已達最高星等")
         return result
 
-    # 取得下一等級門檻
-    threshold = thresholds[next_level]
+    # 計算所需積分
+    required_score = next_stars**2
+    remaining_score = max(0, required_score - current_score)
 
-    # 計算交易進度
-    deals_progress = min(100, (metrics.completed_deals / threshold.min_deals) * 100)
-    result["progress"]["deals"] = {
-        "current": metrics.completed_deals,
-        "required": threshold.min_deals,
-        "percentage": round(deals_progress, 1),
+    # 計算進度百分比
+    # 當前星等的起始積分
+    current_star_base_score = current_stars**2 if current_stars > 1 else 0
+    score_range = required_score - current_star_base_score
+    score_earned_in_current_star = current_score - current_star_base_score
+
+    percentage = (
+        min(100, (score_earned_in_current_star / score_range) * 100)
+        if score_range > 0
+        else 0
+    )
+
+    result["progress"]["score"] = {
+        "current": current_score,
+        "required": required_score,
+        "remaining": remaining_score,
+        "percentage": round(percentage, 1),
     }
 
-    # 計算評價進度（假設最高 5 分）
-    rating_progress = 0
-    if threshold.min_rating > 0:
-        rating_progress = min(100, (metrics.avg_rating / threshold.min_rating) * 100)
-    result["progress"]["rating"] = {
-        "current": round(metrics.avg_rating, 2),
-        "required": threshold.min_rating,
-        "percentage": round(rating_progress, 1),
-    }
-
-    # 計算逾期狀態
-    overdue_ok = metrics.overdue_count <= threshold.max_overdue
-    result["progress"]["overdue"] = {
-        "current": metrics.overdue_count,
-        "max_allowed": int(threshold.max_overdue),
-        "ok": overdue_ok,
-    }
-
-    # 計算整體進度（取三項最小值）
-    progress_values = [deals_progress, rating_progress]
-    if not overdue_ok:
-        progress_values.append(0)  # 逾期超標則進度為 0
-    result["summary"] = round(min(progress_values), 1)
-
-    # 生成升級條件說明
-    remaining_deals = max(0, threshold.min_deals - metrics.completed_deals)
-    if remaining_deals > 0:
-        result["requirements"].append(
-            f"需再完成 {remaining_deals} 筆交易（達 {threshold.min_deals} 筆）"
-        )
-    else:
-        result["requirements"].append(f"✓ 已完成 {threshold.min_deals} 筆交易")
-
-    if metrics.avg_rating < threshold.min_rating:
-        gap = round(threshold.min_rating - metrics.avg_rating, 1)
-        result["requirements"].append(
-            f"評價均分需提升 {gap} 分（達 {threshold.min_rating} 分）"
-        )
-    else:
-        result["requirements"].append(f"✓ 評價均分已達 {threshold.min_rating} 分")
-
-    if overdue_ok:
-        result["requirements"].append(
-            f"✓ 逾期次數未超過 {int(threshold.max_overdue)} 次"
-        )
-    else:
-        excess = metrics.overdue_count - int(threshold.max_overdue)
-        result["requirements"].append(
-            f"逾期次數超標 {excess} 次（需 ≤ {int(threshold.max_overdue)} 次）"
-        )
+    result["summary"] = round(percentage, 1)
+    result["requirements"].append(
+        f"需再獲得 {remaining_score} 積分（達 {required_score} 積分）"
+    )
 
     return result

@@ -103,7 +103,7 @@ class TestRating:
     def test_create(self):
         rating = RatingFactory()
         assert rating.pk is not None
-        assert 1 <= rating.integrity_score <= 5
+        assert 1 <= rating.friendliness_score <= 5
         assert 1 <= rating.punctuality_score <= 5
         assert 1 <= rating.accuracy_score <= 5
 
@@ -117,7 +117,7 @@ class TestRating:
 
     def test_average_score(self):
         rating = RatingFactory(
-            integrity_score=3,
+            friendliness_score=3,
             punctuality_score=4,
             accuracy_score=5,
         )
@@ -141,12 +141,14 @@ class TestLoanExtension:
 
     def test_status_choices(self):
         assert LoanExtension.Status.PENDING == "PENDING"
+        assert LoanExtension.Status.PARTIALLY_APPROVED == "PARTIALLY_APPROVED"
         assert LoanExtension.Status.APPROVED == "APPROVED"
         assert LoanExtension.Status.REJECTED == "REJECTED"
 
-    def test_approved_by_nullable(self):
+    def test_reviewer_fields_nullable(self):
         ext = LoanExtensionFactory()
-        assert ext.approved_by is None
+        assert ext.owner_approved_by is None
+        assert ext.keeper_approved_by is None
 
     def test_ordering(self):
         assert LoanExtension._meta.ordering == ["-created_at"]

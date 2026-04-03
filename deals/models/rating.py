@@ -29,9 +29,9 @@ class Rating(BaseModel):
         related_name="received_ratings",
         verbose_name="被評價者",
     )
-    integrity_score = models.PositiveSmallIntegerField(
+    friendliness_score = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
-        verbose_name="誠信評分",
+        verbose_name="友善評分",
     )
     punctuality_score = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
@@ -60,4 +60,6 @@ class Rating(BaseModel):
     @property
     def average_score(self):
         """計算三項評分的平均分。"""
-        return (self.integrity_score + self.punctuality_score + self.accuracy_score) / 3
+        return (
+            self.friendliness_score + self.punctuality_score + self.accuracy_score
+        ) / 3

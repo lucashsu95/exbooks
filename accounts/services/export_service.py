@@ -1,8 +1,11 @@
 """資料匯出服務
 
 處理用戶個人資料匯出功能，包含頻率限制。
+支援 JSON 和 CSV 格式匯出。
 """
 
+import csv
+import io
 from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
@@ -23,18 +26,23 @@ class ExportLimitExceededError(Exception):
 
 
 @transaction.atomic
-def export_user_data(user):
+def export_user_data(user, format="json"):
     """匯出用戶個人資料
 
     Args:
         user: 用戶實例
+        format: 匯出格式 ('json' 或 'csv')
 
     Returns:
-        dict: 用戶資料 JSON 格式
+        dict 或 str: 用戶資料（JSON 格式返回 dict，CSV 格式返回字串）
 
     Raises:
         ExportLimitExceededError: 超過每日匯出次數限制
+        ValueError: 無效的格式參數
     """
+    if format not in ("json", "csv"):
+        raise ValueError(f"無效的匯出格式: {format}，必須是 'json' 或 'csv'")
+
     # 檢查頻率限制
     check_export_limit(user)
 
@@ -43,6 +51,9 @@ def export_user_data(user):
 
     # 增加匯出次數
     increment_export_count(user)
+
+    if format == "csv":
+        return convert_to_csv(data, user)
 
     return data
 
@@ -258,7 +269,7 @@ def collect_ratings_received(user):
         {
             "id": str(rating.id),
             "rater_email": rating.rater.email if rating.rater else None,
-            "integrity_score": rating.integrity_score,
+            "friendliness_score": rating.friendliness_score,
             "punctuality_score": rating.punctuality_score,
             "accuracy_score": rating.accuracy_score,
             "average_score": rating.average_score,
@@ -288,3 +299,95 @@ def get_remaining_exports(user):
     cache_key = f"{EXPORT_LIMIT_KEY_PREFIX}_{user.id}"
     count = cache.get(cache_key, 0)
     return max(0, EXPORT_LIMIT_PER_DAY - count)
+
+
+def convert_to_csv(data, user):
+    """將用戶資料轉換為 CSV 格式
+
+    CSV 包含三個部分：
+    1. 用戶基本資訊
+    2. 交易評價統計
+    3. 活動統計
+
+    Args:
+        data: 收集的用戶資料
+        user: 用戶實例
+
+    Returns:
+        str: CSV 格式的字串
+    """
+    output = io.StringIO()
+    writer = csv.writer(output, encoding="utf-8")
+
+    # 標題行
+    writer.writerow(["Exbooks 個人資料匯出"])
+    writer.writerow([f"匯出時間: {data['exported_at'][:10]}"])
+    writer.writerow([])
+
+    # 1. 用戶基本資訊
+    profile_data = data["user_profile"]
+    writer.writerow(["用戶基本資訊"])
+    writer.writerow(["項目", "內容"])
+    writer.writerow(["電子信箱", profile_data.get("email", "")])
+    writer.writerow(["暱稱", profile_data.get("nickname", "")])
+    writer.writerow(["信用等級", f"等級 {profile_data.get('trust_level', 1)}"])
+    writer.writerow(["成功還書次數", profile_data.get("successful_returns", 0)])
+    writer.writerow(["逾期次數", profile_data.get("overdue_count", 0)])
+    writer.writerow(["加入時間", profile_data.get("date_joined", "")[:10]])
+    writer.writerow([])
+
+    # 2. 活動統計
+    activity_stats = data["activity_stats"]
+    writer.writerow(["活動統計"])
+    writer.writerow(["項目", "數量"])
+    writer.writerow(["貢獻書籍總數", activity_stats.get("books_contributed_count", 0)])
+    writer.writerow(["成功借入次數", activity_stats.get("successful_borrows", 0)])
+    writer.writerow(["成功借出次數", activity_stats.get("successful_lends", 0)])
+    writer.writerow(["逾期次數", activity_stats.get("overdue_count", 0)])
+    writer.writerow([])
+
+    # 3. 收到的評價統計
+    ratings = data["ratings_received"]
+    writer.writerow(["評價統計"])
+    writer.writerow(["項目", "內容"])
+    writer.writerow(["收到評價數", len(ratings)])
+
+    if ratings:
+        # 計算平均分數
+        scores = [r.get("average_score", 0) for r in ratings if r.get("average_score")]
+        if scores:
+            avg = sum(scores) / len(scores)
+            writer.writerow(["平均評分", f"{avg:.1f}"])
+
+    writer.writerow([])
+
+    # 4. 評價詳情（若有評價）
+    if ratings:
+        writer.writerow(["評價詳情"])
+        writer.writerow(
+            [
+                "日期",
+                "評分人",
+                "書籍名稱",
+                "友善度",
+                "準時度",
+                "正確度",
+                "平均分數",
+                "評論",
+            ]
+        )
+        for rating in ratings:
+            writer.writerow(
+                [
+                    rating.get("created_at", "")[:10],
+                    rating.get("rater_email", ""),
+                    rating.get("book_title", ""),
+                    rating.get("integrity_score", ""),
+                    rating.get("punctuality_score", ""),
+                    rating.get("accuracy_score", ""),
+                    rating.get("average_score", ""),
+                    rating.get("comment", ""),
+                ]
+            )
+
+    return output.getvalue()

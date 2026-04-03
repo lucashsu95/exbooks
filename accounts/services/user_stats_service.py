@@ -31,7 +31,7 @@ def get_user_rating_summary(user):
 
     result = ratings.aggregate(
         total_ratings=Count("id"),
-        average_integrity=Avg("integrity_score"),
+        average_integrity=Avg("friendliness_score"),
         average_punctuality=Avg("punctuality_score"),
         average_accuracy=Avg("accuracy_score"),
     )

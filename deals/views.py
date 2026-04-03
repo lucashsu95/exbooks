@@ -95,7 +95,8 @@ def deal_detail(request, pk):
     messages_list = DealMessage.objects.filter(deal=deal).select_related("sender")[:50]
     extensions_list = LoanExtension.objects.filter(deal=deal).select_related(
         "requested_by__profile",
-        "approved_by__profile",
+        "owner_approved_by__profile",
+        "keeper_approved_by__profile",
     )[:20]
 
     return render(
@@ -107,6 +108,8 @@ def deal_detail(request, pk):
             "extensions": extensions_list,
             "is_applicant": request.user == deal.applicant,
             "is_responder": request.user == deal.responder,
+            "is_owner": request.user == deal.shared_book.owner,
+            "is_keeper": request.user == deal.shared_book.keeper,
         },
     )
 
@@ -306,7 +309,7 @@ def rating_create(request, pk):
                 rating_service.create_rating(
                     deal=deal,
                     rater=request.user,
-                    integrity_score=form.cleaned_data["integrity_score"],
+                    friendliness_score=form.cleaned_data["friendliness_score"],
                     punctuality_score=form.cleaned_data["punctuality_score"],
                     accuracy_score=form.cleaned_data["accuracy_score"],
                     comment=form.cleaned_data.get("comment", ""),
@@ -509,12 +512,19 @@ def extension_request(request, deal_pk):
 def extension_approve(request, extension_pk):
     """核准延長申請。"""
     extension = get_object_or_404(
-        LoanExtension.objects.select_related("deal", "deal__responder"),
+        LoanExtension.objects.select_related(
+            "deal",
+            "deal__shared_book",
+            "deal__shared_book__owner",
+            "deal__shared_book__keeper",
+        ),
         pk=extension_pk,
     )
 
-    # 權限檢查：只有回應者可以核准
-    if request.user != extension.deal.responder:
+    shared_book = extension.deal.shared_book
+
+    # 權限檢查：只有 Owner 或 Keeper 可以核准
+    if request.user not in {shared_book.owner, shared_book.keeper}:
         messages.error(request, "您無權核准此申請。")
         return redirect("deals:detail", extension.deal.id)
 
@@ -535,12 +545,19 @@ def extension_approve(request, extension_pk):
 def extension_reject(request, extension_pk):
     """拒絕延長申請。"""
     extension = get_object_or_404(
-        LoanExtension.objects.select_related("deal", "deal__responder"),
+        LoanExtension.objects.select_related(
+            "deal",
+            "deal__shared_book",
+            "deal__shared_book__owner",
+            "deal__shared_book__keeper",
+        ),
         pk=extension_pk,
     )
 
-    # 權限檢查：只有回應者可以拒絕
-    if request.user != extension.deal.responder:
+    shared_book = extension.deal.shared_book
+
+    # 權限檢查：只有 Owner 或 Keeper 可以拒絕
+    if request.user not in {shared_book.owner, shared_book.keeper}:
         messages.error(request, "您無權拒絕此申請。")
         return redirect("deals:detail", extension.deal.id)
 

@@ -226,7 +226,7 @@ class RatingFactory(factory.django.DjangoModelFactory):
     deal = factory.SubFactory(DealFactory)
     rater = factory.LazyAttribute(lambda obj: obj.deal.applicant)
     ratee = factory.LazyAttribute(lambda obj: obj.deal.responder)
-    integrity_score = factory.Faker("random_int", min=1, max=5)
+    friendliness_score = factory.Faker("random_int", min=1, max=5)
     punctuality_score = factory.Faker("random_int", min=1, max=5)
     accuracy_score = factory.Faker("random_int", min=1, max=5)
     comment = factory.Faker("sentence", locale="zh_TW")

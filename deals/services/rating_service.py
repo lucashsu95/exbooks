@@ -7,7 +7,7 @@ from deals.models import Deal, Rating
 
 @transaction.atomic
 def create_rating(
-    deal, rater, integrity_score, punctuality_score, accuracy_score, comment=""
+    deal, rater, friendliness_score, punctuality_score, accuracy_score, comment=""
 ):
     """
     建立交易評價。
@@ -40,11 +40,16 @@ def create_rating(
         deal=deal,
         rater=rater,
         ratee=ratee,
-        integrity_score=integrity_score,
+        friendliness_score=friendliness_score,
         punctuality_score=punctuality_score,
         accuracy_score=accuracy_score,
         comment=comment,
     )
+
+    # 更新被評價者的信用積分
+    from accounts.services.trust_service import update_trust_score
+
+    update_trust_score(ratee)
 
     # 更新評價旗標
     if rater == deal.applicant:
@@ -58,5 +63,9 @@ def create_rating(
         if can_proceed(deal.complete):
             deal.complete()
             deal.save()
+
+            # 交易完成，更新雙方信用積分（完成交易 +10 分）
+            update_trust_score(deal.applicant)
+            update_trust_score(deal.responder)
 
     return rating

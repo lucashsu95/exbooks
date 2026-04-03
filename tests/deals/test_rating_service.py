@@ -17,7 +17,7 @@ class TestCreateRating:
         rating = create_rating(
             deal,
             deal.applicant,
-            integrity_score=4,
+            friendliness_score=4,
             punctuality_score=5,
             accuracy_score=3,
         )
@@ -32,7 +32,7 @@ class TestCreateRating:
         rating = create_rating(
             deal,
             deal.responder,
-            integrity_score=4,
+            friendliness_score=4,
             punctuality_score=5,
             accuracy_score=3,
         )
@@ -48,14 +48,14 @@ class TestCreateRating:
         create_rating(
             deal,
             deal.applicant,
-            integrity_score=4,
+            friendliness_score=4,
             punctuality_score=5,
             accuracy_score=3,
         )
         create_rating(
             deal,
             deal.responder,
-            integrity_score=4,
+            friendliness_score=4,
             punctuality_score=5,
             accuracy_score=3,
         )
@@ -68,7 +68,7 @@ class TestCreateRating:
         create_rating(
             deal,
             deal.applicant,
-            integrity_score=4,
+            friendliness_score=4,
             punctuality_score=5,
             accuracy_score=3,
         )
@@ -80,7 +80,7 @@ class TestCreateRating:
         create_rating(
             deal,
             deal.applicant,
-            integrity_score=4,
+            friendliness_score=4,
             punctuality_score=5,
             accuracy_score=3,
         )
@@ -88,7 +88,7 @@ class TestCreateRating:
             create_rating(
                 deal,
                 deal.applicant,
-                integrity_score=3,
+                friendliness_score=3,
                 punctuality_score=3,
                 accuracy_score=3,
             )
@@ -100,7 +100,7 @@ class TestCreateRating:
             create_rating(
                 deal,
                 stranger,
-                integrity_score=4,
+                friendliness_score=4,
                 punctuality_score=5,
                 accuracy_score=3,
             )
@@ -111,7 +111,7 @@ class TestCreateRating:
             create_rating(
                 deal,
                 deal.applicant,
-                integrity_score=4,
+                friendliness_score=4,
                 punctuality_score=5,
                 accuracy_score=3,
             )
@@ -122,7 +122,7 @@ class TestCreateRating:
         rating = create_rating(
             deal,
             deal.applicant,
-            integrity_score=4,
+            friendliness_score=4,
             punctuality_score=5,
             accuracy_score=3,
         )
@@ -133,7 +133,7 @@ class TestCreateRating:
         rating = create_rating(
             deal,
             deal.applicant,
-            integrity_score=4,
+            friendliness_score=4,
             punctuality_score=5,
             accuracy_score=3,
         )
@@ -144,7 +144,7 @@ class TestCreateRating:
         rating = create_rating(
             deal,
             deal.applicant,
-            integrity_score=4,
+            friendliness_score=4,
             punctuality_score=5,
             accuracy_score=3,
             comment="交易愉快",

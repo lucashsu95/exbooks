@@ -19,7 +19,7 @@ class RatingInline(admin.TabularInline):
     fields = (
         "rater",
         "ratee",
-        "integrity_score",
+        "friendliness_score",
         "punctuality_score",
         "accuracy_score",
         "comment",
@@ -32,9 +32,16 @@ class RatingInline(admin.TabularInline):
 class LoanExtensionInline(admin.TabularInline):
     model = LoanExtension
     extra = 0
-    fields = ("requested_by", "approved_by", "extra_days", "status", "created_at")
+    fields = (
+        "requested_by",
+        "owner_approved_by",
+        "keeper_approved_by",
+        "extra_days",
+        "status",
+        "created_at",
+    )
     readonly_fields = ("created_at",)
-    autocomplete_fields = ("requested_by", "approved_by")
+    autocomplete_fields = ("requested_by", "owner_approved_by", "keeper_approved_by")
     classes = ["collapse"]
 
 
@@ -129,7 +136,7 @@ class RatingAdmin(admin.ModelAdmin):
         "deal",
         "rater",
         "ratee",
-        "integrity_score",
+        "friendliness_score",
         "punctuality_score",
         "accuracy_score",
         "created_at",
@@ -141,7 +148,7 @@ class RatingAdmin(admin.ModelAdmin):
         "rater",
         "ratee",
     )
-    list_filter = ("integrity_score", "punctuality_score", "accuracy_score")
+    list_filter = ("friendliness_score", "punctuality_score", "accuracy_score")
     search_fields = ("rater__username", "ratee__username", "comment")
     autocomplete_fields = ("deal", "rater", "ratee")
     readonly_fields = ("created_at",)
@@ -153,7 +160,8 @@ class LoanExtensionAdmin(admin.ModelAdmin):
     list_display = (
         "deal",
         "requested_by",
-        "approved_by",
+        "owner_approved_by",
+        "keeper_approved_by",
         "extra_days",
         "status",
         "created_at",
@@ -163,14 +171,20 @@ class LoanExtensionAdmin(admin.ModelAdmin):
         "deal__shared_book",
         "deal__shared_book__official_book",
         "requested_by",
-        "approved_by",
+        "owner_approved_by",
+        "keeper_approved_by",
     )
     list_filter = ("status",)
     search_fields = (
         "deal__shared_book__official_book__title",
         "requested_by__username",
     )
-    autocomplete_fields = ("deal", "requested_by", "approved_by")
+    autocomplete_fields = (
+        "deal",
+        "requested_by",
+        "owner_approved_by",
+        "keeper_approved_by",
+    )
     readonly_fields = ("created_at", "updated_at")
     list_per_page = 20
 

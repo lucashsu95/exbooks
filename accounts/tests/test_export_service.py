@@ -213,7 +213,7 @@ class TestCollectRatingsReceived:
             deal=deal,
             rater=user2,
             ratee=user1,
-            integrity_score=5,
+            friendliness_score=5,
             punctuality_score=4,
             accuracy_score=5,
             comment="很棒的交易！",
@@ -224,7 +224,7 @@ class TestCollectRatingsReceived:
 
         assert len(ratings) == 1
         assert ratings[0]["rater_email"] == user2.email
-        assert ratings[0]["integrity_score"] == 5
+        assert ratings[0]["friendliness_score"] == 5
         assert ratings[0]["punctuality_score"] == 4
         assert ratings[0]["accuracy_score"] == 5
         assert abs(ratings[0]["average_score"] - 4.67) < 0.01  # (5+4+5)/3

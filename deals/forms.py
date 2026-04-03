@@ -44,7 +44,7 @@ class DealApplicationForm(forms.ModelForm):
 class RatingForm(forms.Form):
     """評價表單。"""
 
-    integrity_score = forms.IntegerField(
+    friendliness_score = forms.IntegerField(
         min_value=1,
         max_value=5,
         widget=forms.NumberInput(
@@ -53,7 +53,7 @@ class RatingForm(forms.Form):
                 "type": "range",
             }
         ),
-        label="誠信評分",
+        label="友善評分",
     )
     punctuality_score = forms.IntegerField(
         min_value=1,
@@ -94,7 +94,7 @@ class RatingForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
-            Field("integrity_score", template="forms/widgets/rating_slider.html"),
+            Field("friendliness_score", template="forms/widgets/rating_slider.html"),
             Field("punctuality_score", template="forms/widgets/rating_slider.html"),
             Field("accuracy_score", template="forms/widgets/rating_slider.html"),
             Field("comment"),
