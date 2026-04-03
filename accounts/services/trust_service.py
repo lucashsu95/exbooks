@@ -312,7 +312,9 @@ def get_upgrade_progress(user) -> dict:
     }
 
     # 計算評價進度（假設最高 5 分）
-    rating_progress = min(100, (metrics.avg_rating / threshold.min_rating) * 100)
+    rating_progress = 0
+    if threshold.min_rating > 0:
+        rating_progress = min(100, (metrics.avg_rating / threshold.min_rating) * 100)
     result["progress"]["rating"] = {
         "current": round(metrics.avg_rating, 2),
         "required": threshold.min_rating,
