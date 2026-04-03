@@ -89,34 +89,85 @@ def get_user_activity_stats(user):
             'books_holding': 目前持有書籍數,
         }
     """
-    # 貢獻書籍數（owner）
-    books_contributed = SharedBook.objects.filter(owner=user).count()
+    return {
+        "books_contributed": get_contributed_books_count(user),
+        "books_borrowed": Deal.objects.filter(
+            applicant=user,
+            status=Deal.Status.DONE,
+        ).count(),
+        "books_lent": Deal.objects.filter(
+            responder=user,
+            status=Deal.Status.DONE,
+        ).count(),
+        "deals_completed": get_completed_deals_count(user),
+        "books_holding": SharedBook.objects.filter(keeper=user).count(),
+    }
 
-    # 借閱次數（作為申請者完成交易）
-    books_borrowed = Deal.objects.filter(
-        applicant=user,
-        status=Deal.Status.DONE,
-    ).count()
 
-    # 出借次數（作為回應者完成交易）
-    books_lent = Deal.objects.filter(
-        responder=user,
-        status=Deal.Status.DONE,
-    ).count()
+def get_contributed_books_count(user):
+    """
+    取得用戶貢獻的書籍數量。
+    """
+    return SharedBook.objects.filter(owner=user).count()
 
-    # 完成交易總數
-    deals_completed = Deal.objects.filter(
+
+def get_completed_deals_count(user):
+    """
+    取得用戶完成的交易數量。
+    """
+    return Deal.objects.filter(
         Q(applicant=user) | Q(responder=user),
         status=Deal.Status.DONE,
     ).count()
 
-    # 目前持有書籍數（keeper）
-    books_holding = SharedBook.objects.filter(keeper=user).count()
 
+def get_rating_stats(user):
+    """
+    取得用戶評價統計。
+    """
+    summary = get_user_rating_summary(user)
+
+    # 取得給出的評價數
+    ratings_given = Rating.objects.filter(rater=user).count()
+
+    # 計算各項詳細統計
     return {
-        "books_contributed": books_contributed,
-        "books_borrowed": books_borrowed,
-        "books_lent": books_lent,
-        "deals_completed": deals_completed,
-        "books_holding": books_holding,
+        "average_rating": summary.get("overall_average") or 0.0,
+        "ratings_given": ratings_given,
+        "ratings_received": summary.get("total_ratings") or 0,
+        "details": summary,
     }
+
+
+def get_overdue_count(user):
+    """
+    取得用戶的逾期次數。
+
+    Args:
+        user: 用戶實例
+
+    Returns:
+        int: 逾期次數
+    """
+    if hasattr(user, "profile"):
+        return user.profile.overdue_count
+    return 0
+
+
+def get_violation_count(user):
+    """
+    取得用戶的生效違規次數。
+
+    計算用戶收到的所有已生效（is_active=True）違規處分次數，
+    包括警告、暫時停權、永久停權。
+    已解除（is_active=False）的處分不計入。
+
+    Args:
+        user: 用戶實例
+
+    Returns:
+        int: 生效違規次數
+    """
+    from accounts.models import Violation
+
+    return Violation.objects.filter(user=user, is_active=True).count()
