@@ -124,6 +124,13 @@ class BookAddForm(forms.ModelForm):
             Field("photos"),
         )
 
+    def clean_photos(self):
+        """驗證至少上傳一張書況照片"""
+        photos = self.files.getlist("photos")
+        if not photos:
+            raise forms.ValidationError("請至少上傳一張書況照片")
+        return photos
+
 
 class BookEditForm(forms.ModelForm):
     title = forms.CharField(max_length=200, label="書名")
