@@ -115,6 +115,14 @@ def book_detail(request, pk):
         request.user, book.official_book.id
     )
 
+    from deals.models import Notification
+
+    Notification.objects.filter(
+        recipient=request.user,
+        shared_book=book,
+        is_read=False,
+    ).update(is_read=True)
+
     return render(
         request,
         "books/book_detail.html",
@@ -250,7 +258,6 @@ def book_add(request):
                         },
                     )
 
-                    # 已存在官方書目時，同步可更新的中繼資料。
                     if not created:
                         off_book.title = title
                         off_book.author = author
@@ -266,10 +273,8 @@ def book_add(request):
                             ]
                         )
 
-                    # 封面圖：優先用戶手動上傳，其次用 Google Books URL，都沒有就跳過
                     uploaded_cover = request.FILES.get("cover_image")
                     if uploaded_cover:
-                        # 用戶手動上傳封面（無論 OfficialBook 是否已有封面都覆蓋）
                         off_book.cover_image.save(
                             uploaded_cover.name, uploaded_cover, save=True
                         )
@@ -324,6 +329,12 @@ def book_add(request):
 @login_required
 def book_edit(request, pk):
     from .forms import BookEditForm
+
+    if hasattr(request.user, "profile") and request.user.profile.trust_level == 0:
+        messages.error(
+            request, "新手等級 (Level 0) 尚無權限編輯書籍資訊，請多參與交易提升等級。"
+        )
+        return redirect("books:detail", pk=pk)
 
     book = get_object_or_404(SharedBook, pk=pk, owner=request.user)
 
@@ -417,6 +428,10 @@ def isbn_lookup(request):
 @require_POST
 def toggle_status(request, pk):
     """切換書籍狀態 S ↔ T"""
+    if hasattr(request.user, "profile") and request.user.profile.trust_level == 0:
+        messages.error(request, "新手等級 (Level 0) 尚無權限切換書籍狀態。")
+        return HttpResponse("新手等級尚無權限", status=403)
+
     book = get_object_or_404(SharedBook, pk=pk, owner=request.user)
     if book.status == SharedBook.Status.SUSPENDED:
         list_book(book)
