@@ -1,3 +1,6 @@
+from django.conf import settings
+from django.core.mail import send_mail
+
 from deals.models import Notification
 
 
@@ -9,6 +12,7 @@ def notify(
     deal=None,
     shared_book=None,
     send_push=True,
+    send_email=True,
 ):
     """
     建立系統通知。
@@ -23,11 +27,13 @@ def notify(
         deal: 相關交易（可選）
         shared_book: 相關書籍（可選）
         send_push: 是否發送 Web Push（預設 True）
+        send_email: 是否發送 Email（預設 True）
 
     Returns:
         Notification: 建立的通知
     """
-    notification = Notification.objects.create(
+    notification_manager = getattr(Notification, "objects")
+    notification = notification_manager.create(
         recipient=recipient,
         notification_type=notification_type,
         title=title,
@@ -47,7 +53,31 @@ def notify(
             notification_type=notification_type,
         )
 
+    # 發送 Email
+    if send_email:
+        _send_email_notification(
+            user=recipient,
+            title=title,
+            message=message,
+        )
+
     return notification
+
+
+def _send_email_notification(user, title, message):
+    """發送 Email 通知（內部函式）。"""
+    email_backend = getattr(settings, "EMAIL_BACKEND", "")
+
+    if not email_backend or not user.email:
+        return
+
+    send_mail(
+        subject=f"[Exbooks] {title}",
+        message=message or title,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=True,
+    )
 
 
 def _send_push_notification(
@@ -70,6 +100,7 @@ def _send_push_notification(
         notification_type: 通知類型（可選）
     """
     from django.urls import reverse
+
     from deals.services.push_service import send_push_to_user
 
     # 構建跳轉 URL（使用 reverse 避免硬編碼）
@@ -226,7 +257,54 @@ def mark_as_read(notification):
 
 def mark_all_as_read(user):
     """標記使用者所有未讀通知為已讀"""
-    Notification.objects.filter(
+    notification_manager = getattr(Notification, "objects")
+    notification_manager.filter(
         recipient=user,
         is_read=False,
     ).update(is_read=True)
+
+
+def notify_rating_created(rating):
+    """收到評價 → 通知被評價者。"""
+    notify(
+        recipient=rating.ratee,
+        notification_type="RATING_CREATED",
+        title="您收到新的交易評價",
+        message=(
+            f"{rating.rater} 已針對書籍「{rating.deal.shared_book}」給予您評價，"
+            f"平均分數 {rating.average_score:.1f} 分"
+        ),
+        deal=rating.deal,
+        shared_book=rating.deal.shared_book,
+    )
+
+
+def notify_violation_created(violation):
+    """收到違規處分 → 通知被處分用戶。"""
+    message = (
+        f"您收到一筆{violation.get_action_type_display()}處分"
+        f"（違規行為：{violation.get_violation_type_display()}）。"
+    )
+
+    if violation.suspension_days:
+        message += f" 停權天數：{violation.suspension_days} 天。"
+
+    if violation.description:
+        message += f" 說明：{violation.description}"
+
+    notify(
+        recipient=violation.user,
+        notification_type="VIOLATION_CREATED",
+        title="您收到新的違規處分通知",
+        message=message,
+    )
+
+
+def notify_appeal_status_updated(appeal):
+    """申訴狀態更新 → 通知申訴人。"""
+    notify(
+        recipient=appeal.user,
+        notification_type="APPEAL_STATUS_UPDATED",
+        title=f"申訴狀態已更新：{appeal.get_status_display()}",
+        message=f"您的申訴「{appeal.title}」目前狀態為：{appeal.get_status_display()}。",
+    )
