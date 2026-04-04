@@ -1,122 +1,92 @@
 {# templates/partials/trust_progress.html #}
 {# Enhanced trust level visualization with progress bar and upgrade requirements #}
 {# Usage: {% include "partials/trust_progress.html" with upgrade_progress=upgrade_progress %} #}
-
 <div class="space-y-4">
     {# Level Badge and Progress #}
     <div class="flex items-center gap-3">
         {# Icon Circle #}
-        <div class="size-14 rounded-full flex items-center justify-center shrink-0
-            {% if upgrade_progress.current_level == 0 %} bg-gray-100
-            {% elif upgrade_progress.current_level == 1 %} bg-blue-100
-            {% elif upgrade_progress.current_level == 2 %} bg-green-100
-            {% elif upgrade_progress.current_level == 3 %} bg-amber-100
-            {% endif %}">
-            <span class="material-symbols-outlined text-3xl
-                {% if upgrade_progress.current_level == 0 %} text-gray-400
-                {% elif upgrade_progress.current_level == 1 %} text-blue-500
-                {% elif upgrade_progress.current_level == 2 %} text-green-500
-                {% elif upgrade_progress.current_level == 3 %} text-amber-500
-                {% endif %}">
-                {% if upgrade_progress.current_level == 0 %}new_releases
-                {% elif upgrade_progress.current_level == 1 %}person
-                {% elif upgrade_progress.current_level == 2 %}verified
-                {% elif upgrade_progress.current_level == 3 %}workspace_premium
+        <div class="size-14 rounded-full flex items-center justify-center shrink-0 {% if upgrade_progress.current_level == 0 %} bg-gray-100 {% elif upgrade_progress.current_level == 1 %} bg-blue-100 {% elif upgrade_progress.current_level == 2 %} bg-green-100 {% elif upgrade_progress.current_level == 3 %} bg-amber-100 {% endif %}">
+            <span class="material-symbols-outlined text-3xl {% if upgrade_progress.current_level == 0 %} text-gray-400 {% elif upgrade_progress.current_level == 1 %} text-blue-500 {% elif upgrade_progress.current_level == 2 %} text-green-500 {% elif upgrade_progress.current_level == 3 %} text-amber-500 {% endif %}">
+                {% if upgrade_progress.current_level == 0 %}
+                    new_releases
+                {% elif upgrade_progress.current_level == 1 %}
+                    person
+                {% elif upgrade_progress.current_level == 2 %}
+                    verified
+                {% elif upgrade_progress.current_level == 3 %}
+                    workspace_premium
                 {% endif %}
             </span>
         </div>
-
         {# Level Info #}
         <div class="flex-1">
             <div class="flex items-center gap-2 mb-1">
                 <span class="text-lg font-bold text-slate-900">
-                    {% if upgrade_progress.current_level == 0 %}新手
-                    {% elif upgrade_progress.current_level == 1 %}一般
-                    {% elif upgrade_progress.current_level == 2 %}可信
-                    {% elif upgrade_progress.current_level == 3 %}優良
+                    {% if upgrade_progress.current_level == 0 %}
+                        新手
+                    {% elif upgrade_progress.current_level == 1 %}
+                        一般
+                    {% elif upgrade_progress.current_level == 2 %}
+                        可信
+                    {% elif upgrade_progress.current_level == 3 %}
+                        優良
                     {% endif %}
                 </span>
-                <span class="px-2 py-0.5 rounded-full text-xs font-bold
-                    {% if upgrade_progress.current_level == 0 %} bg-gray-100 text-gray-700
-                    {% elif upgrade_progress.current_level == 1 %} bg-blue-100 text-blue-700
-                    {% elif upgrade_progress.current_level == 2 %} bg-green-100 text-green-700
-                    {% elif upgrade_progress.current_level == 3 %} bg-amber-100 text-amber-700
-                    {% endif %}">
+                <span class="px-2 py-0.5 rounded-full text-xs font-bold {% if upgrade_progress.current_level == 0 %} bg-gray-100 text-gray-700 {% elif upgrade_progress.current_level == 1 %} bg-blue-100 text-blue-700 {% elif upgrade_progress.current_level == 2 %} bg-green-100 text-green-700 {% elif upgrade_progress.current_level == 3 %} bg-amber-100 text-amber-700 {% endif %}">
                     Lv.{{ upgrade_progress.current_level }}
                 </span>
             </div>
-
             {# Progress Bar #}
             {% if upgrade_progress.next_level %}
-            <div class="w-full bg-slate-200 rounded-full h-2.5">
-                <div class="h-2.5 rounded-full transition-all duration-300
-                    {% if upgrade_progress.current_level == 0 %} bg-gray-500
-                    {% elif upgrade_progress.current_level == 1 %} bg-blue-500
-                    {% elif upgrade_progress.current_level == 2 %} bg-green-500
-                    {% endif %}"
-                    style="width: {{ upgrade_progress.summary }}%">
+                <div class="w-full bg-slate-200 rounded-full h-2.5">
+                    <div class="h-2.5 rounded-full transition-all duration-300 {% if upgrade_progress.current_level == 0 %} bg-gray-500 {% elif upgrade_progress.current_level == 1 %} bg-blue-500 {% elif upgrade_progress.current_level == 2 %} bg-green-500 {% endif %}"
+                         style="width: {{ upgrade_progress.summary }}%"></div>
                 </div>
-            </div>
-            <p class="text-xs text-slate-500 mt-1">
-                升級進度 {{ upgrade_progress.summary }}%
-            </p>
+                <p class="text-xs text-slate-500 mt-1">升級進度 {{ upgrade_progress.summary }}%</p>
             {% else %}
-            <p class="text-xs text-amber-600 font-medium">
-                ★ 已達最高等級
-            </p>
+                <p class="text-xs text-amber-600 font-medium">★ 已達最高等級</p>
             {% endif %}
         </div>
     </div>
-
     {# Upgrade Requirements #}
     {% if upgrade_progress.next_level %}
-    <div class="bg-slate-50 rounded-lg p-3 space-y-2">
-        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">
-            升級至 Lv.{{ upgrade_progress.next_level }} 條件
-        </p>
-        <ul class="space-y-1.5">
-            {% for requirement in upgrade_progress.requirements %}
-            <li class="flex items-start gap-2 text-sm
-                {% if '✓' in requirement %} text-green-600
-                {% else %} text-slate-600
-                {% endif %}">
-                <span class="material-symbols-outlined text-base shrink-0 mt-0.5
-                    {% if '✓' in requirement %} text-green-500
-                    {% else %} text-slate-400
-                    {% endif %}">
-                    {% if '✓' in requirement %}check_circle{% else %}radio_button_unchecked{% endif %}
-                </span>
-                <span>{{ requirement }}</span>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
+        <div class="bg-slate-50 rounded-lg p-3 space-y-2">
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">升級至 Lv.{{ upgrade_progress.next_level }} 條件</p>
+            <ul class="space-y-1.5">
+                {% for requirement in upgrade_progress.requirements %}
+                    <li class="flex items-start gap-2 text-sm {% if '✓' in requirement %} text-green-600 {% else %} text-slate-600 {% endif %}">
+                        <span class="material-symbols-outlined text-base shrink-0 mt-0.5 {% if '✓' in requirement %} text-green-500 {% else %} text-slate-400 {% endif %}">
+                            {% if '✓' in requirement %}
+                                check_circle
+                            {% else %}
+                                radio_button_unchecked
+                            {% endif %}
+                        </span>
+                        <span>{{ requirement }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
     {% endif %}
-
     {# Detailed Progress #}
     {% if upgrade_progress.progress.deals %}
-    <div class="grid grid-cols-3 gap-2 text-center">
-        <div class="bg-white rounded-lg border border-slate-200 p-2">
-            <p class="text-lg font-bold text-primary">
-                {{ upgrade_progress.progress.deals.current }}/{{ upgrade_progress.progress.deals.required }}
-            </p>
-            <p class="text-xs text-slate-500">交易數</p>
+        <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="bg-white rounded-lg border border-slate-200 p-2">
+                <p class="text-lg font-bold text-primary">
+                    {{ upgrade_progress.progress.deals.current }}/{{ upgrade_progress.progress.deals.required }}
+                </p>
+                <p class="text-xs text-slate-500">交易數</p>
+            </div>
+            <div class="bg-white rounded-lg border border-slate-200 p-2">
+                <p class="text-lg font-bold text-primary">{{ upgrade_progress.progress.rating.current|floatformat:1 }}</p>
+                <p class="text-xs text-slate-500">評價均分</p>
+            </div>
+            <div class="bg-white rounded-lg border border-slate-200 p-2 {% if not upgrade_progress.progress.overdue.ok %}border-rose-200 bg-rose-50{% endif %}">
+                <p class="text-lg font-bold {% if upgrade_progress.progress.overdue.ok %} text-primary {% else %} text-rose-500{% endif %}">
+                    {{ upgrade_progress.progress.overdue.current }}
+                </p>
+                <p class="text-xs text-slate-500">逾期次數</p>
+            </div>
         </div>
-        <div class="bg-white rounded-lg border border-slate-200 p-2">
-            <p class="text-lg font-bold text-primary">
-                {{ upgrade_progress.progress.rating.current|floatformat:1 }}
-            </p>
-            <p class="text-xs text-slate-500">評價均分</p>
-        </div>
-        <div class="bg-white rounded-lg border border-slate-200 p-2
-            {% if not upgrade_progress.progress.overdue.ok %} border-rose-200 bg-rose-50{% endif %}">
-            <p class="text-lg font-bold
-                {% if upgrade_progress.progress.overdue.ok %} text-primary
-                {% else %} text-rose-500{% endif %}">
-                {{ upgrade_progress.progress.overdue.current }}
-            </p>
-            <p class="text-xs text-slate-500">逾期次數</p>
-        </div>
-    </div>
     {% endif %}
 </div>
