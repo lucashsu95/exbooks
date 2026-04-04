@@ -10,6 +10,11 @@
     'EXTEND_REQUESTED': 'more_time',
     'EXTEND_APPROVED': 'check_circle',
     'EXTEND_REJECTED': 'cancel',
+    'APPEAL_SUBMITTED': 'campaign',
+    'APPEAL_RESOLVED': 'task_alt',
+    'RATING_CREATED': 'star',
+    'VIOLATION_CREATED': 'gavel',
+    'APPEAL_STATUS_UPDATED': 'info',
     } %}
     <div class="flex items-start gap-3 p-4 hover:bg-slate-50 transition-colors {% if not notification.is_read %}bg-primary/5{% endif %}"
          id="notification-{{ notification.id }}">

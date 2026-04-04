@@ -36,14 +36,17 @@ box-shadow: 0 2px 6px rgba(19, 109, 236, 0.3);
 {% endblock %}
 {% block content %}
     <!-- Top Navigation -->
-    <div class="flex items-center bg-white p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200">
-        <a href="{% url 'deals:detail' deal.id %}"
-           class="text-slate-900 flex size-12 shrink-0 items-center cursor-pointer">
-            <span class="material-symbols-outlined">arrow_back</span>
-        </a>
-        <h2 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">評價交易</h2>
-        <div class="flex w-12 items-center justify-end"></div>
-    </div>
+    <header class="flex items-center bg-white/80 backdrop-blur-md p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200">
+        <nav aria-label="返回">
+            <a href="{% url 'deals:detail' deal.id %}"
+               aria-label="返回交易詳情"
+               class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
+                <span class="material-symbols-outlined text-xl" aria-hidden="true">arrow_back</span>
+            </a>
+        </nav>
+        <h1 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">評價交易</h1>
+        <div class="w-10"></div>
+    </header>
     <main class="flex-1 px-4 py-4 pb-32">
         <div class="bg-white rounded-xl border border-slate-200 p-4 mb-6">
             <div class="flex gap-4 items-center">
@@ -80,10 +83,10 @@ box-shadow: 0 2px 6px rgba(19, 109, 236, 0.3);
                 </div>
             </div>
         </div>
-        <form method="post" action="">
+        <form method="post" action="" id="rating-form">
             {% csrf_token %}
             {% crispy form %}
-            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-32">
                 <div class="flex items-start gap-3">
                     <span class="material-symbols-outlined text-primary">info</span>
                     <div>
@@ -96,22 +99,21 @@ box-shadow: 0 2px 6px rgba(19, 109, 236, 0.3);
                     </div>
                 </div>
             </div>
+            <!-- Submit Button moved inside form for better compatibility -->
+            <div class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md p-4 border-t border-slate-200 z-50">
+                <button type="submit"
+                        class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+                    <span class="material-symbols-outlined">send</span>
+                    送出評價
+                </button>
+            </div>
         </form>
-    </main>
-    <div class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md p-4 border-t border-slate-200">
-        <button type="submit"
-                form="rating-form"
-                class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-            <span class="material-symbols-outlined">send</span>
-            送出評價
-        </button>
-    </div>
-{% endblock %}
-{% block extra_js %}
-    <script>
+    {% endblock %}
+    {% block extra_js %}
+        <script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('form');
     if (form) form.id = 'rating-form';
 });
-    </script>
-{% endblock %}
+        </script>
+    {% endblock %}

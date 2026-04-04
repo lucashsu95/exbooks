@@ -1,18 +1,18 @@
 {% extends 'base.html' %}
 {% block title %}Exbooks - 交易詳情{% endblock %}
 {% block content %}
-<!-- Top Navigation - 使用 header 語義標籤 -->
-<header class="flex items-center bg-white p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200">
-  <nav aria-label="返回">
-    <a href="{% url 'deals:list' %}"
-       aria-label="返回交易列表"
-       class="text-slate-900 flex size-12 shrink-0 items-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary rounded-lg">
-      <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
-    </a>
-  </nav>
-  <h1 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">交易詳情</h1>
-  <div class="w-12"></div>
-</header>
+    <!-- Top Navigation - 使用 header 語義標籤 -->
+    <header class="flex items-center bg-white/80 backdrop-blur-md p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200">
+        <nav aria-label="返回">
+            <a href="{% url 'deals:list' %}"
+               aria-label="返回交易列表"
+               class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
+                <span class="material-symbols-outlined text-xl" aria-hidden="true">arrow_back</span>
+            </a>
+        </nav>
+        <h1 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">交易詳情</h1>
+        <div class="w-10"></div>
+    </header>
     <!-- Status Badge -->
     <div class="px-4 py-4">
         <div class="flex items-center justify-center">
@@ -72,6 +72,37 @@
             </div>
         </div>
     </div>
+    <!-- Pending Tasks Checklist (LOAN only) -->
+    {% if deal.deal_type == 'LN' and deal.status == 'M' %}
+        <div class="px-4 mb-4">
+            <div class="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                <h4 class="text-blue-900 font-bold text-sm mb-2">完成交易進度</h4>
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm {% if deal.applicant_rated and deal.responder_rated %}text-green-500{% else %}text-slate-400{% endif %}">
+                            {% if deal.applicant_rated and deal.responder_rated %}
+                                check_circle
+                            {% else %}
+                                radio_button_unchecked
+                            {% endif %}
+                        </span>
+                        <span class="text-sm {% if deal.applicant_rated and deal.responder_rated %}text-slate-500 line-through{% else %}text-slate-700{% endif %}">雙方完成互評</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm {% if deal.shared_book.status == 'T' %}text-green-500{% else %}text-slate-400{% endif %}">
+                            {% if deal.shared_book.status == 'T' %}
+                                check_circle
+                            {% else %}
+                                radio_button_unchecked
+                            {% endif %}
+                        </span>
+                        <span class="text-sm {% if deal.shared_book.status == 'T' %}text-slate-500 line-through{% else %}text-slate-700{% endif %}">主人確認歸還書籍</span>
+                    </div>
+                </div>
+                <p class="text-[11px] text-blue-600 mt-3 italic">提示：即便對方尚未評價，主人仍可先點擊下方「確認歸還」。</p>
+            </div>
+        </div>
+    {% endif %}
     <!-- Book Info Card -->
     <div class="px-4 mb-4">
         <div class="bg-white rounded-xl border border-slate-200 p-4">
@@ -104,42 +135,78 @@
             <div class="bg-white rounded-xl border border-slate-200 p-3">
                 <p class="text-xs text-slate-500 uppercase font-bold tracking-tighter mb-2">申請者</p>
                 <div class="flex items-center gap-2">
-                    <div class="size-10 rounded-full bg-primary/20 overflow-hidden border-2 border-primary">
+                    <div class="size-10 rounded-full bg-primary/20 overflow-hidden border-2 border-primary flex items-center justify-center">
                         {% if deal.applicant.profile.avatar %}
                             <img src="{{ deal.applicant.profile.avatar.url }}"
                                  alt="申請者頭像"
                                  class="w-full h-full object-cover" />
+                        {% else %}
+                            <span class="material-symbols-outlined text-primary text-xl">person</span>
                         {% endif %}
                     </div>
                     <div>
-                        <p class="text-slate-900 font-bold text-sm">{{ deal.applicant.profile.nickname|default:deal.applicant.email }}</p>
+                        <p class="text-slate-900 font-bold text-sm">
+                            {{ deal.applicant.profile.nickname|default:deal.applicant.get_full_name|default:deal.applicant.username }}
+                        </p>
                     </div>
                 </div>
+                <!-- Applicant Rating if exists -->
+                {% for rating in deal.ratings.all %}
+                    {% if rating.rater == deal.applicant %}
+                        <div class="mt-2 pt-2 border-t border-slate-100">
+                            <div class="flex items-center gap-1 text-amber-500">
+                                <span class="material-symbols-outlined text-xs">star</span>
+                                <span class="text-xs font-bold">{{ rating.average_score|stringformat:".1f" }}</span>
+                            </div>
+                            <p class="text-[10px] text-slate-500 line-clamp-1 mt-1">「{{ rating.comment|default:"未留評語" }}」</p>
+                        </div>
+                    {% endif %}
+                {% endfor %}
             </div>
             <!-- Responder -->
             <div class="bg-white rounded-xl border border-slate-200 p-3">
                 <p class="text-xs text-slate-500 uppercase font-bold tracking-tighter mb-2">回應者</p>
                 <div class="flex items-center gap-2">
-                    <div class="size-10 rounded-full bg-primary/20 overflow-hidden border-2 border-slate-300">
+                    <div class="size-10 rounded-full bg-primary/20 overflow-hidden border-2 border-slate-300 flex items-center justify-center">
                         {% if deal.responder.profile.avatar %}
                             <img src="{{ deal.responder.profile.avatar.url }}"
                                  alt="回應者頭像"
                                  class="w-full h-full object-cover" />
+                        {% else %}
+                            <span class="material-symbols-outlined text-slate-400 text-xl">person</span>
                         {% endif %}
                     </div>
                     <div>
-                        <p class="text-slate-900 font-bold text-sm">{{ deal.responder.profile.nickname|default:deal.responder.email }}</p>
+                        <p class="text-slate-900 font-bold text-sm">
+                            {{ deal.responder.profile.nickname|default:deal.responder.get_full_name|default:deal.responder.username }}
+                        </p>
                     </div>
                 </div>
+                <!-- Responder Rating if exists -->
+                {% for rating in deal.ratings.all %}
+                    {% if rating.rater == deal.responder %}
+                        <div class="mt-2 pt-2 border-t border-slate-100">
+                            <div class="flex items-center gap-1 text-amber-500">
+                                <span class="material-symbols-outlined text-xs">star</span>
+                                <span class="text-xs font-bold">{{ rating.average_score|stringformat:".1f" }}</span>
+                            </div>
+                            <p class="text-[10px] text-slate-500 line-clamp-1 mt-1">「{{ rating.comment|default:"未留評語" }}」</p>
+                        </div>
+                    {% endif %}
+                {% endfor %}
             </div>
         </div>
     </div>
     <!-- Message Section (留言協商區) -->
-    {% if deal.status in 'QP' %}
+    {% if deal.status != 'X' %}
         <div class="px-4 mb-32">
             <h4 class="text-slate-900 font-bold mb-3 flex items-center gap-2">
                 <span class="material-symbols-outlined text-primary">chat</span>
-                留言協商
+                {% if deal.status == 'D' %}
+                    歷史留言
+                {% else %}
+                    留言協商
+                {% endif %}
             </h4>
             <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <!-- Messages List -->
@@ -147,29 +214,31 @@
                     {% include 'deals/partials/message_list.html' with messages=deal_messages %}
                 </div>
                 <!-- Message Input -->
-                <div class="border-t border-slate-200 p-3">
-                    <form hx-post="{% url 'deals:message_send' deal.id %}"
-                          hx-target="#message-list"
-                          hx-swap="innerHTML"
-                          hx-on-htmx-after-request="this.reset()"
-                          class="flex items-center gap-2">
-                        {% csrf_token %}
-        <input type="text"
-               name="content"
-               id="message-input"
-               aria-label="輸入訊息"
-               class="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-               placeholder="輸入訊息…"
-               autocomplete="off"
-               required>
-        <label for="message-input" class="sr-only">輸入訊息</label>
-        <button type="submit"
-                aria-label="發送訊息"
-                class="size-10 rounded-xl bg-primary text-white flex items-center justify-center active:scale-[0.95] transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
-          <span class="material-symbols-outlined" aria-hidden="true">send</span>
-        </button>
-                    </form>
-                </div>
+                {% if deal.status != 'D' %}
+                    <div class="border-t border-slate-200 p-3">
+                        <form hx-post="{% url 'deals:message_send' deal.id %}"
+                              hx-target="#message-list"
+                              hx-swap="innerHTML"
+                              hx-on-htmx-after-request="this.reset()"
+                              class="flex items-center gap-2">
+                            {% csrf_token %}
+                            <input type="text"
+                                   name="content"
+                                   id="message-input"
+                                   aria-label="輸入訊息"
+                                   class="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                                   placeholder="輸入訊息…"
+                                   autocomplete="off"
+                                   required>
+                            <label for="message-input" class="sr-only">輸入訊息</label>
+                            <button type="submit"
+                                    aria-label="發送訊息"
+                                    class="size-10 rounded-xl bg-primary text-white flex items-center justify-center active:scale-[0.95] transition-transform focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                                <span class="material-symbols-outlined" aria-hidden="true">send</span>
+                            </button>
+                        </form>
+                    </div>
+                {% endif %}
             </div>
         </div>
     {% endif %}
