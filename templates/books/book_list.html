@@ -1,56 +1,59 @@
 {% extends 'base.html' %}
 {% block title %}Exbooks - 首頁與探索{% endblock %}
 {% block content %}
-<!-- Hero Header with Gradient -->
-<div class="relative overflow-hidden">
-  <!-- Gradient Background -->
-  <div class="absolute inset-0 bg-gradient-to-br from-primary/10 via-background-light to-primary/5-primary/20-background-dark-primary/10">
-  </div>
-  <!-- Header Section - 使用 header 語義標籤 -->
-  <header class="relative flex items-center p-4 justify-between">
-    <!-- 左側留空（對齊用） -->
-    <div class="w-12"></div>
-    <h1 class="text-slate-900 text-2xl font-bold leading-tight tracking-tight flex-1 text-center">Exbooks</h1>
-    <nav class="flex w-12 items-center justify-end" aria-label="使用者選單">
-      <a href="{% url 'accounts:profile' %}"
-         aria-label="個人資料"
-         class="flex size-12 cursor-pointer items-center justify-center rounded-2xl bg-white text-primary backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 overflow-hidden border border-white/60 focus:outline-none focus:ring-2 focus:ring-primary">
-        {% if user.is_authenticated and user.profile.avatar %}
-        <img src="{{ user.profile.avatar.url }}"
-             alt="{{ user.profile.nickname|default:user.email }} 的頭像"
-             width="48"
-             height="48"
-             class="w-full h-full object-cover" />
-        {% elif user.is_authenticated %}
-        <span class="material-symbols-outlined" aria-hidden="true">person</span>
-        {% else %}
-        <span class="material-symbols-outlined" aria-hidden="true">person</span>
-        {% endif %}
-      </a>
-    </nav>
-  </header>
-  <!-- Search Bar Section - Enhanced -->
-  <section class="relative px-4 py-6" aria-label="搜尋">
-    <form method="GET" action="{% url 'books:list' %}" class="relative" role="search">
-      <div class="relative flex items-center rounded-2xl h-16 shadow-2xl bg-white backdrop-blur-xl border border-white/50-slate-700/50 overflow-hidden group focus-within:ring-2 focus-within:ring-primary/50 focus-within:shadow-primary/20">
-        <div class="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity">
+    <!-- Hero Header with Gradient -->
+    <div class="relative overflow-hidden">
+        <!-- Gradient Background -->
+        <div class="absolute inset-0 bg-gradient-to-br from-primary/10 via-background-light to-primary/5-primary/20-background-dark-primary/10">
         </div>
-        <button type="submit"
-                aria-label="搜尋"
-                class="relative z-10 text-slate-500 hover:text-primary flex items-center justify-center pl-5 pr-3 h-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
-          <span class="material-symbols-outlined text-2xl" aria-hidden="true">search</span>
-        </button>
-        <label for="search-input" class="sr-only">搜尋 ISBN、書名、作者、出版社</label>
-        <input name="q"
-               id="search-input"
-               aria-label="搜尋 ISBN、書名、作者、出版社"
-               class="relative z-10 form-input flex w-full min-w-0 flex-1 border-none bg-transparent text-slate-900 focus:ring-0 h-full placeholder:text-slate-400 px-4 text-base font-medium"
-               placeholder="搜尋 ISBN、書名、作者、出版社…"
-               value="{{ search_query }}" />
-        {% if current_category != '全部' %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
-      </div>
-    </form>
-  </section>
+        <!-- Header Section - 使用 header 語義標籤 -->
+        <header class="relative flex items-center p-4 justify-between">
+            <!-- 左側留空（對齊用） -->
+            <div class="w-12"></div>
+            <h1 class="text-slate-900 text-2xl font-bold leading-tight tracking-tight flex-1 text-center">Exbooks</h1>
+            <nav class="flex w-12 items-center justify-end" aria-label="使用者選單">
+                <a href="{% url 'accounts:profile' %}"
+                   aria-label="個人資料"
+                   class="flex size-12 cursor-pointer items-center justify-center rounded-2xl bg-white text-primary backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 overflow-hidden border border-white/60 focus:outline-none focus:ring-2 focus:ring-primary">
+                    {% if user.is_authenticated and user.profile.avatar %}
+                        <img src="{{ user.profile.avatar.url }}"
+                             alt="{{ user.profile.nickname|default:user.email }} 的頭像"
+                             width="48"
+                             height="48"
+                             class="w-full h-full object-cover" />
+                    {% elif user.is_authenticated %}
+                        <span class="material-symbols-outlined" aria-hidden="true">person</span>
+                    {% else %}
+                        <span class="material-symbols-outlined" aria-hidden="true">person</span>
+                    {% endif %}
+                </a>
+            </nav>
+        </header>
+        <!-- Search Bar Section - Enhanced -->
+        <section class="relative px-4 py-6" aria-label="搜尋">
+            <form method="GET"
+                  action="{% url 'books:list' %}"
+                  class="relative"
+                  role="search">
+                <div class="relative flex items-center rounded-2xl h-16 shadow-2xl bg-white backdrop-blur-xl border border-white/50-slate-700/50 overflow-hidden group focus-within:ring-2 focus-within:ring-primary/50 focus-within:shadow-primary/20">
+                    <div class="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-focus-within:opacity-100 transition-opacity">
+                    </div>
+                    <button type="submit"
+                            aria-label="搜尋"
+                            class="relative z-10 text-slate-500 hover:text-primary flex items-center justify-center pl-5 pr-3 h-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
+                        <span class="material-symbols-outlined text-2xl" aria-hidden="true">search</span>
+                    </button>
+                    <label for="search-input" class="sr-only">搜尋 ISBN、書名、作者、出版社</label>
+                    <input name="q"
+                           id="search-input"
+                           aria-label="搜尋 ISBN、書名、作者、出版社"
+                           class="relative z-10 form-input flex w-full min-w-0 flex-1 border-none bg-transparent text-slate-900 focus:ring-0 h-full placeholder:text-slate-400 px-4 text-base font-medium"
+                           placeholder="搜尋 ISBN、書名、作者、出版社…"
+                           value="{{ search_query }}" />
+                    {% if current_category != '全部' %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
+                </div>
+            </form>
+        </section>
         <!-- Categories - Pill Design -->
         <div class="relative px-4 pb-4">
             <div class="flex gap-3 overflow-x-auto no-scrollbar py-2 -mx-4 px-4">
@@ -128,35 +131,35 @@
             <h2 class="text-slate-900 text-xl font-bold leading-tight tracking-tight">書籍列表</h2>
         </div>
         <div class="grid grid-cols-1 gap-4">
-      {% for book in nearby_books|default:"" %}
-      <!-- 方案 G：改善後的卡片設計 -->
-      <a href="{% url 'books:detail' book.id %}"
-         class="block bg-white rounded-2xl p-4 shadow-sm border border-slate-100 active:scale-[0.98] transition-transform hover:shadow-md">
-        <div class="flex gap-4">
-          <!-- 書籍封面 - 固定尺寸 -->
-          <div class="w-20 h-28 rounded-xl overflow-hidden shrink-0 shadow-md bg-slate-100">
-            {% include 'partials/book_cover.html' with book=book %}
-          </div>
-          <!-- 書籍資訊 - 彈性佈局 -->
-          <div class="flex-1 min-w-0 py-1">
-            <!-- 標題 - 最多兩行，超出顯示省略號 -->
-            <h3 class="font-bold text-base text-slate-900 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
-              {{ book.official_book.title }}
-            </h3>
-            <!-- 作者 -->
-            <p class="text-sm text-slate-500 mt-1">{{ book.official_book.author|default:"未知作者" }}</p>
-            <!-- 分類標籤與信任徽章 -->
-            <div class="mt-2 flex items-center gap-2 flex-wrap">
-              <span class="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium">
-                {{ book.official_book.get_category_display }}
-              </span>
-              {% if book.keeper.profile %}
-              {% include "partials/trust_badge_inline.html" with trust_level=book.keeper.profile.trust_level %}
-              {% endif %}
-            </div>
-          </div>
-        </div>
-      </a>
+            {% for book in nearby_books|default:"" %}
+                <!-- 方案 G：改善後的卡片設計 -->
+                <a href="{% url 'books:detail' book.id %}"
+                   class="block bg-white rounded-2xl p-4 shadow-sm border border-slate-100 active:scale-[0.98] transition-transform hover:shadow-md">
+                    <div class="flex gap-4">
+                        <!-- 書籍封面 - 固定尺寸 -->
+                        <div class="w-20 h-28 rounded-xl overflow-hidden shrink-0 shadow-md bg-slate-100">
+                            {% include 'partials/book_cover.html' with book=book %}
+                        </div>
+                        <!-- 書籍資訊 - 彈性佈局 -->
+                        <div class="flex-1 min-w-0 py-1">
+                            <!-- 標題 - 最多兩行，超出顯示省略號 -->
+                            <h3 class="font-bold text-base text-slate-900 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
+                                {{ book.official_book.title }}
+                            </h3>
+                            <!-- 作者 -->
+                            <p class="text-sm text-slate-500 mt-1">{{ book.official_book.author|default:"未知作者" }}</p>
+                            <!-- 分類標籤與信任徽章 -->
+                            <div class="mt-2 flex items-center gap-2 flex-wrap">
+                                <span class="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium">
+                                    {{ book.official_book.get_category_display }}
+                                </span>
+                                {% if book.keeper.profile %}
+                                    {% include "partials/trust_badge_inline.html" with trust_level=book.keeper.profile.trust_level %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </a>
             {% empty %}
                 <div class="flex items-center justify-center p-8 w-full">
                     <div class="text-center text-slate-500 bg-white rounded-2xl p-8 border border-slate-100 shadow-sm">

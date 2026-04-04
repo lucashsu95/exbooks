@@ -14,21 +14,27 @@
                     {% endif %}
                 </p>
             </div>
-            <form hx-post="{% url 'books:toggle_status' book.pk %}"
-                  hx-target="#status-toggle-container"
-                  hx-swap="outerHTML">
-                {% csrf_token %}
-                <button type="submit"
-                        class="px-4 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 transition-colors">
-                    {% if book.status == 'S' %}
-                        開放借閱
-                    {% elif book.status == 'T' %}
-                        暫停借閱
-                    {% else %}
-                        狀態切換
-                    {% endif %}
-                </button>
-            </form>
+            {% if user.profile.trust_level > 0 %}
+                <form hx-post="{% url 'books:toggle_status' book.pk %}"
+                      hx-target="#status-toggle-container"
+                      hx-swap="outerHTML">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="px-4 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 transition-colors">
+                        {% if book.status == 'S' %}
+                            開放借閱
+                        {% elif book.status == 'T' %}
+                            暫停借閱
+                        {% else %}
+                            狀態切換
+                        {% endif %}
+                    </button>
+                </form>
+            {% else %}
+                <div class="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-400 text-xs font-bold border border-slate-200 cursor-not-allowed">
+                    新手限額中
+                </div>
+            {% endif %}
         </div>
     </div>
 {% endif %}

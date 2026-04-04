@@ -2,13 +2,16 @@
 {% load crispy_forms_tags %}
 {% block title %}Exbooks - 編輯書籍{% endblock %}
 {% block content %}
-    <header class="sticky top-0 z-10 bg-white border-b border-slate-200">
+    <header class="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
-            <div class="flex items-center gap-3">
+            <nav class="flex items-center gap-3">
                 <a href="{% url 'books:detail' book.id %}"
-                   class="material-symbols-outlined text-slate-600 cursor-pointer">arrow_back</a>
-                <h1 class="text-xl font-bold tracking-tight">編輯分享書籍</h1>
-            </div>
+                   aria-label="返回書籍詳情"
+                   class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
+                    <span class="material-symbols-outlined text-xl" aria-hidden="true">arrow_back</span>
+                </a>
+                <h1 class="text-xl font-bold tracking-tight">編輯書籍資訊</h1>
+            </nav>
         </div>
     </header>
     <main class="max-w-xl mx-auto p-4 pb-24">
@@ -18,25 +21,25 @@
                 {% crispy form %}
                 <div id="photo-preview" class="grid grid-cols-3 gap-2 mt-3"></div>
             </div>
-        <button type="submit"
-                class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-transform">
-            儲存變更
-        </button>
-    </form>
-    <!-- 刪除按鈕（僅 owner 可見） -->
-    {% if book.owner == request.user %}
-        <form method="POST"
-              action="{% url 'books:delete' book.id %}"
-              onsubmit="return confirm('確定要刪除這本書嗎？此操作無法復原。');">
-            {% csrf_token %}
             <button type="submit"
-                    class="w-full bg-rose-100 text-rose-600 font-bold py-3 rounded-xl mt-4 hover:bg-rose-200 active:scale-[0.98] transition-transform">
-                <span class="material-symbols-outlined align-middle text-sm mr-1">delete</span>
-                刪除書籍
+                    class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-transform">
+                儲存變更
             </button>
         </form>
-    {% endif %}
-</main>
+        <!-- 刪除按鈕（僅 owner 可見） -->
+        {% if book.owner == request.user %}
+            <form method="POST"
+                  action="{% url 'books:delete' book.id %}"
+                  onsubmit="return confirm('確定要刪除這本書嗎？此操作無法復原。');">
+                {% csrf_token %}
+                <button type="submit"
+                        class="w-full bg-rose-100 text-rose-600 font-bold py-3 rounded-xl mt-4 hover:bg-rose-200 active:scale-[0.98] transition-transform">
+                    <span class="material-symbols-outlined align-middle text-sm mr-1">delete</span>
+                    刪除書籍
+                </button>
+            </form>
+        {% endif %}
+    </main>
     {% include '_bottom_nav.html' %}
 {% endblock %}
 {% block extra_js %}

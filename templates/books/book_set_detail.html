@@ -2,28 +2,30 @@
 {% block title %}{{ book_set.name }} - Exbooks{% endblock %}
 {% block content %}
     <!-- Sticky top bar -->
-    <div class="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <a href="{% url 'books:book_set_list' %}"
-               class="text-slate-500 hover:text-primary flex items-center justify-center"
-               aria-label="返回">
-                <span class="material-symbols-outlined text-xl">arrow_back</span>
-            </a>
-            <h1 class="text-lg font-semibold text-slate-900 truncate pr-4">{{ book_set.name }}</h1>
+    <header class="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
+            <nav class="flex items-center gap-3 min-w-0">
+                <a href="{% url 'books:book_set_list' %}"
+                   aria-label="返回"
+                   class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary shrink-0">
+                    <span class="material-symbols-outlined text-xl" aria-hidden="true">arrow_back</span>
+                </a>
+                <h1 class="text-xl font-bold tracking-tight truncate">{{ book_set.name }}</h1>
+            </nav>
+            <div class="flex gap-1 shrink-0">
+                <a href="{% url 'books:book_set_edit' book_set.pk %}"
+                   class="text-slate-500 hover:text-primary p-2 bg-slate-50 rounded-full hover:bg-primary/10 transition-colors flex items-center justify-center"
+                   aria-label="編輯">
+                    <span class="material-symbols-outlined text-xl">edit</span>
+                </a>
+                <a href="{% url 'books:book_set_delete' book_set.pk %}"
+                   class="text-red-500 hover:text-red-600 p-2 bg-red-50 rounded-full hover:bg-red-100 transition-colors flex items-center justify-center"
+                   aria-label="刪除">
+                    <span class="material-symbols-outlined text-xl">delete</span>
+                </a>
+            </div>
         </div>
-        <div class="flex gap-1 shrink-0">
-            <a href="{% url 'books:book_set_edit' book_set.pk %}"
-               class="text-slate-500 hover:text-primary p-2 bg-slate-50 rounded-full hover:bg-primary/10 transition-colors flex items-center justify-center"
-               aria-label="編輯">
-                <span class="material-symbols-outlined text-xl">edit</span>
-            </a>
-            <a href="{% url 'books:book_set_delete' book_set.pk %}"
-               class="text-red-500 hover:text-red-600 p-2 bg-red-50 rounded-full hover:bg-red-100 transition-colors flex items-center justify-center"
-               aria-label="刪除">
-                <span class="material-symbols-outlined text-xl">delete</span>
-            </a>
-        </div>
-    </div>
+    </header>
     <!-- Scrollable content -->
     <div class="px-4 py-4 pb-24 space-y-4">
         <!-- 套書資訊 -->

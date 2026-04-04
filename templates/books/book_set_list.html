@@ -2,22 +2,24 @@
 {% block title %}我的套書 - Exbooks{% endblock %}
 {% block content %}
     <!-- Sticky top bar -->
-    <div class="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <a href="{% url 'books:my_bookshelf' %}"
-               class="text-slate-500 hover:text-primary flex items-center justify-center"
-               aria-label="返回">
-                <span class="material-symbols-outlined text-xl">arrow_back</span>
+    <header class="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
+            <nav class="flex items-center gap-3">
+                <a href="{% url 'books:bookshelf' %}"
+                   aria-label="返回"
+                   class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
+                    <span class="material-symbols-outlined text-xl" aria-hidden="true">arrow_back</span>
+                </a>
+                <h1 class="text-xl font-bold tracking-tight">我的套書</h1>
+            </nav>
+            <a href="{% url 'books:book_set_create' %}"
+               class="text-primary hover:bg-primary/10 p-2 rounded-full transition-colors flex items-center justify-center"
+               aria-label="建立套書"
+               title="建立套書">
+                <span class="material-symbols-outlined text-xl">add</span>
             </a>
-            <h1 class="text-lg font-semibold text-slate-900">我的套書</h1>
         </div>
-        <a href="{% url 'books:book_set_create' %}"
-           class="text-primary hover:bg-primary/10 p-2 rounded-full transition-colors flex items-center justify-center"
-           aria-label="建立套書"
-           title="建立套書">
-            <span class="material-symbols-outlined text-xl">add</span>
-        </a>
-    </div>
+    </header>
     <!-- Scrollable content -->
     <div class="px-4 py-4 pb-24 space-y-3">
         {% if book_sets %}

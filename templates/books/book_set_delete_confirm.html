@@ -1,79 +1,73 @@
 {% extends "base.html" %}
 {% block title %}Exbooks - 刪除套書確認{% endblock %}
 {% block content %}
-<!-- Header -->
-<header class="flex items-center bg-background-light-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
-    <div class="flex size-12 shrink-0 items-center justify-start">
-        <a href="{% url 'books:book_set_detail' book_set.id %}"
-           class="flex size-10 cursor-pointer items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20">
-            <span class="material-symbols-outlined">arrow_back</span>
-        </a>
-    </div>
-    <h2 class="text-slate-900 text-xl font-bold leading-tight tracking-tight flex-1 text-center">刪除套書</h2>
-    <div class="w-12"></div>
-</header>
-
-<main class="px-4 py-6 max-w-lg mx-auto w-full pb-24">
-    <!-- Warning Card -->
-    <div class="bg-rose-50 border border-rose-200 rounded-xl p-6 mb-6">
-        <div class="flex items-center gap-3 mb-4">
-            <div class="size-12 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined text-2xl text-rose-500">warning</span>
+    <!-- Sticky top bar -->
+    <header class="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
+            <nav class="flex items-center gap-3">
+                <a href="{% url 'books:book_set_detail' book_set.id %}"
+                   aria-label="返回"
+                   class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
+                    <span class="material-symbols-outlined text-xl" aria-hidden="true">arrow_back</span>
+                </a>
+                <h1 class="text-xl font-bold tracking-tight">刪除套書</h1>
+            </nav>
+        </div>
+    </header>
+    <main class="px-4 py-6 max-w-lg mx-auto w-full pb-24">
+        <!-- Warning Card -->
+        <div class="bg-rose-50 border border-rose-200 rounded-xl p-6 mb-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="size-12 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-2xl text-rose-500">warning</span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-rose-700">確認刪除套書</h3>
+                    <p class="text-sm text-rose-600">此操作無法復原</p>
+                </div>
             </div>
-            <div>
-                <h3 class="text-lg font-bold text-rose-700">確認刪除套書</h3>
-                <p class="text-sm text-rose-600">此操作無法復原</p>
+            <div class="bg-white rounded-lg p-4 border border-rose-200">
+                <p class="text-sm text-slate-600 mb-2">您確定要刪除以下套書嗎？</p>
+                <p class="text-lg font-bold text-slate-900">{{ book_set.name }}</p>
+                <p class="text-sm text-slate-500 mt-1">包含 {{ book_set.books.count }} 本書籍</p>
             </div>
         </div>
-        
-        <div class="bg-white rounded-lg p-4 border border-rose-200">
-            <p class="text-sm text-slate-600 mb-2">您確定要刪除以下套書嗎？</p>
-            <p class="text-lg font-bold text-slate-900">{{ book_set.name }}</p>
-            <p class="text-sm text-slate-500 mt-1">
-                包含 {{ book_set.books.count }} 本書籍
-            </p>
+        <!-- Book List Preview -->
+        {% if book_set.books.exists %}
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6">
+                <h4 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">套書內書籍</h4>
+                <ul class="space-y-2">
+                    {% for book in book_set.books.all %}
+                        <li class="flex items-center gap-3 p-2 bg-slate-50 rounded-lg">
+                            <div class="size-10 rounded bg-slate-200 flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-slate-400">menu_book</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-slate-900 truncate">{{ book.official_book.title }}</p>
+                                <p class="text-xs text-slate-500">{{ book.official_book.author }}</p>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <p class="text-xs text-slate-400 mt-3 text-center">刪除套書後，這些書籍將從套書中移除，但書籍資料仍會保留</p>
+            </div>
+        {% endif %}
+        <!-- Action Buttons -->
+        <div class="space-y-3">
+            <form method="post" action="{% url 'books:book_set_delete' book_set.id %}">
+                {% csrf_token %}
+                <button type="submit"
+                        class="w-full bg-rose-500 text-white font-bold py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform hover:bg-rose-600">
+                    <span class="material-symbols-outlined">delete</span>
+                    確認刪除套書
+                </button>
+            </form>
+            <a href="{% url 'books:book_set_detail' book_set.id %}"
+               class="w-full bg-white text-slate-900 font-bold py-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+                <span class="material-symbols-outlined">cancel</span>
+                取消
+            </a>
         </div>
-    </div>
-
-    <!-- Book List Preview -->
-    {% if book_set.books.exists %}
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6">
-        <h4 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">套書內書籍</h4>
-        <ul class="space-y-2">
-            {% for book in book_set.books.all %}
-            <li class="flex items-center gap-3 p-2 bg-slate-50 rounded-lg">
-                <div class="size-10 rounded bg-slate-200 flex items-center justify-center shrink-0">
-                    <span class="material-symbols-outlined text-slate-400">menu_book</span>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-slate-900 truncate">{{ book.official_book.title }}</p>
-                    <p class="text-xs text-slate-500">{{ book.official_book.author }}</p>
-                </div>
-            </li>
-            {% endfor %}
-        </ul>
-        <p class="text-xs text-slate-400 mt-3 text-center">
-            刪除套書後，這些書籍將從套書中移除，但書籍資料仍會保留
-        </p>
-    </div>
-    {% endif %}
-
-    <!-- Action Buttons -->
-    <div class="space-y-3">
-        <form method="post" action="{% url 'books:book_set_delete' book_set.id %}">
-            {% csrf_token %}
-            <button type="submit"
-                    class="w-full bg-rose-500 text-white font-bold py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform hover:bg-rose-600">
-                <span class="material-symbols-outlined">delete</span>
-                確認刪除套書
-            </button>
-        </form>
-        <a href="{% url 'books:book_set_detail' book_set.id %}"
-           class="w-full bg-white text-slate-900 font-bold py-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-            <span class="material-symbols-outlined">cancel</span>
-            取消
-        </a>
-    </div>
-</main>
-{% include '_bottom_nav.html' %}
+    </main>
+    {% include '_bottom_nav.html' %}
 {% endblock %}

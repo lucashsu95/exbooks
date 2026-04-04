@@ -2,13 +2,16 @@
 {% block title %}Exbooks - 所有書籍{% endblock %}
 {% block content %}
     <!-- Header -->
-    <header class="sticky top-0 z-10 bg-white border-b border-slate-200">
+    <header class="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
-            <div class="flex items-center gap-3">
+            <nav class="flex items-center gap-3">
                 <a href="{% url 'books:list' %}"
-                   class="material-symbols-outlined text-slate-600 cursor-pointer">arrow_back</a>
+                   aria-label="返回首頁"
+                   class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
+                    <span class="material-symbols-outlined text-xl" aria-hidden="true">arrow_back</span>
+                </a>
                 <h1 class="text-xl font-bold tracking-tight">所有書籍</h1>
-            </div>
+            </nav>
         </div>
     </header>
     <!-- Search & Filter Section -->
@@ -28,7 +31,11 @@
                        value="{{ search_query }}" />
             </div>
             <!-- Retain filters when searching -->
-            {% if current_transferability %}<input type="hidden" name="transferability" value="{{ current_transferability }}">{% endif %}
+            {% if current_transferability %}
+                <input type="hidden"
+                       name="transferability"
+                       value="{{ current_transferability }}">
+            {% endif %}
             {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
         </form>
         <!-- Filter Pills -->
