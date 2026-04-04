@@ -5,25 +5,45 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0007_add_trust_score'),
+        ("accounts", "0007_add_trust_score"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='appeal',
-            name='status',
-            field=django_fsm.FSMField(choices=[('submitted', '已提交'), ('under_review', '審核中'), ('approved', '已通過'), ('rejected', '已駁回'), ('closed', '已結案')], db_index=True, default='submitted', max_length=20, protected=True, verbose_name='狀態'),
+            model_name="appeal",
+            name="status",
+            field=django_fsm.FSMField(
+                choices=[
+                    ("submitted", "已提交"),
+                    ("under_review", "審核中"),
+                    ("approved", "已通過"),
+                    ("rejected", "已駁回"),
+                    ("closed", "已結案"),
+                ],
+                db_index=True,
+                default="submitted",
+                max_length=20,
+                protected=True,
+                verbose_name="狀態",
+            ),
         ),
         migrations.AlterField(
-            model_name='userprofile',
-            name='trust_level',
-            field=models.IntegerField(default=1, help_text='0: 新手, 1: 一般, 2: 可信, 3: 優良（已棄用，改為計算屬性）', verbose_name='信用等級'),
+            model_name="userprofile",
+            name="trust_level",
+            field=models.IntegerField(
+                default=1,
+                help_text="0: 新手, 1: 一般, 2: 可信, 3: 優良（已棄用，改為計算屬性）",
+                verbose_name="信用等級",
+            ),
         ),
         migrations.AlterField(
-            model_name='userprofile',
-            name='trust_score',
-            field=models.IntegerField(default=0, help_text='用戶的信用積分，根據交易、評價、逾期等計算', verbose_name='信用積分'),
+            model_name="userprofile",
+            name="trust_score",
+            field=models.IntegerField(
+                default=0,
+                help_text="用戶的信用積分，根據交易、評價、逾期等計算",
+                verbose_name="信用積分",
+            ),
         ),
     ]
