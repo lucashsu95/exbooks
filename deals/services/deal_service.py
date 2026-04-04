@@ -389,8 +389,20 @@ def confirm_return(deal, confirmed_by):
     if shared_book.transferability != SharedBook.Transferability.RETURN:
         raise ValidationError("只有「閱畢即還」模式的書籍可以確認歸還")
 
-    # 更新書籍狀態為可移轉（重新上架）
     shared_book.status = SharedBook.Status.TRANSFERABLE
-    shared_book.save(update_fields=["status", "updated_at"])
+    shared_book.keeper = shared_book.owner
+    shared_book.save(update_fields=["status", "keeper", "updated_at"])
+
+    # 如果雙方都已經評價過了，歸還後自動完成交易
+    if deal.applicant_rated and deal.responder_rated:
+        if can_proceed(deal.complete):
+            deal.complete()
+            deal.save()
+
+            # 交易完成，更新雙方信用積分
+            from accounts.services.trust_service import update_trust_score
+
+            update_trust_score(deal.applicant)
+            update_trust_score(deal.responder)
 
     return deal

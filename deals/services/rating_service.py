@@ -58,9 +58,27 @@ def create_rating(
         deal.responder_rated = True
     deal.save(update_fields=["applicant_rated", "responder_rated", "updated_at"])
 
-    # BR-9: 雙方均完成評價 → 交易完成（使用 FSM transition）
+    from deals.models import Notification
+
+    Notification.objects.filter(
+        recipient=rater,
+        deal=deal,
+        notification_type=Notification.NotificationType.DEAL_MEETED,
+        is_read=False,
+    ).update(is_read=True)
+
     if deal.applicant_rated and deal.responder_rated:
-        if can_proceed(deal.complete):
+        # 區分完成條件：
+        # - 閱畢即還 (LOAN)：除了互評，還必須書籍已歸還（狀態變為 T）
+        # - 其他 (TRANSFER, RESTORE, etc.)：互評完即完成
+        should_complete = True
+        if (
+            deal.deal_type == Deal.DealType.LOAN
+            and deal.shared_book.status != SharedBook.Status.TRANSFERABLE
+        ):
+            should_complete = False
+
+        if should_complete and can_proceed(deal.complete):
             deal.complete()
             deal.save()
 

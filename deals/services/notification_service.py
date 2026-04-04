@@ -268,7 +268,7 @@ def notify_rating_created(rating):
     """收到評價 → 通知被評價者。"""
     notify(
         recipient=rating.ratee,
-        notification_type="RATING_CREATED",
+        notification_type=Notification.NotificationType.RATING_CREATED,
         title="您收到新的交易評價",
         message=(
             f"{rating.rater} 已針對書籍「{rating.deal.shared_book}」給予您評價，"
@@ -294,7 +294,7 @@ def notify_violation_created(violation):
 
     notify(
         recipient=violation.user,
-        notification_type="VIOLATION_CREATED",
+        notification_type=Notification.NotificationType.VIOLATION_CREATED,
         title="您收到新的違規處分通知",
         message=message,
     )
@@ -304,7 +304,7 @@ def notify_appeal_status_updated(appeal):
     """申訴狀態更新 → 通知申訴人。"""
     notify(
         recipient=appeal.user,
-        notification_type="APPEAL_STATUS_UPDATED",
+        notification_type=Notification.NotificationType.APPEAL_STATUS_UPDATED,
         title=f"申訴狀態已更新：{appeal.get_status_display()}",
         message=f"您的申訴「{appeal.title}」目前狀態為：{appeal.get_status_display()}。",
     )

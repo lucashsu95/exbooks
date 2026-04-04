@@ -89,7 +89,7 @@ def deal_detail(request, pk):
             "shared_book__keeper__profile",
             "applicant__profile",
             "responder__profile",
-        ),
+        ).prefetch_related("ratings__rater__profile"),
         pk=pk,
     )
     messages_list = DealMessage.objects.filter(deal=deal).select_related("sender")[:50]
@@ -97,6 +97,12 @@ def deal_detail(request, pk):
         "requested_by__profile",
         "approved_by__profile",
     )[:20]
+
+    Notification.objects.filter(
+        recipient=request.user,
+        deal=deal,
+        is_read=False,
+    ).update(is_read=True)
 
     return render(
         request,
@@ -119,14 +125,12 @@ def deal_list(request):
     user = request.user
     tab = request.GET.get("tab", "pending")
 
-    # Base queryset with common select_related
     base_qs = Deal.objects.select_related(
         "shared_book__official_book",
-        "applicant",
-        "responder",
+        "applicant__profile",
+        "responder__profile",
     ).prefetch_related("shared_book__photos")
 
-    # 待回應（我是回應者）
     pending_responder = base_qs.filter(
         responder=user,
         status=Deal.Status.REQUESTED,
@@ -250,9 +254,9 @@ def deal_message_send(request, pk):
     if request.user not in [deal.applicant, deal.responder]:
         return HttpResponse("您無權發送留言。", status=403)
 
-    # 檢查交易狀態（Q 或 P 狀態可留言）
-    if deal.status not in [Deal.Status.REQUESTED, Deal.Status.RESPONDED]:
-        return HttpResponse("此交易狀態無法發送留言。", status=400)
+    # 檢查交易狀態（取消或完成後不可再發送新留言）
+    if deal.status in [Deal.Status.CANCELLED, Deal.Status.DONE]:
+        return HttpResponse("此交易已結束，無法再發送留言。", status=400)
 
     content = request.POST.get("content", "").strip()
     if not content:
@@ -316,7 +320,16 @@ def rating_create(request, pk):
                 messages.success(request, "評價已送出！")
                 return redirect("deals:detail", pk)
             except Exception as e:
-                messages.error(request, str(e))
+                logger.error(f"Error creating rating: {e}")
+                if "unique_deal_rater" in str(e):
+                    messages.warning(request, "您已經評價過此交易，無法重複評價。")
+                else:
+                    messages.error(request, f"評價送出失敗: {str(e)}")
+                return redirect("deals:detail", pk)
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{form.fields[field].label}: {error}")
     else:
         form = RatingForm()
 

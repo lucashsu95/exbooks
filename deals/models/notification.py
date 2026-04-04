@@ -22,6 +22,9 @@ class Notification(BaseModel):
         EXTEND_REJECTED = "EXTEND_REJECTED", "延長申請已拒絕"
         APPEAL_SUBMITTED = "APPEAL_SUBMITTED", "申訴已送出"
         APPEAL_RESOLVED = "APPEAL_RESOLVED", "申訴審核完成"
+        RATING_CREATED = "RATING_CREATED", "收到新的評價"
+        VIOLATION_CREATED = "VIOLATION_CREATED", "收到違規處分"
+        APPEAL_STATUS_UPDATED = "APPEAL_STATUS_UPDATED", "申訴狀態更新"
 
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -46,7 +49,7 @@ class Notification(BaseModel):
         verbose_name="相關書籍",
     )
     notification_type = models.CharField(
-        max_length=20,
+        max_length=50,
         choices=NotificationType.choices,
         verbose_name="通知類型",
     )
