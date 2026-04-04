@@ -95,8 +95,7 @@ def deal_detail(request, pk):
     messages_list = DealMessage.objects.filter(deal=deal).select_related("sender")[:50]
     extensions_list = LoanExtension.objects.filter(deal=deal).select_related(
         "requested_by__profile",
-        "owner_approved_by__profile",
-        "keeper_approved_by__profile",
+        "approved_by__profile",
     )[:20]
 
     return render(

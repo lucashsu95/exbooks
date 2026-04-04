@@ -5,7 +5,7 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 
-from accounts.services.trust_service import update_trust_level
+from accounts.services.trust_service import update_trust_score
 
 User = get_user_model()
 
@@ -36,7 +36,7 @@ class Command(BaseCommand):
 
                 new_level = calculate_trust_level(user)
             else:
-                new_level = update_trust_level(user)
+                new_level = update_trust_score(user)
 
             if new_level > old_level:
                 upgraded += 1
@@ -55,15 +55,11 @@ class Command(BaseCommand):
 
         if dry_run:
             self.stdout.write(
-                self.style.WARNING(
-                    f"[DRY RUN] 將更新 {users.count()} 位用戶: "
-                    f"{upgraded} 位升級, {downgraded} 位降級, {unchanged} 位不變"
-                )
+                f"[DRY RUN] 將更新 {users.count()} 位用戶: "
+                f"{upgraded} 位升級, {downgraded} 位降級, {unchanged} 位不變"
             )
         else:
             self.stdout.write(
-                self.style.SUCCESS(
-                    f"已更新 {users.count()} 位用戶: "
-                    f"{upgraded} 位升級, {downgraded} 位降級, {unchanged} 位不變"
-                )
+                f"已更新 {users.count()} 位用戶: "
+                f"{upgraded} 位升級, {downgraded} 位降級, {unchanged} 位不變"
             )

@@ -34,14 +34,13 @@ class LoanExtensionInline(admin.TabularInline):
     extra = 0
     fields = (
         "requested_by",
-        "owner_approved_by",
-        "keeper_approved_by",
+        "approved_by",
         "extra_days",
         "status",
         "created_at",
     )
     readonly_fields = ("created_at",)
-    autocomplete_fields = ("requested_by", "owner_approved_by", "keeper_approved_by")
+    autocomplete_fields = ("requested_by", "approved_by")
     classes = ["collapse"]
 
 
@@ -160,8 +159,7 @@ class LoanExtensionAdmin(admin.ModelAdmin):
     list_display = (
         "deal",
         "requested_by",
-        "owner_approved_by",
-        "keeper_approved_by",
+        "approved_by",
         "extra_days",
         "status",
         "created_at",
@@ -171,8 +169,7 @@ class LoanExtensionAdmin(admin.ModelAdmin):
         "deal__shared_book",
         "deal__shared_book__official_book",
         "requested_by",
-        "owner_approved_by",
-        "keeper_approved_by",
+        "approved_by",
     )
     list_filter = ("status",)
     search_fields = (
@@ -182,8 +179,7 @@ class LoanExtensionAdmin(admin.ModelAdmin):
     autocomplete_fields = (
         "deal",
         "requested_by",
-        "owner_approved_by",
-        "keeper_approved_by",
+        "approved_by",
     )
     readonly_fields = ("created_at", "updated_at")
     list_per_page = 20

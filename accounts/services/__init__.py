@@ -7,7 +7,7 @@ from .appeal_service import (
 from .export_service import export_user_data, get_remaining_exports
 from .trust_service import (
     calculate_trust_level,
-    update_trust_level,
+    update_trust_score,
     get_borrowing_limits,
     get_user_metrics,
     get_upgrade_progress,
@@ -29,7 +29,7 @@ __all__ = [
     "get_remaining_exports",
     # trust_service
     "calculate_trust_level",
-    "update_trust_level",
+    "update_trust_score",
     "get_borrowing_limits",
     "get_user_metrics",
     "get_upgrade_progress",
