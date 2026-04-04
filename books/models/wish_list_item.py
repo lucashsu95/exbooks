@@ -18,12 +18,13 @@ class WishListItem(BaseModel):
     )
     official_book = models.ForeignKey(
         "books.OfficialBook",
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="wished_by",
         verbose_name="官方書目",
     )
 
-    class Meta:
+    class Meta(BaseModel.Meta):
+        abstract = False
         db_table = "exbook_wish_list_item"
         verbose_name = "願望書車"
         verbose_name_plural = "願望書車"

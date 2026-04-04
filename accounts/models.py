@@ -314,10 +314,15 @@ class UserProfile(UpdatableModel):
         blank=True,
         verbose_name="頭像",
     )
+    trust_score = models.IntegerField(
+        default=0,
+        verbose_name="信用積分",
+        help_text="用戶的信用積分，根據交易、評價、逾期等計算",
+    )
     trust_level = models.IntegerField(
         default=1,
         verbose_name="信用等級",
-        help_text="0: 新手, 1: 一般, 2: 可信, 3: 優良",
+        help_text="0: 新手, 1: 一般, 2: 可信, 3: 優良（已棄用，改為計算屬性）",
     )
     successful_returns = models.IntegerField(
         default=0,
@@ -386,3 +391,37 @@ class UserProfile(UpdatableModel):
         from django.utils import timezone
 
         return timezone.now() < self.suspension_end_date
+
+    @property
+    def trust_stars(self):
+        """
+        計算信用星等（1-5星）。
+        公式：floor(sqrt(score))
+        """
+        import math
+
+        if self.trust_score <= 0:
+            return 1  # 最低1星
+        stars = int(math.floor(math.sqrt(self.trust_score)))
+        return min(max(stars, 1), 5)  # 限制在1-5星
+
+    def update_trust_level(self):
+        """
+        根據 trust_score 更新 trust_level（向後相容）。
+        映射關係：
+        - 1星 (score 1-3): Level 0 (新手)
+        - 2星 (score 4-8): Level 1 (一般)
+        - 3星 (score 9-15): Level 2 (可信)
+        - 4星 (score 16-24): Level 3 (優良)
+        - 5星 (score 25+): Level 3 (優良)
+        """
+        stars = self.trust_stars
+        if stars <= 1:
+            self.trust_level = 0
+        elif stars == 2:
+            self.trust_level = 1
+        elif stars == 3:
+            self.trust_level = 2
+        else:  # 4-5星
+            self.trust_level = 3
+        self.save(update_fields=["trust_level", "updated_at"])
