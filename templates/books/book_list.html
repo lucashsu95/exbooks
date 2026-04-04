@@ -1,8 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}Exbooks - 未來感共享體驗{% endblock %}
-
 {% block extra_head %}
-<style>
+    <style>
   :root {
     --spring-physics: cubic-bezier(0.34, 1.56, 0.64, 1);
     --ios-bg: #f2f2f7;
@@ -29,10 +28,10 @@
     inset: 0;
     z-index: -1;
     background: 
-      radial-gradient(at 0% 0%, rgba(19, 109, 236, 0.08) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, rgba(19, 109, 236, 0.05) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, rgba(19, 109, 236, 0.08) 0px, transparent 50%),
-      radial-gradient(at 0% 100%, rgba(19, 109, 236, 0.05) 0px, transparent 50%);
+      radial-gradient(at 0% 0%, rgba(20, 184, 166, 0.08) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(13, 148, 136, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.08) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(20, 184, 166, 0.05) 0px, transparent 50%);
     background-color: var(--ios-bg);
   }
 
@@ -63,7 +62,7 @@
     transition: all 0.4s var(--spring-physics);
   }
   .category-pill.active {
-    box-shadow: 0 8px 16px rgba(19, 109, 236, 0.25);
+    box-shadow: 0 8px 16px rgba(20, 184, 166, 0.25);
     transform: translateY(-2px);
   }
 
@@ -72,7 +71,6 @@
     letter-spacing: -0.02em;
   }
 
-  /* Bento 卡片 */
   .bento-item {
     background: white;
     border-radius: 32px;
@@ -85,171 +83,202 @@
     mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
     -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
   }
-</style>
+    </style>
 {% endblock %}
-
 {% block content %}
-
-<div class="mesh-aura"></div>
-
-<header id="main-nav" class="sticky top-0 z-[100] glass-nav px-6 py-4 flex items-center justify-between">
-  <div class="flex items-center gap-2.5">
-    <div class="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
-      <span class="material-symbols-outlined text-white text-xl fill-1">menu_book</span>
-    </div>
-    <span class="oled-text text-lg font-bold tracking-tight">Exbooks</span>
-  </div>
-
-  <div class="flex items-center gap-3">
-    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="w-10 h-10 rounded-full bg-black/5 flex items-center justify-center touch-spring">
-      <span class="material-symbols-outlined text-slate-600 text-xl">search</span>
-    </button>
-    <a href="{% url 'accounts:profile' %}" class="w-10 h-10 rounded-full border border-white shadow-sm overflow-hidden touch-spring">
-      {% if user.is_authenticated and user.profile.avatar %}
-        <img src="{{ user.profile.avatar.url }}" class="w-full h-full object-cover" />
-      {% else %}
-        <div class="w-full h-full bg-slate-200 flex items-center justify-center text-slate-500">
-          <span class="material-symbols-outlined text-xl">person</span>
-        </div>
-      {% endif %}
-    </a>
-  </div>
-</header>
-
-<div class="px-6 pt-8 pb-4">
-  <h2 class="oled-text text-3xl font-extrabold leading-tight tracking-tight reveal-on-scroll">
-    探索 <span class="text-primary">新視界</span><br/>讓知識流動。
-  </h2>
-  
-  <div class="mt-8 reveal-on-scroll">
-    <form method="GET" action="{% url 'books:list' %}" class="relative">
-      <div class="relative flex items-center h-16 rounded-2xl bg-white/60 backdrop-blur-md border border-white/40 shadow-sm px-6 touch-spring">
-        <span class="material-symbols-outlined text-slate-400 mr-3">search</span>
-        <input name="q" 
-               type="search" 
-               placeholder="想看什麼書？" 
-               class="flex-1 bg-transparent border-none text-slate-900 placeholder:text-slate-400 font-medium focus:ring-0 px-0"
-               value="{{ search_query|default:'' }}"
-               autocomplete="off" />
-      </div>
-    </form>
-  </div>
-</div>
-
-<div class="px-6 py-6">
-  <div class="flex items-center justify-between mb-5 reveal-on-scroll">
-    <h3 class="oled-text font-bold text-lg">✦ 熱門推薦</h3>
-    <a href="{% url 'books:all' %}" class="text-primary text-sm font-semibold flex items-center gap-0.5">
-      全部
-      <span class="material-symbols-outlined text-sm">chevron_right</span>
-    </a>
-  </div>
-
-  <div class="grid grid-cols-2 grid-rows-2 gap-4 h-[380px]">
-    {% for book in new_arrivals|slice:":3" %}
-      {% if forloop.first %}
-        <a href="{% url 'books:detail' book.id %}" class="row-span-2 bento-item touch-spring relative reveal-on-scroll">
-          <div class="absolute inset-0 bg-slate-50">
-            {% include 'partials/official_book_cover.html' with book=book.official_book %}
-          </div>
-          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-          <div class="absolute bottom-6 left-6 right-6">
-            <div class="flex items-center gap-1.5 mb-2">
-              <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-              <span class="text-white/80 text-[10px] font-bold tracking-widest uppercase">精選</span>
+    <div class="mesh-aura"></div>
+    <header id="main-nav"
+            class="sticky top-0 z-[100] glass-nav px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
+                <span class="material-symbols-outlined text-white text-xl fill-1">menu_book</span>
             </div>
-            <h4 class="text-white font-bold text-base line-clamp-2 leading-tight">{{ book.official_book.title }}</h4>
-          </div>
-        </a>
-      {% else %}
-        <a href="{% url 'books:detail' book.id %}" class="bento-item touch-spring relative reveal-on-scroll">
-           <div class="absolute inset-0">
-             {% include 'partials/official_book_cover.html' with book=book.official_book %}
-           </div>
-           <div class="absolute inset-0 bg-black/40"></div>
-           <div class="absolute inset-0 p-4 flex flex-col justify-end">
-             <h4 class="text-white text-xs font-bold line-clamp-2">{{ book.official_book.title }}</h4>
-           </div>
-        </a>
-      {% endif %}
-    {% empty %}
-      <div class="col-span-2 row-span-2 bento-item flex items-center justify-center bg-white/50 border-dashed border-2 border-slate-200">
-        <p class="text-slate-400 text-sm">尚無資料</p>
-      </div>
-    {% endfor %}
-  </div>
-</div>
-
-<!-- 分類滾動區 - 手動列出避免自定義 filter 問題 -->
-<div class="sticky top-[72px] z-10 py-3 bg-transparent">
-  <div class="flex gap-2.5 overflow-x-auto no-scrollbar px-6 mask-edge py-1">
-    <a href="?category=全部{% if search_query %}&q={{ search_query }}{% endif %}"
-       class="category-pill flex-none h-10 px-6 rounded-full flex items-center justify-center text-sm font-bold touch-spring {% if current_category == '全部' %}active bg-primary text-white shadow-primary/30{% else %}bg-white text-slate-500 border border-slate-100{% endif %}">
-      全部
-    </a>
-    <a href="?category=小說{% if search_query %}&q={{ search_query }}{% endif %}"
-       class="category-pill flex-none h-10 px-6 rounded-full flex items-center justify-center text-sm font-bold touch-spring {% if current_category == '小說' %}active bg-primary text-white shadow-primary/30{% else %}bg-white text-slate-500 border border-slate-100{% endif %}">
-      小說
-    </a>
-    <a href="?category=科技{% if search_query %}&q={{ search_query }}{% endif %}"
-       class="category-pill flex-none h-10 px-6 rounded-full flex items-center justify-center text-sm font-bold touch-spring {% if current_category == '科技' %}active bg-primary text-white shadow-primary/30{% else %}bg-white text-slate-500 border border-slate-100{% endif %}">
-      科技
-    </a>
-    <a href="?category=藝術{% if search_query %}&q={{ search_query }}{% endif %}"
-       class="category-pill flex-none h-10 px-6 rounded-full flex items-center justify-center text-sm font-bold touch-spring {% if current_category == '藝術' %}active bg-primary text-white shadow-primary/30{% else %}bg-white text-slate-500 border border-slate-100{% endif %}">
-      藝術
-    </a>
-    <a href="?category=科學{% if search_query %}&q={{ search_query }}{% endif %}"
-       class="category-pill flex-none h-10 px-6 rounded-full flex items-center justify-center text-sm font-bold touch-spring {% if current_category == '科學' %}active bg-primary text-white shadow-primary/30{% else %}bg-white text-slate-500 border border-slate-100{% endif %}">
-      科學
-    </a>
-  </div>
-</div>
-
-<div class="px-6 pt-6 pb-32">
-  <div class="flex flex-col gap-5">
-    {% for book in nearby_books|default:"" %}
-      <a href="{% url 'books:detail' book.id %}" class="reveal-on-scroll flex items-center gap-5 p-1 touch-spring">
-        <div class="w-20 h-28 rounded-2xl overflow-hidden shrink-0 shadow-xl relative bg-white">
-          {% include 'partials/book_cover.html' with book=book %}
-          <div class="absolute inset-0 ring-1 ring-inset ring-black/5 rounded-2xl"></div>
-          <div class="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/20 to-transparent"></div>
+            <span class="oled-text text-lg font-bold tracking-tight">Exbooks</span>
         </div>
-
-        <div class="flex-1 min-w-0 border-b border-slate-100 pb-5">
-          <h4 class="oled-text font-bold text-base line-clamp-2 leading-tight mb-2">{{ book.official_book.title }}</h4>
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 uppercase tracking-tighter">
-              {{ book.official_book.get_category_display }}
-            </span>
-            {% if book.keeper.profile %}
-              {% include "partials/trust_badge_inline.html" with trust_level=book.keeper.profile.trust_level %}
-            {% endif %}
-          </div>
-          <p class="text-slate-400 text-[10px] mt-2 font-medium">持有者：{{ book.keeper.username }}</p>
+        <div class="flex items-center">
+            <a href="{% url 'accounts:profile' %}"
+               class="w-10 h-10 rounded-full border border-white shadow-sm overflow-hidden touch-spring">
+                {% if user.is_authenticated and user.profile.avatar %}
+                    <img src="{{ user.profile.avatar.url }}"
+                         class="w-full h-full object-cover" />
+                {% else %}
+                    <div class="w-full h-full bg-slate-200 flex items-center justify-center text-slate-500">
+                        <span class="material-symbols-outlined text-xl">person</span>
+                    </div>
+                {% endif %}
+            </a>
         </div>
-
-        <div class="text-slate-300">
-          <span class="material-symbols-outlined">chevron_right</span>
+    </header>
+    <div class="px-6 pt-8 pb-4">
+        <h2 class="oled-text text-3xl font-extrabold leading-tight tracking-tight reveal-on-scroll">
+            探索 <span class="text-secondary">新視界</span>
+            <br />
+            讓知識流動。
+        </h2>
+        <div class="mt-8 reveal-on-scroll">
+            <!-- 搜尋列：明確設定 hx-target 為整個 feed -->
+            <form method="GET"
+                  action="{% url 'books:list' %}"
+                  hx-get="{% url 'books:list' %}"
+                  hx-target="#book-feed"
+                  hx-swap="outerHTML transition:true"
+                  hx-push-url="true"
+                  hx-indicator="#global-loader"
+                  class="relative">
+                <div class="relative flex items-center h-16 rounded-2xl bg-white/60 backdrop-blur-md border border-white/40 shadow-sm px-6 touch-spring">
+                    <span class="material-symbols-outlined text-slate-400 mr-3">search</span>
+                    <input name="q"
+                           type="search"
+                           placeholder="想看什麼書？"
+                           class="flex-1 bg-transparent border-none text-slate-900 placeholder:text-slate-400 font-medium focus:ring-0 px-0"
+                           value="{{ search_query|default:'' }}"
+                           autocomplete="off"
+                           hx-get="{% url 'books:list' %}"
+                           hx-target="#book-feed"
+                           hx-swap="outerHTML transition:true"
+                           hx-trigger="keyup changed delay:500ms"
+                           hx-push-url="true" />
+                </div>
+            </form>
         </div>
-      </a>
-    {% empty %}
-      <div class="py-20 text-center reveal-on-scroll">
-        <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
-          <span class="material-symbols-outlined text-4xl text-slate-200">menu_book</span>
+    </div>
+    <div id="book-feed">
+        <!-- Bento Section -->
+        <div class="px-6 py-6">
+            <div class="flex items-center justify-between mb-5 reveal-on-scroll">
+                <h3 class="oled-text font-bold text-lg text-secondary">✦ 熱門推薦</h3>
+                <a href="{% url 'books:all' %}"
+                   class="text-primary text-sm font-semibold flex items-center gap-0.5">
+                    全部
+                    <span class="material-symbols-outlined text-sm">chevron_right</span>
+                </a>
+            </div>
+            <div class="grid grid-cols-2 grid-rows-2 gap-4 h-[380px]">
+                {% for book in new_arrivals|slice:":3" %}
+                    {% if forloop.first %}
+                        <a href="{% url 'books:detail' book.id %}"
+                           class="row-span-2 bento-item touch-spring relative reveal-on-scroll">
+                            <div class="absolute inset-0 bg-slate-50">
+                                {% include 'partials/official_book_cover.html' with book=book.official_book %}
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                            <div class="absolute bottom-6 left-6 right-6">
+                                <div class="flex items-center gap-1.5 mb-2">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></span>
+                                    <span class="text-white/80 text-[10px] font-bold tracking-widest uppercase">精選</span>
+                                </div>
+                                <h4 class="text-white font-bold text-base line-clamp-2 leading-tight">{{ book.official_book.title }}</h4>
+                            </div>
+                        </a>
+                    {% else %}
+                        <a href="{% url 'books:detail' book.id %}"
+                           class="bento-item touch-spring relative reveal-on-scroll">
+                            <div class="absolute inset-0">{% include 'partials/official_book_cover.html' with book=book.official_book %}</div>
+                            <div class="absolute inset-0 bg-black/40"></div>
+                            <div class="absolute inset-0 p-4 flex flex-col justify-end">
+                                <h4 class="text-white text-xs font-bold line-clamp-2">{{ book.official_book.title }}</h4>
+                            </div>
+                        </a>
+                    {% endif %}
+                {% empty %}
+                    <div class="col-span-2 row-span-2 bento-item flex items-center justify-center bg-white/50 border-dashed border-2 border-slate-200">
+                        <p class="text-slate-400 text-sm">尚無資料</p>
+                    </div>
+                {% endfor %}
+            </div>
         </div>
-        <p class="text-slate-400 text-sm font-medium">目前的分類中沒有書籍</p>
-      </div>
-    {% endfor %}
-  </div>
-</div>
-
-{% include '_bottom_nav.html' %}
-
+        <!-- 分類滾動區 — 使用明確的 hx-get 以確保 100% 攔截 -->
+        <div class="sticky top-[72px] z-10 py-3 bg-transparent">
+            <div class="flex gap-2.5 overflow-x-auto no-scrollbar px-6 mask-edge py-1">
+                <a href="?category=全部{% if search_query %}&q={{ search_query }}{% endif %}"
+                   hx-get="?category=全部{% if search_query %}&q={{ search_query }}{% endif %}"
+                   hx-target="#book-feed"
+                   hx-swap="outerHTML transition:true"
+                   hx-push-url="true"
+                   hx-indicator="#global-loader"
+                   class="category-pill flex-none h-10 px-6 rounded-full flex items-center justify-center text-sm font-bold touch-spring {% if current_category == '全部' %}active bg-primary text-white shadow-primary/30{% else %}bg-white text-slate-500 border border-slate-100{% endif %}">
+                    全部
+                </a>
+                <a href="?category=小說{% if search_query %}&q={{ search_query }}{% endif %}"
+                   hx-get="?category=小說{% if search_query %}&q={{ search_query }}{% endif %}"
+                   hx-target="#book-feed"
+                   hx-swap="outerHTML transition:true"
+                   hx-push-url="true"
+                   hx-indicator="#global-loader"
+                   class="category-pill flex-none h-10 px-6 rounded-full flex items-center justify-center text-sm font-bold touch-spring {% if current_category == '小說' %}active bg-primary text-white shadow-primary/30{% else %}bg-white text-slate-500 border border-slate-100{% endif %}">
+                    小說
+                </a>
+                <a href="?category=科技{% if search_query %}&q={{ search_query }}{% endif %}"
+                   hx-get="?category=科技{% if search_query %}&q={{ search_query }}{% endif %}"
+                   hx-target="#book-feed"
+                   hx-swap="outerHTML transition:true"
+                   hx-push-url="true"
+                   hx-indicator="#global-loader"
+                   class="category-pill flex-none h-10 px-6 rounded-full flex items-center justify-center text-sm font-bold touch-spring {% if current_category == '科技' %}active bg-primary text-white shadow-primary/30{% else %}bg-white text-slate-500 border border-slate-100{% endif %}">
+                    科技
+                </a>
+                <a href="?category=藝術{% if search_query %}&q={{ search_query }}{% endif %}"
+                   hx-get="?category=藝術{% if search_query %}&q={{ search_query }}{% endif %}"
+                   hx-target="#book-feed"
+                   hx-swap="outerHTML transition:true"
+                   hx-push-url="true"
+                   hx-indicator="#global-loader"
+                   class="category-pill flex-none h-10 px-6 rounded-full flex items-center justify-center text-sm font-bold touch-spring {% if current_category == '藝術' %}active bg-primary text-white shadow-primary/30{% else %}bg-white text-slate-500 border border-slate-100{% endif %}">
+                    藝術
+                </a>
+                <a href="?category=科學{% if search_query %}&q={{ search_query }}{% endif %}"
+                   hx-get="?category=科學{% if search_query %}&q={{ search_query }}{% endif %}"
+                   hx-target="#book-feed"
+                   hx-swap="outerHTML transition:true"
+                   hx-push-url="true"
+                   hx-indicator="#global-loader"
+                   class="category-pill flex-none h-10 px-6 rounded-full flex items-center justify-center text-sm font-bold touch-spring {% if current_category == '科學' %}active bg-primary text-white shadow-primary/30{% else %}bg-white text-slate-500 border border-slate-100{% endif %}">
+                    科學
+                </a>
+            </div>
+        </div>
+        <div class="px-6 pt-6 pb-32">
+            <div class="flex flex-col gap-5">
+                {% for book in nearby_books|default:"" %}
+                    <a href="{% url 'books:detail' book.id %}"
+                       class="reveal-on-scroll flex items-center gap-5 p-1 touch-spring">
+                        <div class="w-20 h-28 rounded-2xl overflow-hidden shrink-0 shadow-xl relative bg-white">
+                            {% include 'partials/book_cover.html' with book=book %}
+                            <div class="absolute inset-0 ring-1 ring-inset ring-black/5 rounded-2xl"></div>
+                            <div class="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/20 to-transparent"></div>
+                        </div>
+                        <div class="flex-1 min-w-0 border-b border-slate-100 pb-5">
+                            <h4 class="oled-text font-bold text-base line-clamp-2 leading-tight mb-2">{{ book.official_book.title }}</h4>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 uppercase tracking-tighter">
+                                    {{ book.official_book.get_category_display }}
+                                </span>
+                                {% if book.keeper.profile %}
+                                    {% include "partials/trust_badge_inline.html" with trust_level=book.keeper.profile.trust_level %}
+                                {% endif %}
+                            </div>
+                            <p class="text-slate-400 text-[10px] mt-2 font-medium">持有者：{{ book.keeper.username }}</p>
+                        </div>
+                        <div class="text-slate-300">
+                            <span class="material-symbols-outlined">chevron_right</span>
+                        </div>
+                    </a>
+                {% empty %}
+                    <div class="py-20 text-center reveal-on-scroll">
+                        <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+                            <span class="material-symbols-outlined text-4xl text-slate-200">menu_book</span>
+                        </div>
+                        <p class="text-slate-400 text-sm font-medium">目前的分類中沒有書籍</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <!-- /#book-feed -->
+    {% include '_bottom_nav.html' %}
 {% endblock %}
-
 {% block extra_js %}
-<script>
+    <script>
   document.addEventListener("DOMContentLoaded", function() {
     // 捲動導覽列效果
     const nav = document.getElementById('main-nav');
@@ -262,20 +291,30 @@
     }, { passive: true });
 
     // 捲動揭示動畫 (Intersection Observer)
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry, index) => {
-        if (entry.isIntersecting) {
-          // 加入延遲感，讓出現更自然 (Spring 感)
-          setTimeout(() => {
-            entry.target.classList.add('reveal-visible');
-          }, 50);
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.1 });
+    function initializeObservers() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry, index) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => {
+              entry.target.classList.add('reveal-visible');
+            }, 50);
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1 });
 
-    document.querySelectorAll('.reveal-on-scroll').forEach(el => {
-      observer.observe(el);
+      document.querySelectorAll('.reveal-on-scroll:not(.reveal-visible)').forEach(el => {
+        observer.observe(el);
+      });
+    }
+
+    initializeObservers();
+
+    // HTMX 局部更新後重新初始化
+    document.body.addEventListener('htmx:afterSwap', (evt) => {
+      if (evt.detail.target.id === 'book-feed') {
+        initializeObservers();
+      }
     });
 
     // 搜尋焦點處理
@@ -285,5 +324,5 @@
       if (input) input.focus();
     }
   });
-</script>
+    </script>
 {% endblock %}
