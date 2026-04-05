@@ -3,14 +3,19 @@
 {% block title %}Exbooks - 上傳書況照片{% endblock %}
 {% block content %}
     <!-- Top Navigation -->
-    <div class="flex items-center bg-white p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200">
-        <a href="{% url 'deals:detail' deal.id %}"
-           class="text-slate-900 flex size-12 shrink-0 items-center cursor-pointer">
-            <span class="material-symbols-outlined">arrow_back</span>
-        </a>
-        <h2 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">上傳書況照片</h2>
-        <div class="flex w-12 items-center justify-end"></div>
-    </div>
+    <header class="flex items-center bg-white/80 backdrop-blur-md p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200"
+            style="view-transition-name: page-header">
+        <nav aria-label="返回">
+            <a href="{% url 'deals:detail' deal.id %}"
+               class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+               style="view-transition-name: back-button">
+                <span class="material-symbols-outlined text-xl" aria-hidden="true">arrow_back</span>
+            </a>
+        </nav>
+        <h2 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center"
+            style="view-transition-name: page-title">上傳書況照片</h2>
+        <div class="w-10"></div>
+    </header>
     <!-- Main Content -->
     <main class="flex-1 px-4 py-4 pb-32">
         <!-- Transaction Summary -->
@@ -25,17 +30,17 @@
                     <h3 class="text-slate-900 font-bold text-lg mb-1">{{ deal.shared_book.official_book.title }}</h3>
                     <p class="text-slate-600 text-sm mb-2">{{ deal.shared_book.official_book.author }}</p>
                     <div class="flex items-center gap-2">
-                        <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">{{ deal.get_deal_type_display }}</span>
+                        <span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-bold">{{ deal.get_deal_type_display }}</span>
                     </div>
                 </div>
             </div>
         </div>
         <!-- Info Box -->
-        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+        <div class="bg-primary/5 border border-primary/10 rounded-xl p-4 mb-6">
             <div class="flex items-start gap-3">
-                <span class="material-symbols-outlined text-amber-600">photo_camera</span>
+                <span class="material-symbols-outlined text-primary">photo_camera</span>
                 <div>
-                    <h4 class="font-bold text-slate-900 text-sm mb-1">面交照片說明</h4>
+                    <h4 class="font-bold text-primary text-sm mb-1">面交照片說明</h4>
                     <ul class="text-sm text-slate-600 space-y-1 list-disc ml-4">
                         <li>請上傳面交時拍攝的書況照片，作為交易紀錄</li>
                         <li>支援 JPG、PNG 格式，每張最大 5MB</li>

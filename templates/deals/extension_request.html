@@ -2,14 +2,19 @@
 {% load crispy_forms_tags %}
 {% block title %}Exbooks - 申請延長借閱{% endblock %}
 {% block content %}
-    <div class="flex items-center bg-white p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200">
-        <a href="{% url 'deals:detail' deal.id %}"
-           class="text-slate-900 flex size-12 shrink-0 items-center cursor-pointer">
-            <span class="material-symbols-outlined">arrow_back</span>
-        </a>
-        <h2 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">申請延長借閱</h2>
-        <div class="flex w-12 items-center justify-end"></div>
-    </div>
+    <header class="flex items-center bg-white/80 backdrop-blur-md p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200"
+            style="view-transition-name: page-header">
+        <nav aria-label="返回">
+            <a href="{% url 'deals:detail' deal.id %}"
+               class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+               style="view-transition-name: back-button">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+        </nav>
+        <h2 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center"
+            style="view-transition-name: page-title">申請延長借閱</h2>
+        <div class="w-10"></div>
+    </header>
     <main class="flex-1 px-4 py-4 pb-32">
         <div class="bg-white rounded-xl border border-slate-200 p-4 mb-4">
             <div class="flex gap-4">
@@ -20,7 +25,7 @@
                     <h3 class="text-slate-900 text-lg font-bold leading-tight mb-1">{{ deal.shared_book.official_book.title }}</h3>
                     <p class="text-slate-600 text-sm mb-2">{{ deal.shared_book.official_book.author }}</p>
                     <div class="flex items-center gap-2">
-                        <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">{{ deal.get_deal_type_display }}</span>
+                        <span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-bold">{{ deal.get_deal_type_display }}</span>
                     </div>
                 </div>
             </div>
@@ -59,11 +64,11 @@
                     </div>
                 </div>
             {% endif %}
-            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div class="bg-primary/5 border border-primary/10 rounded-xl p-4">
                 <div class="flex items-start gap-3">
                     <span class="material-symbols-outlined text-primary">info</span>
                     <div>
-                        <h4 class="font-bold text-slate-900 text-sm mb-1">申請須知</h4>
+                        <h4 class="font-bold text-primary text-sm mb-1">申請須知</h4>
                         <ul class="text-sm text-slate-600 space-y-1 list-disc ml-4">
                             <li>延長天數範圍為 7 至 30 天</li>
                             <li>提交申請後，對方將收到通知</li>

@@ -2,21 +2,24 @@
 {% block title %}Exbooks - 交易詳情{% endblock %}
 {% block content %}
     <!-- Top Navigation - 使用 header 語義標籤 -->
-    <header class="flex items-center bg-white/80 backdrop-blur-md p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200">
+    <header class="flex items-center bg-white/80 backdrop-blur-md p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200"
+            style="view-transition-name: page-header">
         <nav aria-label="返回">
             <a href="{% url 'deals:list' %}"
                aria-label="返回交易列表"
-               class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
+               class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+               style="view-transition-name: back-button">
                 <span class="material-symbols-outlined text-xl" aria-hidden="true">arrow_back</span>
             </a>
         </nav>
-        <h1 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">交易詳情</h1>
+        <h1 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center"
+            style="view-transition-name: page-title">交易詳情</h1>
         <div class="w-10"></div>
     </header>
     <!-- Status Badge -->
     <div class="px-4 py-4">
         <div class="flex items-center justify-center">
-            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full {% if deal.status == 'Q' %}bg-amber-100 text-amber-700 {% elif deal.status == 'P' %}bg-blue-100 text-blue-700 {% elif deal.status == 'M' %}bg-green-100 text-green-700 {% elif deal.status == 'D' %}bg-slate-100 text-slate-700 {% elif deal.status == 'X' %}bg-rose-100 text-rose-700{% endif %}">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full {% if deal.status == 'Q' %}bg-amber-100 text-amber-700 {% elif deal.status == 'P' %}bg-primary/10 text-primary {% elif deal.status == 'M' %}bg-green-100 text-green-700 {% elif deal.status == 'D' %}bg-slate-100 text-slate-700 {% elif deal.status == 'X' %}bg-rose-100 text-rose-700{% endif %}">
                 <span class="material-symbols-outlined text-lg">
                     {% if deal.status == 'Q' %}
                         schedule
@@ -75,8 +78,8 @@
     <!-- Pending Tasks Checklist (LOAN only) -->
     {% if deal.deal_type == 'LN' and deal.status == 'M' %}
         <div class="px-4 mb-4">
-            <div class="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                <h4 class="text-blue-900 font-bold text-sm mb-2">完成交易進度</h4>
+            <div class="bg-primary/5 rounded-xl p-4 border border-primary/10">
+                <h4 class="text-primary font-bold text-sm mb-2">完成交易進度</h4>
                 <div class="space-y-2">
                     <div class="flex items-center gap-2">
                         <span class="material-symbols-outlined text-sm {% if deal.applicant_rated and deal.responder_rated %}text-green-500{% else %}text-slate-400{% endif %}">
@@ -99,7 +102,7 @@
                         <span class="text-sm {% if deal.shared_book.status == 'T' %}text-slate-500 line-through{% else %}text-slate-700{% endif %}">主人確認歸還書籍</span>
                     </div>
                 </div>
-                <p class="text-[11px] text-blue-600 mt-3 italic">提示：即便對方尚未評價，主人仍可先點擊下方「確認歸還」。</p>
+                <p class="text-[11px] text-primary/70 mt-3 italic">提示：即便對方尚未評價，主人仍可先點擊下方「確認歸還」。</p>
             </div>
         </div>
     {% endif %}
@@ -114,7 +117,7 @@
                     <h3 class="text-slate-900 font-bold text-lg mb-1 leading-tight">{{ deal.shared_book.official_book.title }}</h3>
                     <p class="text-slate-600 text-sm mb-2">{{ deal.shared_book.official_book.author }}</p>
                     <div class="flex items-center gap-2 mb-2">
-                        <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">{{ deal.get_deal_type_display }}</span>
+                        <span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-bold">{{ deal.get_deal_type_display }}</span>
                     </div>
                     <p class="text-xs text-slate-500">
                         <span class="material-symbols-outlined text-sm align-middle">schedule</span>

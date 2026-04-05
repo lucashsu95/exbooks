@@ -2,15 +2,18 @@
 {% load crispy_forms_tags %}
 {% block title %}Exbooks - 申請交易{% endblock %}
 {% block content %}
-    <header class="flex items-center bg-white/80 backdrop-blur-md p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200">
+    <header class="flex items-center bg-white/80 backdrop-blur-md p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200"
+            style="view-transition-name: page-header">
         <nav aria-label="返回">
             <a href="{% url 'books:detail' book.id %}"
                aria-label="返回書籍詳情"
-               class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
+               class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+               style="view-transition-name: back-button">
                 <span class="material-symbols-outlined text-xl" aria-hidden="true">arrow_back</span>
             </a>
         </nav>
-        <h1 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">申請交易</h1>
+        <h1 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center"
+            style="view-transition-name: page-title">申請交易</h1>
         <div class="w-10"></div>
     </header>
     <main class="flex-1 px-4 py-4 pb-32">
@@ -120,11 +123,11 @@
                     </div>
                 </div>
             {% endif %}
-            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div class="bg-primary/5 border border-primary/10 rounded-xl p-4">
                 <div class="flex items-start gap-3">
                     <span class="material-symbols-outlined text-primary">info</span>
                     <div>
-                        <h4 class="font-bold text-slate-900 text-sm mb-1">申請須知</h4>
+                        <h4 class="font-bold text-primary text-sm mb-1">申請須知</h4>
                         <ul class="text-sm text-slate-600 space-y-1 list-disc ml-4">
                             <li>提交申請後，持書人將收到通知</li>
                             <li>對方接受後，您可與持書人協商面交時間地點</li>
