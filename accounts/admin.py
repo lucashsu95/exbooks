@@ -36,19 +36,20 @@ class UserProfileAdmin(admin.ModelAdmin):
         "nickname",
         "user",
         "avatar_preview",
-        "trust_level",
+        "get_trust_level_display",
         "suspension_status",
         "default_transferability",
         "created_at",
     )
     list_select_related = ("user",)
     search_fields = ("nickname", "user__username", "user__email")
-    list_filter = ("default_transferability", "is_suspended", "trust_level")
+    list_filter = ("default_transferability", "is_suspended", TrustLevelFilter)
     autocomplete_fields = ("user",)
     readonly_fields = (
         "avatar_preview",
         "created_at",
         "updated_at",
+        "trust_level",
         "suspension_status_display",
     )
     list_per_page = 20
@@ -70,6 +71,7 @@ class UserProfileAdmin(admin.ModelAdmin):
             "信用與統計",
             {
                 "fields": (
+                    "trust_score",
                     "trust_level",
                     "successful_returns",
                     "overdue_count",
@@ -115,6 +117,10 @@ class UserProfileAdmin(admin.ModelAdmin):
     @admin.display(description="停權狀態詳情")
     def suspension_status_display(self, obj):
         return self.suspension_status(obj)
+
+    @admin.display(description="信用等級", ordering="trust_score")
+    def get_trust_level_display(self, obj):
+        return f"Lv.{obj.trust_level}"
 
     actions = [
         "suspend_temporary",

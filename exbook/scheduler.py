@@ -43,8 +43,8 @@ def configure_scheduler_jobs(
 
     process_due_books = jobs.get("process_due_books", {"hour": 0, "minute": 0})
     send_due_reminders = jobs.get("send_due_reminders", {"hour": 9, "minute": 0})
-    update_trust_levels = jobs.get(
-        "update_trust_levels", {"day_of_week": "mon", "hour": 2, "minute": 0}
+    recalculate_trust_scores = jobs.get(
+        "recalculate_trust_scores", {"day_of_week": "mon", "hour": 2, "minute": 0}
     )
 
     scheduler.add_job(
@@ -66,10 +66,10 @@ def configure_scheduler_jobs(
     scheduler.add_job(
         _run_management_command,
         trigger="cron",
-        id="update_trust_levels",
+        id="recalculate_trust_scores",
         replace_existing=True,
-        kwargs={"command_name": "update_trust_levels"},
-        **update_trust_levels,
+        kwargs={"command_name": "recalculate_trust_scores"},
+        **recalculate_trust_scores,
     )
 
 

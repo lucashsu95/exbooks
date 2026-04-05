@@ -72,7 +72,7 @@ class TestExportUserData:
         user = UserFactory(email="test@example.com")
         profile = user.profile
         profile.nickname = "測試用戶"
-        profile.trust_level = 2
+        profile.trust_score = 9
         profile.successful_returns = 5
         profile.overdue_count = 1
         profile.save()
@@ -99,7 +99,7 @@ class TestExportUserData:
         profile_data = data["user_profile"]
         # If no profile exists, the profile is None so nickname should be None
         # But UserFactory auto-creates profile, so we just verify the values are correct
-        assert profile_data["trust_level"] == 1  # default
+        assert profile_data["trust_level"] == 0
         assert profile_data["successful_returns"] == 0
 
 
@@ -303,7 +303,7 @@ class TestConvertToCSV:
         user = UserFactory(email="test@example.com")
         profile = user.profile
         profile.nickname = "測試用戶"
-        profile.trust_level = 2
+        profile.trust_score = 9
         profile.successful_returns = 5
         profile.overdue_count = 1
         profile.save()
