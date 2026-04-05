@@ -19,6 +19,19 @@
         <!-- Tailwind CSS -->
         <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
         <script>
+// Prevent icon text flash (FOUT)
+if ('fonts' in document) {
+  document.fonts.ready.then(function () {
+    document.documentElement.classList.add('fonts-loaded');
+  });
+  // Fallback: show anyway after 2 seconds in case font fails to load
+  setTimeout(function() {
+    document.documentElement.classList.add('fonts-loaded');
+  }, 2000);
+} else {
+  document.documentElement.classList.add('fonts-loaded');
+}
+
 tailwind.config = {
 darkMode: "class",
 theme: {
@@ -43,9 +56,9 @@ theme: {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap"
               rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap"
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=block"
               rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block"
               rel="stylesheet">
         <!-- HTMX -->
         <script src="https://unpkg.com/htmx.org@2.0.4"></script>
@@ -80,27 +93,63 @@ body {
 .htmx-indicator { opacity: 0; transition: opacity 300ms ease-in; }
 .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { opacity: 1; }
 
-/* Page transition */
-.fade-in { animation: fadeIn 0.3s ease-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+/* Page transition - Removed .fade-in to avoid View Transition collision */
 
 /* View Transitions API */
-::view-transition-old(main-content) { animation: 180ms ease-in both vt-fade-out; }
-::view-transition-new(main-content) { animation: 220ms ease-out both vt-fade-in; }
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(main-content) {
+  animation: 180ms ease-in both vt-fade-out;
+}
+
+::view-transition-new(main-content) {
+  animation: 220ms ease-out both vt-fade-in;
+}
+
+::view-transition-old(page-title),
+::view-transition-new(page-title) {
+  animation: 300ms ease-in-out both vt-fade;
+}
+
 ::view-transition-old(bottom-nav),
-::view-transition-new(bottom-nav) { animation: none; }
+::view-transition-new(bottom-nav) {
+  animation: none;
+}
+
+@keyframes vt-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
 @keyframes vt-fade-out {
-  from { opacity: 1; transform: translateY(0); }
-  to { opacity: 0; transform: translateY(-6px); }
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
 }
 
 @keyframes vt-fade-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(root),
+  ::view-transition-old(root),
+  ::view-transition-new(root),
+  ::view-transition-group(main-content),
   ::view-transition-old(main-content),
   ::view-transition-new(main-content) {
     animation: none !important;
@@ -122,6 +171,26 @@ body {
 }
 .fill-1 {
   font-variation-settings: 'FILL' 1;
+}
+
+/* Material Symbols - Prevent Text Flash (FOUT) */
+.material-symbols-outlined {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  overflow: hidden;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'liga';
+  visibility: hidden; /* Hide until font is loaded or timeout */
+}
+
+.fonts-loaded .material-symbols-outlined {
+  visibility: visible;
 }
 
 /* Screen reader only - 無障礙輔助 */
@@ -307,9 +376,15 @@ body {
         <!-- Main Content Wrapper -->
         <div id="main-content"
              style="view-transition-name: main-content"
-             class="relative flex h-auto min-h-screen w-full flex-col bg-background-light-background-dark overflow-x-hidden fade-in">
+             class="relative flex h-auto min-h-screen w-full flex-col bg-background-light-background-dark overflow-x-hidden">
             {% block content %}{% endblock %}
         </div>
+        <!-- Bottom Navigation - Global Inclusion -->
+        {% block bottom_nav %}
+            {% if user.is_authenticated %}
+                {% include '_bottom_nav.html' %}
+            {% endif %}
+        {% endblock %}
         {% block extra_js %}{% endblock %}
         <!-- Global Loading Indicator & Virtual Keyboard Handling -->
         <script>
@@ -350,33 +425,6 @@ body {
   document.body.addEventListener('htmx:beforeRequest', startLoading);
   document.body.addEventListener('htmx:afterRequest', stopLoading);
   document.body.addEventListener('htmx:beforeSwap', stopLoading);
-
-  // === View Transition API — Bottom Nav 導航平滑過渡 ===
-  if (document.startViewTransition) {
-    let isTransitioning = false;
-
-    document.addEventListener('click', (e) => {
-      const navLink = e.target.closest('#bottom-nav a[href]');
-      if (!navLink || isTransitioning) return;
-
-      const href = navLink.getAttribute('href');
-      const currentPath = window.location.pathname;
-      const targetPath = new URL(href, window.location.origin).pathname;
-
-      // 同頁導航 — 不執行過渡
-      if (currentPath === targetPath) return;
-
-      e.preventDefault();
-      isTransitioning = true;
-
-      document.startViewTransition(() => {
-        window.location.href = href;
-      }).finished.catch(() => {
-        // 如果動畫失敗，仍然導航
-        window.location.href = href;
-      });
-    });
-  }
 
   // === 方案 D: 虛擬鍵盝處理 ===
   if (window.visualViewport) {
