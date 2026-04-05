@@ -337,14 +337,13 @@ def process_book_due(deal):
 
         # BR-4.2: 遞增持有者的逾期次數
         keeper = shared_book.keeper
-        if hasattr(keeper, "profile"):
-            keeper.profile.overdue_count += 1
-            keeper.profile.save(update_fields=["overdue_count", "updated_at"])
+        keeper.profile.overdue_count += 1
+        keeper.profile.save(update_fields=["overdue_count", "updated_at"])
 
-            # 更新信用積分
-            from accounts.services.trust_service import update_trust_score
+        # 更新信用積分
+        from accounts.services.trust_service import update_trust_score
 
-            update_trust_score(keeper)
+        update_trust_score(keeper)
     else:  # TRANSFER
         shared_book.status = SharedBook.Status.TRANSFERABLE
 

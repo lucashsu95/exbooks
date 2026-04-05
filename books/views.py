@@ -78,9 +78,7 @@ def book_list(request):
 
     new_arrivals = new_query.order_by("-updated_at")[:10]
 
-    user_location = ""
-    if hasattr(request.user, "profile"):
-        user_location = request.user.profile.default_location
+    user_location = request.user.profile.default_location
 
     if user_location:
         nearby_books = nearby_query.filter(
@@ -340,7 +338,7 @@ def book_add(request):
 def book_edit(request, pk):
     from .forms import BookEditForm
 
-    if hasattr(request.user, "profile") and request.user.profile.trust_level == 0:
+    if request.user.profile.trust_level == 0:
         messages.error(
             request, "新手等級 (Level 0) 尚無權限編輯書籍資訊，請多參與交易提升等級。"
         )
@@ -438,7 +436,7 @@ def isbn_lookup(request):
 @require_POST
 def toggle_status(request, pk):
     """切換書籍狀態 S ↔ T"""
-    if hasattr(request.user, "profile") and request.user.profile.trust_level == 0:
+    if request.user.profile.trust_level == 0:
         messages.error(request, "新手等級 (Level 0) 尚無權限切換書籍狀態。")
         return HttpResponse("新手等級尚無權限", status=403)
 

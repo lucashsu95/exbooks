@@ -266,11 +266,9 @@ class DealQueryService:
                 "deal_type": deal.deal_type,
                 "status": deal.status,
                 "applicant_nickname": deal.applicant.profile.nickname
-                if hasattr(deal.applicant, "profile")
-                else deal.applicant.email,
+                or deal.applicant.email,
                 "responder_nickname": deal.responder.profile.nickname
-                if hasattr(deal.responder, "profile")
-                else deal.responder.email,
+                or deal.responder.email,
                 "created_at": deal.created_at,
             }
             for deal in deals

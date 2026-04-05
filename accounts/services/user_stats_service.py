@@ -149,9 +149,7 @@ def get_overdue_count(user):
     Returns:
         int: 逾期次數
     """
-    if hasattr(user, "profile"):
-        return user.profile.overdue_count
-    return 0
+    return user.profile.overdue_count
 
 
 def get_violation_count(user):

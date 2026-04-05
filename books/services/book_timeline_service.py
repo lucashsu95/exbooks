@@ -219,7 +219,7 @@ class BookTimelineService:
     @staticmethod
     def _format_user_display(user: User) -> str:
         """格式化用戶顯示名稱"""
-        if hasattr(user, "profile") and user.profile.nickname:
+        if user.profile.nickname:
             return f"{user.profile.nickname} 分享了這本書"
         return f"{user.email} 分享了這本書"
 

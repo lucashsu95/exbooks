@@ -163,8 +163,8 @@ def get_user_metrics(user) -> UserMetrics:
         Q(applicant=user) | Q(responder=user), status=Deal.Status.DONE
     ).count()
 
-    # 取得逾期次數（防禦性存取 profile）
-    overdue_count = getattr(getattr(user, "profile", None), "overdue_count", 0)
+    # 取得逾期次數
+    overdue_count = user.profile.overdue_count
 
     # 取得評價均分
     avg_rating = _calculate_avg_rating(user)

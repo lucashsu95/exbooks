@@ -20,9 +20,7 @@ from .services import user_stats_service
 @login_required
 def profile(request):
     """查看個人資料。"""
-    profile_obj = None
-    if hasattr(request.user, "profile"):
-        profile_obj = request.user.profile
+    profile_obj = request.user.profile
 
     # 統計資料
     activity_stats = user_stats_service.get_user_activity_stats(request.user)

@@ -101,7 +101,7 @@ def collect_user_data(user):
         dict: 用戶資料
     """
     # 獲取用戶 profile
-    profile = getattr(user, "profile", None)
+    profile = user.profile
 
     # 收集各類資料（依 3.15 需求，不包含 books_contributed）
     user_profile_data = collect_user_profile(user, profile)
@@ -148,8 +148,7 @@ def collect_activity_stats(user):
     ).count()
 
     # 逾期次數（從 profile 獲取）
-    profile = getattr(user, "profile", None)
-    overdue_count = profile.overdue_count if profile else 0
+    overdue_count = user.profile.overdue_count
 
     return {
         "books_contributed_count": books_contributed_count,
