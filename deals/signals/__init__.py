@@ -77,11 +77,8 @@ def _handle_accept(deal):
     ).exclude(pk=deal.pk).update(status=Deal.Status.CANCELLED)
 
     # 更新書籍狀態為 V（已被預約）- 使用 FSM 方法
-    if hasattr(shared_book, "reserve"):
-        shared_book.reserve()
-    else:
-        shared_book.status = "V"
-    shared_book.save(update_fields=["status", "updated_at"])
+    shared_book.reserve()
+    shared_book.save()
 
     # 通知申請者交易已被接受
     notify_deal_responded(deal)
@@ -139,11 +136,11 @@ def _handle_complete_meeting(deal):
         # 書從申請者手中到回應者手中（Owner 取回）
         shared_book.keeper = deal.responder
 
-    # 更新書籍狀態 - 使用 FSM 方法（如果可用）
+    # 更新書籍狀態 - 使用 FSM 方法
     new_status = MEET_STATUS_MAP.get(deal.deal_type)
     if new_status:
         # 根據目標狀態選擇 FSM 方法
-        if new_status == "O" and hasattr(shared_book, "mark_as_borrowed"):
+        if new_status == "O":
             shared_book.mark_as_borrowed()
         elif new_status == "S":
             # RESTORE/REGRESS 導向 SUSPENDED，這裡直接設定
@@ -153,7 +150,7 @@ def _handle_complete_meeting(deal):
         else:
             shared_book.status = new_status
 
-    shared_book.save(update_fields=["keeper", "status", "updated_at"])
+    shared_book.save()
 
     # 重新計算到期日（從面交日起算）
     if deal.deal_type in (Deal.DealType.LOAN, Deal.DealType.TRANSFER):
