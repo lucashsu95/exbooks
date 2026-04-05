@@ -1,0 +1,40 @@
+{# templates/books/partials/_book_list_rows.html #}
+{# Book list rows partial — extracted from book_list_results.html lines 100-135 #}
+{# Usage: {% include 'books/partials/_book_list_rows.html' with nearby_books=nearby_books %} #}
+<div class="px-6 pt-6 pb-32">
+    <div class="flex flex-col gap-5">
+        {% for book in nearby_books|default:"" %}
+            <a href="{% url 'books:detail' book.id %}"
+               class="reveal-on-scroll flex items-center gap-5 p-1 touch-spring"
+               hx-boost="false">
+                <div class="w-20 h-28 rounded-2xl overflow-hidden shrink-0 shadow-xl relative bg-white">
+                    {% include 'partials/book_cover.html' with book=book %}
+                    <div class="absolute inset-0 ring-1 ring-inset ring-black/5 rounded-2xl"></div>
+                    <div class="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/20 to-transparent"></div>
+                </div>
+                <div class="flex-1 min-w-0 border-b border-slate-100 pb-5">
+                    <h4 class="oled-text font-bold text-base line-clamp-2 leading-tight mb-2">{{ book.official_book.title }}</h4>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 uppercase tracking-tighter">
+                            {{ book.official_book.get_category_display }}
+                        </span>
+                        {% if book.keeper.profile %}
+                            {% include "partials/trust_badge_inline.html" with trust_level=book.keeper.profile.trust_level %}
+                        {% endif %}
+                    </div>
+                    <p class="text-slate-400 text-[10px] mt-2 font-medium">持有者：{{ book.keeper.username }}</p>
+                </div>
+                <div class="text-slate-300">
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </div>
+            </a>
+        {% empty %}
+            <div class="py-20 text-center reveal-on-scroll">
+                <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+                    <span class="material-symbols-outlined text-4xl text-slate-200">menu_book</span>
+                </div>
+                <p class="text-slate-400 text-sm font-medium">目前的分類中沒有書籍</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>

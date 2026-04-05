@@ -16,6 +16,14 @@ from .services import process_book_photo
 from .forms import BookSearchForm
 
 
+# Module-level constant for category pills (excludes OTHER)
+PILL_CATEGORIES = [
+    (c.value, c.label)
+    for c in OfficialBook.Category
+    if c != OfficialBook.Category.OTHER
+]
+
+
 def overdue_list(request):
     """公開逾期書籍展示頁面。"""
     from deals.services import overdue_service
@@ -88,6 +96,7 @@ def book_list(request):
         "nearby_books": nearby_books,
         "search_query": q,
         "current_category": category or "全部",
+        "categories": PILL_CATEGORIES,
     }
 
     if request.headers.get("HX-Request"):
@@ -228,6 +237,7 @@ def book_all(request):
             "current_transferability": transferability,
             "current_category": category,
             "form": form,
+            "categories": list(OfficialBook.Category.choices),
         },
     )
 

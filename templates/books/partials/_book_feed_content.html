@@ -1,0 +1,8 @@
+{% comment %}
+  Book Feed 內容（共享 partial）
+  由 book_list.html 和 book_list_results.html 共同使用
+  Required context: new_arrivals, nearby_books, categories, current_category, search_query
+{% endcomment %}
+{% include 'books/partials/_bento_section.html' %}
+{% include 'books/partials/_category_pills.html' %}
+{% include 'books/partials/_book_list_rows.html' %}

@@ -1,0 +1,47 @@
+<!-- Bento Section — 熱門推薦區塊 -->
+<div class="px-6 py-6">
+    <div class="flex items-center justify-between mb-5 reveal-on-scroll">
+        <h3 class="oled-text font-bold text-lg text-secondary">✦ 熱門推薦</h3>
+        <a href="{% url 'books:all' %}"
+           class="text-primary text-sm font-semibold flex items-center gap-0.5"
+           hx-boost="false">
+            全部
+            <span class="material-symbols-outlined text-sm">chevron_right</span>
+        </a>
+    </div>
+    <div class="grid grid-cols-2 grid-rows-2 gap-4 h-[380px]">
+        {% for book in new_arrivals|slice:":3" %}
+            {% if forloop.first %}
+                <a href="{% url 'books:detail' book.id %}"
+                   class="row-span-2 bento-item touch-spring relative reveal-on-scroll"
+                   hx-boost="false">
+                    <div class="absolute inset-0 bg-slate-50">
+                        {% include 'partials/official_book_cover.html' with book=book.official_book %}
+                    </div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                    <div class="absolute bottom-6 left-6 right-6">
+                        <div class="flex items-center gap-1.5 mb-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></span>
+                            <span class="text-white/80 text-[10px] font-bold tracking-widest uppercase">精選</span>
+                        </div>
+                        <h4 class="text-white font-bold text-base line-clamp-2 leading-tight">{{ book.official_book.title }}</h4>
+                    </div>
+                </a>
+            {% else %}
+                <a href="{% url 'books:detail' book.id %}"
+                   class="bento-item touch-spring relative reveal-on-scroll"
+                   hx-boost="false">
+                    <div class="absolute inset-0">{% include 'partials/official_book_cover.html' with book=book.official_book %}</div>
+                    <div class="absolute inset-0 bg-black/40"></div>
+                    <div class="absolute inset-0 p-4 flex flex-col justify-end">
+                        <h4 class="text-white text-xs font-bold line-clamp-2">{{ book.official_book.title }}</h4>
+                    </div>
+                </a>
+            {% endif %}
+        {% empty %}
+            <div class="col-span-2 row-span-2 bento-item flex items-center justify-center bg-white/50 border-dashed border-2 border-slate-200">
+                <p class="text-slate-400 text-sm">尚無資料</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>

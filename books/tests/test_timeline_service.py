@@ -3,11 +3,10 @@
 """
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import timedelta
 from django.utils import timezone
 
-from books.models import SharedBook, BookPhoto, OfficialBook
-from deals.models import Deal, LoanExtension, DealMessage
+from deals.models import Deal, LoanExtension
 from books.services.book_timeline_service import BookTimelineService
 from tests.factories import (
     UserFactory,

@@ -3,9 +3,7 @@
 """
 
 import pytest
-from datetime import timedelta
 
-from django.utils import timezone
 
 from deals.services.deal_creation_service import DealCreationService
 from deals.models import Deal
