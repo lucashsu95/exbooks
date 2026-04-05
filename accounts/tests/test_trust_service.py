@@ -9,7 +9,6 @@ from accounts.services.trust_service import (
     calculate_trust_level,
     update_trust_score,
     get_borrowing_limits,
-    initialize_existing_user,
 )
 from deals.models import Deal
 from tests.factories import DealFactory, RatingFactory
@@ -125,7 +124,7 @@ class TrustServiceTest(TestCase):
         self.user.profile.refresh_from_db()
         self.assertEqual(self.user.profile.trust_score, 30)
         self.assertEqual(self.user.profile.trust_stars, 5)
-        self.assertEqual(self.user.profile.trust_level, 3)
+        # trust_level is no longer updated by update_trust_score() (COMMIT 2)
 
     def test_get_borrowing_limits_level_0(self):
         """測試 Level 0 借閱限制"""
@@ -138,11 +137,3 @@ class TrustServiceTest(TestCase):
         limits = get_borrowing_limits(3)
         self.assertEqual(limits["max_books"], float("inf"))
         self.assertEqual(limits["max_days"], float("inf"))
-
-    def test_initialize_existing_user(self):
-        """測試初始化現有用戶"""
-        initial_score = initialize_existing_user(self.user)
-        self.assertEqual(initial_score, 0)
-        self.user.profile.refresh_from_db()
-        self.assertEqual(self.user.profile.trust_score, 0)
-        self.assertEqual(self.user.profile.trust_level, 1)

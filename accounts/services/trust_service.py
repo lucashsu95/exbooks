@@ -60,7 +60,7 @@ def _get_borrowing_limits() -> dict[int, BorrowingLimit]:
     """從 settings 取得借閱限制配置"""
     config = getattr(settings, "BORROWING_LIMITS", None)
     if config is None:
-        # 預設值（向後相容）
+        # 預設值
         config = {
             0: {"max_books": 1, "max_days": 30},
             1: {"max_books": 3, "max_days": 60},
@@ -127,32 +127,6 @@ def compute_trust_stars(score: int) -> int:
         return 1  # 最低1星
     stars = int(math.floor(math.sqrt(score)))
     return min(max(stars, 1), 5)  # 限制在1-5星
-
-
-def compute_trust_level_from_stars(stars: int) -> int:
-    """
-    純函式：根據星等計算信用等級（向後相容）。
-
-    映射關係：
-    - 1星: Level 0 (新手)
-    - 2星: Level 1 (一般)
-    - 3星: Level 2 (可信)
-    - 4-5星: Level 3 (優良)
-
-    Args:
-        stars: 星等（1-5）
-
-    Returns:
-        int: 信用等級（0-3）
-    """
-    if stars <= 1:
-        return 0
-    elif stars == 2:
-        return 1
-    elif stars == 3:
-        return 2
-    else:  # 4-5星
-        return 3
 
 
 def compute_borrowing_limits(trust_level: int) -> BorrowingLimit:
@@ -231,7 +205,7 @@ def _calculate_avg_rating(user) -> float:
 
 
 # ============================================================================
-# 公開 API（向後相容）
+# 公開 API
 # ============================================================================
 
 
@@ -265,7 +239,13 @@ def calculate_trust_stars(user) -> int:
 
 def calculate_trust_level(user) -> int:
     """
-    計算用戶信用等級（向後相容）。
+    計算用戶信用等級。
+
+    映射關係：
+    - 1星: Level 0 (新手)
+    - 2星: Level 1 (一般)
+    - 3星: Level 2 (可信)
+    - 4-5星: Level 3 (優良)
 
     Args:
         user: 用戶實例
@@ -274,7 +254,14 @@ def calculate_trust_level(user) -> int:
         int: 0-3 的信用等級
     """
     stars = calculate_trust_stars(user)
-    return compute_trust_level_from_stars(stars)
+    if stars <= 1:
+        return 0
+    elif stars == 2:
+        return 1
+    elif stars == 3:
+        return 2
+    else:  # 4-5星
+        return 3
 
 
 def update_trust_score(user) -> int:
@@ -288,13 +275,10 @@ def update_trust_score(user) -> int:
         int: 新的信用積分
     """
     new_score = calculate_trust_score(user)
-    new_stars = compute_trust_stars(new_score)
-    new_level = compute_trust_level_from_stars(new_stars)
 
     # 更新資料庫
     user.profile.trust_score = new_score
-    user.profile.trust_level = new_level
-    user.profile.save(update_fields=["trust_score", "trust_level", "updated_at"])
+    user.profile.save(update_fields=["trust_score", "updated_at"])
 
     return new_score
 
@@ -302,8 +286,6 @@ def update_trust_score(user) -> int:
 def get_borrowing_limits(trust_level: int) -> dict:
     """
     根據信用等級取得借閱限制。
-
-    保持原有返回格式（dict）以向後相容。
 
     Args:
         trust_level: 信用等級 (0-3)
@@ -318,28 +300,9 @@ def get_borrowing_limits(trust_level: int) -> dict:
     }
 
 
-def initialize_existing_user(user) -> int:
-    """
-    初始化現有用戶的信用積分。
-
-    根據計劃，現有用戶上線時給基礎分數。
-
-    Args:
-        user: 用戶實例
-
-    Returns:
-        int: 初始化的信用積分
-    """
-    config = _get_score_config()
-    user.profile.trust_score = config.base_score
-    user.profile.trust_level = 1
-    user.profile.save(update_fields=["trust_score", "trust_level", "updated_at"])
-    return config.base_score
-
-
 def get_upgrade_progress(user) -> dict:
     """
-    計算用戶升級進度（向後相容）。
+    計算用戶升級進度。
 
     Returns:
         dict: {
@@ -358,7 +321,14 @@ def get_upgrade_progress(user) -> dict:
     # 獲取當前積分和星等
     current_score = calculate_trust_score(user)
     current_stars = compute_trust_stars(current_score)
-    current_level = compute_trust_level_from_stars(current_stars)
+    if current_stars <= 1:
+        current_level = 0
+    elif current_stars == 2:
+        current_level = 1
+    elif current_stars == 3:
+        current_level = 2
+    else:  # 4-5星
+        current_level = 3
 
     # 獲取下一級所需積分
     next_stars = current_stars + 1 if current_stars < 5 else None

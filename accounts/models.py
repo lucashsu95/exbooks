@@ -405,6 +405,19 @@ class UserProfile(UpdatableModel):
         stars = int(math.floor(math.sqrt(self.trust_score)))
         return min(max(stars, 1), 5)  # 限制在1-5星
 
+    @property
+    def _computed_trust_level(self) -> int:
+        """根據 trust_score 計算信用等級（0-3）"""
+        stars = self.trust_stars
+        if stars <= 1:
+            return 0
+        elif stars == 2:
+            return 1
+        elif stars == 3:
+            return 2
+        else:  # 4-5星
+            return 3
+
     def update_trust_level(self):
         """
         根據 trust_score 更新 trust_level（向後相容）。

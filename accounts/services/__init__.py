@@ -11,7 +11,6 @@ from .trust_service import (
     get_borrowing_limits,
     get_user_metrics,
     get_upgrade_progress,
-    initialize_existing_user,
 )
 from .user_stats_service import (
     get_user_activity_stats,
@@ -33,7 +32,6 @@ __all__ = [
     "get_borrowing_limits",
     "get_user_metrics",
     "get_upgrade_progress",
-    "initialize_existing_user",
     # user_stats_service
     "get_user_activity_stats",
     "get_user_rating_summary",
