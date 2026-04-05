@@ -29,7 +29,8 @@
         </div>
     </header>
     <div class="px-6 pt-8 pb-4">
-        <h2 class="oled-text text-3xl font-extrabold leading-tight tracking-tight reveal-on-scroll">
+        <h2 class="oled-text text-3xl font-extrabold leading-tight tracking-tight reveal-on-scroll"
+            style="view-transition-name: page-title">
             探索 <span class="text-secondary">新視界</span>
             <br />
             讓知識流動。
@@ -63,7 +64,6 @@
     </div>
     <div id="book-feed">{% include 'books/partials/_book_feed_content.html' %}</div>
     <!-- /#book-feed -->
-    {% include '_bottom_nav.html' %}
 {% endblock %}
 {% block extra_js %}
     <script>

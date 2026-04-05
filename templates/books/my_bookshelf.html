@@ -4,9 +4,11 @@
 {% block content %}
     <div id="bookshelf-page">
         <!-- Header -->
-        <header class="sticky top-0 z-10 bg-white border-b border-slate-200">
+        <header class="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200"
+                style="view-transition-name: page-header">
             <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
-                <h1 class="text-xl font-bold tracking-tight">我的書架</h1>
+                <h1 class="text-xl font-bold tracking-tight"
+                    style="view-transition-name: page-title">我的書架</h1>
                 <!-- 套書管理入口 -->
                 <a href="{% url 'books:book_set_list' %}"
                    class="flex items-center gap-1 text-sm text-primary font-medium hover:underline"
@@ -147,5 +149,4 @@
 bottom: calc(92px + env(safe-area-inset-bottom, 0px));
 }
     </style>
-    {% include '_bottom_nav.html' %}
 {% endblock %}
