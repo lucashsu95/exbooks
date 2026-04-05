@@ -130,17 +130,7 @@ class BookAddForm(forms.ModelForm):
         cleaned_data = super().clean()
 
         # 檢查是否有上傳照片
-        # self.files 可能是 MultiValueDict（實際請求）或 dict（測試）
-        if hasattr(self.files, "getlist"):
-            # 實際請求時使用 getlist
-            photos = self.files.getlist("photos")
-        elif isinstance(self.files, dict):
-            # 測試時可能傳入 dict
-            photos = self.files.get("photos", [])
-            if not isinstance(photos, list):
-                photos = [photos] if photos else []
-        else:
-            photos = []
+        photos = self.files.getlist("photos")
 
         if not photos:
             raise forms.ValidationError("請至少上傳一張書況照片")

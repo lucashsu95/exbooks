@@ -251,9 +251,7 @@ class MultipleFileInput(forms.ClearableFileInput):
         super().__init__(attrs=attrs)
 
     def value_from_datadict(self, data, files, name):
-        if hasattr(files, "getlist"):
-            return files.getlist(name)
-        return files.get(name)
+        return files.getlist(name)
 
     def use_required_attribute(self, initial):
         return False

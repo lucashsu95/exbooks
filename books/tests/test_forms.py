@@ -4,6 +4,7 @@ from io import BytesIO
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils.datastructures import MultiValueDict
 from PIL import Image
 
 from books.forms import BookAddForm
@@ -41,13 +42,14 @@ class TestBookAddForm:
 
     def test_form_without_photos_is_invalid(self, valid_book_data):
         """測試：沒有上傳照片時表單應該無效"""
-        form = BookAddForm(data=valid_book_data, files={})
+        files = MultiValueDict()
+        form = BookAddForm(data=valid_book_data, files=files)
         assert not form.is_valid()
         assert "請至少上傳一張書況照片" in str(form.errors)
 
     def test_form_with_one_photo_is_valid(self, valid_book_data, sample_image):
         """測試：上傳一張照片時表單應該有效"""
-        files = {"photos": [sample_image]}
+        files = MultiValueDict({"photos": [sample_image]})
         form = BookAddForm(data=valid_book_data, files=files)
         assert form.is_valid(), f"表單錯誤: {form.errors}"
 
@@ -62,13 +64,13 @@ class TestBookAddForm:
             "test2.jpg", img2_io.read(), content_type="image/jpeg"
         )
 
-        files = {"photos": [sample_image, sample_image2]}
+        files = MultiValueDict({"photos": [sample_image, sample_image2]})
         form = BookAddForm(data=valid_book_data, files=files)
         assert form.is_valid(), f"表單錯誤: {form.errors}"
 
     def test_form_with_empty_photos_list_is_invalid(self, valid_book_data):
         """測試：photos 為空列表時表單應該無效"""
-        files = {"photos": []}
+        files = MultiValueDict({"photos": []})
         form = BookAddForm(data=valid_book_data, files=files)
         assert not form.is_valid()
         assert "請至少上傳一張書況照片" in str(form.errors)
