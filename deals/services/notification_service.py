@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.core.mail import send_mail
 
-from deals.models import Notification
+from deals.models import LoanExtension, Notification
 
 
 def notify(
@@ -32,8 +32,7 @@ def notify(
     Returns:
         Notification: 建立的通知
     """
-    notification_manager = getattr(Notification, "objects")
-    notification = notification_manager.create(
+    notification = Notification.objects.create(
         recipient=recipient,
         notification_type=notification_type,
         title=title,
@@ -66,7 +65,7 @@ def notify(
 
 def _send_email_notification(user, title, message):
     """發送 Email 通知（內部函式）。"""
-    email_backend = getattr(settings, "EMAIL_BACKEND", "")
+    email_backend = settings.EMAIL_BACKEND
 
     if not email_backend or not user.email:
         return
@@ -230,7 +229,7 @@ def notify_extend_requested(extension):
 def notify_extend_result(extension):
     """延長申請結果 → 通知申請者"""
     deal = extension.deal
-    if extension.status == "APPROVED":
+    if extension.status == LoanExtension.Status.APPROVED:
         ntype = Notification.NotificationType.EXTEND_APPROVED
         title = "延長申請已核准"
         msg = f"您的延長申請已被核准，書籍「{deal.shared_book}」到期日延長至 {deal.due_date}"
@@ -257,8 +256,7 @@ def mark_as_read(notification):
 
 def mark_all_as_read(user):
     """標記使用者所有未讀通知為已讀"""
-    notification_manager = getattr(Notification, "objects")
-    notification_manager.filter(
+    Notification.objects.filter(
         recipient=user,
         is_read=False,
     ).update(is_read=True)
