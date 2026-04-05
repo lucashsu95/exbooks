@@ -1,5 +1,7 @@
 <!-- Bottom Navigation Bar - 手機版專用 -->
-<nav class="fixed bottom-0 left-0 right-0 border-t border-slate-200 bg-white/95 backdrop-blur-md z-20 safe-area-pb">
+<nav id="bottom-nav"
+     style="view-transition-name: bottom-nav"
+     class="fixed bottom-0 left-0 right-0 border-t border-slate-200 bg-white/95 backdrop-blur-md z-20 safe-area-pb">
     <div class="flex justify-around items-center h-16">
         <!-- 首頁 -->
         <a class="flex flex-col items-center justify-center min-w-[64px] min-h-[56px] gap-1 {% if request.resolver_match.url_name == 'list' and request.resolver_match.app_name == 'books' %}text-primary{% else %}text-slate-400{% endif %}"

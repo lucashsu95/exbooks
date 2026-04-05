@@ -3,9 +3,9 @@
  * 處理快取策略與 Web Push 通知
  */
 
-const CACHE_NAME = 'exbooks-v1';
-const STATIC_CACHE_NAME = 'exbooks-static-v1';
-const DYNAMIC_CACHE_NAME = 'exbooks-dynamic-v1';
+const CACHE_NAME = 'exbooks-v2';
+const STATIC_CACHE_NAME = 'exbooks-static-v2';
+const DYNAMIC_CACHE_NAME = 'exbooks-dynamic-v2';
 
 // 靜態資源（安裝時預先快取）
 const STATIC_ASSETS = [

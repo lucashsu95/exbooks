@@ -84,6 +84,29 @@ body {
 .fade-in { animation: fadeIn 0.3s ease-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
+/* View Transitions API */
+::view-transition-old(main-content) { animation: 180ms ease-in both vt-fade-out; }
+::view-transition-new(main-content) { animation: 220ms ease-out both vt-fade-in; }
+::view-transition-old(bottom-nav),
+::view-transition-new(bottom-nav) { animation: none; }
+
+@keyframes vt-fade-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-6px); }
+}
+
+@keyframes vt-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(main-content),
+  ::view-transition-new(main-content) {
+    animation: none !important;
+  }
+}
+
 /* Toast auto-dismiss */
 .toast { animation: toastIn 0.4s ease-out, toastOut 0.4s ease-in 4s forwards; }
 @keyframes toastIn { from { opacity: 0; transform: translateY(-12px); } }
@@ -282,7 +305,9 @@ body {
             </style>
         {% endif %}
         <!-- Main Content Wrapper -->
-        <div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light-background-dark overflow-x-hidden fade-in">
+        <div id="main-content"
+             style="view-transition-name: main-content"
+             class="relative flex h-auto min-h-screen w-full flex-col bg-background-light-background-dark overflow-x-hidden fade-in">
             {% block content %}{% endblock %}
         </div>
         {% block extra_js %}{% endblock %}
@@ -325,6 +350,33 @@ body {
   document.body.addEventListener('htmx:beforeRequest', startLoading);
   document.body.addEventListener('htmx:afterRequest', stopLoading);
   document.body.addEventListener('htmx:beforeSwap', stopLoading);
+
+  // === View Transition API — Bottom Nav 導航平滑過渡 ===
+  if (document.startViewTransition) {
+    let isTransitioning = false;
+
+    document.addEventListener('click', (e) => {
+      const navLink = e.target.closest('#bottom-nav a[href]');
+      if (!navLink || isTransitioning) return;
+
+      const href = navLink.getAttribute('href');
+      const currentPath = window.location.pathname;
+      const targetPath = new URL(href, window.location.origin).pathname;
+
+      // 同頁導航 — 不執行過渡
+      if (currentPath === targetPath) return;
+
+      e.preventDefault();
+      isTransitioning = true;
+
+      document.startViewTransition(() => {
+        window.location.href = href;
+      }).finished.catch(() => {
+        // 如果動畫失敗，仍然導航
+        window.location.href = href;
+      });
+    });
+  }
 
   // === 方案 D: 虛擬鍵盝處理 ===
   if (window.visualViewport) {
