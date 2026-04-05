@@ -26,9 +26,8 @@ def validate_and_process(image_file):
         raise ValidationError(f"不支援的檔案格式：{ext}。僅支援 JPG 和 PNG。")
 
     # 2. 驗證 MIME type
-    if hasattr(image_file, "content_type"):
-        if image_file.content_type not in ALLOWED_MIME_TYPES:
-            raise ValidationError(f"不支援的 MIME 類型：{image_file.content_type}。")
+    if image_file.content_type not in ALLOWED_MIME_TYPES:
+        raise ValidationError(f"不支援的 MIME 類型：{image_file.content_type}。")
 
     # 3. 讀取圖片
     try:
