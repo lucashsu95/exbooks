@@ -5,6 +5,31 @@ from django.utils.html import format_html
 from .models import Appeal, UserProfile, Violation
 
 
+class TrustLevelFilter(admin.SimpleListFilter):
+    title = "信用等級"
+    parameter_name = "trust_level_computed"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("0", "Lv.0 新手（積分 0-3）"),
+            ("1", "Lv.1 一般（積分 4-8）"),
+            ("2", "Lv.2 可信（積分 9-15）"),
+            ("3", "Lv.3 優良（積分 16+）"),
+        )
+
+    def queryset(self, request, queryset):
+        v = self.value()
+        if v == "0":
+            return queryset.filter(trust_score__lt=4)
+        if v == "1":
+            return queryset.filter(trust_score__gte=4, trust_score__lt=9)
+        if v == "2":
+            return queryset.filter(trust_score__gte=9, trust_score__lt=16)
+        if v == "3":
+            return queryset.filter(trust_score__gte=16)
+        return queryset
+
+
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = (
