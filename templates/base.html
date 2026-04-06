@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant" class="h-full">
     <head>
+        {% load static %}
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>
@@ -231,6 +232,10 @@ body {
   }
 }
         </style>
+        {% block extra_css %}
+            <link rel="stylesheet" href="{% static 'css/book-ui.css' %}">
+            <link rel="stylesheet" href="{% static 'css/deal-ui.css' %}">
+        {% endblock %}
         {% block extra_head %}{% endblock %}
     </head>
     <body class="bg-background-light-background-dark font-display text-slate-900"

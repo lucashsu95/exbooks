@@ -1,0 +1,53 @@
+/* Deal UI Styles */
+:root {
+  --spring-physics: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 互動彈簧效果 */
+.touch-spring {
+  transition: transform 0.4s var(--spring-physics), opacity 0.4s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.touch-spring:active {
+  transform: scale(0.94);
+  opacity: 0.9;
+}
+
+/* Deal 卡片基礎樣式 */
+.deal-card {
+  @apply bg-white rounded-2xl p-4 shadow-sm border border-slate-100;
+  @apply hover:shadow-md transition-shadow duration-200;
+}
+
+/* 狀態徽章 */
+.status-badge {
+  @apply text-xs font-semibold px-3 py-1 rounded-full;
+}
+.status-badge-amber {
+  @apply bg-amber-100 text-amber-700;
+}
+.status-badge-blue {
+  @apply bg-blue-100 text-blue-700;
+}
+.status-badge-green {
+  @apply bg-green-100 text-green-700;
+}
+.status-badge-gray {
+  @apply bg-gray-100 text-gray-600;
+}
+.status-badge-red {
+  @apply bg-red-100 text-red-700;
+}
+
+/* 玻璃質感導覽列（如需要） */
+.glass-nav {
+  backdrop-filter: blur(25px) saturate(200%);
+  -webkit-backdrop-filter: blur(25px) saturate(200%);
+  background: rgba(255, 255, 255, 0.7);
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+.glass-nav.scrolled {
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+}
