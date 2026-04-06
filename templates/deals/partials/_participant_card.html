@@ -1,0 +1,27 @@
+{% comment %}
+  Participant Card
+  顯示交易參與者資訊（申請者或持有者）
+  Required context: user (User), role_label (str)
+  Optional context: rating_info (dict with avg_rating, total_ratings)
+{% endcomment %}
+<div class="bg-white rounded-3xl p-6 shadow-sm">
+    <div class="flex items-center gap-4 mb-4">
+        {% include "partials/avatar.html" with user=user %}
+        <div>
+            <h4 class="font-bold text-slate-800">{{ user.username }}</h4>
+            <p class="text-slate-500 text-sm">{{ role_label }}</p>
+        </div>
+    </div>
+    {# Trust Badge #}
+    {% if user.profile %}
+        <div class="mb-3">{% include "partials/trust_badge_inline.html" with trust_level=user.profile.trust_level %}</div>
+    {% endif %}
+    {# Rating Info (if provided) #}
+    {% if rating_info %}
+        <div class="flex items-center gap-2 text-sm">
+            <span class="text-amber-500 material-symbols-outlined text-base">star</span>
+            <span class="font-bold text-slate-800">{{ rating_info.avg_rating|floatformat:1 }}</span>
+            <span class="text-slate-400">({{ rating_info.total_ratings }} 評價)</span>
+        </div>
+    {% endif %}
+</div>

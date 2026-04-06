@@ -1,0 +1,24 @@
+{% comment %}
+  Counterpart User Info
+  顯示交易中「對方」的頭像和用戶名
+  Required context: deal (Deal), current_user (User)
+{% endcomment %}
+{% if deal.applicant == current_user %}
+    {# 我是申請者，顯示回應者 #}
+    {% include "partials/avatar.html" with user=deal.responder %}
+    <div>
+        <h4 class="font-bold text-slate-800">{{ deal.responder.username }}</h4>
+        {% if deal.responder.profile %}
+            {% include "partials/trust_badge_inline.html" with trust_level=deal.responder.profile.trust_level %}
+        {% endif %}
+    </div>
+{% else %}
+    {# 我是回應者，顯示申請者 #}
+    {% include "partials/avatar.html" with user=deal.applicant %}
+    <div>
+        <h4 class="font-bold text-slate-800">{{ deal.applicant.username }}</h4>
+        {% if deal.applicant.profile %}
+            {% include "partials/trust_badge_inline.html" with trust_level=deal.applicant.profile.trust_level %}
+        {% endif %}
+    </div>
+{% endif %}

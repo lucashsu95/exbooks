@@ -63,3 +63,25 @@ class TestPartialRendering:
         html = render_to_string("deals/partials/_counterpart_info.html", context)
         assert deal.applicant.username in html
         assert deal.responder.username not in html
+
+    @pytest.mark.parametrize(
+        "status,user_role,expected_buttons",
+        [
+            ("Q", "responder", ["接受", "拒絕"]),
+            ("Q", "applicant", ["取消申請"]),
+            ("P", "responder", ["查看詳情"]),
+            ("M", "applicant", ["查看詳情"]),
+            ("D", "applicant", ["查看詳情"]),
+            ("X", "responder", ["查看詳情"]),
+        ],
+    )
+    def test_deal_card_shows_correct_buttons(self, status, user_role, expected_buttons):
+        """_deal_card.html should show correct action buttons based on status and user role."""
+        deal = DealFactory(status=status)
+        user = deal.responder if user_role == "responder" else deal.applicant
+
+        context = {"deal": deal, "user": user, "current_tab": "pending"}
+        html = render_to_string("deals/partials/_deal_card.html", context)
+
+        for btn_text in expected_buttons:
+            assert btn_text in html

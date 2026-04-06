@@ -46,241 +46,36 @@
             </div>
         </header>
         <main class="max-w-xl mx-auto p-4 space-y-4 pb-24" id="deal-list-content">
-            {% if current_tab == 'pending' %}
-                {% if pending_responder %}
-                    <div class="flex items-center justify-between mb-2">
-                        <p class="text-xs font-bold uppercase tracking-wider text-slate-500">需要您處理的申請</p>
-                        <span class="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">{{ pending_responder.count }} 筆</span>
-                    </div>
-                    {% for deal in pending_responder %}
-                        <a href="{% url 'deals:detail' deal.id %}"
-                           class="block bg-white p-4 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-transform">
-                            <div class="flex gap-4 items-center">
-                                <div class="w-20 h-28 rounded-xl overflow-hidden shrink-0 shadow-md bg-slate-200">
-                                    {% include 'partials/book_cover.html' with book=deal.shared_book %}
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <h3 class="font-bold text-base text-slate-900 line-clamp-2">{{ deal.shared_book.official_book.title }}</h3>
-                                    <div class="flex items-center gap-2 mt-2">
-                                        <span class="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">{{ deal.get_deal_type_display }}</span>
-                                        <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">待回應</span>
-                                    </div>
-                                    <div class="flex items-center gap-2 mt-2">
-                                        <div class="size-7 rounded-full bg-primary/10 overflow-hidden border border-primary/20 grid place-items-center">
-                                            {% if deal.applicant.profile.avatar %}
-                                                <img src="{{ deal.applicant.profile.avatar.url }}"
-                                                     alt="申請者頭像"
-                                                     class="w-full h-full object-cover" />
-                                            {% else %}
-                                                <span class="material-symbols-outlined text-primary text-sm">person</span>
-                                            {% endif %}
-                                        </div>
-                                        <span class="text-sm text-slate-600 font-medium">{{ deal.applicant.profile.nickname|default:deal.applicant.get_full_name|default:deal.applicant.username }}</span>
-                                    </div>
-                                </div>
-                                <div class="text-right flex-shrink-0">
-                                    <p class="text-xs text-slate-500">{{ deal.created_at|timesince }}</p>
-                                    <span class="material-symbols-outlined text-primary mt-2">chevron_right</span>
-                                </div>
-                            </div>
-                        </a>
-                    {% endfor %}
-                {% else %}
-                    <div class="bg-white rounded-xl p-8 text-center">
-                        <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">inbox</span>
-                        <h3 class="text-slate-900 font-bold mb-2">尚無待處理申請</h3>
-                        <p class="text-slate-500 text-sm">目前沒有需要您回應的交易申請</p>
-                    </div>
+            {% if grouped_pending %}
+                <div class="mb-4 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                    <p class="text-sm text-amber-800">
+                        <span class="material-symbols-outlined text-base align-middle">info</span>
+                        有 {{ grouped_pending|length }} 本書籍收到多筆申請，建議檢視後一併處理
+                    </p>
+                </div>
+            {% endif %}
+            {% if current_tab == 'pending' and pending_responder %}
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">需要您處理的申請</p>
+                    <span class="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">{{ pending_responder.count }} 筆</span>
+                </div>
+            {% endif %}
+            {% if deals %}
+                {% for deal in deals %}
+                    {% include 'deals/partials/_deal_card.html' with deal=deal user=request.user current_tab=current_tab %}
+                {% endfor %}
+            {% else %}
+                {% if current_tab == 'pending' %}
+                    {% include 'deals/partials/_empty_state.html' with icon='request_page' message='目前沒有待處理的交易' %}
+                {% elif current_tab == 'pending_applicant' %}
+                    {% include 'deals/partials/_empty_state.html' with icon='hourglass_empty' message='您還沒有待對方回應的交易申請' %}
+                {% elif current_tab == 'meeting' %}
+                    {% include 'deals/partials/_empty_state.html' with icon='event' message='目前沒有約定面交的交易' %}
+                {% elif current_tab == 'rating' %}
+                    {% include 'deals/partials/_empty_state.html' with icon='star' message='目前沒有待評價的交易' %}
+                {% elif current_tab == 'history' %}
+                    {% include 'deals/partials/_empty_state.html' with icon='history' message='您還沒有已完成的交易記錄' %}
                 {% endif %}
-            {% elif current_tab == 'pending_applicant' %}
-                {% for deal in pending_applicant %}
-                    <a href="{% url 'deals:detail' deal.id %}"
-                       class="block bg-white p-4 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-transform">
-                        <div class="flex gap-4 items-center">
-                            <div class="w-20 h-28 rounded-xl overflow-hidden shrink-0 shadow-md bg-slate-200">
-                                {% include 'partials/book_cover.html' with book=deal.shared_book %}
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <h3 class="font-bold text-base text-slate-900 line-clamp-2">{{ deal.shared_book.official_book.title }}</h3>
-                                <div class="flex items-center gap-2 mt-2">
-                                    <span class="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">{{ deal.get_deal_type_display }}</span>
-                                    <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium">等待回應</span>
-                                </div>
-                                <div class="flex items-center gap-2 mt-2">
-                                    <div class="size-6 rounded-full bg-slate-100 overflow-hidden border border-slate-200  grid place-items-center">
-                                        {% if deal.responder.profile.avatar %}
-                                            <img src="{{ deal.responder.profile.avatar.url }}"
-                                                 class="w-full h-full object-cover" />
-                                        {% else %}
-                                            <span class="material-symbols-outlined text-slate-400 text-[14px]">person</span>
-                                        {% endif %}
-                                    </div>
-                                    <span class="text-xs text-slate-500 font-medium">{{ deal.responder.profile.nickname|default:deal.responder.get_full_name|default:deal.responder.username }}</span>
-                                </div>
-                            </div>
-                            <span class="material-symbols-outlined text-slate-400">chevron_right</span>
-                        </div>
-                    </a>
-                {% empty %}
-                    <div class="bg-white rounded-xl p-8 text-center">
-                        <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">hourglass_empty</span>
-                        <h3 class="text-slate-900 font-bold mb-2">尚無等待中的申請</h3>
-                        <p class="text-slate-500 text-sm">您還沒有待對方回應的交易申請</p>
-                    </div>
-                {% endfor %}
-            {% elif current_tab == 'meeting' %}
-                {% for deal in pending_meeting %}
-                    <a href="{% url 'deals:detail' deal.id %}"
-                       class="block bg-white p-4 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-transform">
-                        <div class="flex gap-4 items-center">
-                            <div class="w-20 h-28 rounded-xl overflow-hidden shrink-0 shadow-md bg-slate-200">
-                                {% include 'partials/book_cover.html' with book=deal.shared_book %}
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <h3 class="font-bold text-base text-slate-900 line-clamp-2">{{ deal.shared_book.official_book.title }}</h3>
-                                <div class="flex items-center gap-2 mt-2">
-                                    <span class="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">{{ deal.get_deal_type_display }}</span>
-                                    <span class="px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">待面交</span>
-                                </div>
-                                <div class="flex items-center gap-2 mt-2">
-                                    <div class="size-6 rounded-full bg-slate-100 overflow-hidden border border-slate-200  grid place-items-center">
-                                        {% if request.user == deal.applicant %}
-                                            {% if deal.responder.profile.avatar %}
-                                                <img src="{{ deal.responder.profile.avatar.url }}"
-                                                     class="w-full h-full object-cover" />
-                                            {% else %}
-                                                <span class="material-symbols-outlined text-slate-400 text-[14px]">person</span>
-                                            {% endif %}
-                                        {% else %}
-                                            {% if deal.applicant.profile.avatar %}
-                                                <img src="{{ deal.applicant.profile.avatar.url }}"
-                                                     class="w-full h-full object-cover" />
-                                            {% else %}
-                                                <span class="material-symbols-outlined text-slate-400 text-[14px]">person</span>
-                                            {% endif %}
-                                        {% endif %}
-                                    </div>
-                                    <span class="text-xs text-slate-500 font-medium">
-                                        {% if request.user == deal.applicant %}
-                                            {{ deal.responder.profile.nickname|default:deal.responder.get_full_name|default:deal.responder.username }}
-                                        {% else %}
-                                            {{ deal.applicant.profile.nickname|default:deal.applicant.get_full_name|default:deal.applicant.username }}
-                                        {% endif %}
-                                    </span>
-                                </div>
-                            </div>
-                            <span class="material-symbols-outlined text-slate-400">chevron_right</span>
-                        </div>
-                    </a>
-                {% empty %}
-                    <div class="bg-white rounded-xl p-8 text-center">
-                        <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">handshake</span>
-                        <h3 class="text-slate-900 font-bold mb-2">尚無待面交交易</h3>
-                        <p class="text-slate-500 text-sm">目前沒有待面交的交易</p>
-                    </div>
-                {% endfor %}
-            {% elif current_tab == 'rating' %}
-                {% for deal in pending_rating %}
-                    <a href="{% url 'deals:detail' deal.id %}"
-                       class="block bg-white p-4 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-transform">
-                        <div class="flex gap-4 items-center">
-                            <div class="w-20 h-28 rounded-xl overflow-hidden shrink-0 shadow-md bg-slate-200">
-                                {% include 'partials/book_cover.html' with book=deal.shared_book %}
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <h3 class="font-bold text-base text-slate-900 line-clamp-2">{{ deal.shared_book.official_book.title }}</h3>
-                                <div class="flex items-center gap-2 mt-2">
-                                    <span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">{{ deal.get_deal_type_display }}</span>
-                                    <span class="px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-medium">待評價</span>
-                                </div>
-                                <div class="flex items-center gap-2 mt-2">
-                                    <div class="size-6 rounded-full bg-slate-100 overflow-hidden border border-slate-200  grid place-items-center">
-                                        {% if request.user == deal.applicant %}
-                                            {% if deal.responder.profile.avatar %}
-                                                <img src="{{ deal.responder.profile.avatar.url }}"
-                                                     class="w-full h-full object-cover" />
-                                            {% else %}
-                                                <span class="material-symbols-outlined text-slate-400 text-[14px]">person</span>
-                                            {% endif %}
-                                        {% else %}
-                                            {% if deal.applicant.profile.avatar %}
-                                                <img src="{{ deal.applicant.profile.avatar.url }}"
-                                                     class="w-full h-full object-cover" />
-                                            {% else %}
-                                                <span class="material-symbols-outlined text-slate-400 text-[14px]">person</span>
-                                            {% endif %}
-                                        {% endif %}
-                                    </div>
-                                    <span class="text-xs text-slate-500 font-medium">
-                                        {% if request.user == deal.applicant %}
-                                            {{ deal.responder.profile.nickname|default:deal.responder.get_full_name|default:deal.responder.username }}
-                                        {% else %}
-                                            {{ deal.applicant.profile.nickname|default:deal.applicant.get_full_name|default:deal.applicant.username }}
-                                        {% endif %}
-                                    </span>
-                                </div>
-                            </div>
-                            <span class="material-symbols-outlined text-primary">star</span>
-                        </div>
-                    </a>
-                {% empty %}
-                    <div class="bg-white rounded-xl p-8 text-center">
-                        <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">star</span>
-                        <h3 class="text-slate-900 font-bold mb-2">尚無待評價交易</h3>
-                        <p class="text-slate-500 text-sm">目前沒有待評價的交易</p>
-                    </div>
-                {% endfor %}
-            {% elif current_tab == 'history' %}
-                {% for deal in history %}
-                    <a href="{% url 'deals:detail' deal.id %}"
-                       class="block bg-white p-4 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-transform opacity-75">
-                        <div class="flex gap-4 items-center">
-                            <div class="w-20 h-28 rounded-xl overflow-hidden shrink-0 shadow-md bg-slate-200">
-                                {% include 'partials/book_cover.html' with book=deal.shared_book %}
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <h3 class="font-bold text-base text-slate-900 line-clamp-2">{{ deal.shared_book.official_book.title }}</h3>
-                                <div class="flex items-center gap-2 mt-1">
-                                    <span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">{{ deal.get_deal_type_display }}</span>
-                                    <span class="px-2.5 py-1 rounded-full {% if deal.status == 'D' %}bg-slate-100 text-slate-700{% else %}bg-rose-100 text-rose-700{% endif %} text-xs font-medium">{{ deal.get_status_display }}</span>
-                                </div>
-                                <div class="flex items-center gap-2 mt-2">
-                                    <div class="size-6 rounded-full bg-slate-100 overflow-hidden border border-slate-200  grid place-items-center">
-                                        {% if request.user == deal.applicant %}
-                                            {% if deal.responder.profile.avatar %}
-                                                <img src="{{ deal.responder.profile.avatar.url }}"
-                                                     class="w-full h-full object-cover" />
-                                            {% else %}
-                                                <span class="material-symbols-outlined text-slate-400 text-[14px]">person</span>
-                                            {% endif %}
-                                        {% else %}
-                                            {% if deal.applicant.profile.avatar %}
-                                                <img src="{{ deal.applicant.profile.avatar.url }}"
-                                                     class="w-full h-full object-cover" />
-                                            {% else %}
-                                                <span class="material-symbols-outlined text-slate-400 text-[14px]">person</span>
-                                            {% endif %}
-                                        {% endif %}
-                                    </div>
-                                    <span class="text-xs text-slate-500 font-medium">
-                                        {% if request.user == deal.applicant %}
-                                            {{ deal.responder.profile.nickname|default:deal.responder.get_full_name|default:deal.responder.username }}
-                                        {% else %}
-                                            {{ deal.applicant.profile.nickname|default:deal.applicant.get_full_name|default:deal.applicant.username }}
-                                        {% endif %}
-                                    </span>
-                                </div>
-                            </div>
-                            <span class="material-symbols-outlined text-slate-400">chevron_right</span>
-                        </div>
-                    </a>
-                {% empty %}
-                    <div class="bg-white rounded-xl p-8 text-center">
-                        <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">history</span>
-                        <h3 class="text-slate-900 font-bold mb-2">尚無歷史紀錄</h3>
-                        <p class="text-slate-500 text-sm">您還沒有已完成的交易記錄</p>
-                    </div>
-                {% endfor %}
             {% endif %}
         </main>
     </div>
