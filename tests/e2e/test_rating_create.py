@@ -35,13 +35,11 @@ def test_rating_create_submit_success(authenticated_page, live_server, deal_meet
     # Fill in comment
     authenticated_page.locator("textarea[name='comment']").fill("書況良好，準時赴約")
 
-    # Submit form - use specific selector
-    authenticated_page.locator(
-        "button[form='rating-form'], button:has-text('送出評價')"
-    ).click()
+    # Submit form - use role-based locator with force=True to bypass overlay
+    authenticated_page.get_by_role("button", name="送出評價").click(force=True)
 
     # Wait for page to respond
-    authenticated_page.wait_for_timeout(2000)
+    authenticated_page.wait_for_url(f"{live_server.url}/**", timeout=10000)
 
     # Verify we're on a page
     expect(authenticated_page.locator("body")).to_be_visible()

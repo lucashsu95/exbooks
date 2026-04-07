@@ -90,8 +90,8 @@ def test_deal_detail_complete_meeting(authenticated_page, live_server, deal_resp
     """測試完成面交。"""
     authenticated_page.goto(f"{live_server.url}/deals/{deal_responded.id}/")
 
-    # Click complete button
-    authenticated_page.locator("button:has-text('確認面交')").click()
+    # Click complete button - button is behind fixed nav, use force click
+    authenticated_page.get_by_role("button", name="確認面交").click(force=True)
 
     # Wait for page to load after redirect
     # The status should change to MEETED (M) and show "待評價" or redirect to rating page

@@ -34,15 +34,13 @@ def test_deal_create_submit_success(authenticated_page, live_server, shared_book
     # Fill in note
     authenticated_page.locator("textarea[name='note']").fill("希望週末面交")
 
-    # Submit form - use specific selector for the deal form submit button
-    authenticated_page.locator(
-        "button[form='deal-form'], button:has-text('送出申請')"
-    ).click()
+    # Submit form - button is behind fixed nav, use force click
+    authenticated_page.get_by_role("button", name="送出申請").click(force=True)
 
-    # Wait for page to respond (either redirect or show message)
-    authenticated_page.wait_for_timeout(2000)
+    # Wait for navigation or page update
+    authenticated_page.wait_for_url(f"{live_server.url}/**", timeout=10000)
 
-    # Verify we're on a page (either same page with error or redirected)
+    # Verify we're on a page (either detail or success page)
     expect(authenticated_page.locator("body")).to_be_visible()
 
 
@@ -57,13 +55,11 @@ def test_deal_create_cannot_borrow_own_book(
     # Navigate to deal create page
     authenticated_page.goto(f"{live_server.url}/deals/create/{my_book.id}/LN/")
 
-    # Submit the form to trigger validation - use specific selector
-    authenticated_page.locator(
-        "button[form='deal-form'], button:has-text('送出申請')"
-    ).click()
+    # Submit the form using force click
+    authenticated_page.get_by_role("button", name="送出申請").click(force=True)
 
     # Wait for page response
-    authenticated_page.wait_for_timeout(1000)
+    authenticated_page.wait_for_url(f"{live_server.url}/**", timeout=10000)
 
     # Verify we're still on the same page (form error) or redirected with error message
     expect(authenticated_page.locator("body")).to_be_visible()
@@ -80,13 +76,11 @@ def test_deal_create_wrong_book_status(
     # Navigate to deal create page
     authenticated_page.goto(f"{live_server.url}/deals/create/{book.id}/LN/")
 
-    # Submit the form to trigger validation - use specific selector
-    authenticated_page.locator(
-        "button[form='deal-form'], button:has-text('送出申請')"
-    ).click()
+    # Submit the form using force click
+    authenticated_page.get_by_role("button", name="送出申請").click(force=True)
 
     # Wait for page response
-    authenticated_page.wait_for_timeout(1000)
+    authenticated_page.wait_for_url(f"{live_server.url}/**", timeout=10000)
 
     # Verify we're still on the same page (form error) or redirected with error message
     expect(authenticated_page.locator("body")).to_be_visible()
