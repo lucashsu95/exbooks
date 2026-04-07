@@ -79,3 +79,14 @@ body {
   mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
   -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
 }
+
+/* Fix duplicate select arrows from Tailwind forms plugin */
+select.relative,
+select {
+  background-image: none !important;
+}
+
+/* Remove crispy_tailwind arrow styling for .relative selects */
+select.relative::after {
+  display: none !important;
+}

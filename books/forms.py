@@ -1,8 +1,9 @@
 from django import forms
+from django.urls import reverse
 from django.db.models import Q
 from django.forms.widgets import Input
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Field, Div
+from crispy_forms.layout import Layout, Field, Div, HTML
 
 from .models import SharedBook, OfficialBook, BookSet
 
@@ -24,19 +25,31 @@ class BookSearchForm(forms.Form):
         required=False,
         label="狀態",
         choices=[("", "全部狀態")] + list(SharedBook.Status.choices),
-        widget=forms.Select(attrs={"class": "form-select"}),
+        widget=forms.Select(
+            attrs={
+                "class": "appearance-none w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors cursor-pointer"
+            }
+        ),
     )
     transferability = forms.ChoiceField(
         required=False,
         label="流通性",
         choices=[("", "全部流通性")] + list(SharedBook.Transferability.choices),
-        widget=forms.Select(attrs={"class": "form-select"}),
+        widget=forms.Select(
+            attrs={
+                "class": "appearance-none w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors cursor-pointer"
+            }
+        ),
     )
     category = forms.ChoiceField(
         required=False,
         label="分類",
         choices=[("", "全部分類")] + list(OfficialBook.Category.choices),
-        widget=forms.Select(attrs={"class": "form-select"}),
+        widget=forms.Select(
+            attrs={
+                "class": "appearance-none w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors cursor-pointer"
+            }
+        ),
     )
 
     def __init__(self, *args, **kwargs):
@@ -69,9 +82,8 @@ class BookAddForm(forms.ModelForm):
         label="ISBN",
         widget=forms.TextInput(
             attrs={
-                "hx-get": "/books/api/isbn-lookup/",
-                "hx-trigger": "keyup changed delay:500ms",
-                "hx-target": "#isbn-result",
+                "placeholder": "請輸入 10 或 13 位 ISBN",
+                "class": "form-input",
             }
         ),
     )
@@ -82,6 +94,11 @@ class BookAddForm(forms.ModelForm):
         choices=OfficialBook.Category.choices,
         label="分類",
         initial=OfficialBook.Category.OTHER,
+        widget=forms.Select(
+            attrs={
+                "class": "appearance-none w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors cursor-pointer"
+            }
+        ),
     )
     cover_image = forms.ImageField(
         label="封面圖片",
@@ -99,7 +116,7 @@ class BookAddForm(forms.ModelForm):
         label="流通性",
         widget=forms.Select(
             attrs={
-                "class": "appearance-none bg-white border border-slate-200 text-slate-700 text-sm rounded-full px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                "class": "appearance-none w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors cursor-pointer"
             }
         ),
     )
@@ -113,7 +130,21 @@ class BookAddForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
-            Field("isbn"),
+            Div(
+                Field("isbn", wrapper_class="flex-1 mb-0"),
+                HTML(
+                    f'<button type="button" '
+                    f'hx-get="{reverse("books:isbn_lookup")}" '
+                    "hx-include=\"[name='isbn']\" "
+                    'hx-target="#isbn-result" '
+                    'hx-swap="outerHTML" '
+                    'hx-indicator=".htmx-indicator" '
+                    'class="h-11 px-4 bg-slate-100 text-slate-700 font-medium rounded-xl border border-slate-200 hover:bg-slate-200 transition-colors">'
+                    "查詢"
+                    "</button>"
+                ),
+                css_class="flex gap-2 items-end mb-4",
+            ),
             Field("title"),
             Field("author"),
             Field("publisher"),
@@ -146,6 +177,11 @@ class BookEditForm(forms.ModelForm):
         choices=OfficialBook.Category.choices,
         label="分類",
         initial=OfficialBook.Category.OTHER,
+        widget=forms.Select(
+            attrs={
+                "class": "appearance-none w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors cursor-pointer"
+            }
+        ),
     )
     photos = forms.FileField(
         widget=MultipleFileInput(),
@@ -157,7 +193,7 @@ class BookEditForm(forms.ModelForm):
         label="流通性",
         widget=forms.Select(
             attrs={
-                "class": "appearance-none bg-white border border-slate-200 text-slate-700 text-sm rounded-full px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                "class": "appearance-none w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors cursor-pointer"
             }
         ),
     )

@@ -5,6 +5,8 @@ from typing import Optional, Dict, Any
 import httpx
 from django.core.cache import cache
 
+from books.models import OfficialBook
+
 # 設定 logger
 logger = logging.getLogger(__name__)
 
@@ -44,7 +46,7 @@ def normalize_isbn(isbn: str) -> Optional[str]:
 
 def lookup_by_isbn(isbn: str) -> Optional[Dict[str, Any]]:
     """
-    透過 Google Books API 查詢 ISBN 對應的書籍資訊
+    透過 ISBN 查詢書籍資訊（優先查詢本地資料庫，再查 Google Books API）
 
     Args:
         isbn: ISBN-10 或 ISBN-13 字串
@@ -65,7 +67,31 @@ def lookup_by_isbn(isbn: str) -> Optional[Dict[str, Any]]:
         logger.warning(f"Invalid ISBN format: {isbn}")
         return None
 
-    # 檢查快取
+    # 1. 優先查詢本地資料庫 (OfficialBook)
+    try:
+        official_book = OfficialBook.objects.get(isbn=normalized_isbn)
+        logger.info(
+            f"Book found in database: {official_book.title} (ISBN: {normalized_isbn})"
+        )
+        result = {
+            "title": official_book.title,
+            "author": official_book.author,
+            "publisher": official_book.publisher,
+            "cover_url": official_book.cover_image.url
+            if official_book.cover_image
+            else "",
+            "isbn": normalized_isbn,
+            "source": "database",  # 標記資料來源
+        }
+        return result
+    except OfficialBook.DoesNotExist:
+        logger.info(
+            f"ISBN not found in database: {normalized_isbn}, querying Google Books API..."
+        )
+    except Exception as e:
+        logger.error(f"Error querying database for ISBN {normalized_isbn}: {e}")
+
+    # 2. 檢查快取（避免重複 API 呼叫）
     cache_key = f"isbn_lookup_{normalized_isbn}"
     cached_result = cache.get(cache_key)
     if cached_result is not None:
@@ -100,6 +126,7 @@ def lookup_by_isbn(isbn: str) -> Optional[Dict[str, Any]]:
             "publisher": book_info.get("publisher", ""),
             "cover_url": book_info.get("imageLinks", {}).get("thumbnail", ""),
             "isbn": normalized_isbn,
+            "source": "google_api",  # 標記資料來源
         }
 
         # 快取結果

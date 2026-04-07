@@ -16,14 +16,14 @@
         <form method="POST" enctype="multipart/form-data" class="space-y-4">
             {% csrf_token %}
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                {% crispy form %}
                 <div id="isbn-result"></div>
-                <span class="htmx-indicator text-sm text-slate-500">
+                <span class="htmx-indicator text-sm text-slate-500 mb-2">
                     <span class="material-symbols-outlined animate-spin align-middle"
                           aria-hidden="true">sync</span>
                     查詢中…
                     <span class="sr-only">請稍候</span>
                 </span>
+                {% crispy form %}
                 <div id="photo-preview" class="grid grid-cols-3 gap-2 mt-3"></div>
             </div>
             <button type="submit"

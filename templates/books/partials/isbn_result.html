@@ -1,6 +1,6 @@
 {% if result and result.error %}
-    <div class="bg-orange-50 p-3 rounded-lg border border-orange-200 mt-2">
-        <p class="text-sm text-orange-700">
+    <div hx-swap-oob="beforeend:#toast-container">
+        <div class="toast rounded-lg border px-4 py-3 text-sm shadow-md border-red-200 bg-red-50 text-red-800">
             {% if result.error == 'rate_limit' %}
                 查詢次數過多，請稍後再試，或手動輸入書籍資訊
             {% elif result.error == 'timeout' %}
@@ -8,16 +8,18 @@
             {% else %}
                 查詢發生錯誤，請手動輸入書籍資訊
             {% endif %}
-        </p>
+        </div>
     </div>
+    <div id="isbn-result"></div>
     <script>
-// 查詢失敗時顯示封面上傳欄位
-if (typeof window.setCoverFieldVisibility === 'function') {
-window.setCoverFieldVisibility(false);
-}
+        // 查詢失敗時顯示封面上傳欄位
+        if (typeof window.setCoverFieldVisibility === 'function') {
+            window.setCoverFieldVisibility(false);
+        }
     </script>
 {% elif result %}
-    <div class="bg-green-50 p-3 rounded-lg border border-green-200 mt-2">
+    <div id="isbn-result"
+         class="bg-green-50 p-3 rounded-lg border border-green-200 mt-2 mb-4">
         <div class="flex gap-3 items-start">
             {% if result.cover_url %}
                 <img src="{{ result.cover_url }}"
@@ -64,9 +66,12 @@ window.setCoverFieldVisibility(false);
         </script>
     </div>
 {% elif isbn %}
-    <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200 mt-2">
-        <p class="text-sm text-yellow-700">查無此 ISBN，請手動輸入書籍資訊</p>
+    <div hx-swap-oob="beforeend:#toast-container">
+        <div class="toast rounded-lg border px-4 py-3 text-sm shadow-md border-amber-200 bg-amber-50 text-amber-800">
+            查無此 ISBN，請手動輸入書籍資訊
+        </div>
     </div>
+    <div id="isbn-result"></div>
     <script>
     if (typeof window.setCoverFieldVisibility === 'function') {
       window.setCoverFieldVisibility(false);
