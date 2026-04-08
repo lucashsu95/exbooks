@@ -86,7 +86,7 @@ class CustomSignupForm(AllauthSignupForm):
     birth_date = forms.DateField(
         label=_("出生日期"),
         required=True,
-        widget=forms.DateInput(attrs={"type": "date"}),
+        widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
         help_text=_("用於年齡驗證（需年滿 18 歲）"),
     )
 
@@ -275,7 +275,7 @@ class ProfileForm(forms.ModelForm):
         )
         widgets = {
             "nickname": forms.TextInput(attrs={"placeholder": "你的暱稱"}),
-            "birth_date": forms.DateInput(attrs={"type": "date"}),
+            "birth_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "default_location": forms.TextInput(
                 attrs={"placeholder": "例：台北市大安區"}
             ),

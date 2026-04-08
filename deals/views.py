@@ -104,6 +104,24 @@ def deal_detail(request, pk):
         is_read=False,
     ).update(is_read=True)
 
+    from django.db.models import Avg
+
+    # Correct aggregation for complex calculation
+    from deals.models import Rating
+
+    def get_user_rating_info(user):
+        ratings = Rating.objects.filter(ratee=user)
+        total = ratings.count()
+        if total == 0:
+            return None
+        avg_scores = ratings.aggregate(
+            a=Avg("friendliness_score"),
+            b=Avg("punctuality_score"),
+            c=Avg("accuracy_score"),
+        )
+        avg = (avg_scores["a"] + avg_scores["b"] + avg_scores["c"]) / 3
+        return {"avg_rating": avg, "total_ratings": total}
+
     return render(
         request,
         "deals/deal_detail.html",
@@ -115,6 +133,8 @@ def deal_detail(request, pk):
             "is_responder": request.user == deal.responder,
             "is_owner": request.user == deal.shared_book.owner,
             "is_keeper": request.user == deal.shared_book.keeper,
+            "applicant_rating": get_user_rating_info(deal.applicant),
+            "responder_rating": get_user_rating_info(deal.responder),
         },
     )
 
