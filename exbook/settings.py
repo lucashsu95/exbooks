@@ -30,9 +30,9 @@ SECRET_KEY = "django-insecure-jaxf2rx9wh6aobxeqk@c2lkhmy0l#tr0yr)5k4@e&$i7$qg#_*
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "1b40-1-34-247-26.ngrok-free.app"]
 
-
+CSRF_TRUSTED_ORIGINS = ["https://1b40-1-34-247-26.ngrok-free.app"]
 # Application definition
 
 INSTALLED_APPS = [
@@ -177,9 +177,10 @@ ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 ACCOUNT_LOGOUT_ON_GET = True
 
-# Custom signup forms
+# Custom signup and login forms
 ACCOUNT_FORMS = {
     "signup": "accounts.forms.CustomSignupForm",
+    "login": "accounts.forms.CustomLoginForm",
 }
 
 # Social account settings

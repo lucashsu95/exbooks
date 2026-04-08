@@ -3,10 +3,11 @@ from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 
 from allauth.account.forms import SignupForm as AllauthSignupForm
+from allauth.account.forms import LoginForm as AllauthLoginForm
 from allauth.socialaccount.forms import SignupForm as SocialSignupForm
 
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Field
+from crispy_forms.layout import Layout, Field, Submit, HTML
 
 from .models import Appeal, UserProfile
 from .validators import validate_age_18_or_older
@@ -52,7 +53,19 @@ class AppealForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # 設定日期上限，防止選擇未成年日期（HTML5 驗證輔助）
+        if "birth_date" in self.fields:
+            from datetime import date
+
+            today = date.today()
+            try:
+                max_date = today.replace(year=today.year - 18)
+            except ValueError:  # 處理閏年 2/29 的特殊情況
+                max_date = today.replace(year=today.year - 18, month=2, day=28)
+            self.fields["birth_date"].widget.attrs["max"] = max_date.isoformat()
+
         self.helper = FormHelper()
+
         self.helper.form_tag = False
         self.helper.layout = Layout(
             Field("appeal_type"),
@@ -67,6 +80,42 @@ class AppealForm(forms.ModelForm):
         if len(description) < 50:
             raise forms.ValidationError("申訴描述需至少 50 字元")
         return description
+
+
+class CustomLoginForm(AllauthLoginForm):
+    """
+    自定義登入表單。
+    利用 FormHelper 與 Layout 統一處理 non_field_errors 與欄位樣式。
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            Field("login", placeholder=_("Email")),
+            Field("password", placeholder=_("密碼")),
+            HTML(
+                """
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center">
+                        {% if form.remember.field %}
+                            {{ form.remember }}
+                            <label for="id_remember" class="ml-2 block text-sm text-slate-700">記住我</label>
+                        {% endif %}
+                    </div>
+                    <div class="text-sm">
+                        <a href="{% url 'account_reset_password' %}" class="font-medium text-primary hover:text-primary-hover">忘記密碼？</a>
+                    </div>
+                </div>
+                """
+            ),
+            Submit(
+                "submit",
+                _("登入"),
+                css_class="relative w-full py-4 bg-primary text-white border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 overflow-hidden hover:bg-primary-hover hover:-translate-y-0.5 hover:shadow-[0_8px_20px_-4px_rgba(19,109,236,0.4)] active:translate-y-0",
+            ),
+        )
 
 
 class CustomSignupForm(AllauthSignupForm):
@@ -98,11 +147,16 @@ class CustomSignupForm(AllauthSignupForm):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
-            Field("email"),
-            Field("password1"),
-            Field("password2"),
-            Field("nickname"),
+            Field("email", placeholder=_("Email")),
+            Field("password1", placeholder=_("密碼")),
+            Field("password2", placeholder=_("再次確認密碼")),
+            Field("nickname", placeholder=_("你的暱稱")),
             Field("birth_date"),
+            Submit(
+                "submit",
+                _("註冊"),
+                css_class="relative w-full py-4 bg-primary text-white border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 overflow-hidden hover:bg-primary-hover hover:-translate-y-0.5 hover:shadow-[0_8px_20px_-4px_rgba(19,109,236,0.4)] active:translate-y-0",
+            ),
         )
 
     def clean_birth_date(self):
@@ -173,10 +227,15 @@ class CustomSocialSignupForm(SocialSignupForm):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
-            Field("email"),
-            Field("nickname"),
+            Field("email", readonly=True),
+            Field("nickname", placeholder=_("你的暱稱")),
             Field("birth_date"),
-            Field("default_location"),
+            Field("default_location", placeholder=_("例如：台北市大安區")),
+            Submit(
+                "submit",
+                _("完成註冊"),
+                css_class="relative w-full py-4 bg-primary text-white border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 overflow-hidden hover:bg-primary-hover hover:-translate-y-0.5 hover:shadow-[0_8px_20px_-4px_rgba(19,109,236,0.4)] active:translate-y-0",
+            ),
         )
 
     def clean_birth_date(self):
@@ -248,8 +307,13 @@ class CompleteProfileForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
-            Field("nickname"),
+            Field("nickname", placeholder=_("你的暱稱")),
             Field("birth_date"),
+            Submit(
+                "submit",
+                _("儲存並繼續"),
+                css_class="relative w-full py-4 bg-primary text-white border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 overflow-hidden hover:bg-primary-hover hover:-translate-y-0.5 hover:shadow-[0_8px_20px_-4px_rgba(19,109,236,0.4)] active:translate-y-0",
+            ),
         )
 
     def clean_birth_date(self):
@@ -284,7 +348,19 @@ class ProfileForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # 設定日期上限，防止選擇未成年日期（HTML5 驗證輔助）
+        if "birth_date" in self.fields:
+            from datetime import date
+
+            today = date.today()
+            try:
+                max_date = today.replace(year=today.year - 18)
+            except ValueError:  # 處理閏年 2/29 的特殊情況
+                max_date = today.replace(year=today.year - 18, month=2, day=28)
+            self.fields["birth_date"].widget.attrs["max"] = max_date.isoformat()
+
         self.helper = FormHelper()
+
         self.helper.form_tag = False
         self.helper.layout = Layout(
             Field("nickname"),

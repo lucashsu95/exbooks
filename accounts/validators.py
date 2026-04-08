@@ -30,7 +30,7 @@ def validate_age_18_or_older(value: date) -> None:
 
     if age < 18:
         raise ValidationError(
-            _("年滿 18 歲以上才能註冊使用本服務"),
+            _("您的年齡未滿 18 歲，依法規限制無法註冊使用本服務"),
             code="underage",
         )
 
