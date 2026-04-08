@@ -1,14 +1,17 @@
 {# templates/partials/trust_badge_inline.html #}
 {# Simple inline trust level badge (colored pill with label) #}
 {# Usage: {% include "partials/trust_badge_inline.html" with trust_level=book.keeper.profile.trust_level %} #}
-<span class="text-xs font-medium px-2 py-1 rounded-full {% if trust_level == 0 %} bg-gray-100 text-gray-600 {% elif trust_level == 1 %} bg-blue-100 text-blue-600 {% elif trust_level == 2 %} bg-green-100 text-green-600 {% elif trust_level == 3 %} bg-amber-100 text-amber-600 {% endif %}">
-    {% if trust_level == 0 %}
-        新手
-    {% elif trust_level == 1 %}
-        一般
-    {% elif trust_level == 2 %}
-        可信
-    {% elif trust_level == 3 %}
-        優良
-    {% endif %}
+<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider {% if trust_level == 0 %} bg-slate-100 text-slate-500 {% elif trust_level == 1 %} bg-blue-50 text-blue-600 {% elif trust_level == 2 %} bg-green-50 text-green-600 {% elif trust_level == 3 %} bg-amber-50 text-amber-600 {% endif %}">
+    Lv.{{ trust_level }}
+    <span class="ml-1 opacity-80">
+        {% if trust_level == 0 %}
+            新手
+        {% elif trust_level == 1 %}
+            一般
+        {% elif trust_level == 2 %}
+            可信
+        {% elif trust_level == 3 %}
+            優良
+        {% endif %}
+    </span>
 </span>

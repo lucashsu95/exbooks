@@ -3,13 +3,13 @@
 {% if user.profile.avatar %}
     <img src="{{ user.profile.avatar.url }}"
          alt="{{ user.profile.nickname|default:user.email }} 的頭像"
-         class="{{ class|default:'w-full h-full object-cover' }}">
+         class="{{ class|default:'w-full h-full object-cover rounded-full' }}">
 {% elif user.profile.avatar_url %}
     <img src="{{ user.profile.avatar_url }}"
          alt="{{ user.profile.nickname|default:user.email }} 的頭像"
-         class="{{ class|default:'w-full h-full object-cover' }}">
+         class="{{ class|default:'w-full h-full object-cover rounded-full' }}">
 {% else %}
-    <div class="flex items-center justify-center {{ class|default:'w-full h-full' }} bg-primary/10 text-primary font-bold">
+    <div class="flex items-center justify-center {{ class|default:'w-full h-full rounded-full' }} bg-primary/10 text-primary font-bold">
         {{ user.profile.nickname|default:user.email|first|upper }}
     </div>
 {% endif %}
