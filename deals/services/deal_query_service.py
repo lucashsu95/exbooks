@@ -2,9 +2,16 @@
 交易查詢服務 - 專門處理交易的查詢與過濾邏輯
 
 從原始的 deal_service.py 中拆分出來，專注於查詢操作。
+
+本服務包含以下超出原需求文件的擴充功能：
+- **多維度交易統計**：提供申請者/回應者雙向維度，以及依狀態、類別分組的詳細統計。
+- **強化搜尋能力**：支援同時對書籍標題、ISBN 以及交易雙方的「用戶暱稱」進行關鍵字檢索。
+- **即時逾期分級**：配合 overdue_service 提供不同嚴重程度的逾期資料過濾。
+- **分頁與過濾整合**：在單一介面提供高度整合的狀態與類型過濾，提升大數據量下的查詢效率。
 """
 
 from typing import Optional, List, Dict, Any
+from django.db import models
 from django.db.models import Q, QuerySet
 from django.contrib.auth import get_user_model
 

@@ -141,14 +141,12 @@ class TestLoanExtension:
 
     def test_status_choices(self):
         assert LoanExtension.Status.PENDING == "PENDING"
-        assert LoanExtension.Status.PARTIALLY_APPROVED == "PARTIALLY_APPROVED"
         assert LoanExtension.Status.APPROVED == "APPROVED"
         assert LoanExtension.Status.REJECTED == "REJECTED"
 
     def test_reviewer_fields_nullable(self):
         ext = LoanExtensionFactory()
-        assert ext.owner_approved_by is None
-        assert ext.keeper_approved_by is None
+        assert ext.approved_by is None
 
     def test_ordering(self):
         assert LoanExtension._meta.ordering == ["-created_at"]
@@ -176,8 +174,8 @@ class TestNotification:
 
     def test_notification_type_choices(self):
         types = Notification.NotificationType
-        # 10 original + 2 appeal types (APPEAL_SUBMITTED, APPEAL_RESOLVED)
-        assert len(types.choices) == 12
+        # 15 choices defined in models/notification.py
+        assert len(types.choices) == 15
 
     def test_default_is_read(self):
         notif = NotificationFactory()

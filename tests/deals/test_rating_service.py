@@ -44,7 +44,8 @@ class TestCreateRating:
 
     def test_br9_both_rated_deal_done(self):
         """BR-9: 雙方評價完成 → Deal 狀態 D"""
-        deal = DealFactory(status="M")
+        # 使用非 LOAN 交易（如 TRANSFER），互評完即完成
+        deal = DealFactory(status="M", deal_type=Deal.DealType.TRANSFER)
         create_rating(
             deal,
             deal.applicant,

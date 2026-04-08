@@ -3,6 +3,7 @@ from django.db import transaction
 from django_fsm import can_proceed
 
 from deals.models import Deal, Rating
+from books.models import SharedBook
 
 
 @transaction.atomic

@@ -79,7 +79,7 @@ class TestBookTimelineService:
         book = SharedBookFactory(owner=owner)
 
         # 建立已完成交易
-        deal = DealFactory(
+        DealFactory(
             shared_book=book,
             applicant=applicant,
             deal_type=Deal.DealType.LOAN,
@@ -110,7 +110,7 @@ class TestBookTimelineService:
         )
 
         # 建立延長申請
-        extension = LoanExtensionFactory(
+        LoanExtensionFactory(
             deal=deal,
             requested_by=applicant,
             status=LoanExtension.Status.APPROVED,
@@ -207,14 +207,14 @@ class TestBookTimelineService:
         )
 
         # 建立較舊的照片
-        old_photo = BookPhotoFactory(
+        BookPhotoFactory(
             shared_book=book,
             uploader=owner,
             created_at=timezone.now() - timedelta(days=5),
         )
 
         # 建立較新的交易
-        deal = DealFactory(
+        DealFactory(
             shared_book=book,
             applicant=UserFactory(),
             created_at=timezone.now() - timedelta(days=2),

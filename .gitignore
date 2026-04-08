@@ -2,6 +2,9 @@
 .shared
 AGENTS.md
 .sisyphus
+.opencode
+GEMINI.md
+CLAUDE.md
 
 ### Django ###
 *.log

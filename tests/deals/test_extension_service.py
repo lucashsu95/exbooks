@@ -107,7 +107,7 @@ class TestApproveExtension:
     def test_non_responder_raises(self):
         ext = LoanExtensionFactory()
         stranger = UserFactory()
-        with pytest.raises(ValidationError, match="交易回應者"):
+        with pytest.raises(ValidationError, match="Owner 或 Keeper"):
             approve_extension(ext, stranger)
 
     def test_notification_sent_to_applicant(self):
@@ -149,7 +149,7 @@ class TestRejectExtension:
     def test_non_responder_raises(self):
         ext = LoanExtensionFactory()
         stranger = UserFactory()
-        with pytest.raises(ValidationError, match="交易回應者"):
+        with pytest.raises(ValidationError, match="Owner 或 Keeper"):
             reject_extension(ext, stranger)
 
     def test_notification_sent_to_applicant(self):

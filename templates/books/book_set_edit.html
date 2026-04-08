@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block title %}編輯套書 - Exbooks{% endblock %}
 {% block content %}
+    <!-- 隱藏底部導覽列以顯示儲存按鈕 -->
+    {% block bottom_nav %}{% endblock %}
     <!-- Sticky top bar -->
     <header class="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
@@ -55,11 +57,45 @@
                                 </a>
                                 <p class="text-sm text-slate-500 truncate">{{ book.official_book.author }}</p>
                             </div>
-                            <button hx-post="{% url 'books:book_set_remove_book' book_set.pk book.pk %}"
+                            <button type="button"
+                                    hx-post="{% url 'books:book_set_remove_book' book_set.pk book.pk %}"
                                     hx-target="#book-set-books"
                                     hx-swap="outerHTML"
                                     class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors flex items-center justify-center shrink-0">
                                 <span class="material-symbols-outlined text-xl">remove_circle_outline</span>
+                            </button>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="p-8 text-center text-slate-500">
+                        <span class="material-symbols-outlined text-3xl mb-2 text-slate-300">inbox</span>
+                        <p class="text-sm">此套書尚未加入任何書籍</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <!-- 可加入的書籍 -->
+        {% if available_books %}
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div class="px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-slate-500 text-lg">add_circle</span>
+                    <h2 class="text-sm font-bold text-slate-700">可加入的書籍</h2>
+                </div>
+                <div class="divide-y divide-slate-100">
+                    {% for book in available_books %}
+                        <div class="flex justify-between items-center p-4">
+                            <div class="flex-1 min-w-0 pr-4">
+                                <span class="text-base font-semibold text-slate-900 block truncate mb-1">{{ book.official_book.title }}</span>
+                                <p class="text-sm text-slate-500 truncate">{{ book.official_book.author }}</p>
+                            </div>
+                            <button type="button"
+                                    hx-post="{% url 'books:book_set_add_book' book_set.pk book.pk %}"
+                                    hx-vals='{"book_id": "{{ book.pk }}"}'
+                                    hx-target="#book-set-books"
+                                    hx-swap="outerHTML"
+                                    class="text-primary hover:text-primary/80 hover:bg-primary/5 p-2 rounded-lg text-sm font-medium transition-colors shrink-0 flex items-center gap-1">
+                                <span class="material-symbols-outlined text-xl">add</span>
+                                加入
                             </button>
                         </div>
                     {% endfor %}

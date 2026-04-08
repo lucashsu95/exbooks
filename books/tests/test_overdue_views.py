@@ -23,7 +23,7 @@ class TestOverdueListView:
         applicant.profile.save()
 
         book = SharedBookFactory(owner=owner, status="O", transferability="RETURN")
-        deal = DealFactory(
+        DealFactory(
             shared_book=book,
             applicant=applicant,
             status="M",
