@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load account %}
+{% block title %}
+    {% trans "Confirm Email Address" %} - Exbooks
+{% endblock %}
+{% block content %}
+    <div class="min-h-[80vh] flex items-center justify-center px-4">
+        <div class="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 text-center">
+            <div class="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <span class="material-symbols-outlined text-3xl">mark_email_read</span>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-900 mb-4">{% trans "Confirm Email Address" %}</h1>
+            {% if confirmation %}
+                {% user_display confirmation.email_address.user as user_display %}
+                <p class="text-slate-600 mb-8 leading-relaxed">
+                    {% blocktrans with confirmation.email_address.email as email %}請確認 <span class="font-semibold text-slate-900">{{ email }}</span> 是您帳號的電子郵件地址。{% endblocktrans %}
+                </p>
+                <form method="post"
+                      action="{% url 'account_confirm_email' confirmation.key %}">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="w-full py-4 bg-primary text-white rounded-xl font-bold hover:bg-primary-hover transition-all shadow-lg shadow-primary/20">
+                        {% trans 'Confirm' %}
+                    </button>
+                </form>
+            {% else %}
+                {% url 'account_email' as email_url %}
+                <p class="text-red-500 mb-8 leading-relaxed">
+                    {% blocktrans %}此確認連結已過期或無效。請 <a href="{{ email_url }}" class="text-primary underline">重新申請驗證連結</a>。{% endblocktrans %}
+                </p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

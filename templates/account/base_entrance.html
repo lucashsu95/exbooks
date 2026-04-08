@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block extra_head %}
+    <style>
+    /* 入口頁面專用變數 */
+    .entrance-page {
+        --accent: #14b8a6;
+        --accent-hover: #0d9488;
+        --border: #e5e7eb;
+        --text-secondary: #6b7280;
+        --input-bg: #f9fafb;
+    }
+
+    /* 動畫定義 */
+    @keyframes floatPage {
+        0%, 100% { transform: translateY(0) rotate(var(--rotation, -15deg)); opacity: 0.6; }
+        50% { transform: translateY(-30px) rotate(calc(var(--rotation, -15deg) + 5deg)); opacity: 0.9; }
+    }
+
+    @keyframes cardEnter {
+        from { opacity: 0; transform: translateY(30px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* 浮動書頁背景 */
+    .page-shape {
+        position: absolute;
+        background: linear-gradient(135deg, rgba(20, 184, 166, 0.08) 0%, rgba(20, 184, 166, 0.02) 100%);
+        border-radius: 8px;
+        animation: floatPage 20s ease-in-out infinite;
+    }
+
+    .page-shape:nth-child(1) { width: 300px; height: 400px; top: -100px; left: 10%; --rotation: -15deg; animation-delay: 0s; }
+    .page-shape:nth-child(2) { width: 200px; height: 280px; top: 20%; right: 5%; --rotation: 12deg; animation-delay: -5s; }
+    .page-shape:nth-child(3) { width: 180px; height: 240px; bottom: 10%; left: 5%; --rotation: 8deg; animation-delay: -10s; }
+
+    .entrance-card { animation: cardEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+    
+    .icon-box { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%); }
+    </style>
+    {% block entrance_extra_head %}{% endblock %}
+{% endblock %}
+{% block content %}
+    <div class="entrance-page font-['Work_Sans',sans-serif]">
+        <!-- 浮動背景 -->
+        <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+            <div class="page-shape"></div>
+            <div class="page-shape"></div>
+            <div class="page-shape"></div>
+        </div>
+        <!-- 容器 -->
+        <div class="relative z-10 min-h-screen flex items-center justify-center px-4 py-12">
+            <div class="entrance-card bg-white rounded-3xl shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_20px_50px_-12px_rgba(20,184,166,0.15)] p-6 sm:p-10 w-full {% block card_width %}max-w-[420px]{% endblock %}">
+                <!-- 品牌區域 -->
+                <div class="text-center mb-8">
+                    <div class="icon-box w-12 h-12 mx-auto mb-4 rounded-[14px] shadow-[0_4px_12px_rgba(20,184,166,0.3)] flex items-center justify-center">
+                        {% block entrance_icon %}
+                            <svg class="w-6 h-6 text-white"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 stroke-width="2"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                            </svg>
+                        {% endblock %}
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-2 tracking-tight">
+                        {% block entrance_title %}{% endblock %}
+                    </h1>
+                    <p class="text-sm text-slate-500 leading-relaxed">
+                        {% block entrance_subtitle %}{% endblock %}
+                    </p>
+                </div>
+                <!-- 主要內容 -->
+                {% block entrance_content %}{% endblock %}
+                <!-- 底部頁腳 -->
+                {% block entrance_footer %}{% endblock %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

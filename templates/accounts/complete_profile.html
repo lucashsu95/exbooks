@@ -128,14 +128,13 @@
                 <form method="post" class="flex flex-col gap-4">
                     {% csrf_token %}
                     {% crispy form %}
-                    <button type="submit"
-                            class="submit-btn relative w-full py-4 bg-primary text-white border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 overflow-hidden hover:bg-primary-hover hover:-translate-y-0.5 hover:shadow-[0_8px_20px_-4px_rgba(19,109,236,0.4)] active:translate-y-0">
-                        儲存並繼續
-                    </button>
                 </form>
-                <!-- 年齡提示 -->
-                <div class="text-center text-xs text-slate-500 mt-6 p-3 bg-slate-50 rounded-lg border-l-[3px] border-primary">
-                    年滿 18 歲以上才能使用本服務
+                <!-- 法規聲明 -->
+                <div class="mt-8 pt-6 border-t border-slate-100">
+                    <div class="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border-l-[3px] border-primary">
+                        <span class="material-symbols-outlined text-primary text-lg mt-0.5">info</span>
+                        <p class="text-[0.75rem] text-slate-500 leading-relaxed">根據本站服務條款與相關法令規定，您必須年滿 18 歲方可註冊並使用 Exbooks 共享書籍服務。</p>
+                    </div>
                 </div>
             </div>
         </div>
