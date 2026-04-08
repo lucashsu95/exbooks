@@ -3,8 +3,9 @@
 AGENTS.md
 .sisyphus
 .opencode
-GEMINI.md
+progress.md
 CLAUDE.md
+GEMINI.md
 
 ### Django ###
 *.log
