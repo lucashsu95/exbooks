@@ -4,12 +4,17 @@
   Required context: user (User), role_label (str)
   Optional context: rating_info (dict with avg_rating, total_ratings)
 {% endcomment %}
-<div class="bg-white rounded-3xl p-6 shadow-sm">
-    <div class="flex items-center gap-4 mb-4">
-        {% include "partials/avatar.html" with user=user %}
-        <div>
-            <h4 class="font-bold text-slate-800">{{ user.username }}</h4>
-            <p class="text-slate-500 text-sm">{{ role_label }}</p>
+<div class="bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/50 shadow-sm hover:shadow-md transition-all duration-300">
+    <div class="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+        <div class="size-14 sm:size-16 rounded-full overflow-hidden shrink-0 border-2 border-white shadow-lg bg-white relative">
+            {% include "partials/avatar.html" with user=user %}
+            <div class="absolute inset-0 ring-1 ring-inset ring-black/5 rounded-full"></div>
+        </div>
+        <div class="min-w-0 flex-1">
+            <h4 class="font-extrabold text-slate-900 truncate text-sm sm:text-lg leading-tight mb-0.5">
+                {{ user.profile.nickname|default:user.username }}
+            </h4>
+            <p class="text-slate-400 font-black uppercase tracking-widest text-[9px] sm:text-[10px]">{{ role_label }}</p>
         </div>
     </div>
     {# Trust Badge #}
@@ -18,10 +23,10 @@
     {% endif %}
     {# Rating Info (if provided) #}
     {% if rating_info %}
-        <div class="flex items-center gap-2 text-sm">
-            <span class="text-amber-500 material-symbols-outlined text-base">star</span>
-            <span class="font-bold text-slate-800">{{ rating_info.avg_rating|floatformat:1 }}</span>
-            <span class="text-slate-400">({{ rating_info.total_ratings }} 評價)</span>
+        <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-100/50 text-[11px] font-black">
+            <span class="material-symbols-outlined text-[14px] fill-1 leading-none">star</span>
+            <span>{{ rating_info.avg_rating|floatformat:1 }}</span>
+            <span class="text-amber-400 font-medium">({{ rating_info.total_ratings }})</span>
         </div>
     {% endif %}
 </div>

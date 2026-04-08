@@ -4,23 +4,27 @@
   Required context: deal (Deal), user (User), current_tab (str)
   Optional context: show_actions (bool, default=True)
 {% endcomment %}
-<div class="deal-card touch-spring mb-4">
+<div class="deal-card touch-spring mb-4 relative group">
+    <div class="absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-primary/35 to-transparent"></div>
     <div class="flex items-start gap-4">
         {# Book Cover #}
         <a href="{% url 'books:detail' deal.shared_book.id %}"
-           class="shrink-0"
+           class="shrink-0 pt-1"
            hx-boost="false">
-            <div class="w-20 h-28 rounded-2xl overflow-hidden shadow-md relative">
+            <div class="w-20 h-28 rounded-2xl overflow-hidden shadow-lg shadow-slate-300/40 relative bg-slate-100 border border-white/80 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:scale-[1.02] group-hover:shadow-xl group-hover:shadow-primary/20">
                 {% include 'partials/book_cover.html' with book=deal.shared_book %}
+                <div class="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/70 pointer-events-none"></div>
+                <div class="absolute inset-0 shadow-inner rounded-2xl pointer-events-none"></div>
             </div>
         </a>
         {# Deal Info #}
-        <div class="flex-1 min-w-0">
+        <div class="flex-1 min-w-0 py-1 pr-8">
             {# Book Title #}
-            <a href="{% url 'deals:detail' deal.id %}"
-               class="font-bold text-slate-900 line-clamp-2 block mb-2">{{ deal.shared_book.official_book.title }}</a>
+            <h3 class="font-bold text-slate-900 line-clamp-1 block mb-1 text-base tracking-tight">
+                {{ deal.shared_book.official_book.title }}
+            </h3>
             {# Status Badge (dynamic based on deal.status) #}
-            <div class="flex items-center gap-2 mb-3">
+            <div class="flex flex-wrap items-center gap-2 mb-3">
                 {% if deal.status == 'Q' %}
                     <span class="status-badge status-badge-amber">待回覆</span>
                 {% elif deal.status == 'P' %}
@@ -34,56 +38,62 @@
                 {% endif %}
                 {# Time Info (if pending) #}
                 {% if current_tab == 'pending' %}
-                    <span class="text-xs text-slate-400">{{ deal.created_at|timesince }}前</span>
+                    <span class="inline-flex items-center rounded-full bg-slate-100/80 px-2 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-tighter leading-none">{{ deal.created_at|timesince }}前</span>
                 {% endif %}
             </div>
             {# Counterpart Info #}
-            <div class="flex items-center gap-2">
-                {% include 'deals/partials/_counterpart_info.html' with deal=deal current_user=user %}
+            <div class="rounded-2xl border border-white/80 bg-white/70 px-3 py-2.5 shadow-sm">
+                {% include "deals/partials/_counterpart_info.html" with deal=deal current_user=user %}
             </div>
             {# Action Buttons (conditional) #}
             {% if show_actions|default:True %}
-                <div class="mt-4 flex gap-2">
-                    {% if current_tab == 'pending' and deal.responder == user and deal.status == 'Q' %}
-                        {# Responder actions #}
-                        <form method="post"
-                              action="{% url 'deals:accept' deal.id %}"
-                              class="inline">
-                            {% csrf_token %}
-                            <button type="submit"
-                                    class="px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold touch-spring">
-                                接受
-                            </button>
-                        </form>
-                        <form method="post"
-                              action="{% url 'deals:reject' deal.id %}"
-                              class="inline">
-                            {% csrf_token %}
-                            <button type="submit"
-                                    class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold touch-spring">
-                                拒絕
-                            </button>
-                        </form>
-                    {% elif current_tab == 'pending' and deal.applicant == user and deal.status == 'Q' %}
-                        {# Applicant actions #}
-                        <form method="post"
-                              action="{% url 'deals:cancel' deal.id %}"
-                              class="inline">
-                            {% csrf_token %}
-                            <button type="submit"
-                                    class="px-4 py-2 bg-red-100 text-red-600 rounded-xl text-sm font-bold touch-spring">
-                                取消申請
-                            </button>
-                        </form>
-                    {% else %}
-                        {# View details #}
-                        <a href="{% url 'deals:detail' deal.id %}"
-                           class="px-4 py-2 bg-slate-100 text-slate-800 rounded-xl text-sm font-bold touch-spring">
-                            查看詳情
-                        </a>
-                    {% endif %}
-                </div>
+                {% if current_tab == 'pending' and deal.status == 'Q' %}
+                    <div class="mt-4 flex gap-2">
+                        {% if deal.responder == user %}
+                            {# Responder actions #}
+                            <form method="post"
+                                  action="{% url 'deals:accept' deal.id %}"
+                                  class="flex-1">
+                                {% csrf_token %}
+                                <button type="submit"
+                                        class="w-full py-2.5 bg-primary text-white rounded-xl text-xs font-black touch-spring shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 transition-all">
+                                    接受
+                                </button>
+                            </form>
+                            <form method="post"
+                                  action="{% url 'deals:reject' deal.id %}"
+                                  class="flex-1">
+                                {% csrf_token %}
+                                <button type="submit"
+                                        class="w-full py-2.5 bg-slate-100/90 text-slate-600 rounded-xl text-xs font-black touch-spring border border-slate-200/80 hover:bg-slate-200/70 transition-colors">
+                                    拒絕
+                                </button>
+                            </form>
+                        {% elif deal.applicant == user %}
+                            {# Applicant actions #}
+                            <form method="post"
+                                  action="{% url 'deals:cancel' deal.id %}"
+                                  class="w-full">
+                                {% csrf_token %}
+                                <button type="submit"
+                                        class="w-full py-2.5 bg-rose-50 text-rose-600 rounded-xl text-xs font-black touch-spring border border-rose-100 hover:bg-rose-100/80 transition-colors">
+                                    取消申請
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                {% endif %}
             {% endif %}
         </div>
+        {# Right Chevron - For navigation #}
+        <div class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 group-hover:text-primary transition-colors">
+            <span class="material-symbols-outlined leading-none align-middle">chevron_right</span>
+        </div>
     </div>
+    {# Whole card link overlay (if not in pending/Q which has specific buttons) #}
+    {% if not current_tab == 'pending' or not deal.status == 'Q' %}
+        <a href="{% url 'deals:detail' deal.id %}"
+           class="absolute inset-0 z-10"
+           aria-label="查看交易詳情"></a>
+    {% endif %}
 </div>

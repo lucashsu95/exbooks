@@ -3,22 +3,36 @@
   顯示交易中「對方」的頭像和用戶名
   Required context: deal (Deal), current_user (User)
 {% endcomment %}
-{% if deal.applicant == current_user %}
-    {# 我是申請者，顯示回應者 #}
-    {% include "partials/avatar.html" with user=deal.responder %}
-    <div>
-        <h4 class="font-bold text-slate-800">{{ deal.responder.username }}</h4>
-        {% if deal.responder.profile %}
-            {% include "partials/trust_badge_inline.html" with trust_level=deal.responder.profile.trust_level %}
-        {% endif %}
-    </div>
-{% else %}
-    {# 我是回應者，顯示申請者 #}
-    {% include "partials/avatar.html" with user=deal.applicant %}
-    <div>
-        <h4 class="font-bold text-slate-800">{{ deal.applicant.username }}</h4>
-        {% if deal.applicant.profile %}
-            {% include "partials/trust_badge_inline.html" with trust_level=deal.applicant.profile.trust_level %}
-        {% endif %}
-    </div>
-{% endif %}
+<div class="flex items-center gap-3 min-w-0">
+    {% if deal.applicant == current_user %}
+        {# 我是申請者，顯示回應者 #}
+        <div class="size-10 rounded-full overflow-hidden shrink-0 border-2 border-white shadow-sm shadow-slate-200/60 bg-gradient-to-br from-slate-50 to-white ring-1 ring-slate-200/70">
+            {% include "partials/avatar.html" with user=deal.responder %}
+        </div>
+        <div class="min-w-0 flex flex-col justify-center gap-1">
+            <h4 class="text-sm font-bold text-slate-700 truncate leading-tight">
+                {{ deal.responder.profile.nickname|default:deal.responder.username }}
+            </h4>
+            {% if deal.responder.profile %}
+                <div class="flex items-center">
+                    {% include "partials/trust_badge_inline.html" with trust_level=deal.responder.profile.trust_level %}
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
+        {# 我是回應者，顯示申請者 #}
+        <div class="size-10 rounded-full overflow-hidden shrink-0 border-2 border-white shadow-sm shadow-slate-200/60 bg-gradient-to-br from-slate-50 to-white ring-1 ring-slate-200/70">
+            {% include "partials/avatar.html" with user=deal.applicant %}
+        </div>
+        <div class="min-w-0 flex flex-col justify-center gap-1">
+            <h4 class="text-sm font-bold text-slate-700 truncate leading-tight">
+                {{ deal.applicant.profile.nickname|default:deal.applicant.username }}
+            </h4>
+            {% if deal.applicant.profile %}
+                <div class="flex items-center">
+                    {% include "partials/trust_badge_inline.html" with trust_level=deal.applicant.profile.trust_level %}
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>

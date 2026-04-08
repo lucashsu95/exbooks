@@ -15,28 +15,68 @@
 
 /* Deal 卡片基礎樣式 */
 .deal-card {
-  @apply bg-white rounded-2xl p-4 shadow-sm border border-slate-100;
-  @apply hover:shadow-md transition-shadow duration-200;
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(148, 163, 184, 0.2);
+  transition: transform 0.3s ease-out, box-shadow 0.3s ease-out, border-color 0.3s ease-out;
+}
+
+.deal-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 36px rgba(148, 163, 184, 0.28);
+  border-color: rgba(203, 213, 225, 0.9);
+}
+
+.deal-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.65) 0%,
+    rgba(255, 255, 255, 0.2) 32%,
+    rgba(20, 184, 166, 0.05) 100%
+  );
 }
 
 /* 狀態徽章 */
 .status-badge {
-  @apply text-xs font-semibold px-3 py-1 rounded-full;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
 }
 .status-badge-amber {
-  @apply bg-amber-100 text-amber-700;
+  background: #fef3c7;
+  color: #b45309;
 }
 .status-badge-blue {
-  @apply bg-blue-100 text-blue-700;
+  background: #dbeafe;
+  color: #1d4ed8;
 }
 .status-badge-green {
-  @apply bg-green-100 text-green-700;
+  background: #dcfce7;
+  color: #15803d;
 }
 .status-badge-gray {
-  @apply bg-gray-100 text-gray-600;
+  background: #f3f4f6;
+  color: #4b5563;
 }
 .status-badge-red {
-  @apply bg-red-100 text-red-700;
+  background: #fee2e2;
+  color: #b91c1c;
 }
 
 /* 玻璃質感導覽列（如需要） */
@@ -50,4 +90,45 @@
 .glass-nav.scrolled {
   background: rgba(255, 255, 255, 0.85);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+}
+
+/* Deal list tabs */
+.deal-tab {
+  position: relative;
+  display: flex;
+  min-width: 88px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem;
+  border: 1px solid transparent;
+  padding: 0.625rem 0.75rem;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+
+.deal-tab:hover {
+  background: rgba(255, 255, 255, 0.65);
+  color: #334155;
+}
+
+.deal-tab-active {
+  border-color: rgba(20, 184, 166, 0.2);
+  background: #ffffff;
+  color: #14b8a6;
+  box-shadow: 0 10px 20px rgba(20, 184, 166, 0.15);
+  transform: translateY(-1px);
+}
+
+.deal-tab-count {
+  margin-top: 0.25rem;
+  display: inline-flex;
+  min-width: 1.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  padding: 0.125rem 0.375rem;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
 }
