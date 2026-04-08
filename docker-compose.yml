@@ -28,6 +28,19 @@ services:
       - static_data:/app/staticfiles
       - media_data:/app/media
 
+  scheduler:
+    build: .
+    restart: unless-stopped
+    command: python manage.py run_scheduler
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DJANGO_SETTINGS_MODULE: exbook.prod_settings
+    volumes:
+      - media_data:/app/media
+
   nginx:
     image: nginx:1-alpine
     restart: unless-stopped
