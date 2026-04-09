@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Exbooks 共享書籍 - 讓好書自由流動{% endblock %}
+
+{% block content %}
+<div class="flex-1 bg-white">
+    <!-- Navigation -->
+    <header class="absolute top-0 w-full z-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-20">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-3xl">auto_stories</span>
+                <span class="text-xl font-bold text-slate-900 tracking-tight">Exbooks</span>
+            </div>
+            <div>
+                <a href="{% url 'account_login' %}" class="text-slate-600 font-medium hover:text-primary transition-colors px-4 py-2">登入</a>
+                <a href="{% url 'account_signup' %}" class="bg-primary text-white font-medium rounded-full px-5 py-2.5 shadow-sm shadow-primary/30 hover:bg-primary-hover hover:shadow-md hover:-translate-y-0.5 transition-all">立即加入</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        <!-- Background decorative elements -->
+        <div class="absolute -top-24 -right-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl opacity-60"></div>
+        <div class="absolute top-1/2 -left-24 w-72 h-72 bg-blue-400/10 rounded-full blur-3xl opacity-60"></div>
+        
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-sm mb-6 border border-primary/20">
+                <span class="relative flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                </span>
+                公益性質的去中心化書籍共享社群
+            </div>
+            
+            <h1 class="text-5xl md:text-6xl lg:text-7xl font-extrabold text-slate-900 tracking-tight leading-tight mb-8">
+                讓好書<span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500">自由流通</span><br>
+                知識無界限
+            </h1>
+            
+            <p class="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed">
+                沒有實體圖書館，每一位社員都是圖書管理員。拿出你的閒置藏書，與熱愛閱讀的朋友交換，建立互信的閱讀社群。
+            </p>
+            
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="{% url 'account_signup' %}" class="w-full sm:w-auto px-8 py-4 bg-primary text-white text-lg font-bold rounded-2xl shadow-lg shadow-primary/30 hover:bg-primary-hover hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
+                    開始探索書籍
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                </a>
+                <a href="#how-it-works" class="w-full sm:w-auto px-8 py-4 bg-white text-slate-700 text-lg font-bold rounded-2xl shadow-sm border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-center gap-2">
+                    了解運作機制
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-20 bg-slate-50 border-t border-slate-100">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">為什麼選擇 Exbooks？</h2>
+                <p class="text-slate-500 max-w-2xl mx-auto">打破傳統借閱限制，建立以信任為基礎的書籍共享生態系。</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                    <div class="w-14 h-14 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-2xl">public</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">去中心化管理</h3>
+                    <p class="text-slate-600 leading-relaxed">不再依賴中央圖書館，書籍由擁有者自行保管或在社群間流傳，實現真正的共享經濟。</p>
+                </div>
+                
+                <!-- Feature 2 -->
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                    <div class="w-14 h-14 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-2xl">sync_alt</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">雙軌流通模式</h3>
+                    <p class="text-slate-600 leading-relaxed">自由設定書籍為「開放傳遞」讓書持續漂流，或「閱畢即還」確保愛書回到身邊。</p>
+                </div>
+                
+                <!-- Feature 3 -->
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                    <div class="w-14 h-14 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-2xl">verified_user</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">信用評價機制</h3>
+                    <p class="text-slate-600 leading-relaxed">面交後雙方互評誠信、準時與書況，累積社群信用，確保每一次借閱都令人安心。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it works -->
+    <section id="how-it-works" class="py-20 bg-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">運作機制</h2>
+                <p class="text-slate-500">簡單四個步驟，開啟你的書籍共享旅程</p>
+            </div>
+            
+            <div class="space-y-12 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
+                <!-- Step 1 -->
+                <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-primary text-white font-bold shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">1</div>
+                    <div class="w-[calc(100%-4rem)] md:w-[calc(50%-3rem)] p-6 rounded-3xl bg-slate-50 border border-slate-100 shadow-sm">
+                        <h3 class="font-bold text-slate-900 text-lg mb-2">上架閒置書籍</h3>
+                        <p class="text-slate-600 text-sm leading-relaxed">輸入 ISBN 或書名，設定流通方式（開放傳遞/閱畢即還）與可面交時間地點，將愛書分享給社群。</p>
+                    </div>
+                </div>
+                
+                <!-- Step 2 -->
+                <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-slate-200 text-slate-500 font-bold shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">2</div>
+                    <div class="w-[calc(100%-4rem)] md:w-[calc(50%-3rem)] p-6 rounded-3xl bg-slate-50 border border-slate-100 shadow-sm">
+                        <h3 class="font-bold text-slate-900 text-lg mb-2">探索與申請</h3>
+                        <p class="text-slate-600 text-sm leading-relaxed">在平台上尋找感興趣的書籍，發送借閱申請並與書籍目前的持有者確認面交細節。</p>
+                    </div>
+                </div>
+                
+                <!-- Step 3 -->
+                <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-slate-200 text-slate-500 font-bold shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">3</div>
+                    <div class="w-[calc(100%-4rem)] md:w-[calc(50%-3rem)] p-6 rounded-3xl bg-slate-50 border border-slate-100 shadow-sm">
+                        <h3 class="font-bold text-slate-900 text-lg mb-2">線下面交</h3>
+                        <p class="text-slate-600 text-sm leading-relaxed">雙方在約定的時間地點碰面交書。確認書況無誤後，在平台上點擊「已面交」。</p>
+                    </div>
+                </div>
+                
+                <!-- Step 4 -->
+                <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-slate-200 text-slate-500 font-bold shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">4</div>
+                    <div class="w-[calc(100%-4rem)] md:w-[calc(50%-3rem)] p-6 rounded-3xl bg-slate-50 border border-slate-100 shadow-sm">
+                        <h3 class="font-bold text-slate-900 text-lg mb-2">雙向評價</h3>
+                        <p class="text-slate-600 text-sm leading-relaxed">針對此次交易的友善度、準時度與書況準確度給予評價，共同維護高品質的共享環境。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer CTA -->
+    <section class="py-24 bg-slate-900 text-center px-4">
+        <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">準備好開始您的閱讀旅程了嗎？</h2>
+        <p class="text-slate-400 mb-10 max-w-xl mx-auto">加入我們，讓閒置的書籍發揮最大價值，遇見更多同樣熱愛閱讀的朋友。</p>
+        <a href="{% url 'account_signup' %}" class="inline-flex items-center justify-center px-8 py-4 bg-primary text-white text-lg font-bold rounded-2xl shadow-lg hover:bg-primary-hover hover:-translate-y-1 transition-all">
+            立即免費註冊
+        </a>
+    </section>
+</div>
+{% endblock %}

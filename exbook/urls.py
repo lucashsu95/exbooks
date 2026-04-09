@@ -2,6 +2,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from core import views as core_views
 
 admin.site.site_header = "Exbooks 後台管理"
 admin.site.site_title = "Exbooks 管理者介面"
@@ -12,7 +13,8 @@ urlpatterns = [
     # django-allauth URLs (包含 login, logout, signup, email verification, social auth)
     path("accounts/", include("allauth.urls")),
     # Local apps
-    path("", include("accounts.urls")),
+    path("", core_views.landing_page, name="landing"),
+    path("accounts/", include("accounts.urls")),
     path("books/", include("books.urls")),
     path("deals/", include("deals.urls")),
 ]
