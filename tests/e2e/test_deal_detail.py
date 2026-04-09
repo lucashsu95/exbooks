@@ -33,11 +33,13 @@ def test_deal_detail_accept_button_visible_for_responder(
     authenticated_page.goto(f"{live_server.url}/deals/{deal_as_responder.id}/")
 
     # Verify action buttons are visible for responder
-    expect(authenticated_page.locator("button:has-text('接受')")).to_be_visible()
-    expect(authenticated_page.locator("button:has-text('拒絕')")).to_be_visible()
+    expect(authenticated_page.get_by_role("button", name="接受申請")).to_be_visible()
+    expect(authenticated_page.get_by_role("button", name="婉拒")).to_be_visible()
 
     # Cancel button should NOT be visible for responder
-    expect(authenticated_page.locator("button:has-text('取消')")).not_to_be_visible()
+    expect(
+        authenticated_page.get_by_role("button", name="取消借閱申請")
+    ).not_to_be_visible()
 
 
 @pytest.mark.django_db
@@ -48,10 +50,14 @@ def test_deal_detail_cancel_button_visible_for_applicant(
     authenticated_page.goto(f"{live_server.url}/deals/{deal_as_applicant.id}/")
 
     # Cancel button should be visible for applicant
-    expect(authenticated_page.locator("button:has-text('取消')")).to_be_visible()
+    expect(
+        authenticated_page.get_by_role("button", name="取消借閱申請")
+    ).to_be_visible()
 
     # Accept/Reject buttons should NOT be visible for applicant
-    expect(authenticated_page.locator("button:has-text('接受')")).not_to_be_visible()
+    expect(
+        authenticated_page.get_by_role("button", name="接受申請")
+    ).not_to_be_visible()
 
 
 @pytest.mark.django_db
