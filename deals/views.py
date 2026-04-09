@@ -56,6 +56,8 @@ def deal_create(request, book_id, deal_type):
                     deal_type=deal_type,
                     shared_book=book,
                     applicant=request.user,
+                    meeting_location=form.cleaned_data.get("meeting_location", ""),
+                    meeting_time=form.cleaned_data.get("meeting_time"),
                     note=form.cleaned_data.get("note", ""),
                 )
                 messages.success(request, "交易申請已送出！")
@@ -95,6 +97,7 @@ def deal_create(request, book_id, deal_type):
             initial={
                 "deal_type": deal_type,
                 "shared_book": book_id,
+                "meeting_location": profile.default_location,
                 "note": initial_note.strip(),
             }
         )

@@ -14,6 +14,27 @@ class DealApplicationForm(forms.ModelForm):
 
     deal_type = forms.CharField(widget=forms.HiddenInput())
     shared_book = forms.UUIDField(widget=forms.HiddenInput())
+    meeting_location = forms.CharField(
+        max_length=200,
+        required=False,
+        label="面交地點",
+        widget=forms.TextInput(
+            attrs={
+                "class": "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
+                "placeholder": "請輸入面交地點",
+            }
+        ),
+    )
+    meeting_time = forms.DateTimeField(
+        required=False,
+        label="面交時間",
+        widget=forms.DateTimeInput(
+            attrs={
+                "type": "datetime-local",
+                "class": "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
+            }
+        ),
+    )
     note = forms.CharField(
         widget=forms.Textarea(
             attrs={
@@ -23,12 +44,12 @@ class DealApplicationForm(forms.ModelForm):
         ),
         required=False,
         label="備註",
-        help_text="可填寫面交時間地點或其他說明",
+        help_text="可填寫額外說明",
     )
 
     class Meta:
         model = Deal
-        fields = ["deal_type"]
+        fields = ["deal_type", "meeting_location", "meeting_time"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -37,6 +58,8 @@ class DealApplicationForm(forms.ModelForm):
         self.helper.layout = Layout(
             Field("deal_type"),
             Field("shared_book"),
+            Field("meeting_location"),
+            Field("meeting_time"),
             Field("note"),
         )
 

@@ -95,6 +95,8 @@ def create_deal(
     deal_type,
     book_set=None,
     loan_duration_days=None,
+    meeting_location="",
+    meeting_time=None,
     note=None,
 ):
     """
@@ -196,6 +198,8 @@ def create_deal(
         applicant=applicant,
         responder=responder,
         due_date=due_date,
+        meeting_location=meeting_location,
+        meeting_time=meeting_time,
     )
 
     # 如果有填寫備註，存入第一條交易留言
