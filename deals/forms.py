@@ -264,7 +264,8 @@ class DealPhotoUploadForm(forms.Form):
         widget=MultipleFileInput(
             attrs={
                 "class": "block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20",
-                "accept": "image/jpeg,image/png",
+                "accept": "image/*",
+                "capture": "environment",
             }
         ),
         required=True,

@@ -9,6 +9,9 @@ from tests.factories import DealFactory, UserFactory
 class TestPartialRendering:
     """Verify partials render with minimal context."""
 
+    def _get_display_name(self, user):
+        return getattr(user, "profile", None) and user.profile.nickname or user.email
+
     def test_deal_card_renders_with_required_context(self):
         """_deal_card.html should work with only deal and user."""
         deal = DealFactory()
@@ -22,7 +25,10 @@ class TestPartialRendering:
         # Verify essential elements present
         assert deal.shared_book.official_book.title in html
         assert "hx-boost" in html.lower()  # HTMX preserved
-        assert deal.applicant.username in html or deal.responder.username in html
+        assert (
+            self._get_display_name(deal.applicant) in html
+            or self._get_display_name(deal.responder) in html
+        )
 
     def test_empty_state_renders_with_icon_and_message(self):
         """_empty_state.html should work with icon and message."""
@@ -45,7 +51,7 @@ class TestPartialRendering:
         }
         html = render_to_string("deals/partials/_participant_card.html", context)
 
-        assert user.username in html
+        assert self._get_display_name(user) in html
         assert "申請者" in html
 
     def test_counterpart_info_shows_correct_user(self):
@@ -55,24 +61,24 @@ class TestPartialRendering:
         # As applicant, should see responder
         context = {"deal": deal, "current_user": deal.applicant}
         html = render_to_string("deals/partials/_counterpart_info.html", context)
-        assert deal.responder.username in html
-        assert deal.applicant.username not in html
+        assert self._get_display_name(deal.responder) in html
+        assert self._get_display_name(deal.applicant) not in html
 
         # As responder, should see applicant
         context = {"deal": deal, "current_user": deal.responder}
         html = render_to_string("deals/partials/_counterpart_info.html", context)
-        assert deal.applicant.username in html
-        assert deal.responder.username not in html
+        assert self._get_display_name(deal.applicant) in html
+        assert self._get_display_name(deal.responder) not in html
 
     @pytest.mark.parametrize(
         "status,user_role,expected_buttons",
         [
             ("Q", "responder", ["接受", "拒絕"]),
             ("Q", "applicant", ["取消申請"]),
-            ("P", "responder", ["查看詳情"]),
-            ("M", "applicant", ["查看詳情"]),
-            ("D", "applicant", ["查看詳情"]),
-            ("X", "responder", ["查看詳情"]),
+            ("P", "responder", ["查看交易詳情"]),
+            ("M", "applicant", ["查看交易詳情"]),
+            ("D", "applicant", ["查看交易詳情"]),
+            ("X", "responder", ["查看交易詳情"]),
         ],
     )
     def test_deal_card_shows_correct_buttons(self, status, user_role, expected_buttons):

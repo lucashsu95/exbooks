@@ -14,8 +14,9 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator
 
-from books.models import SharedBook
-from books.services import declare_exception, resolve_exception
+from books.models import SharedBook, BookPhoto
+from books.services import declare_exception, resolve_exception, process_book_photo
+from django.core.exceptions import ValidationError
 from .forms import (
     DealApplicationForm,
     RatingForm,
@@ -62,10 +63,39 @@ def deal_create(request, book_id, deal_type):
             except Exception as e:
                 messages.error(request, str(e))
     else:
+        profile = request.user.profile
+        initial_note = ""
+        if profile.default_location:
+            initial_note += f"建議面交地點：{profile.default_location}\n"
+
+        if profile.available_schedule:
+            try:
+                days_map = {
+                    "1": "週一",
+                    "2": "週二",
+                    "3": "週三",
+                    "4": "週四",
+                    "5": "週五",
+                    "6": "週六",
+                    "7": "週日",
+                }
+                sched_texts = []
+                for entry in profile.available_schedule:
+                    day = str(entry.get("weekday", ""))
+                    day_name = days_map.get(day, f"星期{day}")
+                    start = entry.get("start", "")
+                    end = entry.get("end", "")
+                    sched_texts.append(f"{day_name} {start}-{end}")
+                if sched_texts:
+                    initial_note += f"可面交時間：{'、'.join(sched_texts)}"
+            except Exception:
+                pass
+
         form = DealApplicationForm(
             initial={
                 "deal_type": deal_type,
                 "shared_book": book_id,
+                "note": initial_note.strip(),
             }
         )
 
@@ -933,20 +963,27 @@ def deal_upload_photos(request, pk):
     if request.method == "POST":
         form = DealPhotoUploadForm(request.POST, request.FILES)
         if form.is_valid():
-            from books.models import BookPhoto
-
             photos = request.FILES.getlist("photos")
             caption = form.cleaned_data.get("caption", "")
 
             # 處理每張照片
             for photo_file in photos:
-                BookPhoto.objects.create(
-                    shared_book=deal.shared_book,
-                    deal=deal,
-                    uploader=request.user,
-                    photo=photo_file,
-                    caption=caption,
-                )
+                try:
+                    processed = process_book_photo(photo_file)
+                    BookPhoto.objects.create(
+                        shared_book=deal.shared_book,
+                        deal=deal,
+                        uploader=request.user,
+                        photo=processed,
+                        caption=caption,
+                    )
+                except ValidationError as e:
+                    messages.error(request, f"照片上傳失敗：{str(e)}")
+                    return render(
+                        request,
+                        "deals/deal_upload_photos.html",
+                        {"form": form, "deal": deal},
+                    )
 
             messages.success(request, f"已上傳 {len(photos)} 張照片。")
             return redirect("deals:detail", pk)
