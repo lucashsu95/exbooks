@@ -786,10 +786,15 @@ def book_set_add_book(request, pk):
             messages.error(request, str(e))
 
     books = book_set.books.select_related("official_book").all()
+    available_books = SharedBook.objects.filter(
+        owner=request.user,
+        book_set=None,
+    ).select_related("official_book")
+
     return render(
         request,
-        "books/partials/book_set_books.html",
-        {"book_set": book_set, "books": books},
+        "books/partials/book_set_books_wrapper.html",
+        {"book_set": book_set, "books": books, "available_books": available_books},
     )
 
 
@@ -807,10 +812,15 @@ def book_set_remove_book(request, pk, book_id):
         messages.error(request, str(e))
 
     books = book_set.books.select_related("official_book").all()
+    available_books = SharedBook.objects.filter(
+        owner=request.user,
+        book_set=None,
+    ).select_related("official_book")
+
     return render(
         request,
-        "books/partials/book_set_books.html",
-        {"book_set": book_set, "books": books},
+        "books/partials/book_set_books_wrapper.html",
+        {"book_set": book_set, "books": books, "available_books": available_books},
     )
 
 

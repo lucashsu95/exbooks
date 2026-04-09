@@ -92,6 +92,25 @@ def get_user_activity_stats(user):
             'held_books_status': 持有他人書籍狀態統計,
         }
     """
+    status_map = dict(SharedBook.Status.choices)
+
+    contributed_books_status = list(
+        SharedBook.objects.filter(owner=user)
+        .values("status")
+        .annotate(count=Count("id"))
+    )
+    for stat in contributed_books_status:
+        stat["status_display"] = status_map.get(stat["status"], stat["status"])
+
+    held_books_status = list(
+        SharedBook.objects.filter(keeper=user)
+        .exclude(owner=user)
+        .values("status")
+        .annotate(count=Count("id"))
+    )
+    for stat in held_books_status:
+        stat["status_display"] = status_map.get(stat["status"], stat["status"])
+
     return {
         "books_contributed": get_contributed_books_count(user),
         "books_borrowed": Deal.objects.filter(
@@ -108,17 +127,8 @@ def get_user_activity_stats(user):
             responder=user,
             status=Deal.Status.CANCELLED,
         ).count(),
-        "contributed_books_status": list(
-            SharedBook.objects.filter(owner=user)
-            .values("status")
-            .annotate(count=Count("id"))
-        ),
-        "held_books_status": list(
-            SharedBook.objects.filter(keeper=user)
-            .exclude(owner=user)
-            .values("status")
-            .annotate(count=Count("id"))
-        ),
+        "contributed_books_status": contributed_books_status,
+        "held_books_status": held_books_status,
     }
 
 

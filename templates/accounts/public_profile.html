@@ -79,13 +79,13 @@
                     <p class="text-xs text-slate-500 mb-1">貢獻書籍狀態</p>
                     <div class="flex flex-wrap gap-1">
                         {% for status in activity_stats.contributed_books_status %}
-                            <span class="text-[10px] px-1.5 py-0.5 bg-slate-100 rounded text-slate-600">{{ status.status }}: {{ status.count }}</span>
+                            <span class="text-[10px] px-1.5 py-0.5 bg-slate-100 rounded text-slate-600">{{ status.status_display }}: {{ status.count }}</span>
                         {% endfor %}
                     </div>
                     <p class="text-xs text-slate-500 mb-1 mt-2">持有他人書籍</p>
                     <div class="flex flex-wrap gap-1">
                         {% for status in activity_stats.held_books_status %}
-                            <span class="text-[10px] px-1.5 py-0.5 bg-slate-100 rounded text-slate-600">{{ status.status }}: {{ status.count }}</span>
+                            <span class="text-[10px] px-1.5 py-0.5 bg-slate-100 rounded text-slate-600">{{ status.status_display }}: {{ status.count }}</span>
                         {% endfor %}
                     </div>
                 </div>

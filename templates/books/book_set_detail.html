@@ -43,33 +43,7 @@
                     套書書籍 <span class="text-primary ml-1">({{ books|length }})</span>
                 </h2>
             </div>
-            <div id="book-set-books" class="divide-y divide-slate-100">
-                {% csrf_token %}
-                {% if books %}
-                    {% for book in books %}
-                        <div class="flex justify-between items-center p-4 hover:bg-slate-50 transition-colors">
-                            <div class="flex-1 min-w-0 pr-4">
-                                <a href="{% url 'books:detail' book.pk %}"
-                                   class="text-base font-semibold text-slate-900 hover:text-primary block truncate mb-1">
-                                    {{ book.official_book.title }}
-                                </a>
-                                <p class="text-sm text-slate-500 truncate">{{ book.official_book.author|default:"未知作者" }}</p>
-                            </div>
-                            <button hx-post="{% url 'books:book_set_remove_book' book_set.pk book.pk %}"
-                                    hx-target="#book-set-books"
-                                    hx-swap="outerHTML"
-                                    class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition-colors flex items-center justify-center shrink-0">
-                                <span class="material-symbols-outlined text-xl">remove_circle_outline</span>
-                            </button>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="p-8 text-center text-slate-500">
-                        <span class="material-symbols-outlined text-3xl mb-2 text-slate-300">inbox</span>
-                        <p class="text-sm">此套書尚未加入任何書籍</p>
-                    </div>
-                {% endif %}
-            </div>
+            {% include "books/partials/book_set_books.html" %}
         </div>
     </div>
 {% endblock %}

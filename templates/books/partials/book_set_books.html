@@ -1,21 +1,30 @@
 {% load crispy_forms_tags %}
-<div class="space-y-3" id="book-set-books">
-    {% for book in books %}
-        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-            <div>
-                <a href="{% url 'books:detail' book.pk %}"
-                   class="text-slate-900 hover:text-primary">{{ book.official_book.title }}</a>
-                <p class="text-sm text-slate-500">{{ book.official_book.author }}</p>
+<!-- 已加入的書籍列表 -->
+<div id="book-set-books" class="divide-y divide-slate-100">
+    {% csrf_token %}
+    {% if books %}
+        {% for book in books %}
+            <div class="flex justify-between items-center p-4">
+                <div class="flex-1 min-w-0 pr-4">
+                    <a href="{% url 'books:detail' book.pk %}"
+                       class="text-base font-semibold text-slate-900 hover:text-primary block truncate mb-1">
+                        {{ book.official_book.title }}
+                    </a>
+                    <p class="text-sm text-slate-500 truncate">{{ book.official_book.author }}</p>
+                </div>
+                <button type="button"
+                        hx-post="{% url 'books:book_set_remove_book' book_set.pk book.pk %}"
+                        hx-target="#book-set-books"
+                        hx-swap="outerHTML"
+                        class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-xl">remove_circle_outline</span>
+                </button>
             </div>
-            <button type="button"
-                    hx-post="{% url 'books:book_set_remove_book' book_set.pk book.pk %}"
-                    hx-target="#book-set-books"
-                    hx-swap="outerHTML"
-                    class="text-red-600 hover:text-red-800 text-sm">移除</button>
+        {% endfor %}
+    {% else %}
+        <div class="p-8 text-center text-slate-500">
+            <span class="material-symbols-outlined text-3xl mb-2 text-slate-300">inbox</span>
+            <p class="text-sm">此套書尚未加入任何書籍</p>
         </div>
-    {% empty %}
-        <div class="text-slate-600 text-center py-8">
-            <p>此套書尚未加入任何書籍</p>
-        </div>
-    {% endfor %}
+    {% endif %}
 </div>

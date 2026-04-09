@@ -74,6 +74,8 @@ class RatingForm(forms.Form):
             attrs={
                 "class": "w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer",
                 "type": "range",
+                "min": 1,
+                "max": 5,
             }
         ),
         label="友善評分",
@@ -85,6 +87,8 @@ class RatingForm(forms.Form):
             attrs={
                 "class": "w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer",
                 "type": "range",
+                "min": 1,
+                "max": 5,
             }
         ),
         label="準時評分",
@@ -96,6 +100,8 @@ class RatingForm(forms.Form):
             attrs={
                 "class": "w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer",
                 "type": "range",
+                "min": 1,
+                "max": 5,
             }
         ),
         label="書況準確度評分",
