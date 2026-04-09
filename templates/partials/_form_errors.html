@@ -1,0 +1,22 @@
+{% if form.errors %}
+    <div class="bg-rose-50 border border-rose-200 rounded-xl p-4 mb-4">
+        <div class="flex items-center gap-2 text-rose-600 mb-2">
+            <span class="material-symbols-outlined">error</span>
+            <p class="font-bold text-sm">請修正以下錯誤：</p>
+        </div>
+        <ul class="text-sm text-rose-600 space-y-1 list-disc ml-4">
+            {% for field in form %}
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                        <li>
+                            <span class="font-bold">{{ field.label }}：</span> {{ error }}
+                        </li>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+            {% if form.non_field_errors %}
+                {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+            {% endif %}
+        </ul>
+    </div>
+{% endif %}

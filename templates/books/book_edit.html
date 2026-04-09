@@ -2,18 +2,7 @@
 {% load crispy_forms_tags %}
 {% block title %}Exbooks - 編輯書籍{% endblock %}
 {% block content %}
-    <header class="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
-        <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
-            <nav class="flex items-center gap-3">
-                <a href="{% url 'books:detail' book.id %}"
-                   aria-label="返回書籍詳情"
-                   class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
-                    <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
-                </a>
-                <h1 class="text-xl font-bold tracking-tight">編輯書籍資訊</h1>
-            </nav>
-        </div>
-    </header>
+    {% include 'partials/_header.html' with title="編輯書籍資訊" back_url=book.get_absolute_url %}
     <main class="max-w-xl mx-auto p-4 pb-24">
         <form method="POST" enctype="multipart/form-data" class="space-y-4">
             {% csrf_token %}

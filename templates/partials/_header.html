@@ -1,0 +1,16 @@
+<header class="flex items-center bg-white/80 backdrop-blur-md p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200"
+        style="view-transition-name: page-header">
+    <nav aria-label="返回">
+        <a href="{{ back_url|default:'javascript:history.back() ' }}"
+           aria-label="返回"
+           class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+           style="view-transition-name: back-button">
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+        </a>
+    </nav>
+    <h1 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center"
+        style="view-transition-name: page-title">{{ title }}</h1>
+    <div class="w-10 flex justify-end">
+        {% block header_right %}{% endblock %}
+    </div>
+</header>
