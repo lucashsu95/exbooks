@@ -96,6 +96,16 @@
                             <span class="text-primary text-xs font-bold bg-primary/10 px-2 py-1 rounded">{{ book.get_status_display }}</span>
                             <span class="text-slate-500 text-xs bg-slate-100 px-2 py-1 rounded">{{ book.get_transferability_display }}</span>
                         </div>
+                    </div>
+                    <div class="flex flex-col gap-1 mt-2">
+                        <p class="text-slate-500 text-xs flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[14px]">person</span>
+                            貢獻：{{ book.owner.profile.nickname|default:book.owner.email }}
+                        </p>
+                        <p class="text-slate-500 text-xs flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[14px]">inventory_2</span>
+                            保管：{{ book.keeper.profile.nickname|default:book.keeper.email }}
+                        </p>
                         <p class="text-slate-400 text-xs flex items-center gap-1">
                             <span class="material-symbols-outlined text-[14px]">near_me</span> {{ book.keeper.profile.default_location|default:'未知地點' }}
                         </p>

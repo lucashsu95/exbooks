@@ -25,20 +25,39 @@ def validate_and_process(image_file):
     if ext not in ALLOWED_EXTENSIONS:
         raise ValidationError(f"不支援的檔案格式：{ext}。僅支援 JPG 和 PNG。")
 
-    # 2. 驗證 MIME type
-    if image_file.content_type not in ALLOWED_MIME_TYPES:
-        raise ValidationError(f"不支援的 MIME 類型：{image_file.content_type}。")
+    # 2. 驗證 MIME type（含 iOS 降級方案）
+    mime_type = image_file.content_type
+    if mime_type not in ALLOWED_MIME_TYPES:
+        # iOS Safari 有時會發送 application/octet-stream，此時根據副檔名推測
+        if mime_type == "application/octet-stream" and ext in {".jpg", ".jpeg", ".png"}:
+            if ext in {".jpg", ".jpeg"}:
+                mime_type = "image/jpeg"
+            elif ext == ".png":
+                mime_type = "image/png"
+        else:
+            raise ValidationError(f"不支援的 MIME 類型：{mime_type}。")
 
-    # 3. 讀取圖片
+    # 3. 預先檢查圖片尺寸（避免超大圖片載入超時）
     try:
         img = Image.open(image_file)
-    except Exception as e:
+        width, height = img.size
+        if width > 8192 or height > 8192:
+            raise ValidationError(
+                f"圖片尺寸過大（{width}×{height}）。最大允許 8192×8192 像素。"
+            )
+    except (ValidationError, Exception) as e:
+        if isinstance(e, ValidationError):
+            raise
         raise ValidationError(f"無法開啟圖片檔案：{str(e)}")
 
-    # 4. 處理 EXIF 旋轉
+    # 4. 再次開啟圖片進行處理（第一次開啟已驗證）
+    image_file.seek(0)  # 重置檔案指針
+    img = Image.open(image_file)
+
+    # 5. 處理 EXIF 旋轉
     img = ImageOps.exif_transpose(img)
 
-    # 5. 統一轉換為 RGB (處理 RGBA 或 P 模式，並準備轉存為 JPEG)
+    # 6. 統一轉換為 RGB (處理 RGBA 或 P 模式，並準備轉存為 JPEG)
     if img.mode in ("RGBA", "P"):
         # 建立白色背景以處理透明度
         background = Image.new("RGB", img.size, (255, 255, 255))
@@ -50,7 +69,7 @@ def validate_and_process(image_file):
     elif img.mode != "RGB":
         img = img.convert("RGB")
 
-    # 6. 壓縮處理
+    # 7. 壓縮處理
     output = io.BytesIO()
     quality = 85
 

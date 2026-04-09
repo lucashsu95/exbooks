@@ -39,6 +39,68 @@
                 </nav>
             </div>
         </header>
+        {% if not onboarding_completed %}
+            <!-- Onboarding Quests -->
+            <div class="max-w-xl mx-auto p-4" id="onboarding-quests">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2">
+                    </div>
+                    <div class="flex items-center justify-between mb-4 relative z-10">
+                        <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">rocket_launch</span>
+                            新手任務
+                        </h2>
+                    </div>
+                    <div class="space-y-3 relative z-10">
+                        <!-- Step 1 -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center justify-center w-6 h-6 rounded-full {% if onboarding_step1 %}bg-green-500 text-white{% else %}bg-slate-100 text-slate-400{% endif %}">
+                                    {% if onboarding_step1 %}
+                                        <span class="material-symbols-outlined text-[14px]">check</span>
+                                    {% else %}
+                                        <span class="text-xs font-bold">1</span>
+                                    {% endif %}
+                                </div>
+                                <span class="text-sm font-medium {% if onboarding_step1 %}text-slate-500 line-through{% else %}text-slate-700{% endif %}">完善個人資料</span>
+                            </div>
+                            {% if not onboarding_step1 %}
+                                <a href="{% url 'accounts:profile_edit' %}"
+                                   class="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full hover:bg-primary/20 transition-colors">前往</a>
+                            {% endif %}
+                        </div>
+                        <!-- Step 2 -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center justify-center w-6 h-6 rounded-full {% if onboarding_step2 %}bg-green-500 text-white{% else %}bg-slate-100 text-slate-400{% endif %}">
+                                    {% if onboarding_step2 %}
+                                        <span class="material-symbols-outlined text-[14px]">check</span>
+                                    {% else %}
+                                        <span class="text-xs font-bold">2</span>
+                                    {% endif %}
+                                </div>
+                                <span class="text-sm font-medium {% if onboarding_step2 %}text-slate-500 line-through{% else %}text-slate-700{% endif %}">上架第一本書</span>
+                            </div>
+                            {% if not onboarding_step2 %}
+                                <a href="{% url 'books:add' %}"
+                                   class="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full hover:bg-primary/20 transition-colors">前往</a>
+                            {% endif %}
+                        </div>
+                        <!-- Step 3 -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-400">
+                                    <span class="text-xs font-bold">3</span>
+                                </div>
+                                <span class="text-sm font-medium text-slate-700">探索社群好書</span>
+                            </div>
+                            <a href="{% url 'books:all' %}"
+                               class="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full hover:bg-primary/20 transition-colors">前往</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
         <!-- Main Content - HTMX 目標區域 -->
         <main class="max-w-xl mx-auto p-4 space-y-4" id="bookshelf-content">
             {% if current_tab == 'keeping' %}

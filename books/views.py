@@ -178,11 +178,21 @@ def my_bookshelf(request):
             .order_by("-updated_at")
         )
 
+    # Onboarding status
+    profile = request.user.profile
+    onboarding_step1 = bool(profile.birth_date)
+    onboarding_step2 = SharedBook.objects.filter(owner=request.user).exists()
+    # Step 3 is just browsing, we can consider it done if they have done 1 and 2 or just leave it always open
+    onboarding_completed = onboarding_step1 and onboarding_step2
+
     context = {
         "current_tab": tab,
         "keeping_books": keeping_books,
         "contributions_books": contributions_books,
         "active_requests": active_requests,
+        "onboarding_step1": onboarding_step1,
+        "onboarding_step2": onboarding_step2,
+        "onboarding_completed": onboarding_completed,
     }
     return render(request, "books/my_bookshelf.html", context)
 
@@ -193,13 +203,21 @@ def book_all(request):
     # 使用 BookSearchForm 處理 GET 參數
     form = BookSearchForm(request.GET)
 
-    # 基礎查詢：只顯示可移轉 (T)
+    # 基礎查詢
     all_books = (
-        SharedBook.objects.select_related("official_book", "keeper__profile")
-        .filter(status=SharedBook.Status.TRANSFERABLE)
+        SharedBook.objects.select_related(
+            "official_book", "keeper__profile", "owner__profile"
+        )
         .exclude(keeper=request.user)
         .order_by("-updated_at")
     )
+
+    if form.is_valid() and form.cleaned_data.get("status"):
+        all_books = all_books.filter(status=form.cleaned_data["status"])
+    else:
+        all_books = all_books.exclude(
+            status__in=[SharedBook.Status.SUSPENDED, SharedBook.Status.EXCEPTION]
+        )
 
     # 搜尋
     q = request.GET.get("q", "").strip()
@@ -329,7 +347,35 @@ def book_add(request):
             return redirect("books:bookshelf")
         messages.error(request, "書籍資料有誤，請檢查後再送出。")
     else:
-        form = BookAddForm()
+        profile = request.user.profile
+        initial_desc = ""
+        if profile.default_location:
+            initial_desc += f"取書地點：{profile.default_location}\n"
+
+        if profile.available_schedule:
+            try:
+                days_map = {
+                    "1": "週一",
+                    "2": "週二",
+                    "3": "週三",
+                    "4": "週四",
+                    "5": "週五",
+                    "6": "週六",
+                    "7": "週日",
+                }
+                sched_texts = []
+                for entry in profile.available_schedule:
+                    day = str(entry.get("weekday", ""))
+                    day_name = days_map.get(day, f"星期{day}")
+                    start = entry.get("start", "")
+                    end = entry.get("end", "")
+                    sched_texts.append(f"{day_name} {start}-{end}")
+                if sched_texts:
+                    initial_desc += f"可取書時間：{'、'.join(sched_texts)}"
+            except Exception:
+                pass
+
+        form = BookAddForm(initial={"condition_description": initial_desc.strip()})
 
     return render(request, "books/book_add.html", {"form": form})
 

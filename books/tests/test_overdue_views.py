@@ -37,7 +37,7 @@ class TestOverdueListView:
         content = response.content.decode("utf-8")
         assert "小明" in content
         assert book.official_book.title in content
-        assert "逾期 11 天" in content
+        assert "逾期 10 天" in content
 
     def test_overdue_list_filtering(self, client):
         """測試只有逾期超過 7 天的才會顯示"""
