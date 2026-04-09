@@ -1,0 +1,159 @@
+/* Shared CSS for Exbooks */
+
+/* Material Symbols - Prevent Text Flash (FOUT) */
+.material-symbols-outlined {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  overflow: hidden;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'liga';
+  visibility: hidden;
+}
+
+.fonts-loaded .material-symbols-outlined {
+  visibility: visible;
+}
+
+/* Toast auto-dismiss */
+.toast {
+  animation: toastIn 0.4s ease-out, toastOut 0.4s ease-in 4s forwards;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-12px); }
+}
+
+@keyframes toastOut {
+  to { opacity: 0; transform: translateY(-12px); }
+}
+
+.toast-safe {
+  top: max(16px, env(safe-area-inset-top, 0px));
+  right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+#toast-container:empty {
+  display: none;
+}
+
+/* Safe areas */
+.safe-area-pb {
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+}
+
+.safe-area-pt {
+  padding-top: max(16px, env(safe-area-inset-top, 0px));
+}
+
+/* Utility classes */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.fill-1 {
+  font-variation-settings: 'FILL' 1;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Global Loading Indicator */
+#global-loader {
+  transition: opacity 200ms ease-in-out;
+}
+
+#global-loader-bar {
+  transition: width 300ms ease-in-out;
+}
+
+/* Base Body Styles */
+body {
+  min-height: max(884px, 100dvh);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* View Transitions API */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(main-content) {
+  animation: 180ms ease-in both vt-fade-out;
+}
+
+::view-transition-new(main-content) {
+  animation: 220ms ease-out both vt-fade-in;
+}
+
+::view-transition-old(page-title),
+::view-transition-new(page-title) {
+  animation: 300ms ease-in-out both vt-fade;
+}
+
+::view-transition-old(bottom-nav),
+::view-transition-new(bottom-nav) {
+  animation: none;
+}
+
+@keyframes vt-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes vt-fade-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(root),
+  ::view-transition-old(root),
+  ::view-transition-new(root),
+  ::view-transition-group(main-content),
+  ::view-transition-old(main-content),
+  ::view-transition-new(main-content) {
+    animation: none !important;
+  }
+  
+  .toast {
+    animation: none;
+  }
+}
