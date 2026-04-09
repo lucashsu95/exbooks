@@ -111,6 +111,7 @@ def public_profile(request, user_id):
     activity_stats = user_stats_service.get_user_activity_stats(user)
     rating_summary = user_stats_service.get_user_rating_summary(user)
     overdue_count = user_stats_service.get_overdue_count(user)
+    violation_count = user_stats_service.get_violation_count(user)
 
     context = {
         "viewed_user": user,
@@ -122,6 +123,7 @@ def public_profile(request, user_id):
         "activity_stats": activity_stats,
         "rating_summary": rating_summary,
         "overdue_count": overdue_count,
+        "violation_count": violation_count,
     }
     return render(request, "accounts/public_profile.html", context)
 

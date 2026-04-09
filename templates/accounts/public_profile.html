@@ -37,6 +37,20 @@
         {% if profile %}
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
                 {% include "partials/trust_badge.html" with trust_level=profile.trust_level prefix="信用等級：" %}
+                <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-100">
+                    <div class="text-center">
+                        <p class="text-2xl font-bold {% if overdue_count > 0 %}text-amber-500{% else %}text-slate-400{% endif %}">
+                            {{ overdue_count }}
+                        </p>
+                        <p class="text-xs text-slate-500">逾期次數</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-bold {% if violation_count > 0 %}text-red-500{% else %}text-slate-400{% endif %}">
+                            {{ violation_count }}
+                        </p>
+                        <p class="text-xs text-slate-500">違規次數</p>
+                    </div>
+                </div>
             </div>
         {% endif %}
         <!-- Activity Stats Card -->
@@ -54,6 +68,26 @@
                 <div class="text-center">
                     <p class="text-2xl font-bold text-primary">{{ activity_stats.books_lent }}</p>
                     <p class="text-xs text-slate-500">出借次數</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-4 mt-3 pt-3 border-t border-slate-100">
+                <div class="text-center">
+                    <p class="text-lg font-bold text-red-400">{{ activity_stats.rejected_lending_count }}</p>
+                    <p class="text-xs text-slate-500">拒絕借出</p>
+                </div>
+                <div class="text-center col-span-2 text-left">
+                    <p class="text-xs text-slate-500 mb-1">貢獻書籍狀態</p>
+                    <div class="flex flex-wrap gap-1">
+                        {% for status in activity_stats.contributed_books_status %}
+                            <span class="text-[10px] px-1.5 py-0.5 bg-slate-100 rounded text-slate-600">{{ status.status }}: {{ status.count }}</span>
+                        {% endfor %}
+                    </div>
+                    <p class="text-xs text-slate-500 mb-1 mt-2">持有他人書籍</p>
+                    <div class="flex flex-wrap gap-1">
+                        {% for status in activity_stats.held_books_status %}
+                            <span class="text-[10px] px-1.5 py-0.5 bg-slate-100 rounded text-slate-600">{{ status.status }}: {{ status.count }}</span>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </div>

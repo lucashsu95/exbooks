@@ -87,6 +87,9 @@ def get_user_activity_stats(user):
             'books_lent': 出借次數,
             'deals_completed': 完成交易總數,
             'books_holding': 目前持有書籍數,
+            'rejected_lending_count': 拒絕借出次數,
+            'contributed_books_status': 貢獻書籍狀態統計,
+            'held_books_status': 持有他人書籍狀態統計,
         }
     """
     return {
@@ -101,6 +104,21 @@ def get_user_activity_stats(user):
         ).count(),
         "deals_completed": get_completed_deals_count(user),
         "books_holding": SharedBook.objects.filter(keeper=user).count(),
+        "rejected_lending_count": Deal.objects.filter(
+            responder=user,
+            status=Deal.Status.CANCELLED,
+        ).count(),
+        "contributed_books_status": list(
+            SharedBook.objects.filter(owner=user)
+            .values("status")
+            .annotate(count=Count("id"))
+        ),
+        "held_books_status": list(
+            SharedBook.objects.filter(keeper=user)
+            .exclude(owner=user)
+            .values("status")
+            .annotate(count=Count("id"))
+        ),
     }
 
 

@@ -37,7 +37,7 @@
             <div class="space-y-2">
                 {% for message in messages %}
                     <div class="error-message {% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-600{% else %}bg-blue-50 border-blue-200 text-blue-600{% endif %} border rounded-xl px-4 py-3.5 text-sm flex items-center gap-2">
-                        <span class="material-symbols-outlined text-lg">
+                        <span class="material-symbols-outlined text-lg {% if message.tags == 'error' %}text-red-500{% else %}text-blue-500{% endif %}">
                             {% if message.tags == 'error' %}
                                 error
                             {% else %}
