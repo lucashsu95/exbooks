@@ -270,20 +270,21 @@ def deal_list(request):
             grouped_pending[book] = []
         grouped_pending[book].append(deal)
 
-    return render(
-        request,
-        "deals/deal_list.html",
-        {
-            "current_tab": tab,
-            "deals": deals,  # Add deals for template integration
-            "pending_responder": pending_responder,
-            "grouped_pending": grouped_pending,
-            "pending_applicant": pending_applicant,
-            "pending_meeting": pending_meeting,
-            "pending_rating": pending_rating,
-            "history": history,
-        },
-    )
+    context = {
+        "current_tab": tab,
+        "deals": deals,  # Add deals for template integration
+        "pending_responder": pending_responder,
+        "grouped_pending": grouped_pending,
+        "pending_applicant": pending_applicant,
+        "pending_meeting": pending_meeting,
+        "pending_rating": pending_rating,
+        "history": history,
+    }
+
+    if request.headers.get("HX-Request"):
+        return render(request, "deals/partials/_deal_list_page_wrapper.html", context)
+
+    return render(request, "deals/deal_list.html", context)
 
 
 @login_required
