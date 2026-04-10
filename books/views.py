@@ -194,6 +194,10 @@ def my_bookshelf(request):
         "onboarding_step2": onboarding_step2,
         "onboarding_completed": onboarding_completed,
     }
+
+    if request.headers.get("HX-Request"):
+        return render(request, "books/partials/_bookshelf_page_wrapper.html", context)
+
     return render(request, "books/my_bookshelf.html", context)
 
 
