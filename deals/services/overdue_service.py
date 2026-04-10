@@ -1,4 +1,5 @@
-from datetime import date, timedelta
+from django.utils import timezone
+from datetime import timedelta
 
 
 from deals.models import Deal
@@ -14,7 +15,7 @@ def get_overdue_books(days=7):
     Returns:
         QuerySet: 逾期書籍列表
     """
-    today = date.today()
+    today = timezone.now().date()
     threshold = today - timedelta(days=days)
 
     # 找出借閱中（MEETED 狀態）且到期的交易
@@ -42,7 +43,7 @@ def get_public_overdue_info(deal):
             'is_severe': 是否嚴重逾期（≥14天）
         }
     """
-    today = date.today()
+    today = timezone.now().date()
     overdue_days = (today - deal.due_date).days if deal.due_date else 0
 
     # 取得暱稱，若無則使用 Email 前綴
@@ -68,7 +69,7 @@ def get_overdue_status(deal):
     if not deal.due_date:
         return "none"
 
-    today = date.today()
+    today = timezone.now().date()
     overdue_days = (today - deal.due_date).days
 
     if overdue_days < 3:

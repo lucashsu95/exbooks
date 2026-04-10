@@ -3,13 +3,14 @@
  * 處理快取策略與 Web Push 通知
  */
 
-const CACHE_NAME = 'exbooks-v2';
-const STATIC_CACHE_NAME = 'exbooks-static-v2';
-const DYNAMIC_CACHE_NAME = 'exbooks-dynamic-v2';
+const CACHE_NAME = 'exbooks-v3';
+const STATIC_CACHE_NAME = 'exbooks-static-v3';
+const DYNAMIC_CACHE_NAME = 'exbooks-dynamic-v3';
 
 // 靜態資源（安裝時預先快取）
 const STATIC_ASSETS = [
   '/',
+  '/offline/',
   '/static/manifest.json',
   'https://cdn.tailwindcss.com',
   'https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap',
@@ -101,6 +102,13 @@ async function networkFirst(request) {
     if (cachedResponse) {
       return cachedResponse;
     }
+    
+    // 如果是頁面導航請求且離線，回傳離線頁面
+    if (request.mode === 'navigate') {
+      const offlineResponse = await caches.match('/offline/');
+      if (offlineResponse) return offlineResponse;
+    }
+    
     console.error('[SW] 網路優先策略失敗:', error);
     return new Response('離線中', { status: 503 });
   }

@@ -140,9 +140,89 @@ class TestDealCreationService:
 
     def test_validate_book_set_compatibility(self):
         """測試套書完整性驗證"""
-        # TODO: 需要 BookSetFactory 來測試套書完整性
-        # 目前先跳過
-        pass
+        from tests.factories import BookSetFactory, OfficialBookFactory
+        from core.exceptions import ValidationError as CoreValidationError
+
+        # 測試 1: 書籍屬於套書但未提供套書參數
+        owner = UserFactory()
+        book_set = BookSetFactory(owner=owner)
+        # 建立多本書確保套書不為空
+        book1 = SharedBookFactory(
+            owner=owner,
+            keeper=owner,
+            book_set=book_set,
+            status=SharedBook.Status.TRANSFERABLE,
+            transferability=SharedBook.Transferability.RETURN,
+            official_book=OfficialBookFactory(),
+        )
+        SharedBookFactory(
+            owner=owner,
+            keeper=owner,
+            book_set=book_set,
+            status=SharedBook.Status.TRANSFERABLE,
+            transferability=SharedBook.Transferability.RETURN,
+            official_book=OfficialBookFactory(),
+        )
+        applicant = UserFactory()
+
+        with pytest.raises(CoreValidationError) as exc_info:
+            DealCreationService.create_deal(
+                shared_book=book1,
+                applicant=applicant,
+                deal_type=Deal.DealType.LOAN,
+                loan_duration_days=30,
+                book_set=None,  # 未提供套書
+            )
+        assert exc_info.value.details["field"] == "book_set"
+
+        # 測試 2: 提供的套書與書籍所屬套書不一致
+        wrong_book_set = BookSetFactory(owner=owner)  # 不同的套書
+        # 為 wrong_book_set 添加書籍使其不為空
+        SharedBookFactory(
+            owner=owner,
+            keeper=owner,
+            book_set=wrong_book_set,
+            status=SharedBook.Status.TRANSFERABLE,
+            transferability=SharedBook.Transferability.RETURN,
+            official_book=OfficialBookFactory(),
+        )
+        with pytest.raises(CoreValidationError) as exc_info:
+            DealCreationService.create_deal(
+                shared_book=book1,
+                applicant=applicant,
+                deal_type=Deal.DealType.LOAN,
+                loan_duration_days=30,
+                book_set=wrong_book_set,  # 錯誤的套書
+            )
+        assert exc_info.value.details["field"] == "book_set"
+
+        # 測試 3: 書籍不屬於套書但提供了套書參數
+        non_set_book = SharedBookFactory(
+            owner=owner,
+            keeper=owner,
+            book_set=None,
+            status=SharedBook.Status.TRANSFERABLE,
+            transferability=SharedBook.Transferability.RETURN,
+        )
+        with pytest.raises(CoreValidationError) as exc_info:
+            DealCreationService.create_deal(
+                shared_book=non_set_book,
+                applicant=applicant,
+                deal_type=Deal.DealType.LOAN,
+                loan_duration_days=30,
+                book_set=book_set,  # 書籍無套書但提供了套書
+            )
+        assert exc_info.value.details["field"] == "book_set"
+
+        # 測試 4: 非借出/轉出交易提供了套書參數
+        with pytest.raises(CoreValidationError) as exc_info:
+            DealCreationService.create_deal(
+                shared_book=book1,
+                applicant=owner,  # 擁有者發起例外交易
+                deal_type=Deal.DealType.EXCEPT,
+                book_set=book_set,  # 例外交易不應提供套書
+            )
+        assert exc_info.value.details["field"] == "book_set"
 
     def test_validate_user_permissions(self):
         """測試用戶權限驗證"""
@@ -173,6 +253,22 @@ class TestDealCreationService:
 
     def test_transaction_rollback_on_error(self):
         """測試錯誤時的交易回滾"""
-        # TODO: 需要模擬錯誤情況
-        # 目前先跳過
-        pass
+        from unittest.mock import patch
+
+        initial_count = Deal.objects.count()
+
+        with patch(
+            "deals.models.Deal.objects.create", side_effect=Exception("DB error")
+        ):
+            with pytest.raises(Exception, match="DB error"):
+                DealCreationService.create_deal(
+                    shared_book=SharedBookFactory(
+                        status=SharedBook.Status.TRANSFERABLE,
+                        transferability=SharedBook.Transferability.RETURN,
+                    ),
+                    applicant=UserFactory(),
+                    deal_type=Deal.DealType.LOAN,
+                    loan_duration_days=30,
+                )
+
+        assert Deal.objects.count() == initial_count

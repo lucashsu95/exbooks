@@ -71,4 +71,70 @@
       }
     }
   });
+
+  // === Global Toast Utility ===
+  function showToast(message, type) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const typeClasses = {
+      error:   'border-red-200 bg-red-50 text-red-800',
+      warning: 'border-amber-200 bg-amber-50 text-amber-800',
+      success: 'border-green-200 bg-green-50 text-green-800',
+      info:    'border-blue-200 bg-blue-50 text-blue-800',
+    };
+    const cls = typeClasses[type] || typeClasses.info;
+    const div = document.createElement('div');
+    div.className = `toast rounded-lg border px-4 py-3 text-sm shadow-md ${cls}`;
+    div.textContent = message;
+    container.appendChild(div);
+    setTimeout(() => div.remove(), 5000);
+  }
+  window.showToast = showToast;
+
+  // === HTMX Global Error Handling ===
+  document.body.addEventListener('htmx:sendError', function(e) {
+    showToast('網路連線失敗，請確認網路狀態後再試', 'error');
+  });
+  document.body.addEventListener('htmx:responseError', function(e) {
+    const status = e.detail.xhr?.status;
+    if (status === 403) {
+      showToast('操作被拒絕，請重新整理頁面', 'error');
+    } else if (status === 500) {
+      showToast('伺服器錯誤，請稍後再試', 'error');
+    } else {
+      showToast('請求失敗（' + (status || '未知') + '），請稍後再試', 'warning');
+    }
+  });
+
+  // === View Transitions：底部導航平滑切換 ===
+  if (!document.startViewTransition) return;
+
+  let isTransitioning = false;
+
+  document.addEventListener('click', function(e) {
+    const anchor = e.target.closest('#bottom-nav a[href]');
+    if (!anchor) return;
+
+    const href = anchor.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('javascript')) return;
+
+    const currentPath = window.location.pathname;
+    const targetPath = new URL(href, window.location.origin).pathname;
+    if (currentPath === targetPath) return;
+
+    if (isTransitioning) {
+      e.preventDefault();
+      return;
+    }
+
+    e.preventDefault();
+    isTransitioning = true;
+
+    document.startViewTransition(() => {
+      window.location.href = href;
+    }).finished.catch(() => {
+      isTransitioning = false;
+      window.location.href = href;
+    });
+  });
 })();

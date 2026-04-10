@@ -2,7 +2,8 @@
 逾期公開服務測試。
 """
 
-from datetime import date, timedelta
+from datetime import timedelta
+from django.utils import timezone
 from django.test import TestCase
 from deals.services.overdue_service import (
     get_overdue_books,
@@ -32,7 +33,7 @@ class OverdueServiceTest(TestCase):
     def test_get_overdue_books_returns_overdue_deals(self):
         """測試取得逾期書籍"""
         # 建立逾期 10 天的交易
-        overdue_date = date.today() - timedelta(days=10)
+        overdue_date = timezone.now().date() - timedelta(days=10)
         deal = DealFactory(
             applicant=self.borrower,
             responder=self.lender,
@@ -48,7 +49,7 @@ class OverdueServiceTest(TestCase):
     def test_get_overdue_books_excludes_recent_deals(self):
         """測試不包含未逾期的交易"""
         # 建立逾期 2 天的交易
-        recent_date = date.today() - timedelta(days=2)
+        recent_date = timezone.now().date() - timedelta(days=2)
         deal = DealFactory(
             applicant=self.borrower,
             responder=self.lender,
@@ -63,7 +64,7 @@ class OverdueServiceTest(TestCase):
 
     def test_get_public_overdue_info_returns_correct_data(self):
         """測試取得可公開的逾期資訊"""
-        overdue_date = date.today() - timedelta(days=10)
+        overdue_date = timezone.now().date() - timedelta(days=10)
         deal = DealFactory(
             applicant=self.borrower,
             responder=self.lender,
@@ -80,7 +81,7 @@ class OverdueServiceTest(TestCase):
 
     def test_get_public_overdue_info_severe_overdue(self):
         """測試嚴重逾期（≥14天）標記"""
-        overdue_date = date.today() - timedelta(days=15)
+        overdue_date = timezone.now().date() - timedelta(days=15)
         deal = DealFactory(
             applicant=self.borrower,
             responder=self.lender,
@@ -97,7 +98,7 @@ class OverdueServiceTest(TestCase):
         self.borrower.profile.nickname = ""
         self.borrower.profile.save()
 
-        overdue_date = date.today() - timedelta(days=5)
+        overdue_date = timezone.now().date() - timedelta(days=5)
         deal = DealFactory(
             applicant=self.borrower,
             responder=self.lender,
@@ -112,7 +113,7 @@ class OverdueServiceTest(TestCase):
 
     def test_get_overdue_status_none(self):
         """測試逾期狀態：無逾期"""
-        due_date = date.today() - timedelta(days=2)
+        due_date = timezone.now().date() - timedelta(days=2)
         deal = DealFactory(
             applicant=self.borrower,
             responder=self.lender,
@@ -126,7 +127,7 @@ class OverdueServiceTest(TestCase):
 
     def test_get_overdue_status_warning(self):
         """測試逾期狀態：警告（3-6天）"""
-        due_date = date.today() - timedelta(days=5)
+        due_date = timezone.now().date() - timedelta(days=5)
         deal = DealFactory(
             applicant=self.borrower,
             responder=self.lender,
@@ -140,7 +141,7 @@ class OverdueServiceTest(TestCase):
 
     def test_get_overdue_status_public(self):
         """測試逾期狀態：公開（7-13天）"""
-        due_date = date.today() - timedelta(days=10)
+        due_date = timezone.now().date() - timedelta(days=10)
         deal = DealFactory(
             applicant=self.borrower,
             responder=self.lender,
@@ -154,7 +155,7 @@ class OverdueServiceTest(TestCase):
 
     def test_get_overdue_status_severe(self):
         """測試逾期狀態：嚴重（≥14天）"""
-        due_date = date.today() - timedelta(days=15)
+        due_date = timezone.now().date() - timedelta(days=15)
         deal = DealFactory(
             applicant=self.borrower,
             responder=self.lender,

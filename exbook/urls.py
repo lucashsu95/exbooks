@@ -14,6 +14,7 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     # Local apps
     path("", core_views.landing_page, name="landing"),
+    path("offline/", core_views.OfflineView.as_view(), name="offline"),
     path("accounts/", include("accounts.urls")),
     path("books/", include("books.urls")),
     path("deals/", include("deals.urls")),

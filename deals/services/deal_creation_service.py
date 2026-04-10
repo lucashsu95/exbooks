@@ -185,9 +185,16 @@ class DealCreationService:
                     )
 
                 # 檢查套書完整性
-                if not validate_book_set_completeness(book_set):
+                try:
+                    from django.core.exceptions import (
+                        ValidationError as DjangoValidationError,
+                    )
+
+                    validate_book_set_completeness(book_set)
+                except DjangoValidationError as e:
                     raise CoreValidationError(
-                        message="套書不完整，無法進行交易", field="book_set"
+                        message=e.messages[0] if hasattr(e, "messages") else str(e),
+                        field="book_set",
                     )
 
                 # 確保選擇的套書與書籍所屬套書一致
