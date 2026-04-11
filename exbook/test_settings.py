@@ -7,13 +7,15 @@ concurrency issues during E2E tests.
 
 import os
 import tempfile
+import uuid
 
 from .settings import *  # noqa: F401, F403
 
-# Create a temporary directory for test database
-# Using shared cache mode allows concurrent connections to share data
+# Create a unique temporary database for each test run
+# This ensures test isolation while still allowing concurrent connections
 _temp_dir = tempfile.gettempdir()
-_test_db_path = os.path.join(_temp_dir, "exbook_test.db")
+_unique_id = str(uuid.uuid4())[:8]
+_test_db_path = os.path.join(_temp_dir, f"exbook_test_{_unique_id}.db")
 
 DATABASES = {
     "default": {
@@ -23,6 +25,10 @@ DATABASES = {
         "OPTIONS": {
             "timeout": 30,  # Wait up to 30 seconds for locks
             "check_same_thread": False,  # Allow multi-threaded access
+        },
+        # Ensure test database is properly managed
+        "TEST": {
+            "NAME": _test_db_path,
         },
     }
 }
