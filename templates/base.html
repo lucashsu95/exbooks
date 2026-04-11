@@ -80,40 +80,59 @@ if ('fonts' in document) {
         <!-- PWA Service Worker & Push Registration -->
         <script>
 (function() {
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', async function() {
-      try {
-        // 註冊 Service Worker
-        const registration = await navigator.serviceWorker.register('/static/sw.js');
-        console.log('[PWA] Service Worker 註冊成功:', registration.scope);
+if ('serviceWorker' in navigator) {
+window.addEventListener('load', async function() {
+try {
+// 註冊 Service Worker
+const registration = await navigator.serviceWorker.register('/static/sw.js');
+console.log('[PWA] Service Worker 註冊成功:', registration.scope);
 
-        // 檢查是否支援 Push
-        if (!('PushManager' in window)) {
-          console.log('[PWA] 此瀏覽器不支援 Push 通知');
-          return;
-        }
+// 檢查是否支援 Push
+if (!('PushManager' in window)) {
+console.log('[PWA] 此瀏覽器不支援 Push 通知');
+return;
+}
 
-        // 檢查是否已登入（透過檢查是否有登入後才有的元素）
-        {% if user.is_authenticated %}
-        await initPushNotifications(registration);
-        {% endif %}
-      } catch (error) {
-        console.log('[PWA] Service Worker 註冊失敗:', error);
-      }
-    });
-  }
+// 檢查是否已登入（透過檢查是否有登入後才有的元素）
+{% if user.is_authenticated %}
+// 延遲初始化 Push，避免在頁面載入時立即發送請求
+// 這可以減少並發請求對 SQLite 的壓力
+setTimeout(async () => {
+await initPushNotifications(registration);
+}, 1000);
+{% endif %}
+} catch (error) {
+console.log('[PWA] Service Worker 註冊失敗:', error);
+}
+});
+}
 
-  {% if user.is_authenticated %}
-  async function initPushNotifications(registration) {
-    try {
-      // 取得 VAPID 公開金鑰
-      const response = await fetch('/deals/push/vapid-public-key/');
-      if (!response.ok) {
-        console.log('[PWA] 無法取得 VAPID 金鑰，Web Push 尚未設定');
-        return;
-      }
-      const data = await response.json();
-      const publicKey = data.publicKey;
+{% if user.is_authenticated %}
+async function initPushNotifications(registration) {
+try {
+// 取得 VAPID 公開金鑰（帶重試機制）
+let response;
+let retries = 3;
+while (retries > 0) {
+try {
+response = await fetch('/deals/push/vapid-public-key/');
+break;
+} catch (e) {
+retries--;
+if (retries === 0) {
+console.log('[PWA] 無法連接到 VAPID 端點');
+return;
+}
+await new Promise(r => setTimeout(r, 500));
+}
+}
+
+if (!response || !response.ok) {
+console.log('[PWA] 無法取得 VAPID 金鑰，Web Push 尚未設定');
+return;
+}
+const data = await response.json();
+const publicKey = data.publicKey;
 
       // 將 base64 轉換為 Uint8Array
       const applicationServerKey = urlBase64ToUint8Array(publicKey);

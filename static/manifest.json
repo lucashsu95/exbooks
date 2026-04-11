@@ -5,7 +5,7 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f6f7f8",
-  "theme_color": "#136dec",
+  "theme_color": "#14b8a6",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "zh-Hant",
@@ -65,7 +65,29 @@
       "src": "/static/screenshots/home.png",
       "sizes": "1080x1920",
       "type": "image/png",
-      "form_factor": "narrow"
+      "form_factor": "narrow",
+      "label": "瀏覽共享書籍"
+    },
+    {
+      "src": "/static/screenshots/deals.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "管理交易進度"
+    },
+    {
+      "src": "/static/screenshots/bookshelf.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "個人書架與貢獻"
+    },
+    {
+      "src": "/static/screenshots/desktop-home.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "桌面版瀏覽體驗"
     }
   ],
   "shortcuts": [
@@ -87,7 +109,7 @@
       "name": "我的書架",
       "short_name": "書架",
       "description": "管理我的書籍",
-      "url": "/books/my/",
+      "url": "/books/bookshelf/",
       "icons": [{ "src": "/static/icons/shelf.png", "sizes": "96x96" }]
     }
   ],

@@ -451,21 +451,29 @@ def rating_create(request, pk):
 # ============================================
 
 
-@login_required
 def push_vapid_public_key(request):
     """
     取得 VAPID 公開金鑰。
 
     前端需要此金鑰來註冊 Push 訂閱。
+    注意：此端點不需要登入，因為金鑰是公開的。
     """
-    config = WebPushConfig.get_config()
-    if not config:
+    try:
+        config = WebPushConfig.get_config()
+        if not config:
+            return JsonResponse(
+                {"error": "Web Push 尚未設定"},
+                status=503,
+            )
+
+        return JsonResponse({"publicKey": config.vapid_public_key})
+    except Exception as e:
+        # 處理 SQLite 並發問題或其他資料庫錯誤
+        logger.warning(f"Failed to get VAPID config: {e}")
         return JsonResponse(
-            {"error": "Web Push 尚未設定"},
+            {"error": "Web Push 服務暫時無法使用"},
             status=503,
         )
-
-    return JsonResponse({"publicKey": config.vapid_public_key})
 
 
 @login_required
