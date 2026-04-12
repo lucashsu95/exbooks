@@ -201,10 +201,11 @@
         </main>
     </div>
     <!-- Floating Action Button -->
-    <a href="{% url 'books:add' %}"
-       class="fixed right-4 fab-safe-bottom bg-primary text-white size-14 rounded-full shadow-lg flex items-center justify-center hover:scale-105 transition-transform active:scale-95">
-        <span class="material-symbols-outlined text-3xl">add</span>
-    </a>
+<a href="{% url 'books:add' %}"
+	aria-label="新增書籍"
+	class="fixed right-4 fab-safe-bottom bg-primary text-white size-14 rounded-full shadow-lg flex items-center justify-center hover:scale-105 transition-transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+	<span class="material-symbols-outlined text-3xl" aria-hidden="true">add</span>
+</a>
     <style>
 /* FAB 按鈕位置 - 考慮 Bottom Nav 和 Safe Area */
 .fab-safe-bottom {

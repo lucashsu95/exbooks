@@ -80,13 +80,38 @@ body {
   -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
 }
 
+/* Accessibility - Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+	.touch-spring,
+	.reveal-on-scroll,
+	.category-pill,
+	.glass-nav {
+		transition: none !important;
+	}
+
+	.touch-spring:active {
+		transform: none;
+		opacity: 1;
+	}
+
+	.reveal-on-scroll {
+		opacity: 1;
+		transform: none;
+	}
+
+	.category-pill.active {
+		transform: none;
+		box-shadow: none;
+	}
+}
+
 /* Fix duplicate select arrows from Tailwind forms plugin */
 select.relative,
 select {
-  background-image: none !important;
+	background-image: none !important;
 }
 
 /* Remove crispy_tailwind arrow styling for .relative selects */
 select.relative::after {
-  display: none !important;
+	display: none !important;
 }

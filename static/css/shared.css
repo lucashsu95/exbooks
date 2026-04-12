@@ -144,16 +144,38 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(root),
-  ::view-transition-old(root),
-  ::view-transition-new(root),
-  ::view-transition-group(main-content),
-  ::view-transition-old(main-content),
-  ::view-transition-new(main-content) {
-    animation: none !important;
-  }
-  
-  .toast {
-    animation: none;
-  }
+	/* View Transitions - disable all animations */
+	::view-transition-group(root),
+	::view-transition-old(root),
+	::view-transition-new(root),
+	::view-transition-group(main-content),
+	::view-transition-old(main-content),
+	::view-transition-new(main-content) {
+		animation: none !important;
+	}
+
+	/* Toast animations */
+	.toast {
+		animation: none;
+	}
+
+	/* Global: disable all transitions and animations */
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+
+	/* Keep essential focus transitions for accessibility */
+	button:focus,
+	a:focus,
+	input:focus,
+	select:focus,
+	textarea:focus,
+	[tabindex]:focus {
+		transition: outline 0.01ms !important;
+	}
 }

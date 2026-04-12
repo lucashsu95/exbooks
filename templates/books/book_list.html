@@ -15,17 +15,19 @@
             <span class="oled-text text-lg font-bold tracking-tight">Exbooks</span>
         </div>
         <div class="flex items-center">
-            <a href="{% url 'accounts:profile' %}"
-               class="w-10 h-10 rounded-full border border-white shadow-sm overflow-hidden touch-spring">
-                {% if user.is_authenticated and user.profile.avatar %}
-                    <img src="{{ user.profile.avatar.url }}"
-                         class="w-full h-full object-cover" />
-                {% else %}
-                    <div class="w-full h-full bg-slate-200 flex items-center justify-center text-slate-500">
-                        <span class="material-symbols-outlined text-xl leading-none">person</span>
-                    </div>
-                {% endif %}
-            </a>
+<a href="{% url 'accounts:profile' %}"
+	aria-label="個人資料"
+	class="w-10 h-10 rounded-full border border-white shadow-sm overflow-hidden touch-spring focus:outline-none focus:ring-2 focus:ring-primary">
+	{% if user.is_authenticated and user.profile.avatar %}
+	<img src="{{ user.profile.avatar.url }}"
+		alt="{{ user.profile.nickname|default:user.email }} 的頭像"
+		class="w-full h-full object-cover" />
+	{% else %}
+	<div class="w-full h-full bg-slate-200 flex items-center justify-center text-slate-500">
+		<span class="material-symbols-outlined text-xl leading-none" aria-hidden="true">person</span>
+	</div>
+	{% endif %}
+</a>
         </div>
     </header>
     <div class="px-6 pt-8 pb-4">
@@ -47,17 +49,18 @@
                   class="relative">
                 <div class="relative flex items-center h-16 rounded-2xl bg-white/60 backdrop-blur-md border border-white/40 shadow-sm px-6 touch-spring">
                     <span class="material-symbols-outlined text-slate-400 mr-3">search</span>
-                    <input name="q"
-                           type="search"
-                           placeholder="想看什麼書？"
-                           class="flex-1 bg-transparent border-none text-slate-900 placeholder:text-slate-400 font-medium focus:ring-0 px-0"
-                           value="{{ search_query|default:'' }}"
-                           autocomplete="off"
-                           hx-get="{% url 'books:list' %}"
-                           hx-target="#book-feed"
-                           hx-swap="outerHTML transition:true"
-                           hx-trigger="keyup changed delay:500ms"
-                           hx-push-url="true" />
+<input name="q"
+	type="search"
+	placeholder="想看什麼書？"
+	aria-label="搜尋書籍"
+	class="flex-1 bg-transparent border-none text-slate-900 placeholder:text-slate-400 font-medium focus:ring-0 px-0"
+	value="{{ search_query|default:'' }}"
+	autocomplete="off"
+	hx-get="{% url 'books:list' %}"
+	hx-target="#book-feed"
+	hx-swap="outerHTML transition:true"
+	hx-trigger="keyup changed delay:500ms"
+	hx-push-url="true" />
                 </div>
             </form>
         </div>

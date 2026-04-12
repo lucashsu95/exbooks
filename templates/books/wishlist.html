@@ -6,9 +6,10 @@
             style="view-transition-name: page-header">
         <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
             <div class="flex items-center gap-3">
-                <a href="{% url 'books:list' %}"
-                   class="material-symbols-outlined text-slate-600 cursor-pointer"
-                   style="view-transition-name: back-button">arrow_back</a>
+<a href="{% url 'books:list' %}"
+	aria-label="返回首頁"
+	class="material-symbols-outlined text-slate-600 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary rounded-lg"
+	style="view-transition-name: back-button">arrow_back</a>
                 <h1 class="text-xl font-bold tracking-tight"
                     style="view-transition-name: page-title">願望書車</h1>
             </div>

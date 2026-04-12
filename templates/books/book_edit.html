@@ -42,12 +42,12 @@ document.addEventListener('DOMContentLoaded', function() {
       files.forEach(function(file) {
         if (file.type.startsWith('image/')) {
           var reader = new FileReader();
-          reader.onload = function(event) {
-            var div = document.createElement('div');
-            div.className = 'relative';
-            div.innerHTML = '<img src="' + event.target.result + '" class="w-full h-24 object-cover rounded-lg">';
-            previewContainer.appendChild(div);
-          };
+reader.onload = function(event) {
+	var div = document.createElement('div');
+	div.className = 'relative';
+	div.innerHTML = '<img src="' + event.target.result + '" alt="書況照片預覽" class="w-full h-24 object-cover rounded-lg">';
+	previewContainer.appendChild(div);
+};
           reader.readAsDataURL(file);
         }
       });
