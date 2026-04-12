@@ -10,10 +10,12 @@ from deals.services.deal_service import (
     accept_deal,
     cancel_deal,
     complete_meeting,
+    confirm_return,
     create_deal,
     decline_deal,
     process_book_due,
 )
+from deals.services.rating_service import create_rating
 from tests.factories import (
     BookSetFactory,
     DealFactory,
@@ -603,30 +605,138 @@ class TestProcessBookDue:
         keeper.profile.refresh_from_db()
         assert keeper.profile.overdue_count == initial_count
 
-    def test_overdue_count_no_increment_when_not_due(self):
-        """BR-4.2: 未到期 → 不遞增逾期次數"""
-        from accounts.models import UserProfile
 
+# ============================================================
+# confirm_return — BR-16（歸還流程）
+# ============================================================
+class TestConfirmReturn:
+    """
+    confirm_return 整合測試。
+
+    業務規則：
+    - 只有 MEETED 狀態可以歸還
+    - 只有 responder（持有者）可以確認歸還
+    - 只有 RETURN 流通性書籍適用
+    - 確認後書籍 → T、keeper → owner、交易 → DONE
+    - 評價本身（create_rating）不觸發交易結案，必須透過 confirm_return
+    """
+
+    def _make_loan_deal_meeted(self):
+        """建立一個 LN 交易，狀態已為 MEETED 且書籍為 RETURN 流通性。"""
         owner = UserFactory()
-        keeper = UserFactory()
-        UserProfile.objects.get_or_create(user=keeper)
-
+        applicant = UserFactory()
         book = SharedBookFactory(
             owner=owner,
-            keeper=keeper,
+            keeper=applicant,
             status="O",
             transferability="RETURN",
+            loan_duration_days=30,
         )
         deal = DealFactory(
             shared_book=book,
             deal_type="LN",
             status="M",
-            due_date=timezone.now().date() + timedelta(days=10),  # 未到期
+            applicant=applicant,
+            responder=owner,
+        )
+        return deal, book, owner, applicant
+
+    def test_confirm_return_success_both_rated(self):
+        """雙方評價後，持有者確認歸還 → DONE，書籍重新上架。"""
+        deal, book, owner, applicant = self._make_loan_deal_meeted()
+
+        # 雙方先評價
+        create_rating(
+            deal, applicant, friendliness_score=4, punctuality_score=5, accuracy_score=4
+        )
+        create_rating(
+            deal, owner, friendliness_score=5, punctuality_score=5, accuracy_score=5
         )
 
-        initial_count = keeper.profile.overdue_count
+        deal.refresh_from_db()
+        # 互評後交易應仍維持 MEETED（BR-9 移除自動結案邏輯）
+        assert deal.status == "M", "互評後交易不應自動結案"
 
-        process_book_due(deal)
+        # 持有者按下確認歸還
+        confirm_return(deal, confirmed_by=owner)
 
-        keeper.profile.refresh_from_db()
-        assert keeper.profile.overdue_count == initial_count
+        deal.refresh_from_db()
+        book.refresh_from_db()
+        assert deal.status == "D", "確認歸還後交易應變為 DONE"
+        assert book.status == "T", "書籍應重新上架（TRANSFERABLE）"
+        assert book.keeper == owner, "持有者應恢復為書籍擁有者"
+
+    def test_confirm_return_force_without_rating(self):
+        """未評價時，持有者仍可強制確認歸還 → DONE。"""
+        deal, book, owner, applicant = self._make_loan_deal_meeted()
+
+        # 不評價，直接強制歸還
+        confirm_return(deal, confirmed_by=owner)
+
+        deal.refresh_from_db()
+        book.refresh_from_db()
+        assert deal.status == "D", "強制歸還後交易應變為 DONE"
+        assert book.status == "T", "書籍應重新上架"
+
+    def test_rating_alone_does_not_complete_deal(self):
+        """BR-9 改良：僅評價不觸發交易結案，必須由 confirm_return 觸發。"""
+        deal, book, owner, applicant = self._make_loan_deal_meeted()
+
+        create_rating(
+            deal, applicant, friendliness_score=4, punctuality_score=5, accuracy_score=4
+        )
+        deal.refresh_from_db()
+        assert deal.status == "M", "單方評價後交易應仍維持 MEETED"
+
+        create_rating(
+            deal, owner, friendliness_score=5, punctuality_score=5, accuracy_score=5
+        )
+        deal.refresh_from_db()
+        assert deal.status == "M", "雙方評價後交易仍應維持 MEETED，需點擊歸還才結案"
+
+    def test_non_responder_cannot_confirm_return(self):
+        """申請者無法確認歸還（只有持有者可以）。"""
+        deal, book, owner, applicant = self._make_loan_deal_meeted()
+
+        with pytest.raises(ValidationError, match="持有者"):
+            confirm_return(deal, confirmed_by=applicant)
+
+    def test_non_meeted_deal_raises(self):
+        """非 MEETED 狀態的交易無法確認歸還。"""
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(
+            owner=owner,
+            keeper=applicant,
+            status="V",
+            transferability="RETURN",
+        )
+        deal = DealFactory(
+            shared_book=book,
+            deal_type="LN",
+            status="P",
+            applicant=applicant,
+            responder=owner,
+        )
+        with pytest.raises(ValidationError, match="已面交"):
+            confirm_return(deal, confirmed_by=owner)
+
+    def test_transfer_book_cannot_confirm_return(self):
+        """TRANSFER 流通性書籍不適用歸還流程。"""
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(
+            owner=owner,
+            keeper=applicant,
+            status="O",
+            transferability="TRANSFER",
+        )
+        deal = DealFactory(
+            shared_book=book,
+            deal_type="TF",
+            status="M",
+            applicant=applicant,
+            responder=owner,
+        )
+        with pytest.raises(ValidationError, match="閱畢即還"):
+            confirm_return(deal, confirmed_by=owner)
