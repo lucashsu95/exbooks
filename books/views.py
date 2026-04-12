@@ -51,21 +51,24 @@ def book_list(request):
     q = request.GET.get("q", "").strip()
     category = request.GET.get("category", "").strip()
 
-    new_query = (
+    # 1. 基礎查詢：排除使用者自己的書
+    base_query = (
         SharedBook.objects.select_related("official_book", "keeper__profile")
         .prefetch_related("photos")
         .filter(status=SharedBook.Status.TRANSFERABLE)
         .exclude(keeper=request.user)
     )
 
-    nearby_query = new_query
+    # 2. 熱門推薦 (Bento Section)：不受 category/q 影響，按交易熱度排序
+    # 我們這裡暫用 deal 數量作為熱度指標
+    hot_books = base_query.annotate(deal_count=Count("deals")).order_by(
+        "-deal_count", "-updated_at"
+    )[:3]
+
+    # 3. 附近/搜尋結果：受 category/q 影響
+    nearby_query = base_query
 
     if q:
-        new_query = new_query.filter(
-            Q(official_book__title__icontains=q)
-            | Q(official_book__author__icontains=q)
-            | Q(official_book__isbn__icontains=q)
-        )
         nearby_query = nearby_query.filter(
             Q(official_book__title__icontains=q)
             | Q(official_book__author__icontains=q)
@@ -73,10 +76,7 @@ def book_list(request):
         )
 
     if category and category != "全部":
-        new_query = new_query.filter(official_book__category=category)
         nearby_query = nearby_query.filter(official_book__category=category)
-
-    new_arrivals = new_query.order_by("-updated_at")[:10]
 
     user_location = request.user.profile.default_location
 
@@ -90,7 +90,7 @@ def book_list(request):
         nearby_books = nearby_query.order_by("?")[:10]
 
     context = {
-        "new_arrivals": new_arrivals,
+        "new_arrivals": hot_books,  # 沿用變數名避免改動模板太深，但內容改為熱門書籍
         "nearby_books": nearby_books,
         "search_query": q,
         "current_category": category or "全部",
