@@ -36,7 +36,7 @@ class TestPartialRendering:
             "icon": "request_page",
             "message": "目前沒有待審核的交易",
         }
-        html = render_to_string("deals/partials/_empty_state.html", context)
+        html = render_to_string("partials/_empty_state.html", context)
 
         assert "request_page" in html
         assert "目前沒有待審核的交易" in html

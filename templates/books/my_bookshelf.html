@@ -106,96 +106,35 @@
             {% if current_tab == 'keeping' %}
                 <div class="flex items-center justify-between mb-2">
                     <p class="text-xs font-bold uppercase tracking-wider text-slate-500">您目前持有的書籍</p>
-                    <span class="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">共 {{ keeping_books|length|default:'0' }} 本</span>
+                    {% include 'partials/_badge.html' with text=keeping_books|length prefix='共 ' suffix=' 本' color='primary' %}
                 </div>
                 {% for book in keeping_books %}
-                    <a href="{% url 'books:detail' book.id %}"
-                       class="block bg-white p-4 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-transform">
-                        <div class="flex gap-4 items-center">
-                            <div class="w-16 h-20 bg-slate-200 rounded-lg flex-shrink-0 overflow-hidden shadow-sm">
-                                {% include 'partials/book_cover.html' with book=book %}
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <h3 class="font-bold text-base truncate">{{ book.official_book.title }}</h3>
-                                <p class="text-sm text-primary font-medium flex items-center gap-1">
-                                    <span class="material-symbols-outlined text-sm">book</span> {{ book.get_status_display }}
-                                </p>
-                                <p class="text-xs text-slate-500 mt-1">擁有者：{{ book.owner.profile.nickname|default:book.owner.email }}</p>
-                            </div>
-                        </div>
-                    </a>
+                    {% url 'books:detail' book.id as book_url %}
+                    {% include 'partials/_book_card.html' with book=book url=book_url badge_text=book.get_status_display show_owner=True %}
                 {% empty %}
-                    <div class="flex items-center justify-center p-8 w-full">
-                        <div class="text-center text-slate-500">
-                            <span class="material-symbols-outlined text-4xl mb-2 opacity-50">inbox</span>
-                            <p>目前沒有資料</p>
-                        </div>
-                    </div>
+                    {% include 'partials/_empty_state.html' with icon='inbox' message='目前沒有資料' %}
                 {% endfor %}
             {% elif current_tab == 'contributions' %}
                 <div class="flex items-center justify-between mb-2">
                     <p class="text-xs font-bold uppercase tracking-wider text-slate-500">您貢獻的書籍</p>
-                    <span class="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">共 {{ contributions_books|length|default:'0' }} 本</span>
+                    {% include 'partials/_badge.html' with text=contributions_books|length prefix='共 ' suffix=' 本' color='primary' %}
                 </div>
                 {% for book in contributions_books %}
-                    <a href="{% url 'books:detail' book.id %}"
-                       class="block bg-white p-4 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-transform">
-                        <div class="flex gap-4 items-center">
-                            <div class="w-16 h-20 bg-slate-200 rounded-lg flex-shrink-0 overflow-hidden shadow-sm">
-                                {% include 'partials/book_cover.html' with book=book %}
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <h3 class="font-bold text-base truncate">{{ book.official_book.title }}</h3>
-                                <p class="text-sm font-medium flex items-center gap-1 text-slate-600">
-                                    <span class="material-symbols-outlined text-sm">person</span> 目前持有人：{{ book.keeper.profile.nickname|default:book.keeper.email }}
-                                </p>
-                                <p class="text-xs text-slate-500 mt-1">狀態：{{ book.get_status_display }}</p>
-                            </div>
-                        </div>
-                    </a>
+                    {% url 'books:detail' book.id as book_url %}
+                    {% include 'partials/_book_card.html' with book=book url=book_url subtitle_prefix='目前持有人：' subtitle=book.keeper.profile.nickname|default:book.keeper.email badge_text=book.get_status_display %}
                 {% empty %}
-                    <div class="flex items-center justify-center p-8 w-full">
-                        <div class="text-center text-slate-500">
-                            <span class="material-symbols-outlined text-4xl mb-2 opacity-50">inbox</span>
-                            <p>目前沒有資料</p>
-                        </div>
-                    </div>
+                    {% include 'partials/_empty_state.html' with icon='inbox' message='目前沒有資料' %}
                 {% endfor %}
             {% elif current_tab == 'requests' %}
                 <div class="flex items-center justify-between mb-2">
                     <p class="text-xs font-bold uppercase tracking-wider text-slate-500">進行中的請求</p>
-                    <span class="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">共 {{ active_requests|length|default:'0' }} 筆</span>
+                    {% include 'partials/_badge.html' with text=active_requests|length prefix='共 ' suffix=' 筆' color='primary' %}
                 </div>
                 {% for deal in active_requests %}
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-transform">
-                        <div class="flex gap-4 items-center">
-                            <div class="w-16 h-20 bg-slate-200 rounded-lg flex-shrink-0 overflow-hidden shadow-sm">
-                                {% include 'partials/book_cover.html' with book=deal.shared_book %}
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <h3 class="font-bold text-base truncate">{{ deal.shared_book.official_book.title }}</h3>
-                                <p class="text-sm font-medium flex items-center gap-1 text-primary">
-                                    <span class="material-symbols-outlined text-sm">swap_horiz</span> {{ deal.get_deal_type_display }}
-                                </p>
-                                <p class="text-xs text-slate-500 mt-1">狀態：{{ deal.get_status_display }}</p>
-                                <p class="text-xs text-slate-500 mt-1">
-                                    對象：
-                                    {% if deal.applicant == request.user %}
-                                        {{ deal.responder.profile.nickname|default:deal.responder.email }}
-                                    {% else %}
-                                        {{ deal.applicant.profile.nickname|default:deal.applicant.email }}
-                                    {% endif %}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                    {% url 'deals:detail' deal.id as deal_url %}
+                    {% include 'partials/_book_card.html' with book=deal.shared_book url=deal_url badge_text=deal.get_deal_type_display badge_icon='swap_horiz' subtitle_prefix='狀態：' subtitle=deal.get_status_display badge_color='primary' %}
                 {% empty %}
-                    <div class="flex items-center justify-center p-8 w-full">
-                        <div class="text-center text-slate-500">
-                            <span class="material-symbols-outlined text-4xl mb-2 opacity-50">inbox</span>
-                            <p>目前沒有資料</p>
-                        </div>
-                    </div>
+                    {% include 'partials/_empty_state.html' with icon='inbox' message='目前沒有資料' %}
                 {% endfor %}
             {% endif %}
         </main>

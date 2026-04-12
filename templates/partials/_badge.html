@@ -1,0 +1,8 @@
+{% comment %}
+  Badge UI Component
+  通用的狀態標籤 / 數量標籤
+  Required context: text (str)
+  Optional context: color (str: primary, rose, amber, green, slate, default: primary), icon (str), prefix (str), suffix (str)
+{% endcomment %}<span class="px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap flex items-center gap-1 w-fit {% if color == 'rose' %}bg-rose-100 text-rose-700{% elif color == 'amber' %}bg-amber-100 text-amber-700{% elif color == 'green' %}bg-green-100 text-green-700{% elif color == 'slate' %}bg-slate-100 text-slate-600{% else %}bg-primary/10 text-primary{% endif %}">
+{% if icon %}<span class="material-symbols-outlined text-[14px]" aria-hidden="true">{{ icon }}</span>{% endif %}
+{{ prefix|default:"" }}{{ text }}{{ suffix|default:"" }}</span>

@@ -36,10 +36,7 @@
                                     <p class="text-sm text-slate-500 mt-1 line-clamp-2">{{ book_set.description }}</p>
                                 {% endif %}
                                 <div class="mt-3 flex items-center gap-2">
-                                    <span class="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full flex items-center gap-1">
-                                        <span class="material-symbols-outlined text-[14px]">auto_stories</span>
-                                        {{ book_set.books.count }} 本書籍
-                                    </span>
+                                    {% include 'partials/_badge.html' with text=book_set.books.count|add:' 本書籍' icon='auto_stories' %}
                                 </div>
                             </div>
                             <div class="flex gap-2 relative z-10 shrink-0">
@@ -54,11 +51,8 @@
                 {% endfor %}
             </div>
         {% else %}
-            <div class="flex flex-col items-center justify-center py-16 px-4">
-                <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                    <span class="material-symbols-outlined text-3xl text-slate-300">library_books</span>
-                </div>
-                <p class="text-slate-500 mb-6 text-center">您還沒有建立任何套書</p>
+            {% include 'partials/_empty_state.html' with icon='library_books' message='您還沒有建立任何套書' %}
+            <div class="flex justify-center px-4">
                 <a href="{% url 'books:book_set_create' %}"
                    class="inline-flex items-center px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl shadow-sm hover:bg-primary/90 transition-colors active:scale-95">
                     <span class="material-symbols-outlined text-sm mr-2">add</span>

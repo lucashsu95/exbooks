@@ -1,0 +1,29 @@
+{% comment %}
+  Book Card Component (Bookshelf Style)
+  用於「我的書架」等列表的垂直卡片
+  Required context: book (SharedBook object), url (str)
+  Optional context: subtitle (str), badge_text (str), badge_color (str), badge_icon (str), show_owner (bool)
+{% endcomment %}
+<a href="{{ url }}"
+   class="block bg-white p-4 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-transform focus:outline-none focus:ring-2 focus:ring-primary">
+    <div class="flex gap-4 items-center">
+        <div class="w-16 h-20 bg-slate-200 rounded-lg flex-shrink-0 overflow-hidden shadow-sm">
+            {% include 'partials/book_cover.html' with book=book %}
+        </div>
+        <div class="flex-1 min-w-0">
+            <h3 class="font-bold text-base truncate text-slate-900">{{ book.official_book.title }}</h3>
+            {% if badge_text %}
+                <div class="mt-1">
+                    {% include 'partials/_badge.html' with text=badge_text color=badge_color|default:'primary' icon=badge_icon %}
+                </div>
+            {% endif %}
+            {% if subtitle %}<p class="text-xs text-slate-500 mt-1 truncate">{{ subtitle_prefix }}{{ subtitle }}</p>{% endif %}
+            {% if show_owner %}
+                <p class="text-xs text-slate-400 mt-0.5 truncate">擁有者：{{ book.owner.profile.nickname|default:book.owner.email }}</p>
+            {% endif %}
+        </div>
+        <div class="text-slate-300 shrink-0">
+            <span class="material-symbols-outlined">chevron_right</span>
+        </div>
+    </div>
+</a>

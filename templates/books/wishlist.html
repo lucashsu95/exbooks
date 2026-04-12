@@ -24,7 +24,9 @@
                 <div class="flex-1 min-w-0">
                     <h2 class="font-bold text-base truncate">{{ row.item.official_book.title }}</h2>
                     <p class="text-sm text-slate-600 truncate">{{ row.item.official_book.author|default:"未知作者" }}</p>
-                    <p class="text-xs text-slate-500 mt-1">目前可借：{{ row.available_count }} 本</p>
+                    <div class="mt-1">
+                        {% include 'partials/_badge.html' with text=row.available_count prefix='目前可借：' suffix=' 本' color='primary' %}
+                    </div>
                     <p class="text-xs text-slate-400 mt-1">加入時間：{{ row.item.created_at|date:"Y-m-d H:i" }}</p>
                     <div class="mt-3 flex items-center gap-2">
                         <a href="{% url 'books:all' %}?q={{ row.item.official_book.isbn }}"
@@ -41,12 +43,7 @@
                 </div>
             </article>
         {% empty %}
-            <div class="flex items-center justify-center p-8 w-full">
-                <div class="text-center text-slate-500">
-                    <span class="material-symbols-outlined text-4xl mb-2 opacity-50">favorite</span>
-                    <p>願望書車目前是空的</p>
-                </div>
-            </div>
+            {% include 'partials/_empty_state.html' with icon='favorite' message='願望書車目前是空的' %}
         {% endfor %}
         {% if page_obj.has_other_pages %}
             <nav class="flex justify-center items-center gap-2 pt-2">

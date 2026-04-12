@@ -130,15 +130,15 @@
                 {% endif %}
             {% else %}
                 {% if current_tab == 'pending' %}
-                    {% include 'deals/partials/_empty_state.html' with icon='request_page' message='目前沒有待處理的交易' %}
+                    {% include 'partials/_empty_state.html' with icon='request_page' message='目前沒有待處理的交易' %}
                 {% elif current_tab == 'pending_applicant' %}
-                    {% include 'deals/partials/_empty_state.html' with icon='hourglass_empty' message='您還沒有待對方回應的交易申請' %}
+                    {% include 'partials/_empty_state.html' with icon='hourglass_empty' message='您還沒有待對方回應的交易申請' %}
                 {% elif current_tab == 'meeting' %}
-                    {% include 'deals/partials/_empty_state.html' with icon='event' message='目前沒有約定面交的交易' %}
+                    {% include 'partials/_empty_state.html' with icon='event' message='目前沒有約定面交的交易' %}
                 {% elif current_tab == 'rating' %}
-                    {% include 'deals/partials/_empty_state.html' with icon='star' message='目前沒有待評價的交易' %}
+                    {% include 'partials/_empty_state.html' with icon='star' message='目前沒有待評價的交易' %}
                 {% elif current_tab == 'history' %}
-                    {% include 'deals/partials/_empty_state.html' with icon='history' message='您還沒有已完成的交易記錄' %}
+                    {% include 'partials/_empty_state.html' with icon='history' message='您還沒有已完成的交易記錄' %}
                 {% endif %}
             {% endif %}
         </main>

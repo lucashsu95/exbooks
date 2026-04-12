@@ -34,9 +34,11 @@
                             </div>
                             <span class="font-bold text-slate-900">{{ info.nickname }}</span>
                         </div>
-                        <span class="px-2 py-1 rounded-full text-xs font-bold {% if info.is_severe %}bg-rose-100 text-rose-700{% else %}bg-amber-100 text-amber-700{% endif %}">
-                            逾期 {{ info.overdue_days }} 天
-                        </span>
+                        {% if info.is_severe %}
+                            {% include 'partials/_badge.html' with text=info.overdue_days prefix='逾期 ' suffix=' 天' color='rose' %}
+                        {% else %}
+                            {% include 'partials/_badge.html' with text=info.overdue_days prefix='逾期 ' suffix=' 天' color='amber' %}
+                        {% endif %}
                     </div>
                     <div class="flex items-start gap-3">
                         <div class="size-12 rounded bg-slate-100 flex items-center justify-center shrink-0">
@@ -62,13 +64,7 @@
                     {% endif %}
                 </div>
             {% empty %}
-                <div class="flex flex-col items-center justify-center py-12 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-                    <div class="size-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
-                        <span class="material-symbols-outlined text-4xl text-green-500">check_circle</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-slate-900">目前沒有嚴重逾期紀錄</h3>
-                    <p class="text-sm text-slate-500 mt-1 px-8">社群成員都非常準時歸還書籍，感謝大家的配合！</p>
-                </div>
+                {% include 'partials/_empty_state.html' with icon='check_circle' message='目前沒有嚴重逾期紀錄' subtitle='社群成員都非常準時歸還書籍，感謝大家的配合！' %}
             {% endfor %}
         </div>
     </main>
