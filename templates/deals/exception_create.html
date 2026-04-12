@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 {% block title %}申請例外處理 - Exbooks{% endblock %}
+{% block bottom_nav %}{% endblock %}
 {% block content %}
     <!-- Sticky top bar -->
     <div class="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3">
@@ -34,7 +35,7 @@
         </div>
     </main>
     <!-- Fixed bottom bar -->
-    <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-slate-200 safe-area-pb z-20">
+    <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-slate-200 safe-area-pb z-50">
         <button type="submit"
                 form="exception-create-form"
                 class="w-full py-3.5 bg-red-600 text-white font-bold rounded-2xl shadow-lg shadow-red-600/30 hover:bg-red-700 active:scale-[0.98] transition-all">
