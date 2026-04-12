@@ -2,7 +2,7 @@
 {% block title %}Exbooks - 交易詳情{% endblock %}
 {% block content %}
     <div class="mesh-aura"></div>
-    <article class="relative min-h-screen">
+    <article class="relative min-h-screen pb-56 sm:pb-64">
         <!-- 頂部英雄區漸層 -->
         <div class="absolute top-0 left-0 right-0 h-80 bg-gradient-to-br from-primary/10 via-background-light to-transparent -z-10">
         </div>
@@ -43,51 +43,54 @@
             </div>
         </section>
         <!-- Status Timeline -->
-        <div class="px-4 pb-6">
+        <div class="px-4 pb-6" role="region" aria-label="交易狀態進度">
             <div class="bg-white/80 backdrop-blur-md rounded-2xl p-5 border border-white/50 shadow-xl shadow-slate-200/50">
-                <div class="flex items-center justify-between">
+                <ol class="flex items-center justify-between" role="list">
                     <!-- 已請求 -->
-                    <div class="flex flex-col items-center gap-1.5">
+                    <li class="flex flex-col items-center gap-1.5">
                         <div class="size-9 rounded-full bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
                             <span class="material-symbols-outlined text-sm leading-none">check</span>
                         </div>
                         <span class="text-[11px] font-bold text-slate-600">已請求</span>
-                    </div>
-                    <div class="flex-1 h-1 bg-slate-100 mx-1 rounded-full overflow-hidden">
+                    </li>
+                    <li class="flex-1 h-1 bg-slate-100 mx-1 rounded-full overflow-hidden"
+                        aria-hidden="true">
                         <div class="h-full bg-primary transition-all duration-700"
                              style="width: {% if deal.status == 'Q' %}0%{% else %}100%{% endif %}"></div>
-                    </div>
+                    </li>
                     <!-- 已回應 -->
-                    <div class="flex flex-col items-center gap-1.5 {% if deal.status == 'Q' %}opacity-40{% endif %}">
+                    <li class="flex flex-col items-center gap-1.5 {% if deal.status == 'Q' %}opacity-40{% endif %}">
                         <div class="size-9 rounded-full {% if deal.status != 'Q' %}bg-primary text-white shadow-lg shadow-primary/20{% else %}bg-slate-50 border-2 border-slate-200 text-slate-300{% endif %} flex items-center justify-center">
                             <span class="material-symbols-outlined text-sm leading-none">how_to_reg</span>
                         </div>
                         <span class="text-[11px] font-bold {% if deal.status == 'Q' %}text-slate-400{% else %}text-slate-600{% endif %}">已回應</span>
-                    </div>
-                    <div class="flex-1 h-1 bg-slate-100 mx-1 rounded-full overflow-hidden">
+                    </li>
+                    <li class="flex-1 h-1 bg-slate-100 mx-1 rounded-full overflow-hidden"
+                        aria-hidden="true">
                         <div class="h-full bg-primary transition-all duration-700"
                              style="width: {% if deal.status in 'QM' or deal.status == 'D' %}{% if deal.status == 'Q' %}0%{% elif deal.status == 'P' %}0%{% else %}100%{% endif %}{% else %}0%{% endif %}">
                         </div>
-                    </div>
+                    </li>
                     <!-- 已面交 -->
-                    <div class="flex flex-col items-center gap-1.5 {% if deal.status in 'QP' %}opacity-40{% endif %}">
+                    <li class="flex flex-col items-center gap-1.5 {% if deal.status in 'QP' %}opacity-40{% endif %}">
                         <div class="size-9 rounded-full {% if deal.status in 'MD' %}bg-primary text-white shadow-lg shadow-primary/20{% else %}bg-slate-50 border-2 border-slate-200 text-slate-300{% endif %} flex items-center justify-center">
                             <span class="material-symbols-outlined text-sm leading-none">handshake</span>
                         </div>
                         <span class="text-[11px] font-bold {% if deal.status in 'QP' %}text-slate-400{% else %}text-slate-600{% endif %}">已面交</span>
-                    </div>
-                    <div class="flex-1 h-1 bg-slate-100 mx-1 rounded-full overflow-hidden">
+                    </li>
+                    <li class="flex-1 h-1 bg-slate-100 mx-1 rounded-full overflow-hidden"
+                        aria-hidden="true">
                         <div class="h-full bg-primary transition-all duration-700"
                              style="width: {% if deal.status == 'D' %}100%{% else %}0%{% endif %}"></div>
-                    </div>
+                    </li>
                     <!-- 已完成 -->
-                    <div class="flex flex-col items-center gap-1.5 {% if deal.status != 'D' %}opacity-40{% endif %}">
+                    <li class="flex flex-col items-center gap-1.5 {% if deal.status != 'D' %}opacity-40{% endif %}">
                         <div class="size-9 rounded-full {% if deal.status == 'D' %}bg-primary text-white shadow-lg shadow-primary/20{% else %}bg-slate-50 border-2 border-slate-200 text-slate-300{% endif %} flex items-center justify-center">
                             <span class="material-symbols-outlined text-sm leading-none">done_all</span>
                         </div>
                         <span class="text-[11px] font-bold {% if deal.status == 'D' %}text-slate-600{% else %}text-slate-400{% endif %}">已完成</span>
-                    </div>
-                </div>
+                    </li>
+                </ol>
             </div>
         </div>
         <!-- Pending Tasks Checklist (LOAN only) -->
@@ -242,18 +245,18 @@
         {% endif %}
         <!-- Action Bar - Fixed Bottom -->
         {% if deal.status in 'QPM' %}
-            <div class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-2xl p-4 border-t border-slate-200/60 safe-area-pb z-[60] shadow-[0_-8px_30px_rgba(0,0,0,0.04)]">
-                <div class="max-w-xl mx-auto flex flex-col gap-3">
+            <div class="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-0 right-0 bg-white/90 backdrop-blur-2xl p-3 sm:p-4 border-t border-slate-200/60 z-[60] shadow-[0_-10px_30px_rgba(0,0,0,0.08)]">
+                <div class="max-w-xl mx-auto flex flex-col gap-2 sm:gap-3">
                     {% if deal.status == 'Q' %}
                         {% if is_responder %}
-                            <div class="flex gap-3">
+                            <div class="flex gap-2 sm:gap-3">
                                 <form method="post"
                                       action="{% url 'deals:accept' deal.id %}"
                                       class="flex-1">
                                     {% csrf_token %}
                                     <button type="submit"
-                                            class="w-full bg-primary text-white font-black py-4 rounded-2xl shadow-lg shadow-primary/25 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:brightness-105">
-                                        <span class="material-symbols-outlined leading-none">check_circle</span>
+                                            class="w-full bg-primary text-white font-black py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-primary/25 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:brightness-105">
+                                        <span class="material-symbols-outlined text-xl sm:text-2xl leading-none">check_circle</span>
                                         接受申請
                                     </button>
                                 </form>
@@ -262,8 +265,8 @@
                                       class="flex-1">
                                     {% csrf_token %}
                                     <button type="submit"
-                                            class="w-full bg-white text-rose-500 font-black py-4 rounded-2xl border-2 border-rose-100 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:bg-rose-50">
-                                        <span class="material-symbols-outlined leading-none">cancel</span>
+                                            class="w-full bg-white text-rose-500 font-black py-2.5 sm:py-4 rounded-2xl border-2 border-rose-100 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:bg-rose-50">
+                                        <span class="material-symbols-outlined text-xl sm:text-2xl leading-none">cancel</span>
                                         婉拒
                                     </button>
                                 </form>
@@ -272,8 +275,8 @@
                             <form method="post" action="{% url 'deals:cancel' deal.id %}">
                                 {% csrf_token %}
                                 <button type="submit"
-                                        class="w-full bg-white text-slate-500 font-black py-4 rounded-2xl border-2 border-slate-100 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:bg-slate-50">
-                                    <span class="material-symbols-outlined leading-none">backspace</span>
+                                        class="w-full bg-white text-slate-500 font-black py-2.5 sm:py-4 rounded-2xl border-2 border-slate-100 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:bg-slate-50">
+                                    <span class="material-symbols-outlined text-xl sm:text-2xl leading-none">backspace</span>
                                     取消借閱申請
                                 </button>
                             </form>
@@ -282,34 +285,50 @@
                         <form method="post" action="{% url 'deals:complete' deal.id %}">
                             {% csrf_token %}
                             <button type="submit"
-                                    class="w-full bg-primary text-white font-black py-4 rounded-2xl shadow-lg shadow-primary/25 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:brightness-105">
-                                <span class="material-symbols-outlined leading-none">handshake</span>
+                                    class="w-full bg-primary text-white font-black py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-primary/25 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:brightness-105">
+                                <span class="material-symbols-outlined text-xl sm:text-2xl leading-none">handshake</span>
                                 確認面交完成
                             </button>
                         </form>
                     {% elif deal.status == 'M' %}
                         {% if deal.shared_book.transferability == 'RETURN' and is_responder %}
-                            <form method="post" action="{% url 'deals:confirm_return' deal.id %}">
-                                {% csrf_token %}
-                                <button type="submit"
-                                        class="w-full bg-green-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-green-600/25 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:brightness-105">
-                                    <span class="material-symbols-outlined leading-none">assignment_return</span>
-                                    確認歸還並重新上架
-                                </button>
-                            </form>
+                            {% if deal.both_parties_rated %}
+                                <form method="post" action="{% url 'deals:confirm_return' deal.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                            class="w-full bg-green-600 text-white font-black py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-green-600/25 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:brightness-105">
+                                        <span class="material-symbols-outlined text-xl sm:text-2xl leading-none">assignment_return</span>
+                                        確認歸還並重新上架
+                                    </button>
+                                </form>
+                            {% else %}
+                                <div class="flex flex-col gap-2">
+                                    <form method="post" action="{% url 'deals:confirm_return' deal.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="force" value="true">
+                                        <button type="submit"
+                                                class="w-full bg-slate-100 text-slate-500 font-black py-2.5 sm:py-4 rounded-2xl border-2 border-slate-200 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:bg-slate-200"
+                                                onclick="return confirm('注意：雙方尚未完成互評。如果您已收到書籍，可以強制確認歸還，但這將無法獲得完整的信用積分。確定要繼續嗎？')">
+                                            <span class="material-symbols-outlined text-xl sm:text-2xl leading-none">fast_forward</span>
+                                            強制確認歸還
+                                        </button>
+                                    </form>
+                                    <p class="text-[11px] text-slate-400 text-center italic">提示：待雙方評價完成後，主按鈕才會開啟</p>
+                                </div>
+                            {% endif %}
                         {% endif %}
-                        <div class="flex gap-3">
+                        <div class="flex gap-2 sm:gap-3">
                             {% if is_applicant %}
                                 <a href="{% url 'deals:upload_photos' deal.id %}"
-                                   class="flex-1 bg-amber-500 text-white font-black py-4 rounded-2xl shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:brightness-105">
-                                    <span class="material-symbols-outlined leading-none">add_a_photo</span>
+                                   class="flex-1 bg-amber-500 text-white font-black py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:brightness-105">
+                                    <span class="material-symbols-outlined text-xl sm:text-2xl leading-none">add_a_photo</span>
                                     上傳照片
                                 </a>
                             {% endif %}
                             {% if is_applicant and not deal.applicant_rated or is_responder and not deal.responder_rated %}
                                 <a href="{% url 'deals:rating_create' deal.id %}"
-                                   class="{% if is_applicant %}flex-1{% else %}w-full{% endif %} bg-primary text-white font-black py-4 rounded-2xl shadow-lg shadow-primary/25 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:brightness-105">
-                                    <span class="material-symbols-outlined leading-none">star</span>
+                                   class="{% if is_applicant %}flex-1{% else %}w-full{% endif %} bg-primary text-white font-black py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-primary/25 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:brightness-105">
+                                    <span class="material-symbols-outlined text-xl sm:text-2xl leading-none">star</span>
                                     前往評價
                                 </a>
                             {% endif %}
