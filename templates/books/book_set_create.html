@@ -18,20 +18,11 @@
         </div>
     </header>
     <!-- Scrollable content -->
-    <main class="px-4 py-4 pb-24 space-y-4">
+    <main class="px-4 py-4 pb-48 space-y-4">
         <form method="post" id="book-set-form" class="space-y-6">
             {% csrf_token %}
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">{% crispy form %}</div>
         </form>
-        {% if available_books %}
-            <div class="bg-blue-50 rounded-2xl p-4 flex gap-3">
-                <span class="material-symbols-outlined text-blue-500">info</span>
-                <div>
-                    <h2 class="text-sm font-semibold text-blue-900 mb-1">選擇書籍加入套書</h2>
-                    <p class="text-xs text-blue-700">建立套書後，您可以在詳情頁面加入書籍</p>
-                </div>
-            </div>
-        {% endif %}
     </main>
     <!-- Fixed bottom bar -->
     <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-slate-200 safe-area-pb z-20">

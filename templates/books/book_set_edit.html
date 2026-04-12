@@ -17,44 +17,13 @@
         </div>
     </header>
     <!-- Scrollable content -->
-    <main class="px-4 py-4 pb-24 space-y-4">
+    <main class="px-4 py-4 pb-48 space-y-4">
         <form method="post"
               id="book-set-edit-form"
               class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
             {% csrf_token %}
-            <div class="space-y-4">
-                <div>
-                    <label for="{{ form.name.id_for_label }}"
-                           class="block text-sm font-medium text-slate-700 mb-1">套書名稱</label>
-                    {{ form.name }}
-                    {% if form.name.errors %}<p class="text-red-500 text-sm mt-1">{{ form.name.errors.0 }}</p>{% endif %}
-                </div>
-                <div>
-                    <label for="{{ form.description.id_for_label }}"
-                           class="block text-sm font-medium text-slate-700 mb-1">套書說明（選填）</label>
-                    {{ form.description }}
-                    {% if form.description.errors %}<p class="text-red-500 text-sm mt-1">{{ form.description.errors.0 }}</p>{% endif %}
-                </div>
-            </div>
+            {% crispy form %}
         </form>
-        <!-- 已加入的書籍 -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
-                <span class="material-symbols-outlined text-primary text-lg">auto_stories</span>
-                <h2 class="text-sm font-bold text-slate-700">
-                    套書中的書籍 <span class="text-primary ml-1">({{ books_in_set|length }})</span>
-                </h2>
-            </div>
-            {% include "books/partials/book_set_books.html" with book_set=book_set books=books_in_set available_books=available_books %}
-        </div>
-        <!-- 可加入的書籍 -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mt-4">
-            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
-                <span class="material-symbols-outlined text-slate-500 text-lg">add_circle</span>
-                <h2 class="text-sm font-bold text-slate-700">可加入的書籍</h2>
-            </div>
-            {% include "books/partials/book_set_available_books.html" with book_set=book_set available_books=available_books %}
-        </div>
     </main>
     <!-- Fixed bottom bar -->
     <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-slate-200 safe-area-pb z-20">
