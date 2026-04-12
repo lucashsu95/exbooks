@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}Exbooks - {{ book.official_book.title|default:'大亨小傳' }}{% endblock %}
 {% block content %}
-    <article class="relative min-h-screen pb-56 sm:pb-64">
+    <article class="relative min-h-screen pb-32 sm:pb-40">
         <div class="absolute inset-0 bg-gradient-to-br from-primary/10 via-background-light to-primary/5 h-72"></div>
         <header class="relative flex items-center p-4 justify-between sticky top-0 z-50">
             <nav aria-label="返回" class="w-10">
@@ -12,7 +12,10 @@
                 </a>
             </nav>
             <h1 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">書籍詳情</h1>
-            <div class="w-10 flex justify-end">
+            <div class="w-10 flex justify-end gap-2">
+                {% if book.keeper != request.user %}
+                    {% include 'books/partials/wishlist_button_icon.html' with official_book=book.official_book in_wishlist=in_wishlist %}
+                {% endif %}
                 <button type="button"
                         id="share-book-btn"
                         aria-label="分享書籍"
@@ -151,7 +154,7 @@
                 {% endif %}
             </div>
         </div>
-        <div class="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-0 right-0 z-50 bg-white/95 backdrop-blur-2xl p-3 sm:p-4 border-t border-white/50 flex flex-col gap-2 sm:gap-3 shadow-[0_-10px_30px_rgba(0,0,0,0.12)]">
+        <div class="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-0 right-0 z-50 bg-white/95 backdrop-blur-2xl p-3 sm:p-4 border-t border-white/50 shadow-[0_-10px_30px_rgba(0,0,0,0.12)]">
             {% if book.keeper != request.user %}
                 {% if book.status == 'T' and book.transferability == 'RETURN' %}
                     <a href="{% url 'deals:create' book.id 'LN' %}"
@@ -210,7 +213,6 @@
                     </div>
                 {% endif %}
             {% endif %}
-            {% include 'books/partials/wishlist_button.html' with official_book=book.official_book in_wishlist=in_wishlist %}
         </div>
     </article>
 {% endblock %}

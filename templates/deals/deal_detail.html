@@ -285,6 +285,7 @@
                         <form method="post" action="{% url 'deals:complete' deal.id %}">
                             {% csrf_token %}
                             <button type="submit"
+                                    onclick="return confirm('確認面交完成？\n\n確認後交易將進入「已面交」狀態，雙方可以開始互評。')"
                                     class="w-full bg-primary text-white font-black py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-primary/25 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:brightness-105">
                                 <span class="material-symbols-outlined text-xl sm:text-2xl leading-none">handshake</span>
                                 確認面交完成
