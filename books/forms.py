@@ -223,6 +223,23 @@ class BookEditForm(forms.ModelForm):
 # ============================================
 
 
+class BookSelectWidget(forms.CheckboxSelectMultiple):
+    """自訂書籍選擇 widget，支援縮圖與卡片佈局"""
+
+    template_name = "forms/widgets/book_selection.html"
+
+    def create_option(
+        self, name, value, label, selected, index, subindex=None, attrs=None
+    ):
+        option = super().create_option(
+            name, value, label, selected, index, subindex, attrs
+        )
+        if hasattr(label, "instance"):
+            # ModelChoiceIteratorValue 包含 instance
+            option["book"] = label.instance
+        return option
+
+
 class BookSetCreateForm(forms.ModelForm):
     """建立/編輯套書表單"""
 
@@ -260,11 +277,7 @@ class BookSetCreateForm(forms.ModelForm):
             queryset=SharedBook.objects.none(),
             required=False,
             label="選擇書籍加入此套書",
-            widget=forms.CheckboxSelectMultiple(
-                attrs={
-                    "class": "rounded border-slate-300 text-primary focus:ring-primary"
-                }
-            ),
+            widget=BookSelectWidget(),
             help_text="只有尚未加入任何套書的書籍會顯示在此",
         )
 
@@ -296,11 +309,8 @@ class BookSetManageForm(forms.Form):
         queryset=SharedBook.objects.none(),  # type: ignore[attr-defined]
         required=False,
         label="選擇書籍",
-        widget=forms.CheckboxSelectMultiple(
-            attrs={
-                "class": "rounded border-slate-300 text-primary focus:ring-primary",
-            }
-        ),
+        widget=BookSelectWidget(),
+        help_text="只有尚未加入任何套書的書籍會顯示在此",
     )
 
     def __init__(self, *args, user=None, book_set=None, **kwargs):

@@ -1,0 +1,63 @@
+{% with id=widget.attrs.id %}
+<div id="{{ id }}" class="space-y-3 mt-2">
+    {% for group, options, index in widget.optgroups %}
+        {% for option in options %}
+            <label class="relative block cursor-pointer group book-selection-label">
+                <input type="checkbox" name="{{ option.name }}" value="{{ option.value }}" 
+                       {% if option.selected %}checked{% endif %} 
+                       {% for name, value in option.attrs.items %}{% if name != 'id' %}{{ name }}="{{ value }}"{% endif %}{% endfor %}
+                       id="{{ option.attrs.id }}"
+                       class="peer hidden book-selection-input">
+                
+                <!-- Background & Border Card -->
+                <div class="flex gap-4 items-center p-3 rounded-2xl border-2 transition-all duration-200 shadow-sm border-slate-100 bg-white group-hover:bg-slate-50 peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:shadow-md peer-checked:shadow-primary/5 book-selection-card">
+                    
+                    <!-- Checkbox replacement UI -->
+                    <div class="size-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-200 border-slate-300 bg-white text-transparent selection-icon">
+                        <span class="material-symbols-outlined text-sm font-bold">check</span>
+                    </div>
+
+                    <!-- Book Info with Thumbnail -->
+                    <div class="flex gap-3 items-center flex-1 min-w-0">
+                        <div class="w-12 h-16 bg-slate-100 rounded-lg flex-shrink-0 overflow-hidden shadow-sm border border-slate-200">
+                            {% if option.book %}
+                                {% include 'partials/book_cover.html' with book=option.book %}
+                            {% else %}
+                                <div class="w-full h-full flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-slate-300">book</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <span class="text-sm font-bold text-slate-900 block truncate">{{ option.label }}</span>
+                            {% if option.book %}
+                                <p class="text-xs text-slate-500 mt-0.5 truncate">{{ option.book.official_book.author }}</p>
+                                <p class="text-[10px] text-slate-400 mt-0.5">{{ option.book.official_book.publisher }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </label>
+        {% endfor %}
+    {% endfor %}
+</div>
+{% endwith %}
+
+<style>
+    /* 使用 CSS 處理內部圖示的狀態變化，因為 peer-checked 無法穿透到非兄弟節點 */
+    .book-selection-input:checked + .book-selection-card .selection-icon {
+        border-color: #3b82f6; /* primary color */
+        background-color: #3b82f6;
+        color: white;
+        transform: scale(1.1);
+    }
+    
+    /* 相容性處理：如果 primary color 不是 blue-500，請根據專案調整 */
+    :root {
+        --primary-color: #3b82f6;
+    }
+    .book-selection-input:checked + .book-selection-card .selection-icon {
+        border-color: var(--primary-color);
+        background-color: var(--primary-color);
+    }
+</style>
