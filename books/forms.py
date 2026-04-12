@@ -224,7 +224,7 @@ class BookEditForm(forms.ModelForm):
 
 
 class BookSetCreateForm(forms.ModelForm):
-    """建立套書表單"""
+    """建立/編輯套書表單"""
 
     class Meta:
         model = BookSet
@@ -250,12 +250,42 @@ class BookSetCreateForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
+
+        # 加入多選書籍欄位
+        self.fields["books"] = forms.ModelMultipleChoiceField(
+            queryset=SharedBook.objects.none(),
+            required=False,
+            label="選擇書籍加入此套書",
+            widget=forms.CheckboxSelectMultiple(
+                attrs={
+                    "class": "rounded border-slate-300 text-primary focus:ring-primary"
+                }
+            ),
+            help_text="只有尚未加入任何套書的書籍會顯示在此",
+        )
+
+        if user:
+            # 取得用戶擁有的書籍且尚未加入其他套書
+            # 如果是編輯現有套書，要包含已經在此套書中的書
+            queryset = SharedBook.objects.filter(owner=user).select_related(
+                "official_book"
+            )
+            if self.instance.pk:
+                queryset = queryset.filter(Q(book_set=None) | Q(book_set=self.instance))
+                self.initial["books"] = self.instance.books.all()
+            else:
+                queryset = queryset.filter(book_set=None)
+
+            self.fields["books"].queryset = queryset
+
         self.helper.layout = Layout(
             Field("name"),
             Field("description"),
+            Field("books"),
         )
 
 

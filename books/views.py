@@ -408,27 +408,22 @@ def book_edit(request, pk):
         if form.is_valid():
             try:
                 with transaction.atomic():
+                    # 1. 更新 OfficialBook
                     official_book = book.official_book
                     official_book.title = form.cleaned_data["title"]
                     official_book.author = form.cleaned_data["author"]
                     official_book.publisher = form.cleaned_data["publisher"]
                     official_book.category = form.cleaned_data["category"]
-                    official_book.save(
-                        update_fields=[
-                            "title",
-                            "author",
-                            "publisher",
-                            "category",
-                            "updated_at",
-                        ]
-                    )
+                    official_book.save()
 
-                    form.save()
+                    # 2. 保存 SharedBook (包含其他欄位)
+                    shared_book = form.save()
 
+                    # 3. 處理新上傳的照片
                     for image in request.FILES.getlist("photos"):
                         processed = process_book_photo(image)
                         BookPhoto.objects.create(
-                            shared_book=book,
+                            shared_book=shared_book,
                             uploader=request.user,
                             photo=processed,
                         )
@@ -677,29 +672,63 @@ def book_set_list(request):
 @login_required
 def book_set_create(request):
     """建立套書"""
+
     if request.method == "POST":
-        form = BookSetCreateForm(request.POST)
+        form = BookSetCreateForm(request.POST, user=request.user)
         if form.is_valid():
-            book_set = create_book_set(
-                owner=request.user,
-                name=form.cleaned_data["name"],
-                description=form.cleaned_data.get("description", ""),
-            )
-            messages.success(request, "套書已建立")
+            with transaction.atomic():
+                book_set = create_book_set(
+                    owner=request.user,
+                    name=form.cleaned_data["name"],
+                    description=form.cleaned_data.get("description", ""),
+                )
+                # 處理批次加入書籍
+                selected_books = form.cleaned_data.get("books", [])
+                for book in selected_books:
+                    add_book_to_set(book_set, book)
+
+            messages.success(request, "套書已建立並加入書籍")
             return redirect("books:book_set_detail", pk=book_set.pk)
     else:
-        form = BookSetCreateForm()
-
-    # 取得用戶可加入的書籍
-    available_books = SharedBook.objects.filter(
-        owner=request.user,
-        book_set=None,
-    ).select_related("official_book")
+        form = BookSetCreateForm(user=request.user)
 
     return render(
         request,
         "books/book_set_create.html",
-        {"form": form, "available_books": available_books},
+        {"form": form},
+    )
+
+
+@login_required
+def book_set_edit(request, pk):
+    """編輯套書"""
+
+    book_set = get_object_or_404(BookSet, pk=pk, owner=request.user)
+
+    if request.method == "POST":
+        form = BookSetCreateForm(request.POST, instance=book_set, user=request.user)
+        if form.is_valid():
+            with transaction.atomic():
+                form.save()
+                # 處理書籍更新：先清除再重新加入（或差異比對）
+                # 這裡採簡單策略：清除目前的並按表單重新加入
+                book_set.books.update(book_set=None)
+                selected_books = form.cleaned_data.get("books", [])
+                for book in selected_books:
+                    add_book_to_set(book_set, book)
+
+            messages.success(request, "套書已更新")
+            return redirect("books:book_set_detail", pk=pk)
+    else:
+        form = BookSetCreateForm(instance=book_set, user=request.user)
+
+    return render(
+        request,
+        "books/book_set_edit.html",
+        {
+            "form": form,
+            "book_set": book_set,
+        },
     )
 
 
@@ -718,39 +747,6 @@ def book_set_detail(request, pk):
         request,
         "books/book_set_detail.html",
         {"book_set": book_set, "books": books},
-    )
-
-
-@login_required
-def book_set_edit(request, pk):
-    """編輯套書"""
-    book_set = get_object_or_404(BookSet, pk=pk, owner=request.user)
-
-    if request.method == "POST":
-        form = BookSetCreateForm(request.POST, instance=book_set)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "套書已更新")
-            return redirect("books:book_set_detail", pk=pk)
-    else:
-        form = BookSetCreateForm(instance=book_set)
-
-    # 取得套書中的書籍和可加入的書籍
-    books_in_set = book_set.books.select_related("official_book").all()
-    available_books = SharedBook.objects.filter(
-        owner=request.user,
-        book_set=None,
-    ).select_related("official_book")
-
-    return render(
-        request,
-        "books/book_set_edit.html",
-        {
-            "form": form,
-            "book_set": book_set,
-            "books_in_set": books_in_set,
-            "available_books": available_books,
-        },
     )
 
 
