@@ -12,14 +12,14 @@
                     </a>
                     <p class="text-sm text-slate-500 truncate">{{ book.official_book.author }}</p>
                 </div>
-<button type="button"
-	hx-post="{% url 'books:book_set_remove_book' book_set.pk book.pk %}"
-	hx-target="#book-set-books"
-	hx-swap="outerHTML"
-	aria-label="從套書移除「{{ book.official_book.title }}」"
-	class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors flex items-center justify-center shrink-0 focus:outline-none focus:ring-2 focus:ring-red-500">
-	<span class="material-symbols-outlined text-xl" aria-hidden="true">remove_circle_outline</span>
-</button>
+                <button type="button"
+                        hx-post="{% url 'books:book_set_remove_book' book_set.pk book.pk %}"
+                        hx-target="#book-set-books"
+                        hx-swap="outerHTML"
+                        aria-label="從套書移除「{{ book.official_book.title }}」"
+                        class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors flex items-center justify-center shrink-0 focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <span class="material-symbols-outlined text-xl" aria-hidden="true">remove_circle_outline</span>
+                </button>
             </div>
         {% endfor %}
     {% else %}
