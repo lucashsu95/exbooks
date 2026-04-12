@@ -396,16 +396,17 @@ def confirm_return(deal, confirmed_by):
     shared_book.keeper = shared_book.owner
     shared_book.save(update_fields=["status", "keeper", "updated_at"])
 
-    # 如果雙方都已經評價過了，歸還後自動完成交易
-    if deal.applicant_rated and deal.responder_rated:
-        if can_proceed(deal.complete):
-            deal.complete()
-            deal.save()
+    # 按下歸還完成按鈕後，交易正式結束
+    if can_proceed(deal.complete):
+        deal.complete()
+        deal.save()
 
-            # 交易完成，更新雙方信用積分
-            from accounts.services.trust_service import update_trust_score
+        # 交易完成，更新雙方信用積分
+        from accounts.services.trust_service import update_trust_score
 
-            update_trust_score(deal.applicant)
-            update_trust_score(deal.responder)
+        # 只有在正常完成（雙方已評價）的情況下才給予完整積分獎勵
+        # 如果是強制歸還，積分邏輯由 trust_service 根據 rated 旗標判定
+        update_trust_score(deal.applicant)
+        update_trust_score(deal.responder)
 
     return deal

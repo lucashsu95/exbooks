@@ -213,10 +213,15 @@ class Deal(FSMModelMixin, UpdatableModel):
         """
         pass
 
-    # ========================================================================
-    # FSM 條件檢查方法
-    # ========================================================================
-
-    def _both_parties_rated(self):
+    @property
+    def both_parties_rated(self):
         """檢查雙方是否都已評價。"""
         return self.applicant_rated and self.responder_rated
+
+    @property
+    def can_confirm_return(self):
+        """
+        是否可以正常確認歸還。
+        條件：雙方已評價，且為閱畢即還類型。
+        """
+        return self.both_parties_rated and self.shared_book.transferability == "RETURN"

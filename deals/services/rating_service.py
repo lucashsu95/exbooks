@@ -1,9 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django_fsm import can_proceed
 
 from deals.models import Deal, Rating
-from books.models import SharedBook
 
 
 @transaction.atomic
@@ -68,23 +66,6 @@ def create_rating(
         is_read=False,
     ).update(is_read=True)
 
-    if deal.applicant_rated and deal.responder_rated:
-        # 區分完成條件：
-        # - 閱畢即還 (LOAN)：除了互評，還必須書籍已歸還（狀態變為 T）
-        # - 其他 (TRANSFER, RESTORE, etc.)：互評完即完成
-        should_complete = True
-        if (
-            deal.deal_type == Deal.DealType.LOAN
-            and deal.shared_book.status != SharedBook.Status.TRANSFERABLE
-        ):
-            should_complete = False
-
-        if should_complete and can_proceed(deal.complete):
-            deal.complete()
-            deal.save()
-
-            # 交易完成，更新雙方信用積分（完成交易 +10 分）
-            update_trust_score(deal.applicant)
-            update_trust_score(deal.responder)
-
+    # 僅標記已評價，不在此自動觸發交易完成。
+    # 交易完成應由「確認歸還」按鈕觸發（閱畢即還）或手動確認。
     return rating

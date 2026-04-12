@@ -42,9 +42,9 @@ class TestCreateRating:
         assert deal.responder_rated is True
         assert deal.applicant_rated is False
 
-    def test_br9_both_rated_deal_done(self):
-        """BR-9: 雙方評價完成 → Deal 狀態 D"""
-        # 使用非 LOAN 交易（如 TRANSFER），互評完即完成
+    def test_br9_both_rated_stays_meeted(self):
+        """BR-9 改良：雙方評價完成後，狀態維持 M，等待歸還按鈕點擊"""
+        # 使用非 LOAN 交易（如 TRANSFER）
         deal = DealFactory(status="M", deal_type=Deal.DealType.TRANSFER)
         create_rating(
             deal,
@@ -61,7 +61,10 @@ class TestCreateRating:
             accuracy_score=3,
         )
         deal.refresh_from_db()
-        assert deal.status == Deal.Status.DONE
+        # 現在邏輯：互評完不再自動變 DONE
+        assert deal.status == Deal.Status.MEETED
+        assert deal.applicant_rated is True
+        assert deal.responder_rated is True
 
     def test_single_rate_stays_meeted(self):
         """僅一方評價 → 維持 M"""

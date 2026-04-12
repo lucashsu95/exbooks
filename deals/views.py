@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator
 
@@ -39,6 +39,7 @@ from .services import (
     extension_service,
     notification_service,
 )
+from .services.api_response import api_success, api_error, ErrorCode
 
 logger = logging.getLogger(__name__)
 
@@ -354,15 +355,23 @@ def deal_message_send(request, pk):
 
     # 檢查權限
     if request.user not in [deal.applicant, deal.responder]:
-        return HttpResponse("您無權發送留言。", status=403)
+        return HttpResponse(
+            "您無權發送留言。", status=403, content_type="text/plain; charset=utf-8"
+        )
 
     # 檢查交易狀態（取消或完成後不可再發送新留言）
     if deal.status in [Deal.Status.CANCELLED, Deal.Status.DONE]:
-        return HttpResponse("此交易已結束，無法再發送留言。", status=400)
+        return HttpResponse(
+            "此交易已結束，無法再發送留言。",
+            status=400,
+            content_type="text/plain; charset=utf-8",
+        )
 
     content = request.POST.get("content", "").strip()
     if not content:
-        return HttpResponse("請輸入留言內容。", status=400)
+        return HttpResponse(
+            "請輸入留言內容。", status=400, content_type="text/plain; charset=utf-8"
+        )
 
     DealMessage.objects.create(
         deal=deal,
@@ -461,17 +470,19 @@ def push_vapid_public_key(request):
     try:
         config = WebPushConfig.get_config()
         if not config:
-            return JsonResponse(
-                {"error": "Web Push 尚未設定"},
+            return api_error(
+                message="Web Push 尚未設定",
+                code=ErrorCode.SERVICE_UNAVAILABLE,
                 status=503,
             )
 
-        return JsonResponse({"publicKey": config.vapid_public_key})
+        return api_success(data={"publicKey": config.vapid_public_key})
     except Exception as e:
         # 處理 SQLite 並發問題或其他資料庫錯誤
         logger.warning(f"Failed to get VAPID config: {e}")
-        return JsonResponse(
-            {"error": "Web Push 服務暫時無法使用"},
+        return api_error(
+            message="Web Push 服務暫時無法使用",
+            code=ErrorCode.SERVICE_UNAVAILABLE,
             status=503,
         )
 
@@ -494,8 +505,9 @@ def push_subscribe(request):
         auth = keys.get("auth")
 
         if not all([endpoint, p256dh, auth]):
-            return JsonResponse(
-                {"error": "缺少必要欄位"},
+            return api_error(
+                message="缺少必要欄位",
+                code=ErrorCode.MISSING_FIELD,
                 status=400,
             )
 
@@ -514,23 +526,21 @@ def push_subscribe(request):
         action = "已註冊" if created else "已更新"
         logger.info(f"Push 訂閱{action}: {request.user} - {endpoint[:50]}...")
 
-        return JsonResponse(
-            {
-                "success": True,
-                "message": f"Push 訂閱{action}",
-                "subscription_id": str(subscription_obj.id),
-            }
+        return api_success(
+            data={"subscription_id": str(subscription_obj.id)},
+            message=f"Push 訂閱{action}",
         )
 
     except json.JSONDecodeError:
-        return JsonResponse(
-            {"error": "無效的 JSON 資料"},
+        return api_error(
+            message="無效的 JSON 資料",
+            code=ErrorCode.INVALID_JSON,
             status=400,
         )
     except Exception as e:
         logger.error(f"Push 訂閱失敗: {e}")
-        return JsonResponse(
-            {"error": str(e)},
+        return api_error(
+            message=str(e),
             status=500,
         )
 
@@ -548,8 +558,9 @@ def push_unsubscribe(request):
         endpoint = data.get("endpoint")
 
         if not endpoint:
-            return JsonResponse(
-                {"error": "缺少 endpoint"},
+            return api_error(
+                message="缺少 endpoint",
+                code=ErrorCode.MISSING_FIELD,
                 status=400,
             )
 
@@ -561,22 +572,24 @@ def push_unsubscribe(request):
 
         if updated:
             logger.info(f"Push 訂閱已取消: {request.user} - {endpoint[:50]}...")
-            return JsonResponse({"success": True, "message": "已取消訂閱"})
+            return api_success(message="已取消訂閱")
         else:
-            return JsonResponse(
-                {"error": "找不到訂閱"},
+            return api_error(
+                message="找不到訂閱",
+                code=ErrorCode.NOT_FOUND,
                 status=404,
             )
 
     except json.JSONDecodeError:
-        return JsonResponse(
-            {"error": "無效的 JSON 資料"},
+        return api_error(
+            message="無效的 JSON 資料",
+            code=ErrorCode.INVALID_JSON,
             status=400,
         )
     except Exception as e:
         logger.error(f"取消 Push 訂閱失敗: {e}")
-        return JsonResponse(
-            {"error": str(e)},
+        return api_error(
+            message=str(e),
             status=500,
         )
 
@@ -829,9 +842,21 @@ def deal_confirm_return(request, pk):
         messages.error(request, "只有持有者可以確認歸還。")
         return redirect("deals:detail", pk)
 
+    force = request.POST.get("force") == "true"
+
+    # 如果雙方未評價且未強制
+    if not deal.both_parties_rated and not force:
+        messages.warning(
+            request, "請先完成互評後再確認歸還。若對方遲遲不評價，您可以使用強制歸還。"
+        )
+        return redirect("deals:detail", pk)
+
     try:
         deal_service.confirm_return(deal, confirmed_by=request.user)
-        messages.success(request, "書籍已確認歸還並重新上架！")
+        if force:
+            messages.success(request, "已強制確認歸還並重新上架。")
+        else:
+            messages.success(request, "書籍已確認歸還並重新上架！")
     except Exception as e:
         messages.error(request, str(e))
 

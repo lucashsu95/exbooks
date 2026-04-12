@@ -76,6 +76,10 @@ class RatingForm(forms.Form):
                 "type": "range",
                 "min": 1,
                 "max": 5,
+                "aria-valuemin": 1,
+                "aria-valuemax": 5,
+                "aria-valuenow": 3,
+                "role": "slider",
             }
         ),
         label="友善評分",
@@ -89,6 +93,10 @@ class RatingForm(forms.Form):
                 "type": "range",
                 "min": 1,
                 "max": 5,
+                "aria-valuemin": 1,
+                "aria-valuemax": 5,
+                "aria-valuenow": 3,
+                "role": "slider",
             }
         ),
         label="準時評分",
@@ -102,6 +110,10 @@ class RatingForm(forms.Form):
                 "type": "range",
                 "min": 1,
                 "max": 5,
+                "aria-valuemin": 1,
+                "aria-valuemax": 5,
+                "aria-valuenow": 3,
+                "role": "slider",
             }
         ),
         label="書況準確度評分",
@@ -165,6 +177,9 @@ class ExtensionRequestForm(forms.Form):
                 "placeholder": "7-30 天",
                 "min": 7,
                 "max": 30,
+                "aria-valuemin": 7,
+                "aria-valuemax": 30,
+                "aria-label": "延長天數，最少7天最多30天",
             }
         ),
         label="延長天數",
