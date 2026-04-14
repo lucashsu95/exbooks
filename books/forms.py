@@ -228,6 +228,9 @@ class BookSelectWidget(forms.CheckboxSelectMultiple):
 
     template_name = "forms/widgets/book_selection.html"
 
+    class Media:
+        css = {"all": ("css/widgets/book-select.css",)}
+
     def create_option(
         self, name, value, label, selected, index, subindex=None, attrs=None
     ):
@@ -235,8 +238,22 @@ class BookSelectWidget(forms.CheckboxSelectMultiple):
             name, value, label, selected, index, subindex, attrs
         )
         if hasattr(label, "instance"):
-            # ModelChoiceIteratorValue 包含 instance
-            option["book"] = label.instance
+            book = label.instance
+            # N+1 守衛：如果沒有預先載入 official_book，在開發環境發出警告
+            from django.conf import settings
+
+            if (
+                settings.DEBUG
+                and hasattr(book, "official_book")
+                and "official_book" not in book._state.fields_cache
+            ):
+                import warnings
+
+                warnings.warn(
+                    f"BookSelectWidget: SharedBook(id={book.id}) 缺少 select_related('official_book')，這會引發性能問題。",
+                    RuntimeWarning,
+                )
+            option["book"] = book
         return option
 
 
