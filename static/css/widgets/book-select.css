@@ -1,0 +1,51 @@
+/* Book Selection Widget Styles */
+.book-selection-item {
+    display: block;
+    position: relative;
+}
+
+.book-selection-card {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.75rem;
+    border-radius: 1rem;
+    border-width: 2px;
+    background-color: white;
+    transition: all 0.2s;
+    border-color: #f1f5f9; /* slate-100 */
+    cursor: pointer;
+}
+
+.book-selection-item:hover .book-selection-card {
+    background-color: #f8fafc; /* slate-50 */
+}
+
+/* Checked State Logic */
+.book-selection-input:checked ~ .book-selection-card {
+    border-color: #3b82f6; /* primary color */
+    background-color: rgba(59, 130, 246, 0.05);
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
+}
+
+.book-selection-input:checked ~ .book-selection-card .selection-icon {
+    border-color: #3b82f6;
+    background-color: #3b82f6;
+    color: white;
+    transform: scale(1.1);
+}
+
+.selection-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 9999px;
+    border-width: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    border-color: #cbd5e1; /* slate-300 */
+    background-color: white;
+    color: transparent;
+}
