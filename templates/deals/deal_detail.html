@@ -302,7 +302,7 @@
                                         確認歸還並重新上架
                                     </button>
                                 </form>
-                            {% else %}
+                            {% elif is_force_return_receiver %}
                                 <div class="flex flex-col gap-2">
                                     <form method="post" action="{% url 'deals:confirm_return' deal.id %}">
                                         {% csrf_token %}
@@ -316,6 +316,8 @@
                                     </form>
                                     <p class="text-[11px] text-slate-400 text-center italic">提示：待雙方評價完成後，主按鈕才會開啟</p>
                                 </div>
+                            {% else %}
+                                <p class="text-[11px] text-slate-400 text-center italic">等待收書方確認歸還或雙方先完成互評</p>
                             {% endif %}
                         {% endif %}
                         <div class="flex gap-2 sm:gap-3">

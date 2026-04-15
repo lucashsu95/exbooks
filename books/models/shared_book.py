@@ -1,3 +1,5 @@
+# pyright: reportArgumentType=false, reportAttributeAccessIssue=false, reportIncompatibleVariableOverride=false
+
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -70,16 +72,22 @@ class SharedBook(FSMModelMixin, UpdatableModel):
         verbose_name="書況描述",
     )
     loan_duration_days = models.PositiveIntegerField(
-        default=30,
+        default=30,  # pyright: ignore[reportArgumentType]
         validators=[MinValueValidator(15), MaxValueValidator(90)],
         verbose_name="借閱天數",
         help_text="最少 15 天，最多 90 天",
     )
     extend_duration_days = models.PositiveIntegerField(
-        default=14,
+        default=14,  # pyright: ignore[reportArgumentType]
         validators=[MinValueValidator(7), MaxValueValidator(30)],
         verbose_name="可延長天數",
         help_text="最少 7 天，最多 30 天",
+    )
+    min_trust_level = models.PositiveSmallIntegerField(
+        default=0,  # pyright: ignore[reportArgumentType]
+        validators=[MinValueValidator(0), MaxValueValidator(3)],
+        verbose_name="最低信用等級",
+        help_text="申請者信用等級需達 0-3，0 表示不限制",
     )
     listed_at = models.DateTimeField(
         null=True,
@@ -87,7 +95,7 @@ class SharedBook(FSMModelMixin, UpdatableModel):
         verbose_name="上架時間",
     )
 
-    class Meta:
+    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
         db_table = "exbook_shared_book"
         verbose_name = "分享書籍"
         verbose_name_plural = "分享書籍"
@@ -99,7 +107,7 @@ class SharedBook(FSMModelMixin, UpdatableModel):
         ]
 
     def __str__(self):
-        return f"{self.official_book.title} (by {self.owner})"
+        return f"{self.official_book.title} (by {self.owner})"  # pyright: ignore[reportAttributeAccessIssue]
 
     # ========================================================================
     # FSM 狀態轉換方法

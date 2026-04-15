@@ -1,3 +1,5 @@
+# pyright: reportAttributeAccessIssue=false
+
 from django import forms
 from django.urls import reverse
 from django.db.models import Q
@@ -197,10 +199,31 @@ class BookEditForm(forms.ModelForm):
             }
         ),
     )
+    min_trust_level = forms.TypedChoiceField(
+        choices=[
+            (0, "Level 0（不限制）"),
+            (1, "Level 1"),
+            (2, "Level 2"),
+            (3, "Level 3"),
+        ],
+        coerce=int,
+        label="最低信用等級",
+        help_text="只有達到此信用等級的讀者才能發起借閱／傳遞申請。",
+        widget=forms.Select(
+            attrs={
+                "class": "appearance-none w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors cursor-pointer"
+            }
+        ),
+    )
 
     class Meta:
         model = SharedBook
-        fields = ["transferability", "condition_description", "loan_duration_days"]
+        fields = [
+            "transferability",
+            "min_trust_level",
+            "condition_description",
+            "loan_duration_days",
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -212,6 +235,7 @@ class BookEditForm(forms.ModelForm):
             Field("publisher"),
             Field("category"),
             Field("transferability"),
+            Field("min_trust_level"),
             Field("condition_description"),
             Field("loan_duration_days"),
             Field("photos"),

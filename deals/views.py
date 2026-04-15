@@ -2,6 +2,8 @@
 交易相關 Views。
 """
 
+# pyright: reportAttributeAccessIssue=false, reportCallIssue=false, reportArgumentType=false
+
 import json
 import logging
 from collections import OrderedDict
@@ -13,6 +15,7 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator
+from django.utils import timezone
 
 from books.models import SharedBook, BookPhoto
 from books.services import declare_exception, resolve_exception, process_book_photo
@@ -156,6 +159,14 @@ def deal_detail(request, pk):
         avg = (avg_scores["a"] + avg_scores["b"] + avg_scores["c"]) / 3
         return {"avg_rating": avg, "total_ratings": total}
 
+    is_overdue = False
+    if deal.due_date and deal.deal_type in (
+        Deal.DealType.LOAN,
+        Deal.DealType.RESTORE,
+        Deal.DealType.REGRESS,
+    ):
+        is_overdue = timezone.now().date() > deal.due_date
+
     return render(
         request,
         "deals/deal_detail.html",
@@ -167,6 +178,9 @@ def deal_detail(request, pk):
             "is_responder": request.user == deal.responder,
             "is_owner": request.user == deal.shared_book.owner,
             "is_keeper": request.user == deal.shared_book.keeper,
+            "is_force_return_receiver": request.user
+            == deal_service.get_force_return_receiver(deal),
+            "is_overdue": is_overdue,
             "applicant_rating": get_user_rating_info(deal.applicant),
             "responder_rating": get_user_rating_info(deal.responder),
         },
@@ -438,9 +452,10 @@ def rating_create(request, pk):
                     messages.error(request, f"評價送出失敗: {str(e)}")
                 return redirect("deals:detail", pk)
         else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{form.fields[field].label}: {error}")
+            if form.errors:
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"{form.fields[field].label}: {error}")
     else:
         form = RatingForm()
 
@@ -837,12 +852,16 @@ def deal_confirm_return(request, pk):
         pk=pk,
     )
 
-    # 權限檢查：只有回應者（持有者）可以確認歸還
-    if request.user != deal.responder:
+    force = request.POST.get("force") == "true"
+
+    # 權限檢查：一般模式僅持有者可確認
+    if not force and request.user != deal.responder:
         messages.error(request, "只有持有者可以確認歸還。")
         return redirect("deals:detail", pk)
 
-    force = request.POST.get("force") == "true"
+    if force and request.user != deal_service.get_force_return_receiver(deal):
+        messages.error(request, "只有收書方可以強制確認歸還。")
+        return redirect("deals:detail", pk)
 
     # 如果雙方未評價且未強制
     if not deal.both_parties_rated and not force:
@@ -852,7 +871,7 @@ def deal_confirm_return(request, pk):
         return redirect("deals:detail", pk)
 
     try:
-        deal_service.confirm_return(deal, confirmed_by=request.user)
+        deal_service.confirm_return(deal, confirmed_by=request.user, force=force)
         if force:
             messages.success(request, "已強制確認歸還並重新上架。")
         else:

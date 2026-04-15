@@ -7,7 +7,7 @@ from .deal_service import (
     confirm_return,
     process_book_due,
 )
-from .rating_service import create_rating
+from .rating_service import create_rating, process_pending_ratings
 from .extension_service import (
     request_extension,
     approve_extension,
@@ -27,6 +27,7 @@ from .notification_service import (
     notify_extend_result,
     mark_as_read,
     mark_all_as_read,
+    notify_rating_pending,
 )
 from .overdue_service import (
     get_overdue_books,
@@ -54,6 +55,7 @@ __all__ = [
     "process_book_due",
     # rating_service
     "create_rating",
+    "process_pending_ratings",
     # extension_service
     "request_extension",
     "approve_extension",
@@ -72,6 +74,7 @@ __all__ = [
     "notify_extend_result",
     "mark_as_read",
     "mark_all_as_read",
+    "notify_rating_pending",
     # overdue_service
     "get_overdue_books",
     "get_public_overdue_info",

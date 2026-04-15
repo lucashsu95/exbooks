@@ -46,6 +46,9 @@ def configure_scheduler_jobs(
     recalculate_trust_scores = jobs.get(
         "recalculate_trust_scores", {"day_of_week": "mon", "hour": 2, "minute": 0}
     )
+    process_pending_ratings = jobs.get(
+        "process_pending_ratings", {"hour": 8, "minute": 30}
+    )
 
     scheduler.add_job(
         _run_management_command,
@@ -70,6 +73,14 @@ def configure_scheduler_jobs(
         replace_existing=True,
         kwargs={"command_name": "recalculate_trust_scores"},
         **recalculate_trust_scores,
+    )
+    scheduler.add_job(
+        _run_management_command,
+        trigger="cron",
+        id="process_pending_ratings",
+        replace_existing=True,
+        kwargs={"command_name": "process_pending_ratings"},
+        **process_pending_ratings,
     )
 
 

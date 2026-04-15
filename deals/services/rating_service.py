@@ -1,10 +1,12 @@
+from datetime import timedelta
+
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.utils import timezone
 
 from deals.models import Deal, Rating
+from deals.services.notification_service import notify_rating_pending
 
 
-@transaction.atomic
 def create_rating(
     deal, rater, friendliness_score, punctuality_score, accuracy_score, comment=""
 ):
@@ -35,7 +37,7 @@ def create_rating(
     else:
         raise ValidationError("只有交易雙方可以評價")
 
-    rating = Rating.objects.create(
+    rating = Rating._default_manager.create(
         deal=deal,
         rater=rater,
         ratee=ratee,
@@ -59,7 +61,7 @@ def create_rating(
 
     from deals.models import Notification
 
-    Notification.objects.filter(
+    Notification._default_manager.filter(
         recipient=rater,
         deal=deal,
         notification_type=Notification.NotificationType.DEAL_MEETED,
@@ -69,3 +71,53 @@ def create_rating(
     # 僅標記已評價，不在此自動觸發交易完成。
     # 交易完成應由「確認歸還」按鈕觸發（閱畢即還）或手動確認。
     return rating
+
+
+def process_pending_ratings():
+    """
+    掃描已面交交易的待評價對象，執行提醒與自動代評。
+
+    規則：
+    - 基準時間為 deal.updated_at
+    - >= 3 天：提醒未評價方（每日最多一次）
+    - >= 10 天：系統代評 3 星（固定註解）
+    """
+    now = timezone.now()
+    reminder_cutoff = now - timedelta(days=3)
+    auto_rate_cutoff = now - timedelta(days=10)
+
+    deals = Deal._default_manager.filter(status=Deal.Status.MEETED).select_related(
+        "shared_book",
+        "applicant",
+        "responder",
+    )
+
+    from deals.models import Notification
+
+    for deal in deals:
+        pending_users = []
+        if not deal.applicant_rated:
+            pending_users.append(deal.applicant)
+        if not deal.responder_rated:
+            pending_users.append(deal.responder)
+
+        if not pending_users:
+            continue
+
+        if deal.updated_at <= auto_rate_cutoff:
+            for user in pending_users:
+                create_rating(deal, user, 3, 3, 3, "系統代評：逾期 10 天未評")
+            continue
+
+        if deal.updated_at <= reminder_cutoff:
+            for user in pending_users:
+                already_notified_today = Notification._default_manager.filter(
+                    recipient=user,
+                    deal=deal,
+                    notification_type=Notification.NotificationType.DEAL_MEETED,
+                    title="評價提醒：仍有交易待評",
+                    created_at__date=now.date(),
+                ).exists()
+
+                if not already_notified_today:
+                    notify_rating_pending(deal=deal, user=user)

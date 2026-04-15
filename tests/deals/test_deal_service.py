@@ -1,3 +1,5 @@
+# pyright: reportAttributeAccessIssue=false, reportCallIssue=false
+
 from datetime import timedelta
 
 import pytest
@@ -15,6 +17,7 @@ from deals.services.deal_service import (
     decline_deal,
     process_book_due,
 )
+from deals.services import rating_service
 from deals.services.rating_service import create_rating
 from tests.factories import (
     BookSetFactory,
@@ -213,6 +216,38 @@ class TestCreateDeal:
         )
         deal = create_deal(owner, book, Deal.DealType.REGRESS)
         assert deal.applicant == owner
+
+    def test_min_trust_level_rejects_low_trust_applicant(self):
+        """申請者信用等級低於書籍門檻時，應拒絕建立交易。"""
+        owner = UserFactory()
+        applicant = UserFactory()
+        # 預設 trust_level 為 0
+        book = SharedBookFactory(
+            owner=owner,
+            status="T",
+            transferability="RETURN",
+            min_trust_level=2,
+        )
+
+        with pytest.raises(ValidationError, match="信用等級不足"):
+            create_deal(applicant, book, Deal.DealType.LOAN)
+
+    def test_min_trust_level_allows_when_requirement_met(self):
+        """申請者信用等級達標時，允許建立交易。"""
+        owner = UserFactory()
+        applicant = UserFactory()
+        applicant.profile.trust_score = 10  # trust_stars=3 -> trust_level=2
+        applicant.profile.save(update_fields=["trust_score", "updated_at"])
+
+        book = SharedBookFactory(
+            owner=owner,
+            status="T",
+            transferability="RETURN",
+            min_trust_level=2,
+        )
+
+        deal = create_deal(applicant, book, Deal.DealType.LOAN)
+        assert deal.status == Deal.Status.REQUESTED
 
     # --- EX 狀態限制 ---
 
@@ -721,8 +756,8 @@ class TestConfirmReturn:
         with pytest.raises(ValidationError, match="已面交"):
             confirm_return(deal, confirmed_by=owner)
 
-    def test_transfer_book_cannot_confirm_return(self):
-        """TRANSFER 流通性書籍不適用歸還流程。"""
+    def test_transfer_book_can_confirm_return_in_transfer_deal(self):
+        """TRANSFER 流通性書籍在 TF 交易中可以歸還。"""
         owner = UserFactory()
         applicant = UserFactory()
         book = SharedBookFactory(
@@ -738,5 +773,82 @@ class TestConfirmReturn:
             applicant=applicant,
             responder=owner,
         )
-        with pytest.raises(ValidationError, match="閱畢即還"):
-            confirm_return(deal, confirmed_by=owner)
+
+        # 開放傳遞的 TF 交易可以由 applicant (新 keeper) 或 owner 進行某些確認操作
+        # 由於我們已修改 confirm_return 支援 TRANSFER 交易，這裡應能成功執行
+        confirm_return(deal, confirmed_by=owner)
+
+        deal.refresh_from_db()
+        assert deal.status == Deal.Status.DONE
+
+
+# ============================================================
+# process_pending_ratings — 逾期評價提醒 / 系統代評
+# ============================================================
+class TestProcessPendingRatings:
+    def test_remind_at_3_days_and_auto_rate_at_10_days(self, monkeypatch):
+        reminder_deal = DealFactory(status=Deal.Status.MEETED)
+        auto_rate_deal = DealFactory(status=Deal.Status.MEETED)
+
+        now = timezone.now()
+        Deal._default_manager.filter(pk=reminder_deal.pk).update(
+            updated_at=now - timedelta(days=3, minutes=1)
+        )
+        Deal._default_manager.filter(pk=auto_rate_deal.pk).update(
+            updated_at=now - timedelta(days=10, minutes=1)
+        )
+
+        reminder_deal.refresh_from_db()
+        auto_rate_deal.refresh_from_db()
+
+        reminder_calls = []
+        auto_rate_calls = []
+
+        def fake_notify_rating_pending(deal, user):
+            reminder_calls.append((deal.pk, user.pk))
+
+        def fake_create_rating(
+            deal,
+            rater,
+            friendliness_score,
+            punctuality_score,
+            accuracy_score,
+            comment="",
+        ):
+            auto_rate_calls.append(
+                (
+                    deal.pk,
+                    rater.pk,
+                    friendliness_score,
+                    punctuality_score,
+                    accuracy_score,
+                    comment,
+                )
+            )
+
+        monkeypatch.setattr(
+            rating_service, "notify_rating_pending", fake_notify_rating_pending
+        )
+        monkeypatch.setattr(rating_service, "create_rating", fake_create_rating)
+
+        rating_service.process_pending_ratings()
+
+        assert (reminder_deal.pk, reminder_deal.applicant.pk) in reminder_calls
+        assert (reminder_deal.pk, reminder_deal.responder.pk) in reminder_calls
+
+        assert (
+            auto_rate_deal.pk,
+            auto_rate_deal.applicant.pk,
+            3,
+            3,
+            3,
+            "系統代評：逾期 10 天未評",
+        ) in auto_rate_calls
+        assert (
+            auto_rate_deal.pk,
+            auto_rate_deal.responder.pk,
+            3,
+            3,
+            3,
+            "系統代評：逾期 10 天未評",
+        ) in auto_rate_calls

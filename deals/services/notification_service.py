@@ -32,7 +32,7 @@ def notify(
     Returns:
         Notification: 建立的通知
     """
-    notification = Notification.objects.create(
+    notification = Notification._default_manager.create(
         recipient=recipient,
         notification_type=notification_type,
         title=title,
@@ -175,6 +175,23 @@ def notify_deal_meeted(deal):
         )
 
 
+def notify_rating_pending(deal, user):
+    """評價逾期提醒：通知尚未評價的一方。"""
+    notify(
+        recipient=user,
+        notification_type=Notification.NotificationType.DEAL_MEETED,
+        title="評價提醒：仍有交易待評",
+        message=(
+            f"書籍「{deal.shared_book}」的{deal.get_deal_type_display()}已逾 3 天仍未完成評價，"
+            "請儘速完成。"
+        ),
+        deal=deal,
+        shared_book=deal.shared_book,
+        send_push=True,
+        send_email=False,
+    )
+
+
 def notify_book_due_soon(deal):
     """書籍即將到期 → 通知持有者"""
     notify(
@@ -256,7 +273,7 @@ def mark_as_read(notification):
 
 def mark_all_as_read(user):
     """標記使用者所有未讀通知為已讀"""
-    Notification.objects.filter(
+    Notification._default_manager.filter(
         recipient=user,
         is_read=False,
     ).update(is_read=True)

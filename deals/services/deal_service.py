@@ -84,6 +84,19 @@ def _get_responder(shared_book, deal_type):
         return shared_book.keeper
 
 
+def get_force_return_receiver(deal):
+    """
+    取得「強制歸還(force=true)」允許執行者（收書方）。
+
+    規則：
+    - LN/RS/RG/EX：Owner 為收書方
+    - TF：Applicant（Reader）為收書方
+    """
+    if deal.deal_type == Deal.DealType.TRANSFER:
+        return deal.applicant
+    return deal.shared_book.owner
+
+
 # ============================================================================
 # 交易建立
 # ============================================================================
@@ -116,6 +129,13 @@ def create_deal(
     # 借閱權限檢查 (Trust Level)
     if deal_type in (Deal.DealType.LOAN, Deal.DealType.TRANSFER):
         limits = get_borrowing_limits(applicant.profile.trust_level)
+
+        if applicant.profile.trust_level < shared_book.min_trust_level:
+            raise ValidationError(
+                "您的信用等級不足，無法申請此書籍。"
+                f" 目前等級為 {applicant.profile.trust_level}，"
+                f" 需至少 {shared_book.min_trust_level}。"
+            )
 
         # 檢查借閱數量
         active_deals = Deal.objects.filter(
@@ -358,39 +378,86 @@ def process_book_due(deal):
 
 
 @transaction.atomic
-def confirm_return(deal, confirmed_by):
+def confirm_return(deal, confirmed_by, force=False):
     """
     確認書籍歸還並重新上架。
 
-    此函式用於「閱畢即還」模式的書籍歸還流程：
-    1. 借閱者完成閱讀，歸還書籍給持有者（Keeper）
-    2. 持有者確認收到書籍後，可將書籍重新上架
+    此函式用於書籍歸還流程：
+    1. 借閱者完成閱讀，歸還書籍給收書方
+    2. 收書方確認收到書籍後，可將書籍重新上架
 
     Args:
         deal: Deal 物件，必須為 MEETED 狀態
-        confirmed_by: 確認歸還的使用者（必須是 deal.responder，即持有者）
+        confirmed_by: 確認歸還的使用者
+        force: 是否強制歸還（強制歸還僅限逾期後由收書方發起，跳過評價）
 
     Returns:
         Deal: 更新後的交易物件
 
     Raises:
         ValidationError: 如果交易狀態不符或權限不足
-
-    Note: Deal 狀態保持 MEETED，等待雙方評價後才會變成 DONE。
-    評價流程由 rating_service.create_rating 處理。
     """
     # 狀態檢查：只有 MEETED 狀態可以確認歸還
     if deal.status != Deal.Status.MEETED:
         raise ValidationError("只有「已面交」狀態的交易可以確認歸還")
 
-    # 權限檢查：只有持有者（Responder）可以確認歸還
-    if confirmed_by != deal.responder:
+    # 行鎖：確保歸還流程與書籍狀態更新原子性
+    shared_book = SharedBook.objects.select_for_update().get(id=deal.shared_book_id)
+    deal = Deal.objects.select_for_update().get(id=deal.id)
+
+    # 權限檢查：一般模式僅持有者(Responder)可確認
+    if not force and confirmed_by != deal.responder:
         raise ValidationError("只有持有者可以確認歸還")
 
-    # 檢查是否為「閱畢即還」模式
-    shared_book = deal.shared_book
-    if shared_book.transferability != SharedBook.Transferability.RETURN:
-        raise ValidationError("只有「閱畢即還」模式的書籍可以確認歸還")
+    # 權限檢查：強制模式僅收書方可執行
+    if force and confirmed_by != get_force_return_receiver(deal):
+        raise ValidationError("只有收書方可以強制確認歸還")
+
+    # 檢查是否為「閱畢即還」模式（或是開放傳遞中的傳遞交易）
+    if (
+        shared_book.transferability != SharedBook.Transferability.RETURN
+        and deal.deal_type not in (Deal.DealType.TRANSFER, Deal.DealType.REGRESS)
+    ):
+        raise ValidationError("只有閱畢即還書籍或開放傳遞的歸還/傳遞交易可以確認歸還")
+
+    # 強制歸還的物理限制：
+    if force:
+        # 1. 徹底移除「開放傳遞(TRANSFER)」的強制歸還權限
+        if deal.deal_type == Deal.DealType.TRANSFER:
+            raise ValidationError(
+                "開放傳遞交易不支援強制歸還，若未評價將由系統排程自動代評"
+            )
+
+        # 2. 其他交易（LOAN/RESTORE/REGRESS）必須逾期才能強制歸還
+        if deal.deal_type in (
+            Deal.DealType.LOAN,
+            Deal.DealType.RESTORE,
+            Deal.DealType.REGRESS,
+        ):
+            if not deal.due_date:
+                raise ValidationError("無到期日的交易無法執行強制歸還")
+
+            # 若當下日期 <= 到期日，代表還沒逾期
+            if timezone.now().date() <= deal.due_date:
+                raise ValidationError(
+                    "交易尚未逾期，請等待對方評價，或等待到期後再強制歸還"
+                )
+
+    # 強制歸還：自動補齊未完成評價（系統代評 3 星）
+    if force:
+        from deals.services.rating_service import create_rating
+
+        if not deal.applicant_rated:
+            create_rating(
+                deal, deal.applicant, 3, 3, 3, "系統代評：逾期強制歸還自動補齊"
+            )
+            deal.refresh_from_db(fields=["applicant_rated", "responder_rated"])
+
+        if not deal.responder_rated:
+            create_rating(
+                deal, deal.responder, 3, 3, 3, "系統代評：逾期強制歸還自動補齊"
+            )
+            deal.refresh_from_db(fields=["applicant_rated", "responder_rated"])
 
     shared_book.status = SharedBook.Status.TRANSFERABLE
     shared_book.keeper = shared_book.owner
@@ -404,8 +471,6 @@ def confirm_return(deal, confirmed_by):
         # 交易完成，更新雙方信用積分
         from accounts.services.trust_service import update_trust_score
 
-        # 只有在正常完成（雙方已評價）的情況下才給予完整積分獎勵
-        # 如果是強制歸還，積分邏輯由 trust_service 根據 rated 旗標判定
         update_trust_score(deal.applicant)
         update_trust_score(deal.responder)
 
