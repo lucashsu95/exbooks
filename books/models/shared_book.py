@@ -65,7 +65,7 @@ class SharedBook(FSMModelMixin, UpdatableModel):
         choices=Status.choices,
         default=Status.SUSPENDED,
         verbose_name="狀態",
-        protected=False,  # 允許直接賦值（SharedBook 狀態由 Deal signal 控制）
+        protected=True, # 禁止直接賦值，強制使用 FSM transition
     )
     condition_description = models.TextField(
         blank=True,
@@ -219,6 +219,19 @@ class SharedBook(FSMModelMixin, UpdatableModel):
         標記為借閱中（由 Deal complete_meeting 觸發，LOAN/TRANSFER 類型）。
 
         狀態轉換：RESERVED → OCCUPIED
+        """
+        pass
+
+    @transition(
+        field=status,
+        source=[Status.RESTORABLE, Status.RESERVED],
+        target=Status.SUSPENDED,
+    )
+    def mark_as_suspended(self):
+        """
+        標記為暫不開放（由 RESTORE/REGRESS 會面完成觸發）。
+
+        狀態轉換：RESTORABLE/RESERVED → SUSPENDED
         """
         pass
 
