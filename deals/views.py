@@ -963,7 +963,7 @@ def exception_resolve(request, pk):
             try:
                 resolution = form.cleaned_data["resolution"]
                 resolve_exception(deal.shared_book, resolution)
-                deal.status = Deal.Status.DONE
+                deal.resolve_as_exception()
                 deal.save(update_fields=["status", "updated_at"])
                 messages.success(
                     request,

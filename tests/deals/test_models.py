@@ -69,6 +69,28 @@ class TestDeal:
         deal = DealFactory(book_set=None)
         assert deal.book_set is None
 
+    def test_resolve_as_exception_transitions(self):
+        """測試 resolve_as_exception 狀態流轉。"""
+        # From REQUESTED
+        deal = DealFactory(status=Deal.Status.REQUESTED)
+        deal.resolve_as_exception()
+        assert deal.status == Deal.Status.DONE
+
+        # From RESPONDED
+        deal = DealFactory(status=Deal.Status.RESPONDED)
+        deal.resolve_as_exception()
+        assert deal.status == Deal.Status.DONE
+
+        # From MEETED
+        deal = DealFactory(status=Deal.Status.MEETED)
+        deal.resolve_as_exception()
+        assert deal.status == Deal.Status.DONE
+
+        # From DONE (Should fail)
+        deal = DealFactory(status=Deal.Status.DONE)
+        with pytest.raises(Exception):
+            deal.resolve_as_exception()
+
 
 class TestDealMessage:
     def test_create(self):

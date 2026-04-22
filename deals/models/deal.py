@@ -202,6 +202,19 @@ class Deal(FSMModelMixin, UpdatableModel):
     @transition(
         field=status,
         source=[Status.REQUESTED, Status.RESPONDED, Status.MEETED],
+        target=Status.DONE,
+    )
+    def resolve_as_exception(self):
+        """
+        管理員或 Owner 處置例外，將交易強制完成。
+
+        狀態轉換：REQUESTED/RESPONDED/MEETED → DONE
+        """
+        pass
+
+    @transition(
+        field=status,
+        source=[Status.REQUESTED, Status.RESPONDED, Status.MEETED],
         target=Status.CANCELLED,
     )
     def cancel(self):
