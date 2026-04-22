@@ -71,50 +71,54 @@
 {% endblock %}
 {% block extra_js %}
     <script>
-  document.addEventListener("DOMContentLoaded", function() {
-    // 捲動導覽列效果
-    const nav = document.getElementById('main-nav');
-    window.addEventListener('scroll', () => {
-      if (window.scrollY > 20) {
-        nav.classList.add('scrolled');
-      } else {
-        nav.classList.remove('scrolled');
-      }
-    }, { passive: true });
+        document.addEventListener("DOMContentLoaded", function() {
+            // 捲動導覽列效果
+            const nav = document.getElementById('main-nav');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 20) {
+                    nav.classList.add('scrolled');
+                } else {
+                    nav.classList.remove('scrolled');
+                }
+            }, {
+                passive: true
+            });
 
-    // 捲動揭示動畫 (Intersection Observer)
-    function initializeObservers() {
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry, index) => {
-          if (entry.isIntersecting) {
-            setTimeout(() => {
-              entry.target.classList.add('reveal-visible');
-            }, 50);
-            observer.unobserve(entry.target);
-          }
+            // 捲動揭示動畫 (Intersection Observer)
+            function initializeObservers() {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach((entry, index) => {
+                        if (entry.isIntersecting) {
+                            setTimeout(() => {
+                                entry.target.classList.add('reveal-visible');
+                            }, 50);
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, {
+                    threshold: 0.1
+                });
+
+                document.querySelectorAll('.reveal-on-scroll:not(.reveal-visible)').forEach(el => {
+                    observer.observe(el);
+                });
+            }
+
+            initializeObservers();
+
+            // HTMX 局部更新後重新初始化
+            document.body.addEventListener('htmx:afterSwap', (evt) => {
+                if (evt.detail.target.id === 'book-feed') {
+                    initializeObservers();
+                }
+            });
+
+            // 搜尋焦點處理
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('search') === 'focus') {
+                const input = document.querySelector('input[name="q"]');
+                if (input) input.focus();
+            }
         });
-      }, { threshold: 0.1 });
-
-      document.querySelectorAll('.reveal-on-scroll:not(.reveal-visible)').forEach(el => {
-        observer.observe(el);
-      });
-    }
-
-    initializeObservers();
-
-    // HTMX 局部更新後重新初始化
-    document.body.addEventListener('htmx:afterSwap', (evt) => {
-      if (evt.detail.target.id === 'book-feed') {
-        initializeObservers();
-      }
-    });
-
-    // 搜尋焦點處理
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('search') === 'focus') {
-      const input = document.querySelector('input[name="q"]');
-      if (input) input.focus();
-    }
-  });
     </script>
 {% endblock %}

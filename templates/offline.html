@@ -21,11 +21,11 @@
 {% endblock %}
 {% block extra_js %}
     <script>
-window.addEventListener('online', () => {
-    window.showToast('網路已恢復，正在重新載入...', 'success');
-    setTimeout(() => {
-        window.location.reload();
-    }, 1500);
-});
+        window.addEventListener('online', () => {
+            window.showToast('網路已恢復，正在重新載入...', 'success');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        });
     </script>
 {% endblock %}

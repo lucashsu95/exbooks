@@ -75,96 +75,102 @@
     </div>
 </aside>
 <script>
-function toggleSearchModal() {
-  const modal = document.getElementById('search-modal');
-  const overlay = document.getElementById('search-modal-overlay');
+    function toggleSearchModal() {
+        const modal = document.getElementById('search-modal');
+        const overlay = document.getElementById('search-modal-overlay');
 
-  if (modal.classList.contains('translate-y-full')) {
-    // Open modal - slide up from bottom
-    modal.classList.remove('translate-y-full');
-    modal.classList.add('translate-y-0');
-    overlay.classList.remove('opacity-0', 'pointer-events-none');
-    overlay.classList.add('opacity-100', 'pointer-events-auto');
-    document.body.style.overflow = 'hidden';
+        if (modal.classList.contains('translate-y-full')) {
+            // Open modal - slide up from bottom
+            modal.classList.remove('translate-y-full');
+            modal.classList.add('translate-y-0');
+            overlay.classList.remove('opacity-0', 'pointer-events-none');
+            overlay.classList.add('opacity-100', 'pointer-events-auto');
+            document.body.style.overflow = 'hidden';
 
-    // Auto-focus input
-    setTimeout(() => {
-      document.getElementById('search-modal-input').focus();
-    }, 100);
-  } else {
-    // Close modal - slide down
-    modal.classList.remove('translate-y-0');
-    modal.classList.add('translate-y-full');
-    overlay.classList.remove('opacity-100', 'pointer-events-auto');
-    overlay.classList.add('opacity-0', 'pointer-events-none');
-    document.body.style.overflow = '';
+            // Auto-focus input
+            setTimeout(() => {
+                document.getElementById('search-modal-input').focus();
+            }, 100);
+        } else {
+            // Close modal - slide down
+            modal.classList.remove('translate-y-0');
+            modal.classList.add('translate-y-full');
+            overlay.classList.remove('opacity-100', 'pointer-events-auto');
+            overlay.classList.add('opacity-0', 'pointer-events-none');
+            document.body.style.overflow = '';
 
-    // Clear search input
-    document.getElementById('search-modal-input').value = '';
-  }
-}
-
-// Close modal on Escape key
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    const modal = document.getElementById('search-modal');
-    if (!modal.classList.contains('translate-y-full')) {
-      toggleSearchModal();
+            // Clear search input
+            document.getElementById('search-modal-input').value = '';
+        }
     }
-  }
-});
 
-// === 方案 E：下拉刷新 ===
-(function() {
-  let startY = 0;
-  let pulling = false;
-  let pullDistance = 0;
-  const threshold = 80; // 觸發刷新的距離
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('search-modal');
+            if (!modal.classList.contains('translate-y-full')) {
+                toggleSearchModal();
+            }
+        }
+    });
 
-  // 建立刷新指示器
-  const pullIndicator = document.createElement('div');
-  pullIndicator.id = 'pull-refresh-indicator';
-  pullIndicator.className = 'fixed top-0 left-0 right-0 flex justify-center items-center py-4 z-40 opacity-0 transition-opacity duration-200 pointer-events-none';
-  pullIndicator.setAttribute('aria-hidden', 'true');
-  pullIndicator.innerHTML = '<span class="material-symbols-outlined animate-spin text-primary text-2xl">sync</span>';
-  document.body.appendChild(pullIndicator);
+    // === 方案 E：下拉刷新 ===
+    (function() {
+        let startY = 0;
+        let pulling = false;
+        let pullDistance = 0;
+        const threshold = 80; // 觸發刷新的距離
 
-  document.addEventListener('touchstart', function(e) {
-    // 只有在頁面頂部才啟用下拉刷新
-    if (window.scrollY === 0) {
-      startY = e.touches[0].pageY;
-      pulling = true;
-    }
-  }, { passive: true });
+        // 建立刷新指示器
+        const pullIndicator = document.createElement('div');
+        pullIndicator.id = 'pull-refresh-indicator';
+        pullIndicator.className = 'fixed top-0 left-0 right-0 flex justify-center items-center py-4 z-40 opacity-0 transition-opacity duration-200 pointer-events-none';
+        pullIndicator.setAttribute('aria-hidden', 'true');
+        pullIndicator.innerHTML = '<span class="material-symbols-outlined animate-spin text-primary text-2xl">sync</span>';
+        document.body.appendChild(pullIndicator);
 
-  document.addEventListener('touchmove', function(e) {
-    if (!pulling) return;
+        document.addEventListener('touchstart', function(e) {
+            // 只有在頁面頂部才啟用下拉刷新
+            if (window.scrollY === 0) {
+                startY = e.touches[0].pageY;
+                pulling = true;
+            }
+        }, {
+            passive: true
+        });
 
-    pullDistance = e.touches[0].pageY - startY;
+        document.addEventListener('touchmove', function(e) {
+            if (!pulling) return;
 
-    // 只有向下拉才顯示
-    if (pullDistance > 0) {
-      pullIndicator.style.opacity = Math.min(pullDistance / threshold, 1);
-      pullIndicator.style.transform = `translateY(${Math.min(pullDistance * 0.5, 40)}px)`;
-    }
-  }, { passive: true });
+            pullDistance = e.touches[0].pageY - startY;
 
-  document.addEventListener('touchend', function() {
-    if (pulling) {
-      // 超過閾值則刷新
-      if (pullDistance > threshold) {
-        pullIndicator.querySelector('.material-symbols-outlined').classList.add('animate-spin');
-        setTimeout(() => {
-          location.reload();
-        }, 200);
-      } else {
-        // 重置指示器
-        pullIndicator.style.opacity = '0';
-        pullIndicator.style.transform = 'translateY(0)';
-      }
-    }
-    pulling = false;
-    pullDistance = 0;
-  }, { passive: true });
-})();
+            // 只有向下拉才顯示
+            if (pullDistance > 0) {
+                pullIndicator.style.opacity = Math.min(pullDistance / threshold, 1);
+                pullIndicator.style.transform = `translateY(${Math.min(pullDistance * 0.5, 40)}px)`;
+            }
+        }, {
+            passive: true
+        });
+
+        document.addEventListener('touchend', function() {
+            if (pulling) {
+                // 超過閾值則刷新
+                if (pullDistance > threshold) {
+                    pullIndicator.querySelector('.material-symbols-outlined').classList.add('animate-spin');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 200);
+                } else {
+                    // 重置指示器
+                    pullIndicator.style.opacity = '0';
+                    pullIndicator.style.transform = 'translateY(0)';
+                }
+            }
+            pulling = false;
+            pullDistance = 0;
+        }, {
+            passive: true
+        });
+    })();
 </script>

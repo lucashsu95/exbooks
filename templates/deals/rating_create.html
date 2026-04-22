@@ -114,19 +114,19 @@ box-shadow: 0 2px 6px rgba(20, 184, 166, 0.3);
     {% endblock %}
     {% block extra_js %}
         <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('form');
-    if (form) form.id = 'rating-form';
-    
-    // Update aria-valuenow dynamically for range inputs
-    const rangeInputs = document.querySelectorAll('input[type="range"]');
-    rangeInputs.forEach(function(input) {
-        function updateAriaValue() {
-            input.setAttribute('aria-valuenow', input.value);
-        }
-        updateAriaValue();
-        input.addEventListener('input', updateAriaValue);
-    });
-});
+            document.addEventListener('DOMContentLoaded', function() {
+                const form = document.querySelector('form');
+                if (form) form.id = 'rating-form';
+
+                // Update aria-valuenow dynamically for range inputs
+                const rangeInputs = document.querySelectorAll('input[type="range"]');
+                rangeInputs.forEach(function(input) {
+                    function updateAriaValue() {
+                        input.setAttribute('aria-valuenow', input.value);
+                    }
+                    updateAriaValue();
+                    input.addEventListener('input', updateAriaValue);
+                });
+            });
         </script>
     {% endblock %}

@@ -73,38 +73,38 @@
 {% block bottom_nav %}{% endblock %}
 {% block extra_js %}
     <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const photoInput = document.getElementById('id_photos');
-    const previewArea = document.getElementById('preview-area');
-    const previewGrid = document.getElementById('preview-grid');
+        document.addEventListener('DOMContentLoaded', function() {
+            const photoInput = document.getElementById('id_photos');
+            const previewArea = document.getElementById('preview-area');
+            const previewGrid = document.getElementById('preview-grid');
 
-    if (photoInput) {
-        photoInput.addEventListener('change', function(e) {
-            // Clear previous previews
-            previewGrid.innerHTML = '';
+            if (photoInput) {
+                photoInput.addEventListener('change', function(e) {
+                    // Clear previous previews
+                    previewGrid.innerHTML = '';
 
-            const files = e.target.files;
-            if (files.length > 0) {
-                previewArea.classList.remove('hidden');
+                    const files = e.target.files;
+                    if (files.length > 0) {
+                        previewArea.classList.remove('hidden');
 
-                for (let i = 0; i < files.length; i++) {
-                    const file = files[i];
-                    if (file.type.startsWith('image/')) {
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            const div = document.createElement('div');
-                            div.className = 'aspect-square rounded-lg overflow-hidden bg-slate-200';
-                            div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover" alt="預覽">`;
-                            previewGrid.appendChild(div);
-                        };
-                        reader.readAsDataURL(file);
+                        for (let i = 0; i < files.length; i++) {
+                            const file = files[i];
+                            if (file.type.startsWith('image/')) {
+                                const reader = new FileReader();
+                                reader.onload = function(e) {
+                                    const div = document.createElement('div');
+                                    div.className = 'aspect-square rounded-lg overflow-hidden bg-slate-200';
+                                    div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover" alt="預覽">`;
+                                    previewGrid.appendChild(div);
+                                };
+                                reader.readAsDataURL(file);
+                            }
+                        }
+                    } else {
+                        previewArea.classList.add('hidden');
                     }
-                }
-            } else {
-                previewArea.classList.add('hidden');
+                });
             }
         });
-    }
-});
     </script>
 {% endblock %}

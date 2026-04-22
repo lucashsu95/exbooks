@@ -208,19 +208,19 @@
 {% endblock %}
 {% block extra_js %}
     <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 載入今日剩餘匯出次數
-    fetch('{% url "accounts:export_status" %}')
-        .then(response => response.json())
-        .then(data => {
-            const remainingEl = document.getElementById('remaining-exports');
-            if (remainingEl) {
-                remainingEl.textContent = data.remaining;
-            }
-        })
-        .catch(error => {
-            console.error('無法取得匯出次數:', error);
+        document.addEventListener('DOMContentLoaded', function() {
+            // 載入今日剩餘匯出次數
+            fetch('{% url "accounts:export_status" %}')
+                .then(response => response.json())
+                .then(data => {
+                    const remainingEl = document.getElementById('remaining-exports');
+                    if (remainingEl) {
+                        remainingEl.textContent = data.remaining;
+                    }
+                })
+                .catch(error => {
+                    console.error('無法取得匯出次數:', error);
+                });
         });
-});
     </script>
 {% endblock %}

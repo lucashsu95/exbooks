@@ -122,34 +122,34 @@
     </footer>
 </aside>
 <script>
-function toggleSidebar() {
-  const sidebar = document.getElementById("sidebar");
-  const overlay = document.getElementById("sidebar-overlay");
+    function toggleSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        const overlay = document.getElementById("sidebar-overlay");
 
-  if (sidebar.classList.contains("-translate-x-full")) {
-    sidebar.classList.remove("-translate-x-full");
-    sidebar.classList.add("translate-x-0");
-    overlay.classList.remove("opacity-0", "pointer-events-none");
-    overlay.classList.add("opacity-100", "pointer-events-auto");
-    document.body.style.overflow = "hidden";
-    // Focus trap - 移動焦點到 sidebar
-    sidebar.querySelector("button").focus();
-  } else {
-    sidebar.classList.remove("translate-x-0");
-    sidebar.classList.add("-translate-x-full");
-    overlay.classList.remove("opacity-100", "pointer-events-auto");
-    overlay.classList.add("opacity-0", "pointer-events-none");
-    document.body.style.overflow = "";
-  }
-}
-
-// Close sidebar on Escape key
-document.addEventListener("keydown", function (e) {
-  if (e.key === "Escape") {
-    const sidebar = document.getElementById("sidebar");
-    if (!sidebar.classList.contains("-translate-x-full")) {
-      toggleSidebar();
+        if (sidebar.classList.contains("-translate-x-full")) {
+            sidebar.classList.remove("-translate-x-full");
+            sidebar.classList.add("translate-x-0");
+            overlay.classList.remove("opacity-0", "pointer-events-none");
+            overlay.classList.add("opacity-100", "pointer-events-auto");
+            document.body.style.overflow = "hidden";
+            // Focus trap - 移動焦點到 sidebar
+            sidebar.querySelector("button").focus();
+        } else {
+            sidebar.classList.remove("translate-x-0");
+            sidebar.classList.add("-translate-x-full");
+            overlay.classList.remove("opacity-100", "pointer-events-auto");
+            overlay.classList.add("opacity-0", "pointer-events-none");
+            document.body.style.overflow = "";
+        }
     }
-  }
-});
+
+    // Close sidebar on Escape key
+    document.addEventListener("keydown", function(e) {
+        if (e.key === "Escape") {
+            const sidebar = document.getElementById("sidebar");
+            if (!sidebar.classList.contains("-translate-x-full")) {
+                toggleSidebar();
+            }
+        }
+    });
 </script>

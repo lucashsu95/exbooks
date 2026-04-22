@@ -18,40 +18,45 @@
         <!-- Apple Touch Icon -->
         <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
         <!-- Favicon -->
-        <link rel="icon" type="image/png" href="/static/icons/badge-72.png">
+        <link rel="icon" type="image/png" href="/static/icons/icon-72.png">
         <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
         <script>
-tailwind.config = {
-  darkMode: "class",
-  theme: {
-    extend: {
-      colors: {
-        "primary": "#14b8a6",
-        "secondary": "#0d9488",
-        "accent": "#06b6d4",
-        "background-light": "#f6f7f8",
-        "background-dark": "#101822",
-      },
-      fontFamily: {
-        "display": ["Work Sans"]
-      },
-      borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
-    },
-  },
-}
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        colors: {
+                            "primary": "#14b8a6",
+                            "secondary": "#0d9488",
+                            "accent": "#06b6d4",
+                            "background-light": "#f6f7f8",
+                            "background-dark": "#101822",
+                        },
+                        fontFamily: {
+                            "display": ["Work Sans"]
+                        },
+                        borderRadius: {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "full": "9999px"
+                        },
+                    },
+                },
+            }
 
-// Prevent icon text flash (FOUT)
-if ('fonts' in document) {
-  document.fonts.ready.then(function () {
-    document.documentElement.classList.add('fonts-loaded');
-  });
-  // Fallback: show anyway after 2 seconds in case font fails to load
-  setTimeout(function() {
-    document.documentElement.classList.add('fonts-loaded');
-  }, 2000);
-} else {
-  document.documentElement.classList.add('fonts-loaded');
-}
+            // Prevent icon text flash (FOUT)
+            if ('fonts' in document) {
+                document.fonts.ready.then(function() {
+                    document.documentElement.classList.add('fonts-loaded');
+                });
+                // Fallback: show anyway after 2 seconds in case font fails to load
+                setTimeout(function() {
+                    document.documentElement.classList.add('fonts-loaded');
+                }, 2000);
+            } else {
+                document.documentElement.classList.add('fonts-loaded');
+            }
         </script>
         <!-- Google Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -79,134 +84,150 @@ if ('fonts' in document) {
           hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
         <!-- PWA Service Worker & Push Registration -->
         <script>
-(function() {
-if ('serviceWorker' in navigator) {
-window.addEventListener('load', async function() {
-try {
-// 註冊 Service Worker
-const registration = await navigator.serviceWorker.register('/static/sw.js');
-console.log('[PWA] Service Worker 註冊成功:', registration.scope);
+            (function() {
+                if ('serviceWorker' in navigator) {
+                    window.addEventListener('load', async function() {
+                        try {
+                            // 註冊 Service Worker
+                            const registration = await navigator.serviceWorker.register('/static/sw.js');
+                            console.log('[PWA] Service Worker 註冊成功:', registration.scope);
 
-// 檢查是否支援 Push
-if (!('PushManager' in window)) {
-console.log('[PWA] 此瀏覽器不支援 Push 通知');
-return;
-}
+                            // 檢查是否支援 Push
+                            if (!('PushManager' in window)) {
+                                console.log('[PWA] 此瀏覽器不支援 Push 通知');
+                                return;
+                            }
 
-// 檢查是否已登入（透過檢查是否有登入後才有的元素）
-{% if user.is_authenticated %}
-// 延遲初始化 Push，避免在頁面載入時立即發送請求
-// 這可以減少並發請求對 SQLite 的壓力
-setTimeout(async () => {
-await initPushNotifications(registration);
-}, 1000);
-{% endif %}
-} catch (error) {
-console.log('[PWA] Service Worker 註冊失敗:', error);
-}
-});
-}
+                            // 檢查是否已登入（透過檢查是否有登入後才有的元素）
+                            {
+                                %
+                                if user.is_authenticated %
+                            }
+                            // 延遲初始化 Push，避免在頁面載入時立即發送請求
+                            // 這可以減少並發請求對 SQLite 的壓力
+                            setTimeout(async () => {
+                                await initPushNotifications(registration);
+                            }, 1000);
+                            {
+                                %
+                                endif %
+                            }
+                        } catch (error) {
+                            console.log('[PWA] Service Worker 註冊失敗:', error);
+                        }
+                    });
+                }
 
-{% if user.is_authenticated %}
-async function initPushNotifications(registration) {
-try {
-// 取得 VAPID 公開金鑰（帶重試機制）
-let response;
-let retries = 3;
-while (retries > 0) {
-try {
-response = await fetch('/deals/push/vapid-public-key/');
-break;
-} catch (e) {
-retries--;
-if (retries === 0) {
-console.log('[PWA] 無法連接到 VAPID 端點');
-return;
-}
-await new Promise(r => setTimeout(r, 500));
-}
-}
+                {
+                    %
+                    if user.is_authenticated %
+                }
+                async function initPushNotifications(registration) {
+                    try {
+                        // 取得 VAPID 公開金鑰（帶重試機制）
+                        let response;
+                        let retries = 3;
+                        while (retries > 0) {
+                            try {
+                                response = await fetch('/deals/push/vapid-public-key/');
+                                break;
+                            } catch (e) {
+                                retries--;
+                                if (retries === 0) {
+                                    console.log('[PWA] 無法連接到 VAPID 端點');
+                                    return;
+                                }
+                                await new Promise(r => setTimeout(r, 500));
+                            }
+                        }
 
-if (!response || !response.ok) {
-console.log('[PWA] 無法取得 VAPID 金鑰，Web Push 尚未設定');
-return;
-}
-const data = await response.json();
-const publicKey = data.publicKey;
+                        if (!response || !response.ok) {
+                            console.log('[PWA] 無法取得 VAPID 金鑰，Web Push 尚未設定');
+                            return;
+                        }
+                        const data = await response.json();
+                        const publicKey = data.data ? data.data.publicKey : null;
 
-      // 將 base64 轉換為 Uint8Array
-      const applicationServerKey = urlBase64ToUint8Array(publicKey);
+                        if (!publicKey) {
+                            console.log('[PWA] VAPID 金鑰為空，可能尚未在後端設定');
+                            return;
+                        }
 
-      // 檢查目前的訂閱狀態
-      let subscription = await registration.pushManager.getSubscription();
+                        // 將 base64 轉換為 Uint8Array
+                        const applicationServerKey = urlBase64ToUint8Array(publicKey);
 
-      if (subscription === null) {
-        // 沒有現有訂閱，詢問用戶是否要啟用通知
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-          console.log('[PWA] 用戶拒絕通知權限');
-          return;
-        }
+                        // 檢查目前的訂閱狀態
+                        let subscription = await registration.pushManager.getSubscription();
 
-        // 訂閱 Push
-        subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: applicationServerKey
-        });
-        console.log('[PWA] Push 訂閱成功:', subscription.endpoint);
+                        if (subscription === null) {
+                            // 沒有現有訂閱，詢問用戶是否要啟用通知
+                            const permission = await Notification.requestPermission();
+                            if (permission !== 'granted') {
+                                console.log('[PWA] 用戶拒絕通知權限');
+                                return;
+                            }
 
-        // 將訂閱資訊發送到後端
-        await sendSubscriptionToServer(subscription);
-      } else {
-        console.log('[PWA] 已有 Push 訂閱:', subscription.endpoint);
-        // 確保後端有此訂閱的記錄
-        await sendSubscriptionToServer(subscription);
-      }
-    } catch (error) {
-      console.error('[PWA] Push 初始化失敗:', error);
-    }
-  }
+                            // 訂閱 Push
+                            subscription = await registration.pushManager.subscribe({
+                                userVisibleOnly: true,
+                                applicationServerKey: applicationServerKey
+                            });
+                            console.log('[PWA] Push 訂閱成功:', subscription.endpoint);
 
-  async function sendSubscriptionToServer(subscription) {
-    try {
-      const response = await fetch('/deals/push/subscribe/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': '{{ csrf_token }}'
-        },
-        body: JSON.stringify({
-          subscription: subscription.toJSON()
-        })
-      });
+                            // 將訂閱資訊發送到後端
+                            await sendSubscriptionToServer(subscription);
+                        } else {
+                            console.log('[PWA] 已有 Push 訂閱:', subscription.endpoint);
+                            // 確保後端有此訂閱的記錄
+                            await sendSubscriptionToServer(subscription);
+                        }
+                    } catch (error) {
+                        console.error('[PWA] Push 初始化失敗:', error);
+                    }
+                }
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('[PWA] 訂閱已同步到伺服器:', data.message);
-      } else {
-        console.error('[PWA] 同步訂閱到伺服器失敗');
-      }
-    } catch (error) {
-      console.error('[PWA] 發送訂閱到伺服器失敗:', error);
-    }
-  }
+                async function sendSubscriptionToServer(subscription) {
+                    try {
+                        const response = await fetch('/deals/push/subscribe/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify({
+                                subscription: subscription.toJSON()
+                            })
+                        });
 
-  function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding)
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
+                        if (response.ok) {
+                            const data = await response.json();
+                            console.log('[PWA] 訂閱已同步到伺服器:', data.message);
+                        } else {
+                            console.error('[PWA] 同步訂閱到伺服器失敗');
+                        }
+                    } catch (error) {
+                        console.error('[PWA] 發送訂閱到伺服器失敗:', error);
+                    }
+                }
 
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
+                function urlBase64ToUint8Array(base64String) {
+                    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+                    const base64 = (base64String + padding)
+                        .replace(/-/g, '+')
+                        .replace(/_/g, '/');
 
-    for (let i = 0; i < rawData.length; ++i) {
-      outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
-  }
-  {% endif %}
-})();
+                    const rawData = window.atob(base64);
+                    const outputArray = new Uint8Array(rawData.length);
+
+                    for (let i = 0; i < rawData.length; ++i) {
+                        outputArray[i] = rawData.charCodeAt(i);
+                    }
+                    return outputArray;
+                } {
+                    %
+                    endif %
+                }
+            })();
         </script>
         <!-- Global Loading Indicator - 頁面頂部進度條 -->
         <div id="global-loader"

@@ -27,57 +27,57 @@
 {% endblock %}
 {% block extra_js %}
     <script>
-document.addEventListener('DOMContentLoaded', function() {
-// 封面上傳欄位顯示控制
-// 初始顯示（還沒查 ISBN），查到封面後隱藏
-window.setCoverFieldVisibility = function(hasCover) {
-var wrapper = document.getElementById('cover-image-wrapper');
-if (!wrapper) return;
-if (hasCover) {
-wrapper.style.display = 'none';
-// 清空已選的檔案（避免舊選擇被送出）
-var input = wrapper.querySelector('input[name="cover_image"]');
-if (input) input.value = '';
-} else {
-wrapper.style.display = '';
-}
-};
+        document.addEventListener('DOMContentLoaded', function() {
+            // 封面上傳欄位顯示控制
+            // 初始顯示（還沒查 ISBN），查到封面後隱藏
+            window.setCoverFieldVisibility = function(hasCover) {
+                var wrapper = document.getElementById('cover-image-wrapper');
+                if (!wrapper) return;
+                if (hasCover) {
+                    wrapper.style.display = 'none';
+                    // 清空已選的檔案（避免舊選擇被送出）
+                    var input = wrapper.querySelector('input[name="cover_image"]');
+                    if (input) input.value = '';
+                } else {
+                    wrapper.style.display = '';
+                }
+            };
 
-// ISBN 清空時顯示封面上傳欄位
-var isbnInput = document.querySelector('input[name="isbn"]');
-if (isbnInput) {
-isbnInput.addEventListener('input', function(e) {
-if (!e.target.value.trim()) {
-// ISBN 被清空，顯示封面上傳欄位
-window.setCoverFieldVisibility(false);
-// 清空 ISBN 查詢結果
-var resultDiv = document.getElementById('isbn-result');
-if (resultDiv) resultDiv.innerHTML = '';
-}
-});
-}
+            // ISBN 清空時顯示封面上傳欄位
+            var isbnInput = document.querySelector('input[name="isbn"]');
+            if (isbnInput) {
+                isbnInput.addEventListener('input', function(e) {
+                    if (!e.target.value.trim()) {
+                        // ISBN 被清空，顯示封面上傳欄位
+                        window.setCoverFieldVisibility(false);
+                        // 清空 ISBN 查詢結果
+                        var resultDiv = document.getElementById('isbn-result');
+                        if (resultDiv) resultDiv.innerHTML = '';
+                    }
+                });
+            }
 
-// 書況照片預覽
-  var photoInput = document.querySelector('input[name="photos"]');
-  var previewContainer = document.getElementById('photo-preview');
-  if (photoInput && previewContainer) {
-    photoInput.addEventListener('change', function(e) {
-      previewContainer.innerHTML = '';
-      var files = Array.from(e.target.files);
-      files.forEach(function(file) {
-        if (file.type.startsWith('image/')) {
-          var reader = new FileReader();
-reader.onload = function(event) {
-	var div = document.createElement('div');
-	div.className = 'relative';
-	div.innerHTML = '<img src="' + event.target.result + '" alt="書況照片預覽" class="w-full h-24 object-cover rounded-lg">';
-	previewContainer.appendChild(div);
-};
-          reader.readAsDataURL(file);
-        }
-      });
-    });
-  }
-});
+            // 書況照片預覽
+            var photoInput = document.querySelector('input[name="photos"]');
+            var previewContainer = document.getElementById('photo-preview');
+            if (photoInput && previewContainer) {
+                photoInput.addEventListener('change', function(e) {
+                    previewContainer.innerHTML = '';
+                    var files = Array.from(e.target.files);
+                    files.forEach(function(file) {
+                        if (file.type.startsWith('image/')) {
+                            var reader = new FileReader();
+                            reader.onload = function(event) {
+                                var div = document.createElement('div');
+                                div.className = 'relative';
+                                div.innerHTML = '<img src="' + event.target.result + '" alt="書況照片預覽" class="w-full h-24 object-cover rounded-lg">';
+                                previewContainer.appendChild(div);
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                });
+            }
+        });
     </script>
 {% endblock %}

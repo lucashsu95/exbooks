@@ -45,36 +45,49 @@
            :value="JSON.stringify(schedule)">
 </div>
 <script>
-  function schedulePicker{{ widget.name|capfirst }}() {
-    return {
-      schedule: {{ widget.value|default:"[]"|safe }},
-      weekdays: ['週日', '週一', '週二', '週三', '週四', '週五', '週六'],
-      newSlot: {
-        weekday: '',
-        start: '09:00',
-        end: '12:00'
-      },
-      initSchedule() {
-        if (!Array.isArray(this.schedule)) {
-          this.schedule = [];
+    function schedulePicker {
+        {
+            widget.name | capfirst
         }
-      },
-      getWeekdayName(day) {
-        return this.weekdays[day] || '';
-      },
-      addSlot() {
-        if (this.newSlot.weekday !== '' && this.newSlot.start && this.newSlot.end) {
-          this.schedule.push({
-            weekday: parseInt(this.newSlot.weekday),
-            start: this.newSlot.start,
-            end: this.newSlot.end
-          });
-          this.newSlot = { weekday: '', start: '09:00', end: '12:00' };
-        }
-      },
-      removeSlot(index) {
-        this.schedule.splice(index, 1);
-      }
-    };
-  }
+    }() {
+        return {
+            schedule: {
+                {
+                    widget.value |
+                        default: "[]" | safe
+                }
+            },
+            weekdays: ['週日', '週一', '週二', '週三', '週四', '週五', '週六'],
+            newSlot: {
+                weekday: '',
+                start: '09:00',
+                end: '12:00'
+            },
+            initSchedule() {
+                if (!Array.isArray(this.schedule)) {
+                    this.schedule = [];
+                }
+            },
+            getWeekdayName(day) {
+                return this.weekdays[day] || '';
+            },
+            addSlot() {
+                if (this.newSlot.weekday !== '' && this.newSlot.start && this.newSlot.end) {
+                    this.schedule.push({
+                        weekday: parseInt(this.newSlot.weekday),
+                        start: this.newSlot.start,
+                        end: this.newSlot.end
+                    });
+                    this.newSlot = {
+                        weekday: '',
+                        start: '09:00',
+                        end: '12:00'
+                    };
+                }
+            },
+            removeSlot(index) {
+                this.schedule.splice(index, 1);
+            }
+        };
+    }
 </script>

@@ -218,33 +218,37 @@
 {% endblock %}
 {% block extra_js %}
     <script>
-document.addEventListener('DOMContentLoaded', function() {
-var shareButton = document.getElementById('share-book-btn');
-if (!shareButton) { return; }
+        document.addEventListener('DOMContentLoaded', function() {
+            var shareButton = document.getElementById('share-book-btn');
+            if (!shareButton) {
+                return;
+            }
 
-shareButton.addEventListener('click', async function() {
-    var shareData = {
-        title: '{{ book.official_book.title|escapejs }}',
-        text: '我想分享這本書給你：{{ book.official_book.title|escapejs }}',
-        url: window.location.href
-    };
+            shareButton.addEventListener('click', async function() {
+                var shareData = {
+                    title: '{{ book.official_book.title|escapejs }}',
+                    text: '我想分享這本書給你：{{ book.official_book.title|escapejs }}',
+                    url: window.location.href
+                };
 
-    if (navigator.share) {
-        try {
-            await navigator.share(shareData);
-            return;
-        } catch (err) {
-            if (err && err.name === 'AbortError') { return; }
-        }
-    }
+                if (navigator.share) {
+                    try {
+                        await navigator.share(shareData);
+                        return;
+                    } catch (err) {
+                        if (err && err.name === 'AbortError') {
+                            return;
+                        }
+                    }
+                }
 
-    try {
-        await navigator.clipboard.writeText(window.location.href);
-        alert('已複製分享連結');
-    } catch (err) {
-        alert('分享失敗，請手動複製網址');
-    }
-});
-});
+                try {
+                    await navigator.clipboard.writeText(window.location.href);
+                    alert('已複製分享連結');
+                } catch (err) {
+                    alert('分享失敗，請手動複製網址');
+                }
+            });
+        });
     </script>
 {% endblock %}
