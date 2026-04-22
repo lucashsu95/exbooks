@@ -126,12 +126,29 @@ class Deal(FSMModelMixin, UpdatableModel):
         回應者接受交易申請。
 
         狀態轉換：REQUESTED → RESPONDED
-        副作用（由 signal 處理）：
-        - BR-15: 取消同一冊書的其他申請
-        - 更新書籍狀態為 RESERVED（V）
-        - 發送通知
+        副作用：
+        - BR-15: 拒絕同一本書的其他申請
+        - 更新共享書狀態為 RESERVED（預約中）
         """
-        pass
+        shared_book = self.shared_book
+
+        # BR-15: 拒絕同一本書的其他申請
+        auto_cancelled = list(
+            Deal.objects.filter(
+                shared_book=shared_book,
+                status=Deal.Status.REQUESTED,
+            ).exclude(pk=self.pk)
+        )
+        Deal.objects.filter(
+            shared_book=shared_book,
+            status=Deal.Status.REQUESTED,
+        ).exclude(pk=self.pk).update(status=Deal.Status.CANCELLED)
+        
+        self._auto_cancelled_deals = auto_cancelled
+
+        # 更新書籍狀態為 RESERVED (使用 FSM 方法)
+        shared_book.reserve()
+        shared_book.save()
 
     @transition(
         field=status,
@@ -158,11 +175,18 @@ class Deal(FSMModelMixin, UpdatableModel):
         申請者取消交易申請。
 
         狀態轉換：REQUESTED → CANCELLED
-        副作用（由 signal 處理）：
+        副作用：
         - BR-14: 恢復書籍狀態
-        - 發送取消通知
         """
-        pass
+        from django.utils import timezone
+        from books.models.shared_book import SharedBook
+
+        shared_book = self.shared_book
+        if self.previous_book_status:
+            SharedBook.objects.filter(pk=shared_book.pk).update(
+                status=self.previous_book_status,
+                updated_at=timezone.now()
+            )
 
     @transition(
         field=status,
@@ -174,13 +198,46 @@ class Deal(FSMModelMixin, UpdatableModel):
         確認面交完成。
 
         狀態轉換：RESPONDED → MEETED
-        副作用（由 signal 處理）：
+        副作用：
         - BR-8: 變更 SharedBook.keeper
         - 書籍狀態依交易類別轉移
         - 重新計算到期日
-        - 發送面交完成通知
         """
-        pass
+        from datetime import timedelta
+        from django.utils import timezone
+        
+        from deals.services.deal_service import MEET_STATUS_MAP
+        from books.models.shared_book import SharedBook
+
+        shared_book = self.shared_book
+
+        # BR-8: 變更持有人
+        if self.deal_type in (Deal.DealType.LOAN, Deal.DealType.TRANSFER):
+            # 從回應者(手中有書)交給申請者
+            shared_book.keeper = self.applicant
+        elif self.deal_type in (Deal.DealType.RESTORE, Deal.DealType.REGRESS):
+            # 從申請者(手中有書)交給回應者(Owner)
+            shared_book.keeper = self.responder
+
+        # 更新書籍狀態 - 使用 FSM 方法
+        new_status = MEET_STATUS_MAP.get(self.deal_type)
+        if new_status:
+            if new_status == SharedBook.Status.OCCUPIED:
+                shared_book.mark_as_borrowed()
+            elif new_status == SharedBook.Status.SUSPENDED:
+                shared_book.mark_as_suspended()
+            elif new_status == SharedBook.Status.EXCEPTION:
+                shared_book.declare_exception()
+            else:
+                shared_book.status = new_status
+        
+        shared_book.save()
+
+        # 重新計算到期日
+        if self.deal_type in (Deal.DealType.LOAN, Deal.DealType.TRANSFER):
+            self.due_date = timezone.now().date() + timedelta(
+                days=shared_book.loan_duration_days
+            )
 
     @transition(
         field=status,
@@ -222,9 +279,13 @@ class Deal(FSMModelMixin, UpdatableModel):
         通用取消方法。
 
         狀態轉換：REQUESTED/RESPONDED/MEETED → CANCELLED
-        副作用由 signal 根據來源狀態處理。
+        副作用：根據來源狀態恢復書籍狀態
         """
-        pass
+        if self.status in [self.Status.REQUESTED, self.Status.RESPONDED]:
+            shared_book = self.shared_book
+            if self.previous_book_status:
+                shared_book.status = self.previous_book_status
+                shared_book.save(update_fields=["status", "updated_at"])
 
     @property
     def both_parties_rated(self):

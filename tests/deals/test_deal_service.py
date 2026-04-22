@@ -27,7 +27,7 @@ from tests.factories import (
 )
 
 
-pytestmark = pytest.mark.django_db
+pytestmark = pytest.mark.django_db(transaction=True)
 
 
 # ============================================================
@@ -369,8 +369,9 @@ class TestCancelDeal:
             status="Q",
             previous_book_status="T",
         )
-        book.status = "V"
-        book.save(update_fields=["status"])
+        from books.models.shared_book import SharedBook
+        SharedBook.objects.filter(pk=book.pk).update(status="V", updated_at=timezone.now())
+        book.refresh_from_db()
         cancel_deal(deal)
         book.refresh_from_db()
         assert book.status == "T"

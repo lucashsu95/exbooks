@@ -357,7 +357,7 @@ def process_book_due(deal):
 
     if shared_book.transferability == SharedBook.Transferability.RETURN:
         # BR-12: 「閱畢即還」書籍到期 = 逾期
-        shared_book.status = SharedBook.Status.RESTORABLE
+        shared_book.mark_as_overdue()
 
         # BR-4.2: 遞增持有者的逾期次數
         keeper = shared_book.keeper
@@ -369,7 +369,7 @@ def process_book_due(deal):
 
         update_trust_score(keeper)
     else:  # TRANSFER
-        shared_book.status = SharedBook.Status.TRANSFERABLE
+        shared_book.mark_as_returned()
 
     shared_book.save(update_fields=["status", "updated_at"])
 
@@ -459,7 +459,7 @@ def confirm_return(deal, confirmed_by, force=False):
             )
             deal.refresh_from_db(fields=["applicant_rated", "responder_rated"])
 
-    shared_book.status = SharedBook.Status.TRANSFERABLE
+    shared_book.mark_as_returned()
     shared_book.keeper = shared_book.owner
     shared_book.save(update_fields=["status", "keeper", "updated_at"])
 
