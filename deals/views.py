@@ -305,7 +305,10 @@ def deal_list(request):
 @login_required
 def deal_accept(request, pk):
     """接受交易申請。"""
-    deal = get_object_or_404(Deal, pk=pk, responder=request.user)
+    deal = get_object_or_404(Deal, pk=pk)
+    if not request.user.has_perm("deals.can_accept_deal", deal):
+        messages.error(request, "您無權接受此交易。")
+        return redirect("deals:detail", pk)
     try:
         deal_service.accept_deal(deal)
         messages.success(request, "交易已接受！")
@@ -317,7 +320,10 @@ def deal_accept(request, pk):
 @login_required
 def deal_reject(request, pk):
     """拒絕交易申請。"""
-    deal = get_object_or_404(Deal, pk=pk, responder=request.user)
+    deal = get_object_or_404(Deal, pk=pk)
+    if not request.user.has_perm("deals.can_decline_deal", deal):
+        messages.error(request, "您無權拒絕此交易。")
+        return redirect("deals:detail", pk)
     try:
         deal_service.decline_deal(deal)
         messages.success(request, "交易已拒絕。")
@@ -329,7 +335,10 @@ def deal_reject(request, pk):
 @login_required
 def deal_cancel(request, pk):
     """取消交易申請。"""
-    deal = get_object_or_404(Deal, pk=pk, applicant=request.user)
+    deal = get_object_or_404(Deal, pk=pk)
+    if not request.user.has_perm("deals.can_cancel_deal", deal):
+        messages.error(request, "您無權取消此交易。")
+        return redirect("deals:detail", pk)
     try:
         deal_service.cancel_deal(deal)
         messages.success(request, "交易已取消。")
@@ -342,14 +351,10 @@ def deal_cancel(request, pk):
 @require_POST
 def deal_complete_meeting(request, pk):
     """確認面交完成。"""
-    deal = get_object_or_404(
-        Deal.objects.filter(status=Deal.Status.RESPONDED).filter(applicant=request.user)
-        | Deal.objects.filter(status=Deal.Status.RESPONDED, responder=request.user),
-        pk=pk,
-    )
+    deal = get_object_or_404(Deal, pk=pk)
 
     # 檢查權限
-    if request.user not in [deal.applicant, deal.responder]:
+    if not request.user.has_perm("deals.can_complete_meeting", deal):
         messages.error(request, "您無權執行此操作。")
         return redirect("deals:detail", pk)
 
@@ -368,7 +373,7 @@ def deal_message_send(request, pk):
     deal = get_object_or_404(Deal, pk=pk)
 
     # 檢查權限
-    if request.user not in [deal.applicant, deal.responder]:
+    if not request.user.has_perm("deals.can_send_message", deal):
         return HttpResponse(
             "您無權發送留言。", status=403, content_type="text/plain; charset=utf-8"
         )
@@ -415,7 +420,7 @@ def rating_create(request, pk):
     )
 
     # 檢查權限
-    if request.user not in [deal.applicant, deal.responder]:
+    if not request.user.has_perm("deals.can_rate_deal", deal):
         messages.error(request, "您無權評價此交易。")
         return redirect("deals:detail", pk)
 
@@ -626,8 +631,8 @@ def extension_request(request, deal_pk):
         pk=deal_pk,
     )
 
-    # 權限檢查：只有申請者可以申請延長
-    if request.user != deal.applicant:
+    # 權限檢查
+    if not request.user.has_perm("deals.can_request_extension", deal):
         messages.error(request, "只有借閱者可以申請延長。")
         return redirect("deals:detail", deal_pk)
 
@@ -673,8 +678,8 @@ def extension_approve(request, extension_pk):
 
     shared_book = extension.deal.shared_book
 
-    # 權限檢查：只有 Owner 或 Keeper 可以核准
-    if request.user not in {shared_book.owner, shared_book.keeper}:
+    # 權限檢查
+    if not request.user.has_perm("deals.can_approve_extension", extension):
         messages.error(request, "您無權核准此申請。")
         return redirect("deals:detail", extension.deal.id)
 
@@ -706,8 +711,8 @@ def extension_reject(request, extension_pk):
 
     shared_book = extension.deal.shared_book
 
-    # 權限檢查：只有 Owner 或 Keeper 可以拒絕
-    if request.user not in {shared_book.owner, shared_book.keeper}:
+    # 權限檢查
+    if not request.user.has_perm("deals.can_reject_extension", extension):
         messages.error(request, "您無權拒絕此申請。")
         return redirect("deals:detail", extension.deal.id)
 
@@ -732,8 +737,8 @@ def extension_cancel(request, extension_pk):
         pk=extension_pk,
     )
 
-    # 權限檢查：只有申請者可以取消
-    if request.user != extension.requested_by:
+    # 權限檢查
+    if not request.user.has_perm("deals.can_cancel_extension", extension):
         messages.error(request, "您無權取消此申請。")
         return redirect("deals:detail", extension.deal.id)
 
@@ -854,12 +859,12 @@ def deal_confirm_return(request, pk):
 
     force = request.POST.get("force") == "true"
 
-    # 權限檢查：一般模式僅持有者可確認
-    if not force and request.user != deal.responder:
+    # 權限檢查
+    if not force and not request.user.has_perm("deals.can_confirm_return", deal):
         messages.error(request, "只有持有者可以確認歸還。")
         return redirect("deals:detail", pk)
 
-    if force and request.user != deal_service.get_force_return_receiver(deal):
+    if force and not request.user.has_perm("deals.can_force_return", deal):
         messages.error(request, "只有收書方可以強制確認歸還。")
         return redirect("deals:detail", pk)
 
@@ -894,8 +899,8 @@ def exception_create(request, book_id):
 
     book = get_object_or_404(SharedBook, pk=book_id)
 
-    # 權限檢查：只有 Keeper 可以申請
-    if request.user != book.keeper:
+    # 權限檢查
+    if not request.user.has_perm("deals.can_create_exception", book):
         messages.error(request, "只有持有者可以申請例外處理")
         return redirect("books:detail", pk=book_id)
 
@@ -943,8 +948,8 @@ def exception_resolve(request, pk):
         pk=pk,
     )
 
-    # 權限檢查：只有 Owner 可以處置
-    if request.user != deal.shared_book.owner:
+    # 權限檢查
+    if not request.user.has_perm("deals.can_resolve_exception", deal.shared_book):
         messages.error(request, "只有貢獻者可以處置例外")
         return redirect("deals:detail", pk=pk)
 
@@ -1001,8 +1006,8 @@ def deal_upload_photos(request, pk):
         pk=pk,
     )
 
-    # 權限檢查：只有新持有者可上傳
-    if request.user != deal.shared_book.keeper:
+    # 權限檢查
+    if not request.user.has_perm("deals.can_upload_deal_photos", deal):
         messages.error(request, "只有持有者可以上傳照片。")
         return redirect("deals:detail", pk)
 

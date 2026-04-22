@@ -9,3 +9,4 @@ class DealsConfig(AppConfig):
     def ready(self):
         """註冊 Signal 處理器。"""
         import deals.signals  # noqa: F401
+        import deals.rules  # noqa: F401
