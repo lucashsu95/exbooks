@@ -239,17 +239,22 @@ class Deal(FSMModelMixin, UpdatableModel):
                 days=shared_book.loan_duration_days
             )
 
+    def _both_rated(self):
+        """FSM 條件：雙方都已評價。"""
+        return self.applicant_rated and self.responder_rated
+
     @transition(
         field=status,
         source=Status.MEETED,
         target=Status.DONE,
+        conditions=[_both_rated],
     )
     def complete(self):
         """
         交易完成（雙方評價後）。
 
         狀態轉換：MEETED → DONE
-        前置條件：申請者和回應者都已評價
+        前置條件：申請者和回應者都已評價 (Phase 1-5)
         副作用（由 signal 處理）：
         - 更新信用等級
         - 發送完成通知

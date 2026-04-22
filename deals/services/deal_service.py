@@ -251,6 +251,10 @@ def accept_deal(deal):
     Raises:
         ValidationError: 如果狀態轉換不允許
     """
+    # 行鎖：確保接受流程原子性，防止併發接受 (Phase 1-4)
+    deal = Deal.objects.select_for_update().get(id=deal.id)
+    SharedBook.objects.select_for_update().get(id=deal.shared_book_id)
+
     if not can_proceed(deal.accept):
         raise ValidationError("只有「已請求」狀態的交易可以接受")
 
