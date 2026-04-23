@@ -126,14 +126,29 @@ def create_deal(
     Returns:
         Deal: 建立的交易
     """
-    # 借閱權限檢查 (Trust Level)
+    # 借閱權限檢查 (Trust Level - Groups)
     if deal_type in (Deal.DealType.LOAN, Deal.DealType.TRANSFER):
-        limits = get_borrowing_limits(applicant.profile.trust_level)
+        # 檢查是否被限制或封鎖
+        user_groups = applicant.groups.values_list("name", flat=True)
+        if "banned" in user_groups or "restricted" in user_groups:
+            raise ValidationError("您的帳號已被限制或封鎖，無法申請借閱。")
 
-        if applicant.profile.trust_level < shared_book.min_trust_level:
+        # 取得信用等級 (trust_lvX)
+        trust_level = 0
+        for group_name in user_groups:
+            if group_name.startswith("trust_lv"):
+                try:
+                    trust_level = int(group_name.replace("trust_lv", ""))
+                    break
+                except ValueError:
+                    continue
+
+        limits = get_borrowing_limits(trust_level)
+
+        if trust_level < shared_book.min_trust_level:
             raise ValidationError(
                 "您的信用等級不足，無法申請此書籍。"
-                f" 目前等級為 {applicant.profile.trust_level}，"
+                f" 目前等級為 {trust_level}，"
                 f" 需至少 {shared_book.min_trust_level}。"
             )
 
