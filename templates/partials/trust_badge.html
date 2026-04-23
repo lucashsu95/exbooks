@@ -1,40 +1,96 @@
 {# templates/partials/trust_badge.html #}
 {# Full trust level badge with icon circle, label, and Lv indicator #}
-{# Usage: {% include "partials/trust_badge.html" with trust_level=user.profile.trust_level %} #}
-{# Or: {% include "partials/trust_badge.html" with trust_level=profile.trust_level prefix="信用等級：" %} #}
-<div class="flex items-center gap-3">
-    {# Icon Circle #}
-    <div class="size-12 rounded-full flex items-center justify-center shrink-0 {% if trust_level == 0 %} bg-gray-100 {% elif trust_level == 1 %} bg-blue-100 {% elif trust_level == 2 %} bg-green-100 {% elif trust_level == 3 %} bg-amber-100 {% endif %}">
-        <span class="material-symbols-outlined text-2xl {% if trust_level == 0 %} text-gray-400 {% elif trust_level == 1 %} text-blue-500 {% elif trust_level == 2 %} text-green-500 {% elif trust_level == 3 %} text-amber-500 {% endif %}">
-            {% if trust_level == 0 %}
-                new_releases
-            {% elif trust_level == 1 %}
-                person
-            {% elif trust_level == 2 %}
-                verified
-            {% elif trust_level == 3 %}
-                workspace_premium
-            {% endif %}
-        </span>
-    </div>
-    {# Label and Lv Badge #}
-    <div class="flex-1">
-        <div class="flex items-center gap-2">
-            <p class="text-sm font-bold text-slate-900">
-                {% if prefix %}{{ prefix }}{% endif %}
-                {% if trust_level == 0 %}
-                    新手
-                {% elif trust_level == 1 %}
-                    一般
-                {% elif trust_level == 2 %}
-                    可信
-                {% elif trust_level == 3 %}
-                    優良
-                {% endif %}
-            </p>
-            <span class="px-2 py-0.5 rounded-full text-xs font-bold {% if trust_level == 0 %} bg-gray-100 text-gray-700 {% elif trust_level == 1 %} bg-blue-100 text-blue-700 {% elif trust_level == 2 %} bg-green-100 text-green-700 {% elif trust_level == 3 %} bg-amber-100 text-amber-700 {% endif %}">
-                Lv.{{ trust_level }}
-            </span>
+{# Usage: {% include "partials/trust_badge.html" with prefix="信用等級：" %} #}
+
+{% load trust_tags %}
+
+{% comment %}
+找出用戶的信用等級 (trust_lvX) 與特殊狀態 (restricted, banned)
+注意：此模板應由 context 中傳入 user 物件
+{% endcomment %}
+
+{% if not user %}
+    {# Fallback if user is not in context #}
+    <div class="flex items-center gap-3">
+        <div class="size-12 rounded-full flex items-center justify-center shrink-0 bg-gray-100">
+            <span class="material-symbols-outlined text-2xl text-gray-400">help</span>
+        </div>
+        <div class="flex-1">
+            <p class="text-sm font-bold text-slate-900">{% if prefix %}{{ prefix }}{% endif %}未知</p>
         </div>
     </div>
-</div>
+{% else %}
+    {% for group in user.groups.all %}
+        {% if group.name == 'banned' %}
+            <div class="flex items-center gap-3">
+                <div class="size-12 rounded-full flex items-center justify-center shrink-0 bg-rose-100">
+                    <span class="material-symbols-outlined text-2xl text-rose-500">block</span>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-bold text-rose-600">永久停權</p>
+                    <p class="text-xs text-rose-400">帳號已禁用</p>
+                </div>
+            </div>
+        {% elif group.name == 'restricted' %}
+            <div class="flex items-center gap-3">
+                <div class="size-12 rounded-full flex items-center justify-center shrink-0 bg-amber-100">
+                    <span class="material-symbols-outlined text-2xl text-amber-500">warning</span>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-bold text-amber-600">限制中</p>
+                    <p class="text-xs text-amber-400">部分功能受限</p>
+                </div>
+            </div>
+        {% elif group.name|slice:":8" == "trust_lv" %}
+            {% get_trust_config group.name as trust_config %}
+            
+            <div class="flex items-center gap-3">
+                {# Icon Circle - 根據 Lv 改顏色 #}
+                <div class="size-12 rounded-full flex items-center justify-center shrink-0 
+                    {% if group.name == 'trust_lv0' %} bg-gray-100 
+                    {% elif group.name == 'trust_lv1' %} bg-blue-100 
+                    {% elif group.name == 'trust_lv2' %} bg-green-100 
+                    {% elif group.name == 'trust_lv3' %} bg-amber-100 
+                    {% endif %}">
+                    
+                    <span class="material-symbols-outlined text-2xl 
+                        {% if group.name == 'trust_lv0' %} text-gray-400 
+                        {% elif group.name == 'trust_lv1' %} text-blue-500 
+                        {% elif group.name == 'trust_lv2' %} text-green-500 
+                        {% elif group.name == 'trust_lv3' %} text-amber-500 
+                        {% endif %}">
+                        
+                        {# Badge Icon - 從 TrustLevelConfig 讀取，若無則使用預設 #}
+                        {% if trust_config.badge_icon %}
+                            {{ trust_config.badge_icon }}
+                        {% else %}
+                            {% if group.name == 'trust_lv0' %} new_releases
+                            {% elif group.name == 'trust_lv1' %} person
+                            {% elif group.name == 'trust_lv2' %} verified
+                            {% elif group.name == 'trust_lv3' %} workspace_premium
+                            {% endif %}
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="flex-1">
+                    <div class="flex items-center gap-2">
+                        <p class="text-sm font-bold text-slate-900">
+                            {% if prefix %}{{ prefix }}{% endif %}
+                            {# 顯示名稱 - 從 TrustLevelConfig 讀取 #}
+                            {{ trust_config.display_name|default:"會員" }}
+                        </p>
+                        <span class="px-2 py-0.5 rounded-full text-xs font-bold 
+                            {% if group.name == 'trust_lv0' %} bg-gray-100 text-gray-700 
+                            {% elif group.name == 'trust_lv1' %} bg-blue-100 text-blue-700 
+                            {% elif group.name == 'trust_lv2' %} bg-green-100 text-green-700 
+                            {% elif group.name == 'trust_lv3' %} bg-amber-100 text-amber-700 
+                            {% endif %}">
+                            Lv.{{ group.name|slice:"8:" }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
