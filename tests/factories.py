@@ -4,7 +4,7 @@ import itertools
 import factory
 from django.contrib.auth.models import User
 
-from accounts.models import UserProfile
+from accounts.models import TrustLevelConfig, UserProfile
 from books.models import BookPhoto, BookSet, OfficialBook, SharedBook, WishListItem
 from deals.models import Deal, DealMessage, LoanExtension, Notification, Rating
 
@@ -117,6 +117,18 @@ class UserFactory(factory.django.DjangoModelFactory):
     first_name = factory.Faker("first_name", locale="zh_TW")
     last_name = factory.Faker("last_name", locale="zh_TW")
     password = factory.PostGenerationMethodCall("set_password", "testpass123")
+
+
+class TrustLevelConfigFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = TrustLevelConfig
+
+    level = factory.Sequence(lambda n: n)
+    group_name = factory.LazyAttribute(lambda obj: f"trust_lv{obj.level}")
+    display_name = factory.LazyAttribute(lambda obj: f"Level {obj.level}")
+    min_score = factory.LazyAttribute(lambda obj: obj.level * 100)
+    max_books = 5
+    max_days = 30
 
 
 class UserProfileFactory(factory.django.DjangoModelFactory):

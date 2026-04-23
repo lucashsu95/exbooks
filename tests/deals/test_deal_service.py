@@ -234,10 +234,12 @@ class TestCreateDeal:
 
     def test_min_trust_level_allows_when_requirement_met(self):
         """申請者信用等級達標時，允許建立交易。"""
+        from django.contrib.auth.models import Group
         owner = UserFactory()
         applicant = UserFactory()
-        applicant.profile.trust_score = 10  # trust_stars=3 -> trust_level=2
-        applicant.profile.save(update_fields=["trust_score", "updated_at"])
+        # 建立交易邏輯檢查的是 Group
+        lv2_group, _ = Group.objects.get_or_create(name="trust_lv2")
+        applicant.groups.add(lv2_group)
 
         book = SharedBookFactory(
             owner=owner,

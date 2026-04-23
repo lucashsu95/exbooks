@@ -16,8 +16,28 @@ from tests.factories import (
     DealFactory,
     OfficialBookFactory,
     SharedBookFactory,
+    TrustLevelConfigFactory,
     UserFactory,
 )
+
+
+@pytest.fixture(autouse=True)
+def setup_trust_levels(db):
+    """Ensure basic trust levels and groups exist for tests."""
+    from django.contrib.auth.models import Group
+    from accounts.models import TrustLevelConfig
+    if not TrustLevelConfig.objects.exists():
+        for i in range(4):
+            TrustLevelConfigFactory(level=i)
+            Group.objects.get_or_create(name=f"trust_lv{i}")
+    else:
+        # 即使 config 已存在，也要確保 Group 存在 (為了 SQLite in-memory 每次測試重置)
+        for i in range(4):
+            Group.objects.get_or_create(name=f"trust_lv{i}")
+    
+    # 負向群組
+    Group.objects.get_or_create(name="restricted")
+    Group.objects.get_or_create(name="banned")
 
 
 @pytest.fixture

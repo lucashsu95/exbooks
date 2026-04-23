@@ -1,8 +1,44 @@
 from django.contrib import admin, messages
+from django.contrib.auth.models import Group
 from django.utils import timezone
 from django.utils.html import format_html
 
-from .models import Appeal, UserProfile, Violation
+from .models import Appeal, TrustLevelConfig, UserProfile, Violation
+
+
+@admin.register(TrustLevelConfig)
+class TrustLevelConfigAdmin(admin.ModelAdmin):
+    list_display = ("level", "display_name", "min_score", "max_books", "max_days")
+    ordering = ("level",)
+
+
+# 自定義 GroupAdmin 以控制用戶關聯的唯讀性
+admin.site.unregister(Group)
+
+
+@admin.register(Group)
+class CustomGroupAdmin(admin.ModelAdmin):
+    filter_horizontal = ("permissions",)
+    list_display = ("name",)
+    search_fields = ("name",)
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj and obj.name.startswith("trust_lv"):
+            return ("name", "permissions")
+        return super().get_readonly_fields(request, obj)
+
+
+    def has_change_permission(self, request, obj=None):
+        # 需求：正向 Group (trust_lv*) 為唯讀
+        if obj and obj.name.startswith("trust_lv"):
+            return False
+        # 負向 Group (restricted, banned) 保持可手動操作
+        return super().has_change_permission(request, obj)
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and obj.name.startswith("trust_lv"):
+            return False
+        return super().has_delete_permission(request, obj)
 
 
 class TrustLevelFilter(admin.SimpleListFilter):
