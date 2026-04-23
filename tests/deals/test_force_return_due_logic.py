@@ -3,7 +3,6 @@ from datetime import timedelta
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
-from deals.models import Deal
 from deals.services.deal_service import confirm_return
 from tests.factories import SharedBookFactory, DealFactory, UserFactory
 

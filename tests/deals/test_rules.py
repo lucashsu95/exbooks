@@ -1,5 +1,4 @@
 import pytest
-import rules
 from tests.factories import (
     DealFactory,
     LoanExtensionFactory,
@@ -12,14 +11,6 @@ pytestmark = pytest.mark.django_db
 
 
 import pytest
-import rules
-from tests.factories import (
-    DealFactory,
-    LoanExtensionFactory,
-    SharedBookFactory,
-    UserFactory,
-)
-from deals.models import Deal
 
 pytestmark = pytest.mark.django_db
 

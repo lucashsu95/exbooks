@@ -1,5 +1,4 @@
 import rules
-from .models import Deal
 
 # Predicates
 @rules.predicate

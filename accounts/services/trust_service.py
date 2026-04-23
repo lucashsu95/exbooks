@@ -8,7 +8,6 @@
 import math
 from dataclasses import dataclass
 
-from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -399,9 +398,6 @@ def sync_trust_group(user) -> None:
            若已存在且已滿 26 週則降級，否則維持
     - 不碰負向 Group（restricted, banned）
     """
-    from django.contrib.auth.models import Group
-    from django.utils import timezone
-    from datetime import timedelta
 
     profile = user.profile
     score = profile.trust_score
