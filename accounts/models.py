@@ -343,6 +343,12 @@ class UserProfile(UpdatableModel):
         blank=True,
         verbose_name="停權原因",
     )
+    trust_level_protected_since = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="等級保護起始時間",
+        help_text="記錄用戶積分跌破門檻後，降級保護期開始計時的時間點",
+    )
 
     class Meta:
         db_table = "exbook_user_profile"
