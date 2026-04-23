@@ -286,6 +286,9 @@ def update_trust_score(user) -> int:
     user.profile.trust_score = new_score
     user.profile.save(update_fields=["trust_score", "updated_at"])
 
+    # 同步信用等級 Group
+    sync_trust_group(user)
+
     return new_score
 
 

@@ -3,8 +3,10 @@
 """
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.test import TestCase
 
+from accounts.models import TrustLevelConfig
 from accounts.services.trust_service import (
     calculate_trust_level,
     update_trust_score,
@@ -24,6 +26,21 @@ class TrustServiceTest(TestCase):
         self.other_user = User.objects.create_user(
             username="otheruser", email="other@example.com", password="password"
         )
+        
+        # 建立信用等級配置與對應 Group
+        for level in range(4):
+            Group.objects.get_or_create(name=f"trust_lv{level}")
+            TrustLevelConfig.objects.get_or_create(
+                level=level,
+                defaults={
+                    "group_name": f"trust_lv{level}",
+                    "display_name": f"Level {level}",
+                    "min_score": level * 10,
+                    "max_books": (level + 1) * 2,
+                    "max_days": 30,
+                    "demotion_protection_weeks": 26
+                }
+            )
 
     def test_calculate_trust_level_new_user(self):
         """測試新用戶預設信用等級為 0"""
