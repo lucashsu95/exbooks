@@ -5,7 +5,11 @@
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 
-from accounts.services.trust_service import calculate_trust_score, update_trust_score
+from accounts.services.trust_service import (
+    calculate_trust_score,
+    sync_trust_group,
+    update_trust_score,
+)
 
 User = get_user_model()
 
@@ -35,6 +39,7 @@ class Command(BaseCommand):
                 new_score = calculate_trust_score(user)
             else:
                 new_score = update_trust_score(user)
+                sync_trust_group(user)
 
             if new_score > old_score:
                 increased += 1
