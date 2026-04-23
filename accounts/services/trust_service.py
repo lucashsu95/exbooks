@@ -8,10 +8,16 @@
 import math
 from dataclasses import dataclass
 
+from datetime import timedelta
+
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.db.models import Avg, Q
+from django.utils import timezone
 
 from deals.models import Deal, Rating
+
+from accounts.models import TrustLevelConfig
 
 
 # ============================================================================
@@ -375,7 +381,88 @@ def get_upgrade_progress(user) -> dict:
 
     result["summary"] = round(percentage, 1)
     result["requirements"].append(
-        f"需再獲得 {remaining_score} 積分（達 {required_score} 積分）"
+        f"ݦAo {remaining_score} n]F {required_score} n^"
     )
 
     return result
+
+
+def sync_trust_group(user) -> None:
+    """
+    同步用戶的信用等級 Group。
+    - 根據 trust_score 對照 TrustLevelConfig 找出目標等級
+    - 升級：立即加入新 Group，清除 protected_since
+    - 降級：若 protected_since 為 None 則設定為現在
+           若已存在且已滿 26 週則降級，否則維持
+    - 不碰負向 Group（restricted, banned）
+    """
+    from django.contrib.auth.models import Group
+    from django.utils import timezone
+    from datetime import timedelta
+
+    profile = user.profile
+    score = profile.trust_score
+
+    # 1. 找出目標等級（從高到低找第一個符合的）
+    configs = TrustLevelConfig.objects.filter(level__gte=0).order_by("-level")
+    target_config = None
+    for config in configs:
+        if score >= config.min_score:
+            target_config = config
+            break
+
+    if target_config is None:
+        # 沒有符合的等級，使用 Lv0
+        target_config = TrustLevelConfig.objects.filter(level=0).first()
+
+    target_level = target_config.level
+    target_group_name = f"trust_lv{target_level}"
+
+    # 2. 找出用戶目前的正向 Group
+    current_group = None
+    for level in range(3, -1, -1):
+        group_name = f"trust_lv{level}"
+        if user.groups.filter(name=group_name).exists():
+            current_group = group_name
+            break
+
+    # 3. 判斷升級或降級
+    now = timezone.now()
+
+    if current_group is None:
+        # 目前沒有任何正向 Group，直接加入目標 Group
+        target_group = Group.objects.get(name=target_group_name)
+        user.groups.add(target_group)
+        profile.trust_level_protected_since = None
+        profile.save(update_fields=["trust_level_protected_since", "updated_at"])
+        return
+
+    current_level = int(current_group[-1])  # trust_lv3 -> 3
+
+    if target_level > current_level:
+        # 升級：立即切換，清除 protected_since
+        current_group_obj = Group.objects.get(name=current_group)
+        target_group_obj = Group.objects.get(name=target_group_name)
+        user.groups.remove(current_group_obj)
+        user.groups.add(target_group_obj)
+        profile.trust_level_protected_since = None
+        profile.save(update_fields=["trust_level_protected_since", "updated_at"])
+    elif target_level < current_level:
+        # 降級邏輯：檢查 protected_since
+        if profile.trust_level_protected_since is None:
+            # 第一次低於門檻，設定 protected_since
+            profile.trust_level_protected_since = now
+            profile.save(update_fields=["trust_level_protected_since", "updated_at"])
+        else:
+            # 已存在 protected_since，檢查是否已滿 26 週
+            weeks_elapsed = (now - profile.trust_level_protected_since).days // 7
+            if weeks_elapsed >= target_config.demotion_protection_weeks:
+                # 已滿保護期，執行降級
+                current_group_obj = Group.objects.get(name=current_group)
+                target_group_obj = Group.objects.get(name=target_group_name)
+                user.groups.remove(current_group_obj)
+                user.groups.add(target_group_obj)
+                profile.trust_level_protected_since = None
+                profile.save(update_fields=["trust_level_protected_since", "updated_at"])
+            # 否則維持現狀
+
