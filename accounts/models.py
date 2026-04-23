@@ -412,3 +412,37 @@ class UserProfile(UpdatableModel):
             return 2
         else:  # 4-5星
             return 3
+
+
+class TrustLevelConfig(models.Model):
+    """
+    信用等級配置模型。
+    定義各等級的積分門檻、借閱限制與降級保護期。
+    """
+
+    level = models.PositiveSmallIntegerField(unique=True, verbose_name="等級")
+    group_name = models.CharField(max_length=50, verbose_name="對應群組名稱")
+    display_name = models.CharField(max_length=50, verbose_name="顯示名稱")
+    min_score = models.IntegerField(verbose_name="最低積分門檻")
+    max_books = models.PositiveSmallIntegerField(verbose_name="最大持書數量")
+    max_days = models.PositiveSmallIntegerField(verbose_name="最大借閱天數")
+    demotion_protection_weeks = models.PositiveSmallIntegerField(
+        default=26,
+        verbose_name="降級保護週數",
+        help_text="達到此等級後的保護期限，期間內若積分不足也不會降級",
+    )
+    badge_icon = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="徽章圖標",
+        help_text="CSS class 或圖片路徑",
+    )
+
+    class Meta:
+        db_table = "exbook_trust_level_config"
+        verbose_name = "信用等級配置"
+        verbose_name_plural = "信用等級配置"
+        ordering = ["level"]
+
+    def __str__(self):
+        return f"Lv{self.level}: {self.display_name}"
