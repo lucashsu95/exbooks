@@ -12,7 +12,16 @@ logger = logging.getLogger(__name__)
 
 # Google Books API 基本設定
 GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes"
+ISBN_CACHE_PREFIX = "isbn"
 CACHE_TIMEOUT = 24 * 60 * 60  # 24 hours in seconds
+
+
+def get_isbn_cache_key(isbn: str) -> str:
+    """
+    產生 ISBN 查詢的快取鍵值
+    格式: isbn:{normalized_isbn}
+    """
+    return f"{ISBN_CACHE_PREFIX}:{isbn}"
 
 
 def normalize_isbn(isbn: str) -> Optional[str]:
@@ -92,7 +101,7 @@ def lookup_by_isbn(isbn: str) -> Optional[Dict[str, Any]]:
         logger.error(f"Error querying database for ISBN {normalized_isbn}: {e}")
 
     # 2. 檢查快取（避免重複 API 呼叫）
-    cache_key = f"isbn_lookup_{normalized_isbn}"
+    cache_key = get_isbn_cache_key(normalized_isbn)
     cached_result = cache.get(cache_key)
     if cached_result is not None:
         return cached_result
