@@ -24,6 +24,7 @@ class TestPredicates:
         other_user = UserFactory()
 
         from deals.rules import is_applicant
+
         assert is_applicant(user, deal) is True
         assert is_applicant(other_user, deal) is False
         assert is_applicant(user, None) is False
@@ -34,6 +35,7 @@ class TestPredicates:
         other_user = UserFactory()
 
         from deals.rules import is_responder
+
         assert is_responder(user, deal) is True
         assert is_responder(other_user, deal) is False
 
@@ -44,6 +46,7 @@ class TestPredicates:
         other_user = UserFactory()
 
         from deals.rules import is_owner
+
         assert is_owner(user, deal) is True
         assert is_owner(other_user, deal) is False
 
@@ -54,6 +57,7 @@ class TestPredicates:
         other_user = UserFactory()
 
         from deals.rules import is_keeper
+
         assert is_keeper(user, deal) is True
         assert is_keeper(other_user, deal) is False
 
@@ -64,6 +68,7 @@ class TestPredicates:
         other_user = UserFactory()
 
         from deals.rules import is_involved
+
         assert is_involved(applicant, deal) is True
         assert is_involved(responder, deal) is True
         assert is_involved(other_user, deal) is False
@@ -74,6 +79,7 @@ class TestPredicates:
         other_user = UserFactory()
 
         from deals.rules import is_extension_applicant
+
         assert is_extension_applicant(user, extension) is True
         assert is_extension_applicant(other_user, extension) is False
 
@@ -86,10 +92,10 @@ class TestPredicates:
         other_user = UserFactory()
 
         from deals.rules import is_extension_reviewer
+
         assert is_extension_reviewer(owner, extension) is True
         assert is_extension_reviewer(keeper, extension) is True
         assert is_extension_reviewer(other_user, extension) is False
-
 
 
 class TestPermissions:
@@ -142,7 +148,7 @@ class TestFSMTransitions:
 
     def test_both_rated_condition(self):
         deal = DealFactory(status=Deal.Status.MEETED)
-        
+
         # Initially False
         assert deal._both_rated() is False
 
@@ -165,7 +171,7 @@ class TestFSMTransitions:
 
         # Check deal1
         assert deal1.status == Deal.Status.RESPONDED
-        
+
         # Check deal2 (BR-15: Auto-cancelled)
         deal2.refresh_from_db()
         assert deal2.status == Deal.Status.CANCELLED
@@ -177,9 +183,11 @@ class TestFSMTransitions:
     def test_cancel_request_restores_book_status(self):
         """測試 cancel_request 恢復書籍狀態 (BR-14)。"""
         book = SharedBookFactory(status="R")
-        deal = DealFactory(shared_book=book, status=Deal.Status.REQUESTED, previous_book_status="T")
-        
+        deal = DealFactory(
+            shared_book=book, status=Deal.Status.REQUESTED, previous_book_status="T"
+        )
+
         deal.cancel_request()
-        
+
         book.refresh_from_db()
         assert book.status == "T"

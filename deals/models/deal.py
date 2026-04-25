@@ -143,7 +143,7 @@ class Deal(FSMModelMixin, UpdatableModel):
             shared_book=shared_book,
             status=Deal.Status.REQUESTED,
         ).exclude(pk=self.pk).update(status=Deal.Status.CANCELLED)
-        
+
         self._auto_cancelled_deals = auto_cancelled
 
         # 更新書籍狀態為 RESERVED (使用 FSM 方法)
@@ -184,8 +184,7 @@ class Deal(FSMModelMixin, UpdatableModel):
         shared_book = self.shared_book
         if self.previous_book_status:
             SharedBook.objects.filter(pk=shared_book.pk).update(
-                status=self.previous_book_status,
-                updated_at=timezone.now()
+                status=self.previous_book_status, updated_at=timezone.now()
             )
 
     @transition(
@@ -205,7 +204,7 @@ class Deal(FSMModelMixin, UpdatableModel):
         """
         from datetime import timedelta
         from django.utils import timezone
-        
+
         from deals.services.deal_service import MEET_STATUS_MAP
         from books.models.shared_book import SharedBook
 
@@ -230,7 +229,7 @@ class Deal(FSMModelMixin, UpdatableModel):
                 shared_book.declare_exception()
             else:
                 shared_book.status = new_status
-        
+
         shared_book.save()
 
         # 重新計算到期日

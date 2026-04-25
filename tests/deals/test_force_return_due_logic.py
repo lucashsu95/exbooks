@@ -8,13 +8,14 @@ from tests.factories import SharedBookFactory, DealFactory, UserFactory
 
 pytestmark = pytest.mark.django_db
 
+
 class TestForceReturnDueLogic:
     def test_cannot_force_return_if_not_overdue(self):
         """[P0] 測試：未逾期時，無法強制歸還。"""
         owner = UserFactory()
         applicant = UserFactory()
         book = SharedBookFactory(owner=owner, status="O", transferability="RETURN")
-        
+
         # 設定到期日為明天（尚未逾期）
         due_date = timezone.now().date() + timedelta(days=1)
         deal = DealFactory(
@@ -23,7 +24,7 @@ class TestForceReturnDueLogic:
             status="M",
             applicant=applicant,
             responder=owner,
-            due_date=due_date
+            due_date=due_date,
         )
 
         with pytest.raises(ValidationError, match="交易尚未逾期"):
@@ -34,7 +35,7 @@ class TestForceReturnDueLogic:
         owner = UserFactory()
         applicant = UserFactory()
         book = SharedBookFactory(owner=owner, status="O", transferability="RETURN")
-        
+
         # 設定到期日為昨天（已逾期）
         due_date = timezone.now().date() - timedelta(days=1)
         deal = DealFactory(
@@ -43,7 +44,7 @@ class TestForceReturnDueLogic:
             status="M",
             applicant=applicant,
             responder=owner,
-            due_date=due_date
+            due_date=due_date,
         )
 
         returned_deal = confirm_return(deal, confirmed_by=owner, force=True)
@@ -56,16 +57,15 @@ class TestForceReturnDueLogic:
         owner = UserFactory()
         applicant = UserFactory()
         book = SharedBookFactory(owner=owner, status="O", transferability="TRANSFER")
-        
+
         deal = DealFactory(
             shared_book=book,
             deal_type="TF",
             status="M",
             applicant=applicant,
             responder=owner,
-            due_date=timezone.now().date() - timedelta(days=10) # 即使逾期
+            due_date=timezone.now().date() - timedelta(days=10),  # 即使逾期
         )
 
         with pytest.raises(ValidationError, match="不支援強制歸還"):
             confirm_return(deal, confirmed_by=applicant, force=True)
-

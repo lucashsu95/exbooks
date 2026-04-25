@@ -56,10 +56,12 @@ def _handle_accept(deal):
     transaction.on_commit(lambda: notify_deal_responded(deal))
 
     # 通知被自動取消的申請者
-    if hasattr(deal, '_auto_cancelled_deals'):
+    if hasattr(deal, "_auto_cancelled_deals"):
         for cancelled_deal in deal._auto_cancelled_deals:
             # capture local variable in lambda
-            transaction.on_commit(lambda cd=cancelled_deal: notify_deal_cancelled(cd, deal.responder))
+            transaction.on_commit(
+                lambda cd=cancelled_deal: notify_deal_cancelled(cd, deal.responder)
+            )
 
 
 def _handle_decline(deal):

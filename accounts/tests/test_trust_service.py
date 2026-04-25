@@ -26,7 +26,7 @@ class TrustServiceTest(TestCase):
         self.other_user = User.objects.create_user(
             username="otheruser", email="other@example.com", password="password"
         )
-        
+
         # 建立信用等級配置與對應 Group
         for level in range(4):
             Group.objects.get_or_create(name=f"trust_lv{level}")
@@ -38,8 +38,8 @@ class TrustServiceTest(TestCase):
                     "min_score": level * 10,
                     "max_books": (level + 1) * 2,
                     "max_days": 30,
-                    "demotion_protection_weeks": 26
-                }
+                    "demotion_protection_weeks": 26,
+                },
             )
 
     def test_calculate_trust_level_new_user(self):

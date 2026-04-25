@@ -27,7 +27,6 @@ class CustomGroupAdmin(admin.ModelAdmin):
             return ("name", "permissions")
         return super().get_readonly_fields(request, obj)
 
-
     def has_change_permission(self, request, obj=None):
         # 需求：正向 Group (trust_lv*) 為唯讀
         if obj and obj.name.startswith("trust_lv"):

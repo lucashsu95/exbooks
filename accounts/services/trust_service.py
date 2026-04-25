@@ -382,9 +382,7 @@ def get_upgrade_progress(user) -> dict:
     }
 
     result["summary"] = round(percentage, 1)
-    result["requirements"].append(
-        f"ݦAo {remaining_score} n]F {required_score} n^"
-    )
+    result["requirements"].append(f"ݦAo {remaining_score} n]F {required_score} n^")
 
     return result
 
@@ -462,6 +460,7 @@ def sync_trust_group(user) -> None:
                 user.groups.remove(current_group_obj)
                 user.groups.add(target_group_obj)
                 profile.trust_level_protected_since = None
-                profile.save(update_fields=["trust_level_protected_since", "updated_at"])
+                profile.save(
+                    update_fields=["trust_level_protected_since", "updated_at"]
+                )
             # 否則維持現狀
-

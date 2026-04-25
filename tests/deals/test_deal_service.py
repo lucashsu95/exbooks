@@ -235,6 +235,7 @@ class TestCreateDeal:
     def test_min_trust_level_allows_when_requirement_met(self):
         """申請者信用等級達標時，允許建立交易。"""
         from django.contrib.auth.models import Group
+
         owner = UserFactory()
         applicant = UserFactory()
         # 建立交易邏輯檢查的是 Group
@@ -372,7 +373,10 @@ class TestCancelDeal:
             previous_book_status="T",
         )
         from books.models.shared_book import SharedBook
-        SharedBook.objects.filter(pk=book.pk).update(status="V", updated_at=timezone.now())
+
+        SharedBook.objects.filter(pk=book.pk).update(
+            status="V", updated_at=timezone.now()
+        )
         book.refresh_from_db()
         cancel_deal(deal)
         book.refresh_from_db()
@@ -715,6 +719,7 @@ class TestConfirmReturn:
         # 這裡模擬逾期情境以觸發 force 邏輯中的自動補評
         from datetime import timedelta
         from django.utils import timezone
+
         deal.due_date = timezone.now().date() - timedelta(days=1)
         deal.save()
 

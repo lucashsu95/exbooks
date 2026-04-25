@@ -65,7 +65,7 @@ class SharedBook(FSMModelMixin, UpdatableModel):
         choices=Status.choices,
         default=Status.SUSPENDED,
         verbose_name="狀態",
-        protected=True, # 禁止直接賦值，強制使用 FSM transition
+        protected=True,  # 禁止直接賦值，強制使用 FSM transition
     )
     condition_description = models.TextField(
         blank=True,

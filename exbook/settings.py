@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "accounts",
     "books",
     "deals",
+    "ai",
     "rules.apps.AutodiscoverRulesConfig",
 ]
 
@@ -237,6 +238,8 @@ DEFAULT_FROM_EMAIL = os.environ.get(
 # Auth URLs
 LOGIN_URL = "account_login"
 LOGIN_REDIRECT_URL = "books:list"
+LOGIN_URL = "account_login"
+LOGIN_REDIRECT_URL = "books:list"
 LOGOUT_REDIRECT_URL = "account_login"
 
 # Crispy Forms configuration
@@ -263,3 +266,22 @@ BORROWING_LIMITS = {
     2: {"max_books": 5, "max_days": 90},
     3: {"max_books": float("inf"), "max_days": float("inf")},
 }
+
+# === Redis Cache Configuration ===
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "SOCKET_CONNECT_TIMEOUT": 5,
+            "SOCKET_TIMEOUT": 5,
+            "RETRY_ON_TIMEOUT": True,
+            "CONNECTION_POOL_KWARGS": {"max_connections": 50},
+        },
+        "KEY_PREFIX": "exbook",
+    }
+}
+
+# === Redis Connection for AI Conversation Cache ===
+REDIS_CONNECTION_URL = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")

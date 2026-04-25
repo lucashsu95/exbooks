@@ -53,7 +53,23 @@ services:
       - static_data:/app/staticfiles:ro
       - media_data:/app/media:ro
 
+  redis:
+    image: redis:7-alpine
+    container_name: exbook_redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   db_data:
   static_data:
   media_data:
+  redis_data:

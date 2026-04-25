@@ -27,6 +27,4 @@ class Command(BaseCommand):
                     self.style.SUCCESS(f"Successfully created group: {name}")
                 )
             else:
-                self.stdout.write(
-                    self.style.WARNING(f"Group already exists: {name}")
-                )
+                self.stdout.write(self.style.WARNING(f"Group already exists: {name}"))

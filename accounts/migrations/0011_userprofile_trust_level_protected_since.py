@@ -4,15 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0010_trustlevelconfig'),
+        ("accounts", "0010_trustlevelconfig"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='userprofile',
-            name='trust_level_protected_since',
-            field=models.DateTimeField(blank=True, help_text='記錄用戶積分跌破門檻後，降級保護期開始計時的時間點', null=True, verbose_name='等級保護起始時間'),
+            model_name="userprofile",
+            name="trust_level_protected_since",
+            field=models.DateTimeField(
+                blank=True,
+                help_text="記錄用戶積分跌破門檻後，降級保護期開始計時的時間點",
+                null=True,
+                verbose_name="等級保護起始時間",
+            ),
         ),
     ]
