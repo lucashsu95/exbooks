@@ -676,8 +676,6 @@ def extension_approve(request, extension_pk):
         pk=extension_pk,
     )
 
-    shared_book = extension.deal.shared_book
-
     # 權限檢查
     if not request.user.has_perm("deals.can_approve_extension", extension):
         messages.error(request, "您無權核准此申請。")
@@ -708,8 +706,6 @@ def extension_reject(request, extension_pk):
         ),
         pk=extension_pk,
     )
-
-    shared_book = extension.deal.shared_book
 
     # 權限檢查
     if not request.user.has_perm("deals.can_reject_extension", extension):

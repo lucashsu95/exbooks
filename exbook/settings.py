@@ -268,12 +268,38 @@ BORROWING_LIMITS = {
 }
 
 # === Redis Cache Configuration ===
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "unique-snowflake",
+# Use Redis for cache in production, fallback to LocMemCache for local dev
+try:
+    _redis_url = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
+    # Test Redis connection first
+    import redis
+
+    _test_conn = redis.from_url(_redis_url, socket_connect_timeout=2)
+    _test_conn.ping()
+    # Redis is available, use it
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": _redis_url,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "SOCKET_CONNECT_TIMEOUT": 5,
+                "SOCKET_TIMEOUT": 5,
+                "RETRY_ON_TIMEOUT": True,
+                "CONNECTION_POOL_KWARGS": {"max_connections": 50},
+            },
+            "KEY_PREFIX": "exbook",
+        }
     }
-}
+except (redis.ConnectionError, redis.exceptions.TimeoutError, Exception):
+    # Redis not available, use in-memory cache for local development
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "exbook-unique-snowflake",
+        }
+    }
+    # Fallback to LocMemCache silently for development
 
 # === Redis Connection for AI Conversation Cache ===
 REDIS_CONNECTION_URL = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")

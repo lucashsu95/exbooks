@@ -6,11 +6,7 @@ from tests.factories import (
     UserFactory,
 )
 from deals.models import Deal
-
-pytestmark = pytest.mark.django_db
-
-
-import pytest
+from deals.rules import is_applicant
 
 pytestmark = pytest.mark.django_db
 
@@ -23,7 +19,6 @@ class TestPredicates:
         deal = DealFactory(applicant=user)
         other_user = UserFactory()
 
-        from deals.rules import is_applicant
 
         assert is_applicant(user, deal) is True
         assert is_applicant(other_user, deal) is False
