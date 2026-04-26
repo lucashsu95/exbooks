@@ -1,15 +1,16 @@
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from django.core.cache import cache
+
 
 class ConversationCache:
     """
     Manages user conversation history in Redis (or fallback cache).
-    
+
     Format in cache: List of dicts [{"role": "user", "content": "..."}, ...]
     TTL: 1 hour (3600 seconds)
     Max messages: 20
     """
-    
+
     CACHE_PREFIX = "ai_conv:"
     TTL = 3600
     MAX_MESSAGES = 20
@@ -30,13 +31,13 @@ class ConversationCache:
         """Add a new message to the history and enforce length limits."""
         key = cls._get_key(user_id)
         history = cls.get_history(user_id)
-        
+
         history.append({"role": role, "content": content})
-        
+
         # Keep only the last MAX_MESSAGES
         if len(history) > cls.MAX_MESSAGES:
-            history = history[-cls.MAX_MESSAGES:]
-            
+            history = history[-cls.MAX_MESSAGES :]
+
         cache.set(key, history, cls.TTL)
 
     @classmethod
