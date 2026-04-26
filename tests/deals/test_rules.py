@@ -19,7 +19,6 @@ class TestPredicates:
         deal = DealFactory(applicant=user)
         other_user = UserFactory()
 
-
         assert is_applicant(user, deal) is True
         assert is_applicant(other_user, deal) is False
         assert is_applicant(user, None) is False
