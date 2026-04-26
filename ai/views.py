@@ -1,5 +1,4 @@
 import json
-import time
 from typing import Generator
 from django.http import JsonResponse, StreamingHttpResponse
 from django.views import View
@@ -25,7 +24,9 @@ class ChatSSEView(LoginRequiredMixin, View):
 
         return StreamingHttpResponse(event_stream(), content_type="text/event-stream")
 
-    @method_decorator(csrf_exempt)  # For simplicity in T2-5, usually handled via header in production
+    @method_decorator(
+        csrf_exempt
+    )  # For simplicity in T2-5, usually handled via header in production
     def post(self, request, *args, **kwargs):
         try:
             data = json.loads(request.body)
@@ -37,7 +38,7 @@ class ChatSSEView(LoginRequiredMixin, View):
 
         user_id = request.user.id
         history = ConversationCache.get_history(user_id)
-        
+
         # Add user message to history
         ConversationCache.add_message(user_id, "user", user_message)
 
@@ -61,19 +62,21 @@ class ChatSSEView(LoginRequiredMixin, View):
                         # Execute immediately
                         result = tool_def.func(**arguments)
                         yield f"data: {json.dumps({'type': 'tool_result', 'tool': tool_name, 'result': result})}\n\n"
-            
+
             # 2. Stream Content
             # Simulated streaming for T2-5
             full_content = response.content
             # To simulate streaming, we could split by words/chars but for simplicity:
             yield f"data: {json.dumps({'type': 'content', 'delta': full_content})}\n\n"
-            
+
             # Add AI response to history
             ConversationCache.add_message(user_id, "assistant", full_content)
-            
+
             yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
-        return StreamingHttpResponse(stream_response(), content_type="text/event-stream")
+        return StreamingHttpResponse(
+            stream_response(), content_type="text/event-stream"
+        )
 
 
 class ConsentView(LoginRequiredMixin, View):
@@ -101,9 +104,9 @@ class ConsentView(LoginRequiredMixin, View):
             result = tool_def.func(**arguments)
             # Optionally add to history that action was confirmed and executed
             ConversationCache.add_message(
-                request.user.id, 
-                "system", 
-                f"User confirmed and executed action: {action} with args {arguments}. Result: {result}"
+                request.user.id,
+                "system",
+                f"User confirmed and executed action: {action} with args {arguments}. Result: {result}",
             )
             return JsonResponse({"status": "success", "result": result})
         except Exception as e:
