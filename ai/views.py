@@ -111,3 +111,14 @@ class ConsentView(LoginRequiredMixin, View):
             return JsonResponse({"status": "success", "result": result})
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
+
+
+class ClearHistoryView(LoginRequiredMixin, View):
+    """
+    Clears the conversation history for the current user.
+    """
+
+    @method_decorator(csrf_exempt)
+    def post(self, request, *args, **kwargs):
+        ConversationCache.clear_history(request.user.id)
+        return JsonResponse({"status": "success"})

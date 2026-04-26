@@ -264,5 +264,9 @@
         <!-- Shared scripts -->
         <script src="{% static 'js/shared.js' %}"></script>
         {% block extra_js %}{% endblock %}
+
+        {% if user.is_authenticated %}
+            {% include "ai/_chat_widget.html" %}
+        {% endif %}
     </body>
 </html>
