@@ -55,7 +55,7 @@ def normalize_isbn(isbn: str) -> Optional[str]:
 
 def lookup_by_isbn(isbn: str) -> Optional[Dict[str, Any]]:
     """
-    透過 ISBN 查詢書籍資訊（優先查詢本地資料庫，再查 Google Books API）
+    透過 ISBN 查詢書籍資訊（優先查詢本地資料庫，再查快取，最後查 Google Books API）
 
     Args:
         isbn: ISBN-10 或 ISBN-13 字串
@@ -94,9 +94,7 @@ def lookup_by_isbn(isbn: str) -> Optional[Dict[str, Any]]:
         }
         return result
     except OfficialBook.DoesNotExist:
-        logger.info(
-            f"ISBN not found in database: {normalized_isbn}, querying Google Books API..."
-        )
+        logger.info(f"ISBN not found in database: {normalized_isbn}, checking cache...")
     except Exception as e:
         logger.error(f"Error querying database for ISBN {normalized_isbn}: {e}")
 
@@ -104,8 +102,10 @@ def lookup_by_isbn(isbn: str) -> Optional[Dict[str, Any]]:
     cache_key = get_isbn_cache_key(normalized_isbn)
     cached_result = cache.get(cache_key)
     if cached_result is not None:
+        logger.info(f"Book found in cache: {normalized_isbn}")
         return cached_result
 
+    logger.info(f"Querying Google Books API for ISBN: {normalized_isbn}...")
     # 準備 API 請求
     params = {
         "q": f"isbn:{normalized_isbn}",
