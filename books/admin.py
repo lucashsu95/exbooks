@@ -1,7 +1,17 @@
 from django.contrib import admin
+from django.db.models import Prefetch
 from django.utils.html import format_html
 
-from .models import BookPhoto, BookSet, OfficialBook, SharedBook, WishListItem
+from .models import (
+    Author,
+    BookPhoto,
+    BookSet,
+    OfficialBook,
+    OfficialBookAuthor,
+    Publisher,
+    SharedBook,
+    WishListItem,
+)
 
 
 class BookPhotoInline(admin.TabularInline):
@@ -20,24 +30,66 @@ class SharedBookInline(admin.TabularInline):
     show_change_link = True
 
 
+class OfficialBookAuthorInline(admin.TabularInline):
+    model = OfficialBookAuthor
+    extra = 0
+    autocomplete_fields = ("author",)
+    fields = ("author", "role", "sort_order")
+
+
+@admin.register(Publisher)
+class PublisherAdmin(admin.ModelAdmin):
+    list_display = ("name", "created_at")
+    search_fields = ("name",)
+    readonly_fields = ("created_at", "updated_at")
+    ordering = ("name",)
+
+
+@admin.register(Author)
+class AuthorAdmin(admin.ModelAdmin):
+    list_display = ("display_name", "sort_key", "created_at")
+    search_fields = ("display_name", "sort_key")
+    readonly_fields = ("created_at", "updated_at")
+    ordering = ("sort_key", "display_name")
+
+
 @admin.register(OfficialBook)
 class OfficialBookAdmin(admin.ModelAdmin):
     list_display = (
         "title",
         "isbn",
-        "author",
-        "publisher",
+        "author_columns",
+        "publisher_display",
         "cover_image_preview",
         "created_at",
     )
-    search_fields = ("title", "isbn", "author", "publisher")
-    list_filter = ("publisher",)
+    search_fields = (
+        "title",
+        "isbn",
+        "author",
+        "publisher",
+        "publisher_ref__name",
+        "author_links__author__display_name",
+    )
+    list_filter = ("category", "publisher_ref")
     readonly_fields = ("cover_image_preview", "created_at", "updated_at")
     list_per_page = 20
-    inlines = [SharedBookInline]
+    inlines = [OfficialBookAuthorInline, SharedBookInline]
 
     fieldsets = (
-        ("基本資訊", {"fields": ("title", "isbn", "author", "publisher")}),
+        (
+            "基本資訊",
+            {
+                "fields": (
+                    "title",
+                    "isbn",
+                    "category",
+                    "author",
+                    "publisher",
+                    "publisher_ref",
+                )
+            },
+        ),
         ("詳細資訊", {"fields": ("cover_image", "cover_image_preview", "description")}),
         (
             "系統資訊",
@@ -47,6 +99,38 @@ class OfficialBookAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related("publisher_ref").prefetch_related(
+            Prefetch(
+                "author_links",
+                queryset=OfficialBookAuthor.objects.select_related("author").order_by(
+                    "sort_order", "created_at"
+                ),
+            )
+        )
+
+    @admin.display(description="作者（優先正規化）")
+    def author_columns(self, obj):
+        links = list(obj.author_links.all())
+        if links:
+            parts = []
+            for link in links:
+                suffix = (
+                    f"（{link.get_role_display()}）"
+                    if link.role != OfficialBookAuthor.Role.AUTHOR
+                    else ""
+                )
+                parts.append(f"{link.author.display_name}{suffix}")
+            return "、".join(parts)
+        return obj.author or "—"
+
+    @admin.display(description="出版社（優先正規化）", ordering="publisher_ref__name")
+    def publisher_display(self, obj):
+        if obj.publisher_ref_id:
+            return obj.publisher_ref.name
+        return obj.publisher or "—"
 
     @admin.display(description="封面預覽")
     def cover_image_preview(self, obj):

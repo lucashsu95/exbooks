@@ -37,6 +37,21 @@ class OfficialBook(UpdatableModel):
     )
     description = models.TextField(blank=True, verbose_name="書籍簡介")
 
+    publisher_ref = models.ForeignKey(
+        "books.Publisher",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="official_books",
+        verbose_name="出版社（正規化）",
+    )
+    authors = models.ManyToManyField(
+        "books.Author",
+        through="OfficialBookAuthor",
+        related_name="official_books",
+        verbose_name="作者（正規化）",
+    )
+
     class Meta:
         db_table = "exbook_official_book"
         verbose_name = "官方書目"
