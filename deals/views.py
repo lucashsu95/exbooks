@@ -820,12 +820,13 @@ def notification_mark_read(request, pk):
     )
     notification_service.mark_as_read(notification)
 
-    # 返回更新後的通知項目
-    return render(
+    response = render(
         request,
         "deals/partials/notification_item.html",
         {"notification": notification},
     )
+    response["HX-Trigger"] = "refreshNotificationBadge"
+    return response
 
 
 @login_required

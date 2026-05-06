@@ -349,6 +349,16 @@ class UserProfile(UpdatableModel):
         verbose_name="等級保護起始時間",
         help_text="記錄用戶積分跌破門檻後，降級保護期開始計時的時間點",
     )
+    push_enabled = models.BooleanField(
+        default=True,
+        verbose_name="啟用推播通知",
+        help_text="關閉後將不會收到瀏覽器 Push 通知",
+    )
+    email_notifications_enabled = models.BooleanField(
+        default=True,
+        verbose_name="啟用 Email 通知",
+        help_text="關閉後將不會收到 Email 通知",
+    )
 
     class Meta:
         db_table = "exbook_user_profile"

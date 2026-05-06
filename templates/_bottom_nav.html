@@ -16,15 +16,20 @@
             <span class="text-[10px] font-bold uppercase tracking-wider">書架</span>
         </a>
         <!-- 交易 -->
-        <a class="flex flex-col items-center justify-center min-w-[64px] min-h-[56px] gap-1 relative {% if request.resolver_match.app_name == 'deals' %}text-primary{% else %}text-slate-400{% endif %}"
+        <a class="flex flex-col items-center justify-center min-w-[64px] min-h-[56px] gap-1 relative {% if request.resolver_match.app_name == 'deals' and request.resolver_match.url_name != 'notification_list' %}text-primary{% else %}text-slate-400{% endif %}"
            href="{% url 'deals:list' %}">
-            <span class="material-symbols-outlined text-2xl {% if request.resolver_match.app_name == 'deals' %}fill-1{% endif %}">swap_horiz</span>
+            <span class="material-symbols-outlined text-2xl {% if request.resolver_match.app_name == 'deals' and request.resolver_match.url_name != 'notification_list' %}fill-1{% endif %}">swap_horiz</span>
             <span class="text-[10px] font-bold uppercase tracking-wider">交易</span>
-            <!-- 未讀通知 badge (由 HTMX 動態更新) -->
+        </a>
+        <!-- 通知 -->
+        <a class="flex flex-col items-center justify-center min-w-[64px] min-h-[56px] gap-1 relative {% if request.resolver_match.url_name == 'notification_list' %}text-primary{% else %}text-slate-400{% endif %}"
+           href="{% url 'deals:notification_list' %}">
+            <span class="material-symbols-outlined text-2xl {% if request.resolver_match.url_name == 'notification_list' %}fill-1{% endif %}">notifications</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider">通知</span>
             {% if user.is_authenticated %}
                 <span id="nav-notification-badge"
                       hx-get="{% url 'deals:notification_count' %}"
-                      hx-trigger="load, every 30s"
+                      hx-trigger="load, every 30s, refreshNotificationBadge from:body"
                       hx-swap="innerHTML">
                     {% include 'deals/partials/notification_badge.html' with unread_count=0 %}
                 </span>

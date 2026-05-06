@@ -336,6 +336,8 @@ class ProfileForm(forms.ModelForm):
             "default_location",
             "available_schedule",
             "avatar",
+            "push_enabled",
+            "email_notifications_enabled",
         )
         widgets = {
             "nickname": forms.TextInput(attrs={"placeholder": "你的暱稱"}),
@@ -369,6 +371,10 @@ class ProfileForm(forms.ModelForm):
             Field("default_location"),
             Field("available_schedule", template="forms/widgets/schedule_picker.html"),
             Field("avatar", template="forms/widgets/image_preview.html"),
+            HTML('<hr class="my-6 border-slate-200">'),
+            HTML('<h3 class="text-base font-semibold text-slate-700 mb-3">通知偏好</h3>'),
+            Field("push_enabled"),
+            Field("email_notifications_enabled"),
         )
 
     def clean_birth_date(self):

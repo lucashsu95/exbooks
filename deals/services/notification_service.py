@@ -1,10 +1,19 @@
 from datetime import timedelta
 
-from django.conf import settings
-from django.core.mail import send_mail
 from django.utils import timezone
 
 from deals.models import Deal, LoanExtension, Notification
+
+
+def _resolve_notification_url(deal=None, shared_book=None):
+    """產生通知點擊跳轉 URL。"""
+    from django.urls import reverse
+
+    if deal:
+        return reverse("deals:detail", kwargs={"pk": deal.id})
+    if shared_book:
+        return reverse("books:detail", kwargs={"pk": shared_book.id})
+    return "/"
 
 
 def notify(
@@ -18,9 +27,7 @@ def notify(
     send_email=True,
 ):
     """
-    建立系統通知。
-
-    統一入口，所有通知透過此函式建立。
+    建立系統通知並透過 Celery 非同步發送 Push／Email。
 
     Args:
         recipient: 接收者 (User)
@@ -44,84 +51,32 @@ def notify(
         shared_book=shared_book,
     )
 
-    # 發送 Web Push
-    if send_push:
-        _send_push_notification(
-            user=recipient,
+    profile = getattr(recipient, "profile", None)
+
+    if send_push and (not profile or profile.push_enabled):
+        from deals.tasks import send_push_notification_task
+
+        url = _resolve_notification_url(deal, shared_book)
+        send_push_notification_task.delay(
+            user_id=recipient.pk,
             title=title,
             message=message,
-            deal=deal,
-            shared_book=shared_book,
+            url=url,
+            deal_id=str(deal.id) if deal else None,
+            book_id=str(shared_book.id) if shared_book else None,
             notification_type=notification_type,
         )
 
-    # 發送 Email
-    if send_email:
-        _send_email_notification(
-            user=recipient,
+    if send_email and (not profile or profile.email_notifications_enabled):
+        from deals.tasks import send_email_notification_task
+
+        send_email_notification_task.delay(
+            user_id=recipient.pk,
             title=title,
             message=message,
         )
 
     return notification
-
-
-def _send_email_notification(user, title, message):
-    """發送 Email 通知（內部函式）。"""
-    email_backend = settings.EMAIL_BACKEND
-
-    if not email_backend or not user.email:
-        return
-
-    send_mail(
-        subject=f"[Exbooks] {title}",
-        message=message or title,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        fail_silently=True,
-    )
-
-
-def _send_push_notification(
-    user,
-    title,
-    message,
-    deal=None,
-    shared_book=None,
-    notification_type=None,
-):
-    """
-    發送 Web Push 通知（內部函式）。
-
-    Args:
-        user: 接收者
-        title: 通知標題
-        message: 通知內容
-        deal: 相關交易（可選）
-        shared_book: 相關書籍（可選）
-        notification_type: 通知類型（可選）
-    """
-    from django.urls import reverse
-
-    from deals.services.push_service import send_push_to_user
-
-    # 構建跳轉 URL（使用 reverse 避免硬編碼）
-    url = "/"
-    if deal:
-        url = reverse("deals:detail", kwargs={"pk": deal.id})
-    elif shared_book:
-        url = reverse("books:detail", kwargs={"pk": shared_book.id})
-
-    # 發送 Push
-    send_push_to_user(
-        user=user,
-        title=title,
-        message=message,
-        url=url,
-        deal_id=str(deal.id) if deal else None,
-        book_id=str(shared_book.id) if shared_book else None,
-        notification_type=notification_type,
-    )
 
 
 def notify_deal_requested(deal):
