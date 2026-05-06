@@ -284,6 +284,8 @@ class DealCreationService:
             deal_type, loan_duration_days
         )
 
+        shared_book = SharedBook.objects.select_for_update().get(pk=shared_book.pk)
+
         # 3. 驗證交易類型相容性
         DealCreationService._validate_deal_type_compatibility(shared_book, deal_type)
 

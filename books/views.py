@@ -85,9 +85,9 @@ def book_list(request):
             keeper__profile__default_location__icontains=user_location
         )[:10]
         if not nearby_books:
-            nearby_books = nearby_query.order_by("?")[:10]
+            nearby_books = nearby_query.order_by("-listed_at")[:10]
     else:
-        nearby_books = nearby_query.order_by("?")[:10]
+        nearby_books = nearby_query.order_by("-listed_at")[:10]
 
     context = {
         "new_arrivals": hot_books,  # 沿用變數名避免改動模板太深，但內容改為熱門書籍
@@ -212,6 +212,7 @@ def book_all(request):
         SharedBook.objects.select_related(
             "official_book", "keeper__profile", "owner__profile"
         )
+        .prefetch_related("photos")
         .exclude(keeper=request.user)
         .order_by("-updated_at")
     )
