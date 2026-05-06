@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ page_title }} | Exbooks{% endblock %}
+{% block meta_seo %}
+    <link rel="canonical" href="{{ canonical_url }}">
+    <meta name="description" content="{{ meta_description }}">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ og_title }}">
+    <meta property="og:description" content="{{ og_description }}">
+    {% if og_image_url %}<meta property="og:image" content="{{ og_image_url }}">{% endif %}
+    <meta property="og:url" content="{{ canonical_url }}">
+    <script type="application/ld+json">{{ book_json_ld|safe }}</script>
+{% endblock %}
+{% block search_modal %}{% endblock %}
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/book-ui.css' %}">
+{% endblock %}
+{% block content %}
+    <article class="relative min-h-screen pb-24">
+        <header class="sticky top-0 z-50 flex items-center justify-between p-4 bg-white/90 backdrop-blur border-b border-slate-100">
+            <a href="{% url 'books:public_list' %}"
+               class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700"
+               aria-label="返回公開書單">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <span class="text-sm font-bold text-slate-700 truncate max-w-[50%]">書籍詳情</span>
+            {% if user.is_authenticated %}
+                <a href="{% url 'books:detail' book.pk %}"
+                   class="text-xs font-semibold text-primary px-2 py-1 rounded-lg bg-primary/10">完整資訊</a>
+            {% else %}
+                <a href="{% url 'account_login' %}?next={{ request.path|urlencode }}"
+                   class="text-xs font-semibold text-primary px-2 py-1 rounded-lg bg-primary/10">登入借閱</a>
+            {% endif %}
+        </header>
+        <div class="px-4 pt-6 flex flex-col md:flex-row gap-8 items-center md:items-start">
+            <div class="w-44 md:w-52 shrink-0 rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/5 aspect-[2/3]">
+                {% include 'partials/official_book_cover.html' with book=book.official_book %}
+            </div>
+            <div class="flex-1 text-center md:text-left space-y-3">
+                <div class="flex flex-wrap gap-2 justify-center md:justify-start">
+                    <span class="px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs font-bold">{{ book.get_status_display }}</span>
+                    <span class="px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-bold">{{ book.get_transferability_display }}</span>
+                </div>
+                <h1 class="text-2xl md:text-3xl font-bold text-slate-900 leading-tight">{{ book.official_book.title }}</h1>
+                <p class="text-lg text-slate-600">{{ book.official_book.author }}</p>
+                <p class="text-sm text-slate-500">ISBN {{ book.official_book.isbn }}</p>
+                {% if book.official_book.publisher_ref %}
+                    <p class="text-sm text-slate-500">{{ book.official_book.publisher_ref.name }}</p>
+                {% elif book.official_book.publisher %}
+                    <p class="text-sm text-slate-500">{{ book.official_book.publisher }}</p>
+                {% endif %}
+                {% if book.official_book.description %}
+                    <div class="mt-4 text-left text-sm text-slate-700 whitespace-pre-line border-t border-slate-100 pt-4">{{ book.official_book.description }}</div>
+                {% endif %}
+                <p class="text-xs text-slate-400 pt-4">
+                    面交地點與持有者資訊僅供登入社員於 App 內查看，以保障隱私。
+                </p>
+            </div>
+        </div>
+    </article>
+{% endblock %}

@@ -1,10 +1,13 @@
 from django.urls import path
 
 from . import views
+from . import views_public
 
 app_name = "books"
 
 urlpatterns = [
+    path("browse/", views_public.public_book_list, name="public_list"),
+    path("browse/<uuid:pk>/", views_public.public_book_detail, name="public_detail"),
     path("", views.book_list, name="list"),
     path("bookshelf/", views.my_bookshelf, name="bookshelf"),
     path("all/", views.book_all, name="all"),

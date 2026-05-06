@@ -7,6 +7,7 @@
         <title>
             {% block title %}Exbooks 共享書籍{% endblock %}
         </title>
+        {% block meta_seo %}{% endblock %}
         <!-- PWA Meta Tags -->
         <meta name="theme-color" content="#136dec">
         <meta name="apple-mobile-web-app-capable" content="yes">
@@ -237,7 +238,9 @@
                  style="width: 0%"></div>
         </div>
         <!-- Search Modal -->
-        {% include '_search_modal.html' %}
+        {% block search_modal %}
+            {% include '_search_modal.html' %}
+        {% endblock %}
         <!-- Messages (Toast) - Safe Area 適配 -->
         <div class="fixed top-4 right-4 z-50 flex flex-col gap-2 toast-safe"
              id="toast-container">

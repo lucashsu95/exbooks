@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sitemaps",
     # django-allauth required
     "django.contrib.sites",
     # allauth
@@ -273,6 +274,10 @@ TRUST_THRESHOLDS = {
     1: {"min_deals": 3, "min_rating": 0.0, "max_overdue": 2},  # 一般
     0: {"min_deals": 0, "min_rating": 0.0, "max_overdue": float("inf")},  # 新手
 }
+
+TRUST_SCORE_FORMULA_VERSION = os.environ.get(
+    "TRUST_SCORE_FORMULA_VERSION", "2026-05-v1"
+)
 
 # 借閱限制（根據信用等級）
 BORROWING_LIMITS = {

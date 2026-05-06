@@ -1,14 +1,29 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
+
+from books.sitemaps import PublicSharedBookSitemap, StaticViewSitemap
 from core import views as core_views
+
+SITEMAPS = {
+    "static": StaticViewSitemap,
+    "shared_books": PublicSharedBookSitemap,
+}
 
 admin.site.site_header = "Exbooks 後台管理"
 admin.site.site_title = "Exbooks 管理者介面"
 admin.site.index_title = "歡迎使用 Exbooks 共享書籍後台"
 
 urlpatterns = [
+    path("robots.txt", core_views.robots_txt),
+    path(
+        "sitemap.xml",
+        sitemap,
+        {"sitemaps": SITEMAPS},
+        name="django.contrib.sitemaps.views.sitemap",
+    ),
     path("admin/", admin.site.urls),
     # django-allauth URLs (包含 login, logout, signup, email verification, social auth)
     path("accounts/", include("allauth.urls")),
