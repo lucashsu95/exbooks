@@ -3,9 +3,6 @@ from typing import Generator
 from django.http import JsonResponse, StreamingHttpResponse
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
-
 from .services.gemini_service import GeminiService
 from .services.conversation_cache import ConversationCache
 from .services.tool_registry import ToolRegistry, ConsentRequirement
@@ -24,9 +21,6 @@ class ChatSSEView(LoginRequiredMixin, View):
 
         return StreamingHttpResponse(event_stream(), content_type="text/event-stream")
 
-    @method_decorator(
-        csrf_exempt
-    )  # For simplicity in T2-5, usually handled via header in production
     def post(self, request, *args, **kwargs):
         try:
             data = json.loads(request.body)
@@ -84,7 +78,6 @@ class ConsentView(LoginRequiredMixin, View):
     Handles user confirmation for sensitive tool actions.
     """
 
-    @method_decorator(csrf_exempt)
     def post(self, request, action, *args, **kwargs):
         try:
             data = json.loads(request.body)
@@ -118,7 +111,6 @@ class ClearHistoryView(LoginRequiredMixin, View):
     Clears the conversation history for the current user.
     """
 
-    @method_decorator(csrf_exempt)
     def post(self, request, *args, **kwargs):
         ConversationCache.clear_history(request.user.id)
         return JsonResponse({"status": "success"})

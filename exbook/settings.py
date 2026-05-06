@@ -15,6 +15,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from core.constants import SESSION_COOKIE_AGE, SESSION_EXPIRE_AT_BROWSER_CLOSE
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -32,7 +34,13 @@ DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
-CSRF_TRUSTED_ORIGINS = ["https://1b40-1-34-247-26.ngrok-free.app"]
+CSRF_TRUSTED_ORIGINS = [
+    x.strip()
+    for x in os.environ.get(
+        "CSRF_TRUSTED_ORIGINS", "http://localhost,http://127.0.0.1"
+    ).split(",")
+    if x.strip()
+]
 # Application definition
 
 INSTALLED_APPS = [
@@ -179,6 +187,13 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 ACCOUNT_LOGOUT_ON_GET = True
+
+SESSION_COOKIE_AGE = SESSION_COOKIE_AGE
+SESSION_EXPIRE_AT_BROWSER_CLOSE = SESSION_EXPIRE_AT_BROWSER_CLOSE
+
+ACCOUNT_RATE_LIMITS = {
+    "login_failed": "10/m/ip,10/1m/key",
+}
 
 # Custom signup and login forms
 ACCOUNT_FORMS = {
