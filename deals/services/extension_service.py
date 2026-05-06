@@ -11,7 +11,8 @@ from django.db import transaction
 from django_fsm import can_proceed
 
 from books.models import SharedBook
-from deals.models import LoanExtension
+from deals.models import LoanExtension, ExchangeEvent
+from deals.services.exchange_event_service import record_exchange_event
 from deals.services.notification_service import (
     notify_extend_requested,
     notify_extend_result,
@@ -45,6 +46,14 @@ def request_extension(deal, applicant, extra_days):
     )
 
     notify_extend_requested(extension)
+
+    record_exchange_event(
+        shared_book=deal.shared_book,
+        event_type=ExchangeEvent.EventType.EXTENSION_REQUESTED,
+        deal=deal,
+        actor=applicant,
+        metadata={"extra_days": extra_days},
+    )
 
     return extension
 
@@ -93,6 +102,17 @@ def approve_extension(extension, reviewer):
 
     notify_extend_result(extension)
 
+    record_exchange_event(
+        shared_book=deal.shared_book,
+        event_type=ExchangeEvent.EventType.EXTENSION_APPROVED,
+        deal=deal,
+        actor=reviewer,
+        metadata={
+            "extra_days": extension.extra_days,
+            "due_date": str(deal.due_date) if deal.due_date else None,
+        },
+    )
+
 
 def reject_extension(extension, reviewer):
     """
@@ -120,6 +140,14 @@ def reject_extension(extension, reviewer):
 
     notify_extend_result(extension)
 
+    record_exchange_event(
+        shared_book=deal.shared_book,
+        event_type=ExchangeEvent.EventType.EXTENSION_REJECTED,
+        deal=deal,
+        actor=reviewer,
+        metadata={"extra_days": extension.extra_days},
+    )
+
 
 def cancel_extension(extension, applicant):
     """
@@ -140,3 +168,12 @@ def cancel_extension(extension, applicant):
 
     extension.reject()
     extension.save()
+
+    deal = extension.deal
+    record_exchange_event(
+        shared_book=deal.shared_book,
+        event_type=ExchangeEvent.EventType.EXTENSION_CANCELLED,
+        deal=deal,
+        actor=applicant,
+        metadata={"extra_days": extension.extra_days},
+    )

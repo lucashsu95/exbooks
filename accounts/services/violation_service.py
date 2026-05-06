@@ -9,7 +9,8 @@ from django.db import transaction
 from django.db.models import QuerySet
 from django.contrib.auth import get_user_model
 
-from accounts.models import UserProfile, Violation
+from accounts.models import TrustScoreLedger, UserProfile, Violation
+from accounts.services.trust_service import record_trust_snapshot
 
 if TYPE_CHECKING:
     from accounts.models import Appeal
@@ -83,6 +84,16 @@ class ViolationService:
                         "updated_at",
                     ]
                 )
+
+            record_trust_snapshot(
+                user,
+                source=TrustScoreLedger.Source.VIOLATION,
+                payload={
+                    "violation_id": str(violation.id),
+                    "action_type": action_type,
+                    "violation_type": violation_type,
+                },
+            )
 
             return violation
 

@@ -10,7 +10,8 @@ from django.db import transaction
 from accounts.services.trust_service import get_borrowing_limits
 from books.models import SharedBook, BookSet
 from books.services.book_service import validate_book_set_completeness
-from deals.models import Deal
+from deals.models import Deal, ExchangeEvent
+from deals.services.exchange_event_service import record_exchange_event
 from core.constants import (
     BORROWING_DAYS_DEFAULT,
     BORROWING_DAYS_MIN,
@@ -342,6 +343,14 @@ class DealCreationService:
             )
 
         deal = Deal.objects.create(**deal_data)
+
+        record_exchange_event(
+            shared_book=shared_book,
+            event_type=ExchangeEvent.EventType.DEAL_REQUESTED,
+            deal=deal,
+            actor=applicant,
+            metadata={"deal_type": deal_type},
+        )
 
         return deal
 

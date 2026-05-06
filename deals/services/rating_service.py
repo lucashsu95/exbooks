@@ -3,7 +3,9 @@ from datetime import timedelta
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from deals.models import Deal, Rating
+from accounts.models import TrustScoreLedger
+from deals.models import Deal, Rating, ExchangeEvent
+from deals.services.exchange_event_service import record_exchange_event
 from deals.services.notification_service import notify_rating_pending
 
 
@@ -50,7 +52,7 @@ def create_rating(
     # 更新被評價者的信用積分
     from accounts.services.trust_service import update_trust_score
 
-    update_trust_score(ratee)
+    update_trust_score(ratee, ledger_source=TrustScoreLedger.Source.RATING)
 
     # 更新評價旗標
     if rater == deal.applicant:
@@ -58,6 +60,21 @@ def create_rating(
     else:
         deal.responder_rated = True
     deal.save(update_fields=["applicant_rated", "responder_rated", "updated_at"])
+
+    record_exchange_event(
+        shared_book=deal.shared_book,
+        event_type=ExchangeEvent.EventType.RATING_SUBMITTED,
+        deal=deal,
+        actor=rater,
+        metadata={
+            "ratee_id": ratee.id,
+            "friendliness_score": friendliness_score,
+            "punctuality_score": punctuality_score,
+            "accuracy_score": accuracy_score,
+            "applicant_rated": deal.applicant_rated,
+            "responder_rated": deal.responder_rated,
+        },
+    )
 
     from deals.models import Notification
 

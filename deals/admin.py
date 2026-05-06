@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import Deal, DealMessage, LoanExtension, Notification, Rating
+from .models import Deal, DealMessage, ExchangeEvent, LoanExtension, Notification, Rating
 
 
 class DealMessageInline(admin.TabularInline):
@@ -183,6 +183,29 @@ class LoanExtensionAdmin(admin.ModelAdmin):
     )
     readonly_fields = ("created_at", "updated_at")
     list_per_page = 20
+
+
+@admin.register(ExchangeEvent)
+class ExchangeEventAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "event_type", "shared_book", "deal", "actor")
+    list_filter = ("event_type",)
+    search_fields = ("shared_book__official_book__title",)
+    readonly_fields = (
+        "id",
+        "created_at",
+        "shared_book",
+        "deal",
+        "event_type",
+        "actor",
+        "metadata",
+    )
+    ordering = ("-created_at",)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Notification)

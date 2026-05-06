@@ -10,7 +10,7 @@ from django.db.models import QuerySet
 from django.contrib.auth import get_user_model
 
 from books.models import SharedBook, BookPhoto
-from deals.models import Deal, LoanExtension
+from deals.models import Deal, LoanExtension, ExchangeEvent
 from core.constants import MAX_PHOTOS_PER_BOOK
 
 User = get_user_model()
@@ -35,11 +35,15 @@ class BookTimelineService:
         # 1. 書籍上架事件
         timeline_events.extend(BookTimelineService._get_listing_events(book))
 
-        # 2. 交易記錄事件
-        timeline_events.extend(BookTimelineService._get_deal_events(book))
+        has_exchange_audit = ExchangeEvent.objects.filter(shared_book=book).exists()
 
-        # 3. 延長借閱事件
-        timeline_events.extend(BookTimelineService._get_extension_events(book))
+        # 2. 持久化交換事件（有新紀錄後優先於向下相容推導）
+        timeline_events.extend(BookTimelineService._get_exchange_events(book))
+
+        # 3. 交易／延長（僅在尚無稽核事件時推導，以免重複）
+        if not has_exchange_audit:
+            timeline_events.extend(BookTimelineService._get_deal_events(book))
+            timeline_events.extend(BookTimelineService._get_extension_events(book))
 
         # 4. 書況照片上傳事件
         timeline_events.extend(BookTimelineService._get_photo_events(book))
@@ -48,6 +52,46 @@ class BookTimelineService:
         timeline_events.sort(key=lambda x: x["time"], reverse=True)
 
         return timeline_events
+
+    @staticmethod
+    def _get_exchange_events(book: SharedBook) -> List[Dict[str, Any]]:
+        qs = ExchangeEvent.objects.filter(shared_book=book).select_related(
+            "actor__profile", "deal"
+        )
+        if not qs.exists():
+            return []
+
+        events = []
+        for ev in qs.order_by("created_at"):
+            events.append(
+                {
+                    "type": "exchange_event",
+                    "sub_type": ev.event_type,
+                    "time": ev.created_at,
+                    "title": ev.get_event_type_display(),
+                    "description": BookTimelineService._format_exchange_event(ev),
+                    "user": ev.actor,
+                    "deal": ev.deal,
+                }
+            )
+        return events
+
+    @staticmethod
+    def _format_exchange_event(ev: ExchangeEvent) -> str:
+        meta = ev.metadata or {}
+        parts = []
+        if ev.deal_id:
+            parts.append(f"交易 #{str(ev.deal_id)[:8]}…")
+        if ev.actor_id:
+            parts.append(
+                BookTimelineService._format_user_display(ev.actor).replace(
+                    "分享了這本書", "操作"
+                )
+            )
+        extra = meta.get("deal_type") or meta.get("note")
+        if extra:
+            parts.append(str(extra))
+        return " · ".join(parts) if parts else ev.get_event_type_display()
 
     @staticmethod
     def _get_listing_events(book: SharedBook) -> List[Dict[str, Any]]:

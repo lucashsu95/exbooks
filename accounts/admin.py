@@ -3,13 +3,38 @@ from django.contrib.auth.models import Group
 from django.utils import timezone
 from django.utils.html import format_html
 
-from .models import Appeal, TrustLevelConfig, UserProfile, Violation
+from .models import Appeal, TrustLevelConfig, TrustScoreLedger, UserProfile, Violation
 
 
 @admin.register(TrustLevelConfig)
 class TrustLevelConfigAdmin(admin.ModelAdmin):
     list_display = ("level", "display_name", "min_score", "max_books", "max_days")
     ordering = ("level",)
+
+
+@admin.register(TrustScoreLedger)
+class TrustScoreLedgerAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "user", "trust_score", "trust_level", "source", "formula_version")
+    list_filter = ("source", "formula_version")
+    search_fields = ("user__username", "user__email")
+    list_select_related = ("user",)
+    ordering = ("-created_at",)
+    readonly_fields = (
+        "id",
+        "created_at",
+        "user",
+        "trust_score",
+        "trust_level",
+        "formula_version",
+        "source",
+        "payload",
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 # 自定義 GroupAdmin 以控制用戶關聯的唯讀性

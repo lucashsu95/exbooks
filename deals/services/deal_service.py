@@ -18,9 +18,11 @@ from django.utils import timezone
 from django_fsm import can_proceed
 
 from accounts.services.trust_service import get_borrowing_limits
+from accounts.models import TrustScoreLedger
 from books.models import SharedBook
 from books.services.book_service import validate_book_set_completeness
-from deals.models import Deal, DealMessage
+from deals.models import Deal, DealMessage, ExchangeEvent
+from deals.services.exchange_event_service import record_exchange_event
 from deals.services.notification_service import (
     notify_deal_requested,
     notify_book_overdue,
@@ -243,6 +245,17 @@ def create_deal(
 
     notify_deal_requested(deal)
 
+    record_exchange_event(
+        shared_book=shared_book,
+        event_type=ExchangeEvent.EventType.DEAL_REQUESTED,
+        deal=deal,
+        actor=applicant,
+        metadata={
+            "deal_type": deal_type,
+            "due_date": str(deal.due_date) if deal.due_date else None,
+        },
+    )
+
     return deal
 
 
@@ -276,6 +289,23 @@ def accept_deal(deal):
     deal.accept()
     deal.save()
 
+    record_exchange_event(
+        shared_book=deal.shared_book,
+        event_type=ExchangeEvent.EventType.DEAL_ACCEPTED,
+        deal=deal,
+        actor=deal.responder,
+        metadata={"deal_type": deal.deal_type},
+    )
+
+    for other in getattr(deal, "_auto_cancelled_deals", []) or []:
+        record_exchange_event(
+            shared_book=other.shared_book,
+            event_type=ExchangeEvent.EventType.DEAL_SUPERSEDED,
+            deal=other,
+            actor=deal.responder,
+            metadata={"superseded_by_deal_id": str(deal.id)},
+        )
+
     return deal
 
 
@@ -296,6 +326,14 @@ def decline_deal(deal):
 
     deal.decline()
     deal.save()
+
+    record_exchange_event(
+        shared_book=deal.shared_book,
+        event_type=ExchangeEvent.EventType.DEAL_DECLINED,
+        deal=deal,
+        actor=deal.responder,
+        metadata={"deal_type": deal.deal_type},
+    )
 
     return deal
 
@@ -318,6 +356,14 @@ def cancel_deal(deal):
 
     deal.cancel_request()
     deal.save()
+
+    record_exchange_event(
+        shared_book=deal.shared_book,
+        event_type=ExchangeEvent.EventType.DEAL_CANCELLED_REQUEST,
+        deal=deal,
+        actor=deal.applicant,
+        metadata={"deal_type": deal.deal_type},
+    )
 
     return deal
 
@@ -343,6 +389,28 @@ def complete_meeting(deal):
 
     deal.complete_meeting()
     deal.save()
+
+    shared_book = SharedBook.objects.get(pk=deal.shared_book_id)
+    record_exchange_event(
+        shared_book=deal.shared_book,
+        event_type=ExchangeEvent.EventType.DEAL_MEETING_COMPLETED,
+        deal=deal,
+        actor=deal.applicant,
+        metadata={
+            "deal_type": deal.deal_type,
+            "due_date": str(deal.due_date) if deal.due_date else None,
+        },
+    )
+    record_exchange_event(
+        shared_book=deal.shared_book,
+        event_type=ExchangeEvent.EventType.KEEPER_CHANGED,
+        deal=deal,
+        actor=None,
+        metadata={
+            "keeper_id": shared_book.keeper_id,
+            "book_status": shared_book.status,
+        },
+    )
 
     return deal
 
@@ -386,11 +454,23 @@ def process_book_due(deal):
         # 更新信用積分
         from accounts.services.trust_service import update_trust_score
 
-        update_trust_score(keeper)
+        update_trust_score(keeper, ledger_source=TrustScoreLedger.Source.OVERDUE_ADJUST)
     else:  # TRANSFER
         shared_book.mark_as_returned()
 
     shared_book.save(update_fields=["status", "updated_at"])
+
+    record_exchange_event(
+        shared_book=shared_book,
+        event_type=ExchangeEvent.EventType.BOOK_OVERDUE_PROCESSED,
+        deal=deal,
+        actor=None,
+        metadata={
+            "transferability": shared_book.transferability,
+            "new_status": shared_book.status,
+            "due_date": str(deal.due_date) if deal.due_date else None,
+        },
+    )
 
     # 通知持有者與貢獻者書籍已逾期
     notify_book_overdue(deal)
@@ -482,15 +562,50 @@ def confirm_return(deal, confirmed_by, force=False):
     shared_book.keeper = shared_book.owner
     shared_book.save(update_fields=["status", "keeper", "updated_at"])
 
+    record_exchange_event(
+        shared_book=shared_book,
+        event_type=ExchangeEvent.EventType.DEAL_CONFIRM_RETURN,
+        deal=deal,
+        actor=confirmed_by,
+        metadata={
+            "force": force,
+            "deal_type": deal.deal_type,
+        },
+    )
+    record_exchange_event(
+        shared_book=shared_book,
+        event_type=ExchangeEvent.EventType.KEEPER_CHANGED,
+        deal=deal,
+        actor=confirmed_by,
+        metadata={
+            "keeper_id": shared_book.keeper_id,
+            "note": "return_to_owner",
+        },
+    )
+
     # 按下歸還完成按鈕後，交易正式結束
     if can_proceed(deal.complete):
         deal.complete()
         deal.save()
 
+        record_exchange_event(
+            shared_book=shared_book,
+            event_type=ExchangeEvent.EventType.DEAL_COMPLETED,
+            deal=deal,
+            actor=None,
+            metadata={"deal_type": deal.deal_type},
+        )
+
         # 交易完成，更新雙方信用積分
         from accounts.services.trust_service import update_trust_score
 
-        update_trust_score(deal.applicant)
-        update_trust_score(deal.responder)
+        update_trust_score(
+            deal.applicant,
+            ledger_source=TrustScoreLedger.Source.DEAL_COMPLETED,
+        )
+        update_trust_score(
+            deal.responder,
+            ledger_source=TrustScoreLedger.Source.DEAL_COMPLETED,
+        )
 
     return deal

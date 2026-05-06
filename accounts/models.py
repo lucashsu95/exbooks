@@ -3,7 +3,7 @@ from django.db import models
 from django.utils import timezone
 from django_fsm import FSMField, FSMModelMixin, transition
 
-from core.models import UpdatableModel
+from core.models import UpdatableModel, BaseModel
 
 
 class Violation(UpdatableModel):
@@ -452,3 +452,43 @@ class TrustLevelConfig(models.Model):
 
     def __str__(self):
         return f"Lv{self.level}: {self.display_name}"
+
+
+class TrustScoreLedger(BaseModel):
+    """信用積分稽核條目（append-only）。"""
+
+    class Source(models.TextChoices):
+        RECALCULATE = "recalculate", "批次／手動重算"
+        RATING = "rating", "收到評價"
+        DEAL_COMPLETED = "deal_completed", "交易結案"
+        OVERDUE_ADJUST = "overdue_adjust", "逾期處理"
+        VIOLATION = "violation", "違規處分"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="trust_score_ledgers",
+        verbose_name="用戶",
+    )
+    trust_score = models.IntegerField(verbose_name="當下積分")
+    trust_level = models.PositiveSmallIntegerField(verbose_name="當下等級（0-3）")
+    formula_version = models.CharField(max_length=40, verbose_name="公式版本")
+    source = models.CharField(
+        max_length=30,
+        choices=Source.choices,
+        verbose_name="來源",
+        db_index=True,
+    )
+    payload = models.JSONField(default=dict, blank=True, verbose_name="摘要指標")
+
+    class Meta:
+        db_table = "exbook_trust_score_ledger"
+        verbose_name = "信用積分稽核"
+        verbose_name_plural = "信用積分稽核"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["user", "-created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user_id} {self.source} @ {self.created_at}"

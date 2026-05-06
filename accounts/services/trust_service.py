@@ -16,7 +16,7 @@ from django.utils import timezone
 
 from deals.models import Deal, Rating
 
-from accounts.models import TrustLevelConfig
+from accounts.models import TrustLevelConfig, TrustScoreLedger
 
 
 # ============================================================================
@@ -269,16 +269,61 @@ def calculate_trust_level(user) -> int:
         return 3
 
 
-def update_trust_score(user) -> int:
+def _metrics_payload(metrics: UserMetrics) -> dict:
+    return {
+        "completed_deals": metrics.completed_deals,
+        "overdue_count": metrics.overdue_count,
+        "avg_rating": metrics.avg_rating,
+    }
+
+
+def append_trust_ledger(
+    user,
+    *,
+    source: str,
+    trust_score: int,
+    payload: dict | None = None,
+) -> None:
+    pv = getattr(settings, "TRUST_SCORE_FORMULA_VERSION", "v1")
+    lvl = calculate_trust_level(user)
+    TrustScoreLedger.objects.create(
+        user=user,
+        trust_score=trust_score,
+        trust_level=lvl,
+        formula_version=str(pv),
+        source=source,
+        payload=payload or {},
+    )
+
+
+def record_trust_snapshot(user, *, source: str, payload: dict | None = None) -> None:
+    """在目前 profile.trust_score 不重算的前提下寫入稽核（如違規）。"""
+    metrics = get_user_metrics(user)
+    merged = {**_metrics_payload(metrics), **(payload or {})}
+    append_trust_ledger(
+        user,
+        source=source,
+        trust_score=user.profile.trust_score,
+        payload=merged,
+    )
+
+
+def update_trust_score(
+    user,
+    *,
+    ledger_source: str = TrustScoreLedger.Source.RECALCULATE,
+) -> int:
     """
     更新用戶信用積分和等級。
 
     Args:
         user: 用戶實例
+        ledger_source: 寫入 TrustScoreLedger 的來源（對應 TrustScoreLedger.Source）
 
     Returns:
         int: 新的信用積分
     """
+    metrics = get_user_metrics(user)
     new_score = calculate_trust_score(user)
 
     # 更新資料庫
@@ -287,6 +332,13 @@ def update_trust_score(user) -> int:
 
     # 同步信用等級 Group
     sync_trust_group(user)
+
+    append_trust_ledger(
+        user,
+        source=ledger_source,
+        trust_score=new_score,
+        payload=_metrics_payload(metrics),
+    )
 
     return new_score
 
