@@ -10,6 +10,7 @@ from django.core.paginator import Paginator
 from django.core.exceptions import ValidationError
 
 from .models import SharedBook, OfficialBook, BookPhoto
+from .services.book_query_service import get_hot_books
 from .services.isbn_service import lookup_by_isbn
 from .services.book_service import list_book, suspend_book
 from .services import process_book_photo
@@ -59,11 +60,8 @@ def book_list(request):
         .exclude(keeper=request.user)
     )
 
-    # 2. 熱門推薦 (Bento Section)：不受 category/q 影響，按交易熱度排序
-    # 我們這裡暫用 deal 數量作為熱度指標
-    hot_books = base_query.annotate(deal_count=Count("deals")).order_by(
-        "-deal_count", "-updated_at"
-    )[:3]
+    # 2. 熱門推薦 (Bento Section)：不受 category/q 影響（快取邏輯在 book_query_service）
+    hot_books = get_hot_books(request.user)
 
     # 3. 附近/搜尋結果：受 category/q 影響
     nearby_query = base_query

@@ -53,6 +53,9 @@ MIGRATION_MODULES = DisableMigrations()
 # Silence logging during tests
 LOGGING = {}
 
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True
+
 DEFAULT_FILE_STORAGE = "django.core.files.storage.InMemoryStorage"
 
 # Disable Web Push in tests (no VAPID keys configured)

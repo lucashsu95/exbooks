@@ -1,7 +1,10 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.core.mail import send_mail
+from django.utils import timezone
 
-from deals.models import LoanExtension, Notification
+from deals.models import Deal, LoanExtension, Notification
 
 
 def notify(
@@ -202,6 +205,40 @@ def notify_book_due_soon(deal):
         deal=deal,
         shared_book=deal.shared_book,
     )
+
+
+def batch_send_due_reminders(days: int = 3) -> dict:
+    """發送即將到期借閱提醒，跳過當日已發送者。"""
+    target_date = timezone.now().date() + timedelta(days=days)
+    upcoming_deals = Deal.objects.filter(
+        status=Deal.Status.MEETED,
+        due_date=target_date,
+        shared_book__status="O",
+    ).select_related("shared_book__official_book", "applicant", "responder")
+
+    today = timezone.now().date()
+    sent = 0
+    skipped = 0
+    errors = 0
+
+    for deal in upcoming_deals:
+        existing = Notification.objects.filter(
+            recipient=deal.applicant,
+            notification_type=Notification.NotificationType.BOOK_DUE_SOON,
+            created_at__date=today,
+        ).exists()
+
+        if existing:
+            skipped += 1
+            continue
+
+        try:
+            notify_book_due_soon(deal)
+            sent += 1
+        except Exception:
+            errors += 1
+
+    return {"sent": sent, "skipped": skipped, "errors": errors}
 
 
 def notify_book_overdue(deal):

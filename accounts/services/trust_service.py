@@ -464,3 +464,29 @@ def sync_trust_group(user) -> None:
                     update_fields=["trust_level_protected_since", "updated_at"]
                 )
             # 否則維持現狀
+
+
+def recalculate_all_trust_scores() -> dict:
+    """重新計算所有活躍用戶的信用積分。"""
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    users = list(User.objects.filter(is_active=True))
+    increased = decreased = unchanged = 0
+
+    for user in users:
+        old_score = user.profile.trust_score
+        new_score = update_trust_score(user)
+        if new_score > old_score:
+            increased += 1
+        elif new_score < old_score:
+            decreased += 1
+        else:
+            unchanged += 1
+
+    return {
+        "users": len(users),
+        "increased": increased,
+        "decreased": decreased,
+        "unchanged": unchanged,
+    }

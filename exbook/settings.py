@@ -338,3 +338,41 @@ CSRF_COOKIE_HTTPONLY = True
 X_FRAME_OPTIONS = 'DENY'
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# ============================================================================
+# Celery
+# ============================================================================
+
+from celery.schedules import crontab  # noqa: E402
+
+
+def _default_celery_redis_url() -> str:
+    """Broker／結果後端預設使用 Redis DB 1，與快取 DB 0 分離。"""
+    base = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0").rstrip("/")
+    if base.endswith("/0"):
+        return f"{base[:-2]}/1"
+    return f"{base}/1"
+
+
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL") or _default_celery_redis_url()
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND") or CELERY_BROKER_URL
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_BEAT_SCHEDULE = {
+    "process-due-books-daily": {
+        "task": "deals.process_due_books",
+        "schedule": crontab(hour=0, minute=0),
+    },
+    "send-due-reminders-daily": {
+        "task": "deals.send_due_reminders",
+        "schedule": crontab(hour=9, minute=0),
+        "kwargs": {"days": 3},
+    },
+    "process-pending-ratings-daily": {
+        "task": "deals.process_pending_ratings",
+        "schedule": crontab(hour=8, minute=30),
+    },
+    "recalculate-trust-scores-weekly": {
+        "task": "accounts.recalculate_trust_scores",
+        "schedule": crontab(day_of_week="mon", hour=2, minute=0),
+    },
+}

@@ -21,6 +21,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     env_file: .env
     environment:
       DJANGO_SETTINGS_MODULE: exbook.prod_settings
@@ -28,18 +30,33 @@ services:
       - static_data:/app/staticfiles
       - media_data:/app/media
 
-  scheduler:
+  celery_worker:
     build: .
     restart: unless-stopped
-    command: python manage.py run_scheduler
+    command: celery -A exbook worker -l info -c 2
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     env_file: .env
     environment:
       DJANGO_SETTINGS_MODULE: exbook.prod_settings
     volumes:
       - media_data:/app/media
+
+  celery_beat:
+    build: .
+    restart: unless-stopped
+    command: celery -A exbook beat -l info
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DJANGO_SETTINGS_MODULE: exbook.prod_settings
 
   nginx:
     image: nginx:1-alpine

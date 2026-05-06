@@ -10,7 +10,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from deals.models import Deal
-from deals.services import deal_service
+from deals.services.overdue_service import batch_process_due_books
 
 
 class Command(BaseCommand):
@@ -54,27 +54,9 @@ class Command(BaseCommand):
                 )
             return
 
-        # 實際處理
-        processed = 0
-        errors = 0
-
-        for deal in overdue_deals:
-            try:
-                deal_service.process_book_due(deal)
-                processed += 1
-                self.stdout.write(
-                    self.style.SUCCESS(
-                        f"✓ 已處理: {deal.shared_book.official_book.title}"
-                    )
-                )
-            except Exception as e:
-                errors += 1
-                self.stdout.write(
-                    self.style.ERROR(
-                        f"✗ 處理失敗: {deal.shared_book.official_book.title} - {e}"
-                    )
-                )
-
+        summary = batch_process_due_books()
         self.stdout.write(
-            self.style.SUCCESS(f"\n處理完成: {processed} 筆成功, {errors} 筆失敗")
+            self.style.SUCCESS(
+                f"\n處理完成: {summary['processed']} 筆成功, {summary['errors']} 筆失敗"
+            )
         )

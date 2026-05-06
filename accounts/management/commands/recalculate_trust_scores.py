@@ -7,8 +7,7 @@ from django.core.management.base import BaseCommand
 
 from accounts.services.trust_service import (
     calculate_trust_score,
-    sync_trust_group,
-    update_trust_score,
+    recalculate_all_trust_scores,
 )
 
 User = get_user_model()
@@ -28,41 +27,35 @@ class Command(BaseCommand):
         dry_run = options["dry_run"]
         users = User.objects.filter(is_active=True)
 
-        increased = 0
-        decreased = 0
-        unchanged = 0
-
-        for user in users:
-            old_score = user.profile.trust_score
-
-            if dry_run:
-                new_score = calculate_trust_score(user)
-            else:
-                new_score = update_trust_score(user)
-                sync_trust_group(user)
-
-            if new_score > old_score:
-                increased += 1
-                if options["verbosity"] >= 2:
-                    self.stdout.write(
-                        f"用戶 {user.email} 積分上升: {old_score} → {new_score}"
-                    )
-            elif new_score < old_score:
-                decreased += 1
-                if options["verbosity"] >= 2:
-                    self.stdout.write(
-                        f"用戶 {user.email} 積分下降: {old_score} → {new_score}"
-                    )
-            else:
-                unchanged += 1
-
         if dry_run:
+            increased = decreased = unchanged = 0
+            for user in users:
+                old_score = user.profile.trust_score
+                new_score = calculate_trust_score(user)
+                if new_score > old_score:
+                    increased += 1
+                    if options["verbosity"] >= 2:
+                        self.stdout.write(
+                            f"用戶 {user.email} 積分上升: {old_score} → {new_score}"
+                        )
+                elif new_score < old_score:
+                    decreased += 1
+                    if options["verbosity"] >= 2:
+                        self.stdout.write(
+                            f"用戶 {user.email} 積分下降: {old_score} → {new_score}"
+                        )
+                else:
+                    unchanged += 1
+
             self.stdout.write(
                 f"[DRY RUN] 將重新計算 {users.count()} 位用戶: "
                 f"{increased} 位上升, {decreased} 位下降, {unchanged} 位不變"
             )
-        else:
-            self.stdout.write(
-                f"已重新計算 {users.count()} 位用戶: "
-                f"{increased} 位上升, {decreased} 位下降, {unchanged} 位不變"
-            )
+            return
+
+        summary = recalculate_all_trust_scores()
+        self.stdout.write(
+            f"已重新計算 {summary['users']} 位用戶: "
+            f"{summary['increased']} 位上升, {summary['decreased']} 位下降, "
+            f"{summary['unchanged']} 位不變"
+        )

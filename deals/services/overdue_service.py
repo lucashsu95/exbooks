@@ -80,3 +80,24 @@ def get_overdue_status(deal):
         return "public"
     else:
         return "severe"
+
+
+def batch_process_due_books() -> dict:
+    """處理所有已到期借閱交易，回傳處理結果摘要。"""
+    from deals.services import deal_service
+
+    today = timezone.now().date()
+    overdue_deals = Deal.objects.filter(
+        status=Deal.Status.MEETED,
+        due_date__lte=today,
+        shared_book__status="O",
+    ).select_related("shared_book__official_book", "applicant", "responder")
+
+    processed, errors = 0, 0
+    for deal in overdue_deals:
+        try:
+            deal_service.process_book_due(deal)
+            processed += 1
+        except Exception:
+            errors += 1
+    return {"processed": processed, "errors": errors}

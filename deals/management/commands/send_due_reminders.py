@@ -9,8 +9,8 @@ from datetime import timedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from deals.models import Deal, Notification
-from deals.services import notification_service
+from deals.models import Deal
+from deals.services.notification_service import batch_send_due_reminders
 
 
 class Command(BaseCommand):
@@ -60,41 +60,10 @@ class Command(BaseCommand):
                 )
             return
 
-        # 實際發送通知
-        sent = 0
-        skipped = 0
-
-        for deal in upcoming_deals:
-            # 檢查是否已發送過同一天的提醒
-            existing = Notification.objects.filter(
-                recipient=deal.applicant,
-                notification_type=Notification.NotificationType.BOOK_DUE_SOON,
-                created_at__date=timezone.now().date(),
-            ).exists()
-
-            if existing:
-                skipped += 1
-                self.stdout.write(
-                    f"  跳過: {deal.shared_book.official_book.title} (已發送提醒)"
-                )
-                continue
-
-            try:
-                notification_service.notify_book_due_soon(deal)
-                sent += 1
-                self.stdout.write(
-                    self.style.SUCCESS(
-                        f"✓ 已發送: {deal.shared_book.official_book.title} "
-                        f"→ {deal.applicant}"
-                    )
-                )
-            except Exception as e:
-                self.stdout.write(
-                    self.style.ERROR(
-                        f"✗ 發送失敗: {deal.shared_book.official_book.title} - {e}"
-                    )
-                )
-
-        self.stdout.write(
-            self.style.SUCCESS(f"\n發送完成: {sent} 筆成功, {skipped} 筆跳過（已發送）")
+        summary = batch_send_due_reminders(days)
+        msg = (
+            f"\n發送完成: {summary['sent']} 筆成功, {summary['skipped']} 筆跳過（已發送）"
         )
+        if summary.get("errors"):
+            msg += f", {summary['errors']} 筆錯誤"
+        self.stdout.write(self.style.SUCCESS(msg))
