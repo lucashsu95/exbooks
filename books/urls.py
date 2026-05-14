@@ -1,10 +1,11 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views, views_public
-from .api_views import OfficialBookViewSet
+from .api_views import OfficialBookViewSet, SharedBookViewSet
 
 router = DefaultRouter()
 router.register(r"official", OfficialBookViewSet, basename="official")
+router.register(r"shared", SharedBookViewSet, basename="shared")
 
 app_name = "books"
 
