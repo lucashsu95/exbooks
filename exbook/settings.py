@@ -68,6 +68,8 @@ INSTALLED_APPS = [
     "deals",
     "ai",
     "rules.apps.AutodiscoverRulesConfig",
+    "rest_framework",
+    "django_filters",
 ]
 
 MIDDLEWARE = [
@@ -327,6 +329,17 @@ REDIS_CONNECTION_URL = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
 # ============================================================================
 # Security Settings
 # ============================================================================
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
+    ],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
+}
 
 # 若非開發環境，啟用正式安全設定
 if not DEBUG:

@@ -3,6 +3,10 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 from books.sitemaps import PublicSharedBookSitemap, StaticViewSitemap
 from core import views as core_views
@@ -25,6 +29,9 @@ urlpatterns = [
         name="django.contrib.sitemaps.views.sitemap",
     ),
     path("admin/", admin.site.urls),
+    # JWT Auth
+    path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     # django-allauth URLs (包含 login, logout, signup, email verification, social auth)
     path("accounts/", include("allauth.urls")),
     # Local apps

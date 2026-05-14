@@ -21,6 +21,9 @@ dependencies = [
     "redis>=5.0.0",
     "google-generativeai>=0.8.0",
     "pywebpush>=2.0",
+    "djangorestframework>=3.17.1",
+    "djangorestframework-simplejwt>=5.5.1",
+    "django-filter>=25.2",
 ]
 
 [tool.setuptools.packages.find]
