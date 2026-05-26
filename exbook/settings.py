@@ -27,7 +27,9 @@ load_dotenv(BASE_DIR / ".env")
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-jaxf2rx9wh6aobxeqk@c2lkhmy0l#tr0yr)5k4@e&$i7$qg#_*")
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY", "django-insecure-jaxf2rx9wh6aobxeqk@c2lkhmy0l#tr0yr)5k4@e&$i7$qg#_*"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
@@ -344,7 +346,9 @@ REST_FRAMEWORK = {
 # 若非開發環境，啟用正式安全設定
 if not DEBUG:
     # 根據環境變數決定是否強制跳轉 HTTPS (預設開啟)
-    SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "True").lower() == "true"
+    SECURE_SSL_REDIRECT = (
+        os.environ.get("SECURE_SSL_REDIRECT", "True").lower() == "true"
+    )
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 else:
@@ -353,7 +357,7 @@ else:
 
 # 全域安全防護
 CSRF_COOKIE_HTTPONLY = True
-X_FRAME_OPTIONS = 'DENY'
+X_FRAME_OPTIONS = "DENY"
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 

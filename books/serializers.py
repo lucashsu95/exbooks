@@ -2,26 +2,28 @@ from rest_framework import serializers
 from books.models.official_book import OfficialBook
 from books.models.shared_book import SharedBook
 
+
 class OfficialBookSerializer(serializers.ModelSerializer):
     class Meta:
         model = OfficialBook
         fields = [
-            "id", 
-            "isbn", 
-            "title", 
-            "author", 
-            "publisher", 
-            "category", 
-            "cover_image", 
-            "description"
+            "id",
+            "isbn",
+            "title",
+            "author",
+            "publisher",
+            "category",
+            "cover_image",
+            "description",
         ]
         read_only_fields = ["id"]
+
 
 class SharedBookSerializer(serializers.ModelSerializer):
     official_book = OfficialBookSerializer(read_only=True)
     owner_nickname = serializers.ReadOnlyField(source="owner.profile.nickname")
     keeper_nickname = serializers.ReadOnlyField(source="keeper.profile.nickname")
-    
+
     class Meta:
         model = SharedBook
         fields = [

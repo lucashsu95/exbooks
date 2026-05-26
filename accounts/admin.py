@@ -14,7 +14,14 @@ class TrustLevelConfigAdmin(admin.ModelAdmin):
 
 @admin.register(TrustScoreLedger)
 class TrustScoreLedgerAdmin(admin.ModelAdmin):
-    list_display = ("created_at", "user", "trust_score", "trust_level", "source", "formula_version")
+    list_display = (
+        "created_at",
+        "user",
+        "trust_score",
+        "trust_level",
+        "source",
+        "formula_version",
+    )
     list_filter = ("source", "formula_version")
     search_fields = ("user__username", "user__email")
     list_select_related = ("user",)

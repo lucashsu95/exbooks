@@ -64,7 +64,9 @@ class Migration(migrations.Migration):
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 (
                     "display_name",
-                    models.CharField(max_length=200, unique=True, verbose_name="顯示名稱"),
+                    models.CharField(
+                        max_length=200, unique=True, verbose_name="顯示名稱"
+                    ),
                 ),
                 (
                     "sort_key",

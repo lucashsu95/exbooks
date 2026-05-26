@@ -4,30 +4,37 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0013_trustscoreledger'),
+        ("accounts", "0013_trustscoreledger"),
     ]
 
     operations = [
         migrations.RenameIndex(
-            model_name='trustscoreledger',
-            new_name='exbook_trus_user_id_c674b8_idx',
-            old_name='exbook_trust_user_created_idx',
+            model_name="trustscoreledger",
+            new_name="exbook_trus_user_id_c674b8_idx",
+            old_name="exbook_trust_user_created_idx",
         ),
         migrations.AddField(
-            model_name='userprofile',
-            name='email_notifications_enabled',
-            field=models.BooleanField(default=True, help_text='關閉後將不會收到 Email 通知', verbose_name='啟用 Email 通知'),
+            model_name="userprofile",
+            name="email_notifications_enabled",
+            field=models.BooleanField(
+                default=True,
+                help_text="關閉後將不會收到 Email 通知",
+                verbose_name="啟用 Email 通知",
+            ),
         ),
         migrations.AddField(
-            model_name='userprofile',
-            name='push_enabled',
-            field=models.BooleanField(default=True, help_text='關閉後將不會收到瀏覽器 Push 通知', verbose_name='啟用推播通知'),
+            model_name="userprofile",
+            name="push_enabled",
+            field=models.BooleanField(
+                default=True,
+                help_text="關閉後將不會收到瀏覽器 Push 通知",
+                verbose_name="啟用推播通知",
+            ),
         ),
         migrations.AlterField(
-            model_name='trustscoreledger',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, verbose_name='建立時間'),
+            model_name="trustscoreledger",
+            name="created_at",
+            field=models.DateTimeField(auto_now_add=True, verbose_name="建立時間"),
         ),
     ]

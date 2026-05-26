@@ -6,7 +6,9 @@ from core.models import UpdatableModel
 class Author(UpdatableModel):
     """作者／貢獻者（正規化）。display_name 唯一以避免重複建立。"""
 
-    display_name = models.CharField(max_length=200, unique=True, verbose_name="顯示名稱")
+    display_name = models.CharField(
+        max_length=200, unique=True, verbose_name="顯示名稱"
+    )
     sort_key = models.CharField(
         max_length=200,
         blank=True,

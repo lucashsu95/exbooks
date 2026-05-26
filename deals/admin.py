@@ -1,7 +1,14 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import Deal, DealMessage, ExchangeEvent, LoanExtension, Notification, Rating
+from .models import (
+    Deal,
+    DealMessage,
+    ExchangeEvent,
+    LoanExtension,
+    Notification,
+    Rating,
+)
 
 
 class DealMessageInline(admin.TabularInline):

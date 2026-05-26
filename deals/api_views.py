@@ -270,4 +270,3 @@ class RatingViewSet(viewsets.ModelViewSet):
 
         # Ensure rater can only rate once per deal
         # The unique constraint on (deal, rater) handles this, but we'll provide a clean error.
-

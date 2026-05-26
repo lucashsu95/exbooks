@@ -61,9 +61,7 @@ class Command(BaseCommand):
             return
 
         summary = batch_send_due_reminders(days)
-        msg = (
-            f"\n發送完成: {summary['sent']} 筆成功, {summary['skipped']} 筆跳過（已發送）"
-        )
+        msg = f"\n發送完成: {summary['sent']} 筆成功, {summary['skipped']} 筆跳過（已發送）"
         if summary.get("errors"):
             msg += f", {summary['errors']} 筆錯誤"
         self.stdout.write(self.style.SUCCESS(msg))
