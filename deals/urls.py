@@ -9,7 +9,12 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .api_views import DealViewSet, LoanExtensionViewSet, DealMessageViewSet, NotificationViewSet
+from .api_views import (
+    DealViewSet,
+    LoanExtensionViewSet,
+    DealMessageViewSet,
+    NotificationViewSet,
+)
 
 router = DefaultRouter()
 router.register(r"deals", DealViewSet, basename="deal")

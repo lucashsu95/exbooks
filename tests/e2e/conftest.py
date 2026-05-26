@@ -1,6 +1,3 @@
-import pytest
-
-
 def _playwright_available():
     try:
         from playwright.sync_api import sync_playwright
@@ -14,6 +11,7 @@ def _playwright_available():
 
 
 if not _playwright_available():
+
     def pytest_collect_file(file_path, parent):
         if file_path.suffix == ".py" and file_path.name.startswith("test_"):
             parent.config.issue_config_time_warning(
@@ -21,6 +19,10 @@ if not _playwright_available():
             )
             return None
 
-    collect_ignore = ["test_book_add.py", "test_deal_create.py",
-                      "test_deal_detail.py", "test_deal_list.py",
-                      "test_rating_create.py"]
+    collect_ignore = [
+        "test_book_add.py",
+        "test_deal_create.py",
+        "test_deal_detail.py",
+        "test_deal_list.py",
+        "test_rating_create.py",
+    ]
