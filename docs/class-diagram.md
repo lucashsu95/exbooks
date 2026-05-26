@@ -20,12 +20,71 @@ classDiagram
     class UserProfile {
         +User user
         +String nickname
+        +Date birth_date
         +String default_transferability
         +String default_location
         +String available_schedule
         +Image avatar
+        +Integer trust_score
+        +Integer successful_returns
+        +Integer overdue_count
+        +Boolean is_suspended
+        +DateTime suspension_end_date
+        +String suspension_reason
+        +DateTime trust_level_protected_since
+        +Boolean push_enabled
+        +Boolean email_notifications_enabled
     }
     UpdatableModel <|-- UserProfile
+
+    class Violation {
+        +User user
+        +String action_type
+        +String severity
+        +String violation_type
+        +Text description
+        +Integer suspension_days
+        +Boolean is_active
+        +User created_by
+        +Appeal related_appeal
+        +DateTime lifted_at
+        +User lifted_by
+    }
+    UpdatableModel <|-- Violation
+
+    class Appeal {
+        +User user
+        +String appeal_type
+        +String title
+        +Text description
+        +File evidence
+        +String status
+        +Text resolution_notes
+        +User resolved_by
+        +DateTime resolved_at
+    }
+    UpdatableModel <|-- Appeal
+
+    class TrustLevelConfig {
+        +Integer level
+        +String group_name
+        +String display_name
+        +Integer min_score
+        +Integer max_books
+        +Integer max_days
+        +Integer demotion_protection_weeks
+        +String badge_icon
+    }
+
+    class TrustScoreLedger {
+        +User user
+        +Integer trust_score
+        +Integer trust_level
+        +String formula_version
+        +String source
+        +Dict payload
+    }
+    BaseModel <|-- TrustScoreLedger
 
     %% Books Models
     class OfficialBook {
@@ -33,10 +92,31 @@ classDiagram
         +String title
         +String author
         +String publisher
+        +String category
         +Image cover_image
         +Text description
+        +Publisher publisher_ref
     }
     UpdatableModel <|-- OfficialBook
+
+    class Author {
+        +String display_name
+        +String sort_key
+    }
+    UpdatableModel <|-- Author
+
+    class Publisher {
+        +String name
+    }
+    UpdatableModel <|-- Publisher
+
+    class OfficialBookAuthor {
+        +OfficialBook official_book
+        +Author author
+        +String role
+        +Integer sort_order
+    }
+    BaseModel <|-- OfficialBookAuthor
 
     class BookSet {
         +User owner
@@ -53,8 +133,9 @@ classDiagram
         +String transferability
         +String status
         +Text condition_description
-        +Int loan_duration_days
-        +Int extend_duration_days
+        +Integer loan_duration_days
+        +Integer extend_duration_days
+        +Integer min_trust_level
         +DateTime listed_at
     }
     UpdatableModel <|-- SharedBook
@@ -66,13 +147,13 @@ classDiagram
         +Image photo
         +String caption
     }
-    UpdatableModel <|-- BookPhoto
+    BaseModel <|-- BookPhoto
 
     class WishListItem {
         +User user
         +OfficialBook official_book
     }
-    UpdatableModel <|-- WishListItem
+    BaseModel <|-- WishListItem
 
     %% Deals Models
     class Deal {
@@ -85,7 +166,7 @@ classDiagram
         +User responder
         +String meeting_location
         +DateTime meeting_time
-        +DateTime due_date
+        +Date due_date
         +Boolean applicant_rated
         +Boolean responder_rated
     }
@@ -102,7 +183,7 @@ classDiagram
         +Deal deal
         +User requested_by
         +User approved_by
-        +Int extra_days
+        +Integer extra_days
         +String status
     }
     UpdatableModel <|-- LoanExtension
@@ -116,21 +197,57 @@ classDiagram
         +Text message
         +Boolean is_read
     }
-    UpdatableModel <|-- Notification
+    BaseModel <|-- Notification
 
     class Rating {
         +Deal deal
         +User rater
         +User ratee
-        +Int integrity_score
-        +Int punctuality_score
-        +Int accuracy_score
+        +Integer friendliness_score
+        +Integer punctuality_score
+        +Integer accuracy_score
         +Text comment
     }
-    UpdatableModel <|-- Rating
+    BaseModel <|-- Rating
+
+    class ExchangeEvent {
+        +SharedBook shared_book
+        +Deal deal
+        +String event_type
+        +User actor
+        +Dict metadata
+    }
+    BaseModel <|-- ExchangeEvent
+
+    class PushSubscription {
+        +User user
+        +String endpoint
+        +String p256dh
+        +String auth
+        +String user_agent
+        +Boolean is_active
+    }
+    BaseModel <|-- PushSubscription
+
+    class WebPushConfig {
+        +String vapid_public_key
+        +Text vapid_private_key
+        +String subject
+    }
+    BaseModel <|-- WebPushConfig
 
     %% Relationships
     UserProfile --> User : user
+    Violation --> User : user
+    Violation --> User : created_by
+    Violation --> User : lifted_by
+    Violation --> Appeal : related_appeal
+    Appeal --> User : user
+    Appeal --> User : resolved_by
+    TrustScoreLedger --> User : user
+    OfficialBook --> Publisher : publisher_ref
+    OfficialBook --> OfficialBookAuthor : author_links
+    Author --> OfficialBookAuthor : book_links
     BookSet --> User : owner
     SharedBook --> OfficialBook : official_book
     SharedBook --> User : owner
@@ -156,6 +273,10 @@ classDiagram
     Rating --> Deal : deal
     Rating --> User : rater
     Rating --> User : ratee
+    ExchangeEvent --> SharedBook : shared_book
+    ExchangeEvent --> Deal : deal
+    ExchangeEvent --> User : actor
+    PushSubscription --> User : user
 ```
 
 ## Core
@@ -173,6 +294,94 @@ classDiagram
     BaseModel <|-- UpdatableModel
 ```
 
+## Accounts
+```mermaid
+classDiagram
+    class UpdatableModel {
+        +DateTime updated_at
+    }
+
+    class BaseModel {
+        +UUID id
+        +DateTime created_at
+    }
+
+    class UserProfile {
+        +User user
+        +String nickname
+        +Date birth_date
+        +String default_transferability
+        +String default_location
+        +String available_schedule
+        +Image avatar
+        +Integer trust_score
+        +Integer successful_returns
+        +Integer overdue_count
+        +Boolean is_suspended
+        +DateTime suspension_end_date
+        +String suspension_reason
+        +DateTime trust_level_protected_since
+        +Boolean push_enabled
+        +Boolean email_notifications_enabled
+    }
+
+    class Violation {
+        +User user
+        +String action_type
+        +String severity
+        +String violation_type
+        +Text description
+        +Integer suspension_days
+        +Boolean is_active
+        +User created_by
+        +Appeal related_appeal
+        +DateTime lifted_at
+        +User lifted_by
+    }
+
+    class Appeal {
+        +User user
+        +String appeal_type
+        +String title
+        +Text description
+        +File evidence
+        +String status
+        +Text resolution_notes
+        +User resolved_by
+        +DateTime resolved_at
+    }
+
+    class TrustLevelConfig {
+        +Integer level
+        +String group_name
+        +String display_name
+        +Integer min_score
+        +Integer max_books
+        +Integer max_days
+        +Integer demotion_protection_weeks
+        +String badge_icon
+    }
+
+    class TrustScoreLedger {
+        +User user
+        +Integer trust_score
+        +Integer trust_level
+        +String formula_version
+        +String source
+        +Dict payload
+    }
+
+    UpdatableModel <|-- UserProfile
+    UpdatableModel <|-- Violation
+    UpdatableModel <|-- Appeal
+    BaseModel <|-- TrustScoreLedger
+
+    UserProfile --> User : user
+    Violation --> User : user
+    Appeal --> User : user
+    TrustScoreLedger --> User : user
+```
+
 ## Books
 ```mermaid
 classDiagram
@@ -180,13 +389,36 @@ classDiagram
         +DateTime updated_at
     }
 
+    class BaseModel {
+        +UUID id
+        +DateTime created_at
+    }
+
     class OfficialBook {
         +String isbn
         +String title
         +String author
         +String publisher
+        +String category
         +Image cover_image
         +Text description
+        +Publisher publisher_ref
+    }
+
+    class Author {
+        +String display_name
+        +String sort_key
+    }
+
+    class Publisher {
+        +String name
+    }
+
+    class OfficialBookAuthor {
+        +OfficialBook official_book
+        +Author author
+        +String role
+        +Integer sort_order
     }
 
     class BookSet {
@@ -203,8 +435,9 @@ classDiagram
         +String transferability
         +String status
         +Text condition_description
-        +Int loan_duration_days
-        +Int extend_duration_days
+        +Integer loan_duration_days
+        +Integer extend_duration_days
+        +Integer min_trust_level
         +DateTime listed_at
     }
 
@@ -222,11 +455,17 @@ classDiagram
     }
 
     UpdatableModel <|-- OfficialBook
+    UpdatableModel <|-- Author
+    UpdatableModel <|-- Publisher
     UpdatableModel <|-- BookSet
     UpdatableModel <|-- SharedBook
-    UpdatableModel <|-- BookPhoto
-    UpdatableModel <|-- WishListItem
+    BaseModel <|-- OfficialBookAuthor
+    BaseModel <|-- BookPhoto
+    BaseModel <|-- WishListItem
 
+    OfficialBook --> Publisher : publisher_ref
+    OfficialBook --> OfficialBookAuthor : author_links
+    Author --> OfficialBookAuthor : book_links
     SharedBook --> OfficialBook : official_book
     SharedBook --> BookSet : book_set
     BookPhoto --> SharedBook : shared_book
@@ -255,7 +494,7 @@ classDiagram
         +User responder
         +String meeting_location
         +DateTime meeting_time
-        +DateTime due_date
+        +Date due_date
         +Boolean applicant_rated
         +Boolean responder_rated
     }
@@ -270,7 +509,7 @@ classDiagram
         +Deal deal
         +User requested_by
         +User approved_by
-        +Int extra_days
+        +Integer extra_days
         +String status
     }
 
@@ -288,20 +527,50 @@ classDiagram
         +Deal deal
         +User rater
         +User ratee
-        +Int integrity_score
-        +Int punctuality_score
-        +Int accuracy_score
+        +Integer friendliness_score
+        +Integer punctuality_score
+        +Integer accuracy_score
         +Text comment
+    }
+
+    class ExchangeEvent {
+        +SharedBook shared_book
+        +Deal deal
+        +String event_type
+        +User actor
+        +Dict metadata
+    }
+
+    class PushSubscription {
+        +User user
+        +String endpoint
+        +String p256dh
+        +String auth
+        +String user_agent
+        +Boolean is_active
+    }
+
+    class WebPushConfig {
+        +String vapid_public_key
+        +Text vapid_private_key
+        +String subject
     }
 
     UpdatableModel <|-- Deal
     UpdatableModel <|-- LoanExtension
-    UpdatableModel <|-- Notification
-    UpdatableModel <|-- Rating
     BaseModel <|-- DealMessage
+    BaseModel <|-- Notification
+    BaseModel <|-- Rating
+    BaseModel <|-- ExchangeEvent
+    BaseModel <|-- PushSubscription
+    BaseModel <|-- WebPushConfig
 
     DealMessage --> Deal : deal
     LoanExtension --> Deal : deal
     Notification --> Deal : deal
     Rating --> Deal : deal
+    ExchangeEvent --> SharedBook : shared_book
+    ExchangeEvent --> Deal : deal
+    ExchangeEvent --> User : actor
+    PushSubscription --> User : user
 ```

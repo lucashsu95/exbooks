@@ -10,7 +10,7 @@ def _resolve_notification_url(deal=None, shared_book=None):
     from django.urls import reverse
 
     if deal:
-        return reverse("deals:detail", kwargs={"pk": deal.id})
+        return reverse("deals:deal-detail", kwargs={"pk": deal.id})
     if shared_book:
         return reverse("books:detail", kwargs={"pk": shared_book.id})
     return "/"

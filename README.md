@@ -291,3 +291,11 @@ Pipeline 定義在 `.github/workflows/ci.yml`，分三個階段：
 | [`docs/acquire.md`](docs/acquire.md) | 需求擷取 — 業務規則、流程、專有名詞定義 |
 | [`docs/usecase.md`](docs/usecase.md) | 用例圖 — PlantUML Use Case Diagram |
 | [`docs/schema.md`](docs/schema.md) | 系統分析 — Database Schema、ER Diagram、Django Models |
+| [`docs/class-diagram.md`](docs/class-diagram.md) | 類別圖 — Mermaid Class Diagram |
+| [`docs/er-diagram.md`](docs/er-diagram.md) | ER 圖 — 實體關係圖（分段） |
+| [`docs/testing_strategy.md`](docs/testing_strategy.md) | Views 測試策略 |
+| [`docs/seed.md`](docs/seed.md) | 資料填充指令說明 |
+| [`docs/BACKUP.md`](docs/BACKUP.md) | 資料備份操作機制 |
+| [`docs/progress.md`](docs/progress.md) | Session 進度追蹤 |
+| [`docs/adr/`](docs/adr/) | 架構決策記錄（ADR） |
+| [`docs/web-push-architecture.tex`](docs/web-push-architecture.tex) | Web Push 架構圖（LaTeX TikZ） |

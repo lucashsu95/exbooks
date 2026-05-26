@@ -13,19 +13,29 @@
 
 ### 1.1 實體清單
 
-| #   | 實體     | 英文          | 說明                                           | 來源           |
-| --- | -------- | ------------- | ---------------------------------------------- | -------------- |
-| 1   | 用戶資料 | UserProfile   | 擴展 Django User，存放暱稱、偏好設定等         | 3.2 使用者註冊 |
-| 2   | 官方書目 | OfficialBook  | 以 ISBN 為鍵的書籍元資料（書名、作者、出版社） | 3.2 書籍上架   |
-| 3   | 分享書籍 | SharedBook    | 用戶貢獻的特定書冊（書況、流通性、狀態）       | 3.2 書籍上架   |
-| 4   | 套書     | BookSet       | 書籍套組，綁定後限制整套借出                   | 規則 #7        |
-| 5   | 交易     | Deal          | 借用/傳遞/返還/回歸/例外等交易記錄             | 5.2 交易類別   |
-| 6   | 交易留言 | DealMessage   | 交易雙方的協商訊息                             | UC: Negotiate  |
-| 7   | 書況照片 | BookPhoto     | 書籍現況照片紀錄                               | 3.2 書況確認   |
-| 8   | 評價     | Rating        | 交易後雙方互評紀錄                             | 4.3 信用與評價 |
-| 9   | 願望書車 | WishListItem  | 讀者的書籍願望清單                             | UC: WishList   |
-| 10  | 延長申請 | LoanExtension | 借閱延長申請與核准                             | UC: ExtendLoan |
-| 11  | 通知     | Notification  | 系統通知（到期提醒、交易通知等）               | UC: MailNotice |
+| #   | 實體         | 英文                  | 說明                                                   | 來源           |
+| --- | ------------ | --------------------- | ------------------------------------------------------ | -------------- |
+| 1   | 用戶資料     | UserProfile           | 擴展 Django User，存放暱稱、偏好設定、停權、信用等     | 3.2 使用者註冊 |
+| 2   | 違規處分     | Violation             | 管理員對違規用戶的處分記錄（警告/停權）                | 3.16 違規處理  |
+| 3   | 申訴         | Appeal                | 用戶對處分的申訴（附 FSM 狀態機）                      | 3.16 申訴機制  |
+| 4   | 信用等級配置 | TrustLevelConfig      | 各等級的積分門檻、借閱限制與降級保護期                 | 4.3 信用與評價 |
+| 5   | 信用積分稽核 | TrustScoreLedger      | 信用積分變更的 append-only 稽核記錄                    | 4.3 信用與評價 |
+| 6   | 官方書目     | OfficialBook          | 以 ISBN 為鍵的書籍元資料（含分類、正規化作者/出版社）  | 3.2 書籍上架   |
+| 7   | 作者         | Author                | 作者／貢獻者（正規化）                                 | 3.2 書籍上架   |
+| 8   | 出版社       | Publisher             | 出版社（正規化）                                       | 3.2 書籍上架   |
+| 9   | 書目作者關聯 | OfficialBookAuthor    | OfficialBook 與 Author 之多對多中介（含排序與角色）    | 3.2 書籍上架   |
+| 10  | 分享書籍     | SharedBook            | 用戶貢獻的特定書冊（書況、流通性、狀態）               | 3.2 書籍上架   |
+| 11  | 套書         | BookSet               | 書籍套組，綁定後限制整套借出                           | 規則 #7        |
+| 12  | 交易         | Deal                  | 借用/傳遞/返還/回歸/例外等交易記錄（附 FSM）          | 5.2 交易類別   |
+| 13  | 交易留言     | DealMessage           | 交易雙方的協商訊息                                     | UC: Negotiate  |
+| 14  | 書況照片     | BookPhoto             | 書籍現況照片紀錄                                       | 3.2 書況確認   |
+| 15  | 評價         | Rating                | 交易後雙方互評紀錄（友善/準時/書況準確度）            | 4.3 信用與評價 |
+| 16  | 願望書車     | WishListItem          | 讀者的書籍願望清單                                     | UC: WishList   |
+| 17  | 延長申請     | LoanExtension         | 借閱延長申請與核准（附 FSM）                           | UC: ExtendLoan |
+| 18  | 通知         | Notification          | 系統通知（到期提醒、交易通知等）                       | UC: MailNotice |
+| 19  | 交換事件     | ExchangeEvent         | 書籍交換／交易稽核事件（append-only）                  | 7.2 自動化     |
+| 20  | Push 訂閱    | PushSubscription      | 用戶的 Web Push 訂閱資訊                               | 7.1 通訊增強   |
+| 21  | Web Push 設定| WebPushConfig         | VAPID 金鑰設定（Singleton）                            | 7.1 通訊增強   |
 
 ### 1.2 角色模型分析
 
@@ -52,6 +62,9 @@ Timer（系統計時器）      — 非人類角色，定時任務觸發器
 ```mermaid
 erDiagram
     User ||--|| UserProfile : "擴展"
+    User ||--o{ Violation : "違規"
+    User ||--o{ Appeal : "申訴"
+    User ||--o{ TrustScoreLedger : "信用稽核"
     User ||--o{ SharedBook : "貢獻 (owner)"
     User ||--o{ SharedBook : "持有 (keeper)"
     User ||--o{ BookSet : "建立"
@@ -59,47 +72,145 @@ erDiagram
     User ||--o{ Deal : "回應 (responder)"
     User ||--o{ DealMessage : "發送"
     User ||--o{ BookPhoto : "上傳"
+    User ||--o{ ExchangeEvent : "操作"
     User ||--o{ Rating : "評價 (rater)"
     User ||--o{ Rating : "被評 (ratee)"
     User ||--o{ WishListItem : "收藏"
     User ||--o{ LoanExtension : "申請延長"
     User ||--o{ Notification : "接收"
+    User ||--o{ PushSubscription : "Push 訂閱"
 
     OfficialBook ||--o{ SharedBook : "實例化"
     OfficialBook ||--o{ WishListItem : "被收藏"
+    OfficialBook }o--|| Publisher : "出版社（正規化）"
+    OfficialBook ||--o{ OfficialBookAuthor : "作者關聯"
+    Author ||--o{ OfficialBookAuthor : "作品關聯"
 
     BookSet ||--o{ SharedBook : "包含"
 
     SharedBook ||--o{ Deal : "交易標的"
     SharedBook ||--o{ BookPhoto : "書況紀錄"
+    SharedBook ||--o{ ExchangeEvent : "稽核事件"
 
     Deal ||--o{ DealMessage : "協商"
     Deal ||--o{ BookPhoto : "面交拍攝"
     Deal ||--o{ Rating : "產生評價"
     Deal ||--o{ LoanExtension : "延長申請"
     Deal ||--o{ Notification : "觸發通知"
+    Deal ||--o{ ExchangeEvent : "稽核事件"
 
     UserProfile {
         UUID id PK "主鍵"
         INT user_id FK "Django User 外鍵"
         VARCHAR nickname "暱稱（最長 50 字）"
+        DATE birth_date "出生日期（年齡驗證）"
         ENUM default_transferability "預設流通性 TRANSFER｜RETURN"
         VARCHAR default_location "預設面交地點"
         JSON available_schedule "可用時間排程"
         VARCHAR avatar "頭像圖片路徑"
+        INT trust_score "信用積分"
+        INT successful_returns "成功歸還次數"
+        INT overdue_count "逾期次數"
+        BOOLEAN is_suspended "是否停權中"
+        DATETIME suspension_end_date "停權結束時間（null=永久）"
+        TEXT suspension_reason "停權原因"
+        DATETIME trust_level_protected_since "等級保護起始時間"
+        BOOLEAN push_enabled "啟用推播通知"
+        BOOLEAN email_notifications_enabled "啟用 Email 通知"
         DATETIME created_at "建立時間"
         DATETIME updated_at "最後更新時間"
+    }
+
+    Violation {
+        UUID id PK "主鍵"
+        INT user_id FK "違規用戶"
+        ENUM action_type "處分類型 warning｜temporary_suspension｜permanent_suspension"
+        ENUM severity "違規等級 minor｜moderate｜severe"
+        ENUM violation_type "違規行為類型"
+        TEXT description "違規描述"
+        INT suspension_days "停權天數（可空）"
+        BOOLEAN is_active "是否生效中"
+        INT created_by_id FK "處分者"
+        INT related_appeal_id FK "相關申訴（可空）"
+        DATETIME lifted_at "解除時間（可空）"
+        INT lifted_by_id FK "解除者（可空）"
+        DATETIME created_at "建立時間"
+        DATETIME updated_at "最後更新時間"
+    }
+
+    Appeal {
+        UUID id PK "主鍵"
+        INT user_id FK "申訴人"
+        ENUM appeal_type "申訴類型"
+        VARCHAR title "標題"
+        TEXT description "描述"
+        FILE evidence "證據文件（可空）"
+        ENUM status "狀態 submitted｜under_review｜approved｜rejected｜closed"
+        TEXT resolution_notes "審核備註"
+        INT resolved_by_id FK "審核者（可空）"
+        DATETIME resolved_at "審核時間（可空）"
+        DATETIME created_at "建立時間"
+        DATETIME updated_at "最後更新時間"
+    }
+
+    TrustLevelConfig {
+        INT level PK "信用等級（0-3）"
+        VARCHAR group_name "對應群組名稱"
+        VARCHAR display_name "顯示名稱"
+        INT min_score "最低積分門檻"
+        INT max_books "最大持書數量"
+        INT max_days "最大借閱天數"
+        INT demotion_protection_weeks "降級保護週數"
+        VARCHAR badge_icon "徽章圖標"
+    }
+
+    TrustScoreLedger {
+        UUID id PK "主鍵"
+        INT user_id FK "用戶"
+        INT trust_score "當下積分"
+        INT trust_level "當下等級"
+        VARCHAR formula_version "公式版本"
+        ENUM source "來源 recalculate｜rating｜deal_completed｜overdue_adjust｜violation"
+        JSON payload "摘要指標"
+        DATETIME created_at "建立時間"
     }
 
     OfficialBook {
         UUID id PK "主鍵"
         VARCHAR isbn UK "ISBN 書號（全域唯一）"
         VARCHAR title "書名"
-        VARCHAR author "作者"
-        VARCHAR publisher "出版社"
+        VARCHAR author "作者（保留相容）"
+        VARCHAR publisher "出版社（保留相容）"
+        ENUM category "分類 小說｜科技｜藝術｜科學｜未分類"
         VARCHAR cover_image "封面圖片路徑"
+        TEXT description "書籍簡介"
+        INT publisher_ref_id FK "出版社正規化（可空）"
         DATETIME created_at "建立時間"
         DATETIME updated_at "最後更新時間"
+    }
+
+    Author {
+        UUID id PK "主鍵"
+        VARCHAR display_name UK "顯示名稱（唯一）"
+        VARCHAR sort_key "排序鍵"
+        DATETIME created_at "建立時間"
+        DATETIME updated_at "最後更新時間"
+    }
+
+    Publisher {
+        UUID id PK "主鍵"
+        VARCHAR name UK "名稱（唯一）"
+        DATETIME created_at "建立時間"
+        DATETIME updated_at "最後更新時間"
+    }
+
+    OfficialBookAuthor {
+        UUID id PK "主鍵"
+        INT official_book_id FK "官方書目"
+        INT author_id FK "作者"
+        ENUM role "角色 author｜translator"
+        INT sort_order "排序"
+        DATETIME created_at "建立時間"
     }
 
     BookSet {
@@ -122,6 +233,7 @@ erDiagram
         TEXT condition_description "書況描述"
         INT loan_duration_days "借閱天數（15~90，預設 30）"
         INT extend_duration_days "可延長天數（7~30）"
+        INT min_trust_level "最低信用等級（0-3）"
         DATETIME listed_at "上架時間"
         DATETIME created_at "建立時間"
         DATETIME updated_at "最後更新時間"
@@ -133,6 +245,7 @@ erDiagram
         INT book_set_id FK "套書（可空）"
         ENUM deal_type "交易類別 LN｜RS｜TF｜RG｜EX"
         ENUM status "交易狀態 Q｜P｜M｜D｜X"
+        VARCHAR previous_book_status "交易前書籍狀態（BR-14）"
         INT applicant_id FK "申請者"
         INT responder_id FK "回應者"
         VARCHAR meeting_location "面交地點"
@@ -167,7 +280,7 @@ erDiagram
         INT deal_id FK "所屬交易（deal + rater 聯合唯一）"
         INT rater_id FK "評價者"
         INT ratee_id FK "被評者"
-        TINYINT integrity_score "誠信評分（1~5）"
+        TINYINT friendliness_score "友善評分（1~5）"
         TINYINT punctuality_score "準時評分（1~5）"
         TINYINT accuracy_score "書況準確度評分（1~5）"
         TEXT comment "評價留言"
@@ -197,10 +310,39 @@ erDiagram
         INT recipient_id FK "接收者"
         INT deal_id FK "關聯交易（可空）"
         INT shared_book_id FK "關聯書籍（可空）"
-        ENUM notification_type "通知類型（見 3.1 通知類型表）"
+        ENUM notification_type "通知類型"
         VARCHAR title "通知標題"
         TEXT message "通知內容"
         BOOLEAN is_read "是否已讀"
+        DATETIME created_at "建立時間"
+    }
+
+    ExchangeEvent {
+        UUID id PK "主鍵"
+        INT shared_book_id FK "分享書籍"
+        INT deal_id FK "相關交易（可空）"
+        ENUM event_type "事件類型"
+        INT actor_id FK "操作者（可空）"
+        JSON metadata "附加資料"
+        DATETIME created_at "建立時間"
+    }
+
+    PushSubscription {
+        UUID id PK "主鍵"
+        INT user_id FK "用戶"
+        VARCHAR endpoint UK "訂閱端點"
+        VARCHAR p256dh "p256dh 金鑰"
+        VARCHAR auth "auth 金鑰"
+        VARCHAR user_agent "瀏覽器資訊（可空）"
+        BOOLEAN is_active "是否啟用"
+        DATETIME created_at "建立時間"
+    }
+
+    WebPushConfig {
+        UUID id PK "主鍵"
+        VARCHAR vapid_public_key "VAPID 公開金鑰"
+        TEXT vapid_private_key "VAPID 私有金鑰"
+        VARCHAR subject "主體 URL"
         DATETIME created_at "建立時間"
     }
 ```
@@ -302,24 +444,29 @@ stateDiagram-v2
 
 #### 通知類型 (Notification Type)
 
-| 值                 | 說明                     |
-| ------------------ | ------------------------ |
-| `DEAL_REQUESTED`   | 收到交易申請             |
-| `DEAL_RESPONDED`   | 交易已被回應             |
-| `DEAL_CANCELLED`   | 交易被取消/拒絕          |
-| `DEAL_MEETED`      | 面交完成，請評價         |
-| `BOOK_DUE_SOON`    | 書籍即將到期（提前通知） |
-| `BOOK_OVERDUE`     | 書籍已逾期               |
-| `BOOK_AVAILABLE`   | 願望書車中的書籍已可借閱 |
-| `EXTEND_REQUESTED` | 收到延長申請             |
-| `EXTEND_APPROVED`  | 延長申請已核准           |
-| `EXTEND_REJECTED`  | 延長申請已拒絕           |
+| 值                     | 說明                     |
+| ---------------------- | ------------------------ |
+| `DEAL_REQUESTED`       | 收到交易申請             |
+| `DEAL_RESPONDED`       | 交易已被回應             |
+| `DEAL_CANCELLED`       | 交易被取消/拒絕          |
+| `DEAL_MEETED`          | 面交完成，請評價         |
+| `BOOK_DUE_SOON`        | 書籍即將到期（提前通知） |
+| `BOOK_OVERDUE`         | 書籍已逾期               |
+| `BOOK_AVAILABLE`       | 願望書車中的書籍已可借閱 |
+| `EXTEND_REQUESTED`     | 收到延長申請             |
+| `EXTEND_APPROVED`      | 延長申請已核准           |
+| `EXTEND_REJECTED`      | 延長申請已拒絕           |
+| `APPEAL_SUBMITTED`     | 申訴已送出               |
+| `APPEAL_RESOLVED`      | 申訴審核完成             |
+| `APPEAL_STATUS_UPDATED`| 申訴狀態更新             |
+| `RATING_CREATED`       | 收到新的評價             |
+| `VIOLATION_CREATED`    | 收到違規處分             |
 
 #### 評價評分 (Rating Score)
 
 - 評分範圍：**1 ~ 5**（1 = 極差，5 = 極佳）
 - 評分維度：
-  - `integrity_score` — 誠信
+  - `friendliness_score` — 友善度（對應需求的「誠信」維度）
   - `punctuality_score` — 準時
   - `accuracy_score` — 書況描述準確度
 
@@ -327,26 +474,46 @@ stateDiagram-v2
 
 #### 唯一性約束 (Unique Constraints)
 
-| 實體         | 約束欄位                | 說明                         |
-| ------------ | ----------------------- | ---------------------------- |
-| OfficialBook | `isbn`                  | ISBN 全域唯一                |
-| Rating       | `(deal, rater)`         | 同一交易中，每人只能評價一次 |
-| WishListItem | `(user, official_book)` | 同一書籍只能收藏一次         |
+| 實體               | 約束欄位                     | 說明                              |
+| ------------------ | ----------------------------| --------------------------------- |
+| OfficialBook       | `isbn`                      | ISBN 全域唯一                     |
+| Author             | `display_name`              | 作者名稱唯一                      |
+| Publisher          | `name`                      | 出版社名稱唯一                    |
+| OfficialBookAuthor | `(official_book, author)`   | 書目與作者關聯唯一                |
+| Rating             | `(deal, rater)`             | 同一交易中，每人只能評價一次      |
+| WishListItem       | `(user, official_book)`     | 同一書籍只能收藏一次              |
+| PushSubscription   | `endpoint`                  | 同一個 Push 端點不重複訂閱        |
 
 #### 索引策略 (Indexes)
 
-| 實體         | 索引欄位                | 類型      | 理由                   |
-| ------------ | ----------------------- | --------- | ---------------------- |
-| OfficialBook | `title`                 | B-Tree    | 書名搜尋               |
-| OfficialBook | `author`                | B-Tree    | 作者搜尋               |
-| SharedBook   | `status`                | B-Tree    | 按狀態篩選（高頻查詢） |
-| SharedBook   | `(owner, status)`       | Composite | Owner 查看自己的書籍   |
-| SharedBook   | `(keeper, status)`      | Composite | Keeper 查看持有的書籍  |
-| Deal         | `(applicant, status)`   | Composite | 用戶查看自己的申請     |
-| Deal         | `(responder, status)`   | Composite | 用戶查看待回應的交易   |
-| Deal         | `(shared_book, status)` | Composite | 查看書籍的交易紀錄     |
-| Deal         | `due_date`              | B-Tree    | 定時任務查詢到期交易   |
-| Notification | `(recipient, is_read)`  | Composite | 用戶查看未讀通知       |
+| 實體               | 索引欄位                         | 類型         | 理由                              |
+| ------------------ | -------------------------------- | ------------ | --------------------------------- |
+| OfficialBook       | `title`                          | B-Tree       | 書名搜尋                          |
+| OfficialBook       | `author`                         | B-Tree       | 作者搜尋                          |
+| OfficialBook       | `category`                       | B-Tree       | 分類篩選                          |
+| SharedBook         | `status`                         | B-Tree       | 按狀態篩選（高頻查詢）            |
+| SharedBook         | `(owner, status)`                | Composite    | Owner 查看自己的書籍              |
+| SharedBook         | `(keeper, status)`               | Composite    | Keeper 查看持有的書籍             |
+| SharedBook         | `-listed_at`                     | B-Tree DESC  | 按上架時間排序                    |
+| SharedBook         | `-updated_at`                    | B-Tree DESC  | 按最近更新排序                    |
+| Deal               | `(applicant, status)`            | Composite    | 用戶查看自己的申請                |
+| Deal               | `(responder, status)`            | Composite    | 用戶查看待回應的交易              |
+| Deal               | `(shared_book, status)`          | Composite    | 查看書籍的交易紀錄                |
+| Deal               | `due_date`                       | B-Tree       | 定時任務查詢到期交易              |
+| Deal               | `-created_at`                    | B-Tree DESC  | 按建立時間排序                    |
+| Notification       | `(recipient, is_read)`           | Composite    | 用戶查看未讀通知                  |
+| Notification       | `(recipient, notification_type)` | Composite    | 按類型篩選通知                    |
+| Violation          | `(user, is_active)`              | Composite    | 查詢用戶活躍處分                  |
+| Violation          | `(action_type, is_active)`       | Composite    | 按處分類型篩選                    |
+| Appeal             | `(user, status)`                 | Composite    | 用戶查看自己的申訴                |
+| Appeal             | `(status, created_at)`           | Composite    | 管理員依狀態查詢                  |
+| WishListItem       | `(user, -created_at)`            | Composite    | 用戶查看願望清單（按時間倒序）    |
+| WishListItem       | `official_book`                  | B-Tree       | 依書目查詢被收藏狀況              |
+| TrustScoreLedger   | `(user, -created_at)`            | Composite    | 用戶信用稽核歷史（按時間倒序）    |
+| ExchangeEvent      | `(shared_book, -created_at)`     | Composite    | 書籍稽核時間軸                    |
+| ExchangeEvent      | `(deal, created_at)`             | Composite    | 交易稽核紀錄                      |
+| PushSubscription   | `(user, is_active)`              | Composite    | 用戶啟用中的訂閱                  |
+| PushSubscription   | `endpoint`                       | Unique       | 端點唯一                          |
 
 ### 3.3 業務規則約束
 
