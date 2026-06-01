@@ -16,7 +16,8 @@
 
 ## HIGH（上線前建議完成）
 
-- [ ] **SSL 終止確認** — 確認上線環境有外層 reverse proxy 處理 HTTPS（Cloudflare / Traefik / nginx SSL）
+- [x] **SSL 設定範本** — 新增 `nginx/ssl.conf.example` + `scripts/setup_ssl.sh`（certbot 自動取得與續約）
+- [ ] **SSL 終止確認** — 部署後確認 HTTPS 正常：`curl -I https://your-domain.example.com`
 - [x] **Media 備份** — 加上使用者上傳照片的備份機制（rsync 到外部儲存 / S3）
 - [x] **Deploy health verification** — 在 `scripts/deploy.sh` 加入 `/health/` 端點輪詢，確認 app 真正正常
 - [x] **Container 資源限制** — 在 `docker-compose.yml` 加入 web/celery 的 CPU 與記憶體上限
@@ -24,6 +25,6 @@
 
 ## MEDIUM（上線後儘快補）
 
-- [ ] **壓力測試** — 用 `locust` 或 `k6` 跑一次基本場景測試，確認瓶頸
+- [x] **壓力測試** — 用 `k6` 跑一次基本場景測試，確認瓶頸
 - [ ] **非同步 Email 測試** — production 啟用 SMTP 前先用 mailtrap.io 驗證流程
-- [ ] **正式域名 SSL 憑證** — 若自管 nginx 需加 certbot/LetsEncrypt 自動續約
+- [ ] **正式域名 SSL 憑證** — 部署後執行 `scripts/setup_ssl.sh your-domain.com` 取得憑證，確認 certbot renew 自動續約正常
