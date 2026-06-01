@@ -2,6 +2,8 @@ services:
   db:
     image: mariadb:10.11
     restart: unless-stopped
+    mem_limit: 768m
+    cpus: "1.00"
     environment:
       MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
       MARIADB_DATABASE: ${DB_NAME:-exbook}
@@ -18,6 +20,8 @@ services:
   web:
     build: .
     restart: unless-stopped
+    mem_limit: 768m
+    cpus: "1.00"
     depends_on:
       db:
         condition: service_healthy
@@ -33,6 +37,8 @@ services:
   celery_worker:
     build: .
     restart: unless-stopped
+    mem_limit: 768m
+    cpus: "1.00"
     command: celery -A exbook worker -l info -c 2
     depends_on:
       db:
@@ -48,6 +54,8 @@ services:
   celery_beat:
     build: .
     restart: unless-stopped
+    mem_limit: 256m
+    cpus: "0.50"
     command: celery -A exbook beat -l info
     depends_on:
       db:
@@ -61,6 +69,8 @@ services:
   nginx:
     image: nginx:1-alpine
     restart: unless-stopped
+    mem_limit: 128m
+    cpus: "0.25"
     ports:
       - "${PORT:-80}:80"
     depends_on:
@@ -73,6 +83,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: exbook_redis
+    mem_limit: 256m
+    cpus: "0.50"
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     restart: unless-stopped
     volumes:
@@ -86,6 +98,8 @@ services:
   backup:
     image: mariadb:10.11
     profiles: ["backup"]
+    mem_limit: 256m
+    cpus: "0.50"
     depends_on:
       db:
         condition: service_healthy
@@ -96,6 +110,35 @@ services:
     volumes:
       - backup_data:/backup
       - ./scripts/backup_mysql.sh:/backup.sh:ro
+    entrypoint: ["/bin/sh", "/backup.sh"]
+
+  media_backup:
+    image: alpine:3.20
+    profiles: ["backup"]
+    mem_limit: 256m
+    cpus: "0.50"
+    depends_on:
+      - web
+    env_file: .env
+    volumes:
+      - media_data:/media:ro
+      - backup_data:/backup
+      - ./scripts/backup_media.sh:/backup.sh:ro
+    entrypoint: ["/bin/sh", "/backup.sh"]
+
+  redis_backup:
+    image: redis:7-alpine
+    profiles: ["backup"]
+    mem_limit: 256m
+    cpus: "0.50"
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file: .env
+    volumes:
+      - redis_data:/data
+      - backup_data:/backup
+      - ./scripts/backup_redis.sh:/backup.sh:ro
     entrypoint: ["/bin/sh", "/backup.sh"]
 
 volumes:

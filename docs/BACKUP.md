@@ -20,13 +20,20 @@ gunzip -c exbook_YYYYMMDD_HHMMSS.sql.gz | docker compose exec -T db mariadb -uro
 
 ## 媒體檔（media）
 
-目前媒體掛載於命名 volume `media_data`。請另行以：
+使用 Compose profile `backup` 的 `media_backup` 服務，會將 `media_data` volume 打包成 `tar.gz`，寫入 `backup_data`。
 
-- 週期性將 volume 掛載到備份主機並 `rsync`／快照，或
-- 物件儲存（S3 相容）同步策略
+```bash
+docker compose --profile backup run --rm media_backup
+```
 
-納入備援計畫；腳本未自動備份媒體。
+如果你要把備份推到外部儲存，請在容器外再把 `backup_data` 中的檔案同步到 S3、NAS，或其他備份主機。
 
 ## Redis
 
-Redis 使用 `redis_data` volume，設定為 AOF（`appendonly yes`）。若僅作快取／短期佇列可接受重建；若有業務不可失資料，請評估 RDB／AOF 複製或托管服務。
+使用 Compose profile `backup` 的 `redis_backup` 服務，會透過 `redis-cli --rdb` 產生 RDB 快照，寫入 `backup_data`。
+
+```bash
+docker compose --profile backup run --rm redis_backup
+```
+
+Redis 目前啟用 AOF，若只作快取／短期佇列可接受重建；若有業務不可失資料，建議再把 `backup_data` 同步到外部儲存，或改用托管服務。

@@ -58,5 +58,13 @@ CELERY_TASK_EAGER_PROPAGATES = True
 
 DEFAULT_FILE_STORAGE = "django.core.files.storage.InMemoryStorage"
 
+# Use LocMemCache for test isolation — avoids flaky failures from shared Redis
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "exbook-test",
+    }
+}
+
 # Disable Web Push in tests (no VAPID keys configured)
 WEBPUSH_ENABLED = False
