@@ -168,6 +168,23 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+if os.environ.get("USE_S3") == "true":
+    DEFAULT_FILE_STORAGE = "core.storage.MinioStorage"
+    STORAGES = {
+        "default": {"BACKEND": "core.storage.MinioStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
+    AWS_STORAGE_BUCKET_NAME = "exbook-media"
+    AWS_S3_ENDPOINT_URL = os.environ.get("MINIO_ENDPOINT")
+    AWS_ACCESS_KEY_ID = os.environ.get("MINIO_ROOT_USER")
+    AWS_SECRET_ACCESS_KEY = os.environ.get("MINIO_ROOT_PASSWORD")
+    AWS_S3_REGION_NAME = "us-east-1"
+    AWS_S3_ADDRESSING_STYLE = "path"
+    AWS_DEFAULT_ACL = None
+    AWS_S3_USE_SSL = os.environ.get("MINIO_ENDPOINT", "").startswith("https")
+    AWS_QUERYSTRING_AUTH = False
+    AWS_S3_FILE_OVERWRITE = False
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 

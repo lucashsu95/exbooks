@@ -4,8 +4,7 @@ AGENTS.md
 .sisyphus
 .opencode
 progress.md
-CLAUDE.md
-GEMINI.md
+.kilo
 
 ### Django ###
 *.log
