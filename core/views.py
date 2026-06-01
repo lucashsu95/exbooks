@@ -1,4 +1,5 @@
 from django.http import HttpResponse
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_GET
 from django.views.generic import TemplateView
@@ -38,3 +39,23 @@ def robots_txt(request):
         ]
     )
     return HttpResponse(body, content_type="text/plain; charset=utf-8")
+
+
+@require_GET
+def health_check(request):
+    """Return app and database health status for deploy probes."""
+    from django.db import connection
+
+    try:
+        connection.ensure_connection()
+        db_status = "ok" if connection.is_usable() else "unhealthy"
+        status_code = 200 if db_status == "ok" else 503
+    except Exception:
+        db_status = "unhealthy"
+        status_code = 503
+
+    payload = {
+        "status": "ok" if db_status == "ok" else "unhealthy",
+        "database": db_status,
+    }
+    return JsonResponse(payload, status=status_code)
