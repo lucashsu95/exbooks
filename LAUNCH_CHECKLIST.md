@@ -7,12 +7,12 @@
 
 ## CRITICAL（上線前必須處理）
 
-- [ ] **Production LOGGING** — 在 `exbook/prod_settings.py` 加入 Django logging 設定，輸出到 stdout 或檔案
-- [ ] **自訂錯誤頁面** — 建立 `templates/404.html`、`templates/500.html`、`templates/403.html`
-- [ ] **錯誤監控** — 整合 `sentry-sdk`，即時掌握 production 錯誤
-- [ ] **Health check 端點** — 新增 `GET /health/` 回傳 200 + DB 連線狀態
-- [ ] **API Rate Limiting** — 在 `REST_FRAMEWORK` 設定中加入 `DEFAULT_THROTTLE_CLASSES`
-- [ ] **資料庫連線池** — 在 `prod_settings.py` 的 `DATABASES["default"]["OPTIONS"]` 中加入 `CONN_MAX_AGE=600`
+- [x] **Production LOGGING** — 在 `exbook/prod_settings.py` 加入 Django logging 設定，輸出到 stdout 或檔案
+- [x] **自訂錯誤頁面** — 建立 `templates/404.html`、`templates/500.html`、`templates/403.html`
+- [x] **錯誤監控** — 整合 `sentry-sdk`，即時掌握 production 錯誤
+- [x] **Health check 端點** — 新增 `GET /health/` 回傳 200 + DB 連線狀態
+- [x] **API Rate Limiting** — 在 `REST_FRAMEWORK` 設定中加入 `DEFAULT_THROTTLE_CLASSES`
+- [x] **資料庫連線池** — 在 `prod_settings.py` 的 `DATABASES["default"]["OPTIONS"]` 中加入 `CONN_MAX_AGE=600`
 
 ## HIGH（上線前建議完成）
 
