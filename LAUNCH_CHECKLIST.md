@@ -17,10 +17,10 @@
 ## HIGH（上線前建議完成）
 
 - [ ] **SSL 終止確認** — 確認上線環境有外層 reverse proxy 處理 HTTPS（Cloudflare / Traefik / nginx SSL）
-- [ ] **Media 備份** — 加上使用者上傳照片的備份機制（rsync 到外部儲存 / S3）
-- [ ] **Deploy health verification** — 在 `scripts/deploy.sh` 加入 `/health/` 端點輪詢，確認 app 真正正常
-- [ ] **Container 資源限制** — 在 `docker-compose.yml` 加入 web/celery 的 CPU 與記憶體上限
-- [ ] **Redis 備份** — 定期備份 `redis_data` volume（AOF snapshot 抄寫到外部儲存）
+- [x] **Media 備份** — 加上使用者上傳照片的備份機制（rsync 到外部儲存 / S3）
+- [x] **Deploy health verification** — 在 `scripts/deploy.sh` 加入 `/health/` 端點輪詢，確認 app 真正正常
+- [x] **Container 資源限制** — 在 `docker-compose.yml` 加入 web/celery 的 CPU 與記憶體上限
+- [x] **Redis 備份** — 定期備份 `redis_data` volume（AOF snapshot 抄寫到外部儲存）
 
 ## MEDIUM（上線後儘快補）
 

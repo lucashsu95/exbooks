@@ -4,6 +4,9 @@ set -euo pipefail
 # ── 設定 ────────────────────────────────────────────────────────
 APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 COMPOSE="docker compose -f $APP_DIR/docker-compose.yml"
+HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:${PORT:-80}/health/}"
+HEALTH_TIMEOUT_SECONDS="${HEALTH_TIMEOUT_SECONDS:-60}"
+HEALTH_INTERVAL_SECONDS="${HEALTH_INTERVAL_SECONDS:-2}"
 
 echo "========================================"
 echo "  Exbook Deploy — $(date '+%Y-%m-%d %H:%M:%S')"
@@ -20,21 +23,42 @@ $COMPOSE up -d
 
 echo ""
 echo "[3/3] Checking health..."
-sleep 5
 
-# 確認所有容器都在跑
-RUNNING=$($COMPOSE ps --status running --format json | python3 -c "
-import sys, json
-lines = sys.stdin.read().strip().split('\n')
-count = sum(1 for l in lines if l.strip())
-print(count)
-")
+check_health() {
+  python3 - "$HEALTH_URL" <<'PY'
+import json
+import sys
+import urllib.error
+import urllib.request
 
-EXPECTED=3
-if [ "$RUNNING" -eq "$EXPECTED" ]; then
-    echo "✓ All $EXPECTED services running."
-else
-    echo "✗ Expected $EXPECTED services, got $RUNNING."
+url = sys.argv[1]
+
+try:
+    with urllib.request.urlopen(url, timeout=5) as response:
+        payload = json.load(response)
+        if response.status != 200:
+            raise SystemExit(1)
+        if payload.get("status") == "ok" and payload.get("database") == "ok":
+            print("healthy")
+            raise SystemExit(0)
+        raise SystemExit(1)
+except Exception as exc:
+    print(f"unhealthy: {exc}", file=sys.stderr)
+    raise SystemExit(1)
+PY
+}
+
+deadline=$((SECONDS + HEALTH_TIMEOUT_SECONDS))
+while [ "$SECONDS" -lt "$deadline" ]; do
+    if check_health >/dev/null 2>&1; then
+        echo "✓ Health endpoint is ready: $HEALTH_URL"
+        break
+    fi
+    sleep "$HEALTH_INTERVAL_SECONDS"
+done
+
+if ! check_health >/dev/null 2>&1; then
+    echo "✗ Health check failed after ${HEALTH_TIMEOUT_SECONDS}s: $HEALTH_URL"
     $COMPOSE ps
     exit 1
 fi
