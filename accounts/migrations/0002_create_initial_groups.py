@@ -9,8 +9,16 @@ def create_groups(apps, schema_editor):
     ContentType = apps.get_model("contenttypes", "ContentType")
 
     def get_perm(app_label, model_name, codename):
-        ct = ContentType.objects.get(app_label=app_label, model=model_name)
-        return Permission.objects.get(content_type=ct, codename=codename)
+        ct, _ = ContentType.objects.get_or_create(
+            app_label=app_label,
+            model=model_name.lower(),
+        )
+        perm, _ = Permission.objects.get_or_create(
+            content_type=ct,
+            codename=codename,
+            defaults={"name": codename.replace("_", " ").title()},
+        )
+        return perm
 
     # Group 1: 客服人員
     cs_group, _ = Group.objects.get_or_create(name="客服人員")

@@ -159,7 +159,7 @@ function browsePublicPages() {
     failRate.add(res.status >= 400);
     sleep(0.5);
 
-    res = http.get(`${BASE_URL}/api/official/`, {
+    res = http.get(`${BASE_URL}/books/api/official/`, {
       tags: { name: "official-books" },
     });
     bookListDuration.add(res.timings.duration);
@@ -170,7 +170,7 @@ function browsePublicPages() {
     failRate.add(res.status >= 400);
     sleep(0.5);
 
-    res = http.get(`${BASE_URL}/api/shared/`, {
+    res = http.get(`${BASE_URL}/books/api/shared/`, {
       tags: { name: "shared-books" },
     });
     bookListDuration.add(res.timings.duration);
@@ -198,24 +198,24 @@ function authenticatedOperations(token) {
     });
 
   group("authenticated operations", () => {
-    let res = authGet(`${BASE_URL}/api/me/`, "my-profile");
+    let res = authGet(`${BASE_URL}/accounts/api/me/`, "my-profile");
     check(res, { "profile status 200": (r) => r.status === 200 });
     failRate.add(res.status >= 400);
     sleep(1);
 
-    res = authGet(`${BASE_URL}/api/deals/`, "my-deals");
+    res = authGet(`${BASE_URL}/deals/api/deals/`, "my-deals");
     check(res, {
       "deals status 200": (r) => r.status === 200 || r.status === 404,
     });
     failRate.add(res.status >= 500);
     sleep(1);
 
-    res = authGet(`${BASE_URL}/api/notifications/`, "notifications");
+    res = authGet(`${BASE_URL}/deals/api/notifications/`, "notifications");
     check(res, { "notifications status 200": (r) => r.status === 200 });
     failRate.add(res.status >= 400);
     sleep(0.5);
 
-    res = authGet(`${BASE_URL}/api/extensions/`, "extensions");
+    res = authGet(`${BASE_URL}/deals/api/extensions/`, "extensions");
     check(res, { "extensions status 200": (r) => r.status === 200 });
     failRate.add(res.status >= 400);
     sleep(1);
