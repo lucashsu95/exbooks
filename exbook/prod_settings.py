@@ -28,6 +28,51 @@ ACCOUNT_RATE_LIMITS = {
     "login_failed": "5/m/ip,5/5m/key",
 }
 
+# ── Logging / Monitoring ────────────────────────────────────────
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {name} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO"),
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO"),
+            "propagate": False,
+        },
+    },
+}
+
+SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
+if SENTRY_DSN:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.django import DjangoIntegration
+
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            integrations=[DjangoIntegration()],
+            environment=os.environ.get("SENTRY_ENVIRONMENT", "production"),
+            traces_sample_rate=float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0")),
+            send_default_pii=False,
+        )
+    except ImportError:
+        pass
+
 # ── Database (Docker Compose 內部網路) ──────────────────────────
 DATABASES = {
     "default": {
@@ -40,6 +85,7 @@ DATABASES = {
         "OPTIONS": {
             "charset": "utf8mb4",
         },
+        "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "600")),
     }
 }
 
