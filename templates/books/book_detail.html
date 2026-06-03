@@ -129,10 +129,10 @@
                         {% for photo in photos %}
                             <div id="photo-{{ photo.pk }}"
                                  class="relative aspect-square rounded-xl overflow-hidden shadow-lg group">
-                                <a href="{{ photo.photo.url }}"
+                                <a href="{{ photo.serve_url }}"
                                    target="_blank"
                                    class="block w-full h-full">
-                                    <img src="{{ photo.photo.url }}"
+                                    <img src="{{ photo.serve_url }}"
                                          alt="書況照片"
                                          class="w-full h-full object-cover hover:scale-[1.02] transition-all duration-300" />
                                 </a>

@@ -2,6 +2,7 @@ from uuid import uuid4
 
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 
 from core.models import BaseModel
 
@@ -57,3 +58,14 @@ class BookPhoto(BaseModel):
 
     def __str__(self):
         return f"{self.shared_book} 照片 ({self.created_at:%Y-%m-%d})"
+
+    @property
+    def serve_url(self):
+        """
+        根據照片是否與交易關聯，回傳對應的存取 URL。
+        - 有關聯交易 (deal_id is not None): 回傳受保護的 serve URL。
+        - 無關聯交易: 回傳原媒體檔案 URL。
+        """
+        if self.deal_id:
+            return reverse("serve_protected_photo", kwargs={"pk": self.pk})
+        return self.photo.url

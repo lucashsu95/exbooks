@@ -42,5 +42,10 @@ urlpatterns = [
         name="book_set_remove_book",
     ),
     # 書況照片
+    path(
+        "photos/<uuid:pk>/serve/",
+        views.serve_protected_photo,
+        name="serve_protected_photo",
+    ),
     path("photos/<uuid:pk>/delete/", views.book_photo_delete, name="photo_delete"),
 ]

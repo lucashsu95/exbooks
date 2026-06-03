@@ -35,10 +35,10 @@
                                    class="text-xs text-primary hover:underline mt-1 inline-block">查看詳情</a>
                             {% endif %}
                             {% if event.type == 'photo_upload' and event.photo %}
-                                <a href="{{ event.photo.photo.url }}"
+                                <a href="{{ event.photo.serve_url }}"
                                    target="_blank"
                                    class="inline-block mt-2">
-                                    <img src="{{ event.photo.photo.url }}"
+                                    <img src="{{ event.photo.serve_url }}"
                                          alt="書況照片"
                                          class="w-20 h-20 rounded-lg object-cover shadow-sm hover:shadow-md transition-shadow" />
                                 </a>

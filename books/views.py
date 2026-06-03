@@ -4,10 +4,12 @@ from django.db import transaction
 from django.db.models import Q, Count
 from django.contrib import messages
 from django.utils import timezone
-from django.http import HttpResponse
+from django.http import HttpResponse, FileResponse
 from django.views.decorators.http import require_GET, require_POST
 from django.core.paginator import Paginator
 from django.core.exceptions import ValidationError
+from django.conf import settings
+from django.core.files.storage import default_storage
 
 from .models import SharedBook, OfficialBook, BookPhoto
 from .services.book_query_service import get_hot_books
@@ -467,13 +469,50 @@ def book_delete(request, pk):
 @require_GET
 def isbn_lookup(request):
     """HTMX endpoint: ISBN 查詢"""
-    isbn = request.GET.get("isbn", "")
+    isbn = request.GET.get("isbn", "").strip()
     result = lookup_by_isbn(isbn) if isbn else None
     return render(
         request,
         "books/partials/isbn_result.html",
         {"result": result, "isbn": isbn},
     )
+
+
+@login_required
+def serve_protected_photo(request, pk):
+    """
+    提供面交照片的權限檢查存取。
+    - 權限者：uploader, deal.applicant, deal.responder
+    - 權限通過後，透過 X-Accel-Redirect 由 Nginx 內部轉發 MinIO 檔案。
+    - Local Dev (DEBUG=True) 則直接由 Django serve。
+    """
+    photo = get_object_or_404(
+        BookPhoto.objects.select_related(
+            "deal", "uploader", "deal__applicant", "deal__responder"
+        ),
+        pk=pk,
+        deal__isnull=False,
+    )
+
+    if (
+        request.user != photo.uploader
+        and request.user != photo.deal.applicant
+        and request.user != photo.deal.responder
+    ):
+        return HttpResponse(status=403)
+
+    if settings.DEBUG:
+        # Local development: serve file directly from storage
+        try:
+            file = default_storage.open(photo.photo.name)
+            return FileResponse(file)
+        except Exception:
+            return HttpResponse(status=404)
+
+    # Production: Use Nginx X-Accel-Redirect
+    response = HttpResponse()
+    response["X-Accel-Redirect"] = f"/internal-media/{photo.photo.name}"
+    return response
 
 
 @login_required
