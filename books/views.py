@@ -249,18 +249,19 @@ def book_all(request):
     page_number = request.GET.get("page", 1)
     page_obj = paginator.get_page(page_number)
 
-    return render(
-        request,
-        "books/book_all.html",
-        {
-            "page_obj": page_obj,
-            "search_query": q,
-            "current_transferability": transferability,
-            "current_category": category,
-            "form": form,
-            "categories": list(OfficialBook.Category.choices),
-        },
-    )
+    context = {
+        "page_obj": page_obj,
+        "search_query": q,
+        "current_transferability": transferability,
+        "current_category": category,
+        "form": form,
+        "categories": list(OfficialBook.Category.choices),
+    }
+
+    if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
+        return render(request, "books/partials/book_all_content.html", context)
+
+    return render(request, "books/book_all.html", context)
 
 
 @login_required
@@ -573,11 +574,12 @@ def wishlist_list(request):
     page_number = request.GET.get("page", 1)
     page_obj = paginator.get_page(page_number)
 
-    return render(
-        request,
-        "books/wishlist.html",
-        {"page_obj": page_obj, "wishlist_items": wishlist_items},
-    )
+    context = {"page_obj": page_obj, "wishlist_items": wishlist_items}
+
+    if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
+        return render(request, "books/partials/wishlist_content.html", context)
+
+    return render(request, "books/wishlist.html", context)
 
 
 @login_required
@@ -677,6 +679,10 @@ def due_soon_list(request):
         "deals_with_days_left": deals_with_days_left,
         "remind_days": remind_days,
     }
+
+    if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
+        return render(request, "books/partials/due_soon_content.html", context)
+
     return render(request, "books/due_soon_list.html", context)
 
 

@@ -784,15 +784,18 @@ def notification_list(request):
         is_read=False,
     ).count()
 
-    return render(
-        request,
-        "deals/notification_list.html",
-        {
-            "page_obj": page_obj,
-            "current_tab": tab,
-            "unread_count": unread_count,
-        },
-    )
+    context = {
+        "page_obj": page_obj,
+        "current_tab": tab,
+        "unread_count": unread_count,
+    }
+
+    if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
+        return render(
+            request, "deals/partials/notification_list_content.html", context
+        )
+
+    return render(request, "deals/notification_list.html", context)
 
 
 @login_required

@@ -13,82 +13,40 @@
             <!-- Placeholder for symmetry -->
         </div>
     </div>
-    <!-- Filter Tabs -->
+    <!-- Filter Tabs with HTMX -->
     <div class="px-4 py-3 bg-white border-b border-slate-200">
         <div class="flex gap-2">
             <a href="?days=7"
-               class="px-4 py-2 rounded-full text-sm font-medium {% if remind_days == 7 %}bg-primary text-white{% else %}bg-slate-100 text-slate-600{% endif %}">
+               hx-get="?days=7"
+               hx-target="#due-soon-content"
+               hx-swap="outerHTML transition:true"
+               hx-indicator="#global-loader"
+               hx-push-url="true"
+               class="px-4 py-2 rounded-full text-sm font-medium {% if remind_days == 7 %}bg-primary text-white{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
                 7 天內
             </a>
             <a href="?days=14"
-               class="px-4 py-2 rounded-full text-sm font-medium {% if remind_days == 14 %}bg-primary text-white{% else %}bg-slate-100 text-slate-600{% endif %}">
+               hx-get="?days=14"
+               hx-target="#due-soon-content"
+               hx-swap="outerHTML transition:true"
+               hx-indicator="#global-loader"
+               hx-push-url="true"
+               class="px-4 py-2 rounded-full text-sm font-medium {% if remind_days == 14 %}bg-primary text-white{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
                 14 天內
             </a>
             <a href="?days=30"
-               class="px-4 py-2 rounded-full text-sm font-medium {% if remind_days == 30 %}bg-primary text-white{% else %}bg-slate-100 text-slate-600{% endif %}">
+               hx-get="?days=30"
+               hx-target="#due-soon-content"
+               hx-swap="outerHTML transition:true"
+               hx-indicator="#global-loader"
+               hx-push-url="true"
+               class="px-4 py-2 rounded-full text-sm font-medium {% if remind_days == 30 %}bg-primary text-white{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
                 30 天內
             </a>
         </div>
     </div>
-    <!-- Content -->
+    <!-- Content (HTMX target) -->
     <div class="px-4 py-4">
-        {% if deals_with_days_left %}
-            <div class="space-y-4">
-                {% for item in deals_with_days_left %}
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-                        <div class="flex gap-4">
-                            <!-- Book Cover -->
-                            <div class="w-20 h-28 bg-slate-200 rounded-lg overflow-hidden flex-shrink-0 shadow-sm">
-                                {% include 'partials/book_cover.html' with book=item.deal.shared_book %}
-                            </div>
-                            <!-- Book Info -->
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-start justify-between gap-2 mb-2">
-                                    <div>
-                                        <h3 class="text-slate-900 font-bold text-lg leading-tight">{{ item.deal.shared_book.official_book.title }}</h3>
-                                        <p class="text-slate-500 text-sm">{{ item.deal.shared_book.official_book.author }}</p>
-                                    </div>
-                                    <!-- Days Left Badge -->
-                                    <div class="flex-shrink-0">
-                                        {% if item.days_left <= 0 %}
-                                            {% include 'partials/_badge.html' with text='已逾期' color='rose' %}
-                                        {% elif item.days_left <= 3 %}
-                                            {% include 'partials/_badge.html' with text=item.days_left suffix=' 天' color='rose' %}
-                                        {% elif item.days_left <= 7 %}
-                                            {% include 'partials/_badge.html' with text=item.days_left suffix=' 天' color='amber' %}
-                                        {% else %}
-                                            {% include 'partials/_badge.html' with text=item.days_left suffix=' 天' color='green' %}
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <!-- Due Date -->
-                                <div class="flex items-center gap-2 text-slate-500 text-sm mb-2">
-                                    <span class="material-symbols-outlined text-sm">event</span>
-                                    <span>到期日：{{ item.deal.due_date|date:"Y/m/d" }}</span>
-                                </div>
-                                <!-- Lender Info -->
-                                <div class="flex items-center gap-2 text-slate-500 text-sm mb-3">
-                                    <span class="material-symbols-outlined text-sm">person</span>
-                                    <span>借閱對象：{{ item.deal.responder.profile.nickname|default:item.deal.responder.email }}</span>
-                                </div>
-                                <!-- Actions -->
-                                <div class="flex gap-2">
-                                    <a href="{% url 'deals:detail' item.deal.id %}"
-                                       class="flex-1 bg-primary/10 text-primary font-bold text-sm py-2 rounded-lg text-center hover:bg-primary/20 transition-colors">
-                                        查看交易
-                                    </a>
-                                    <a href="{% url 'books:detail' item.deal.shared_book.id %}"
-                                       class="flex-1 bg-slate-100 text-slate-600 font-medium text-sm py-2 rounded-lg text-center hover:bg-slate-200 transition-colors">
-                                        書籍詳情
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            {% include 'partials/_empty_state.html' with icon='check_circle' message='沒有即將到期的書籍' %}
-        {% endif %}
+        {% include 'books/partials/due_soon_content.html' %}
     </div>
 {% endblock %}

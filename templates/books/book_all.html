@@ -1,128 +1,101 @@
 {% extends 'base.html' %}
 {% block title %}Exbooks - 所有書籍{% endblock %}
 {% block content %}
-    <!-- Header -->
-    <header class="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
-        <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
-            <nav class="flex items-center gap-3">
-                <a href="{% url 'books:list' %}"
-                   aria-label="返回首頁"
-                   class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
-                    <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
-                </a>
-                <h1 class="text-xl font-bold tracking-tight">所有書籍</h1>
-            </nav>
+    <div id="book-all-page">
+        <!-- Header -->
+        <header class="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
+            <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
+                <nav class="flex items-center gap-3">
+                    <a href="{% url 'books:list' %}"
+                       aria-label="返回首頁"
+                       class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
+                        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+                    </a>
+                    <h1 class="text-xl font-bold tracking-tight">所有書籍</h1>
+                </nav>
+            </div>
+        </header>
+        <!-- Search & Filter Section -->
+        <div class="px-4 py-4 max-w-xl mx-auto">
+            <!-- Search Bar with HTMX live search -->
+            <div class="flex flex-col min-w-40 h-14 w-full mb-4">
+                <div class="flex w-full flex-1 items-stretch rounded-xl h-full shadow-sm">
+                    <button type="submit"
+                            form="search-form"
+                            class="text-slate-400 flex border-none bg-white items-center justify-center pl-4 rounded-l-xl">
+                        <span class="material-symbols-outlined">search</span>
+                    </button>
+                    <input name="q"
+                           form="search-form"
+                           aria-label="搜尋 ISBN、書名、作者、出版社"
+                           class="form-input flex w-full min-w-0 flex-1 border-none bg-white text-slate-900 focus:ring-0 h-full placeholder:text-slate-400 px-4 rounded-r-xl text-base font-normal"
+                           placeholder="搜尋 ISBN、書名、作者、出版社"
+                           value="{{ search_query }}"
+                           hx-get="{% url 'books:all' %}"
+                           hx-trigger="keyup changed delay:500ms, search"
+                           hx-target="#book-all-content"
+                           hx-swap="outerHTML transition:true"
+                           hx-push-url="true"
+                           hx-indicator="#global-loader"
+                           hx-include="#filter-form" />
+                </div>
+            </div>
+            <!-- Filter Pills -->
+            <div class="flex flex-wrap gap-2 mb-4">
+                <!-- Transferability Filter -->
+                <div class="relative">
+                    <select name="transferability"
+                            id="filter-transferability"
+                            class="appearance-none bg-white border border-slate-200 text-slate-700 text-sm rounded-full px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                            hx-get="{% url 'books:all' %}"
+                            hx-trigger="change"
+                            hx-target="#book-all-content"
+                            hx-swap="outerHTML transition:true"
+                            hx-push-url="true"
+                            hx-indicator="#global-loader"
+                            hx-include="[name='q'], [name='category']">
+                        <option value="" {% if not current_transferability %}selected{% endif %}>全部流通性</option>
+                        <option value="TRANSFER"
+                                {% if current_transferability == 'TRANSFER' %}selected{% endif %}>開放傳遞</option>
+                        <option value="RETURN"
+                                {% if current_transferability == 'RETURN' %}selected{% endif %}>閱畢即還</option>
+                    </select>
+                    <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">expand_more</span>
+                </div>
+                <!-- Category Filter -->
+                <div class="relative">
+                    <select name="category"
+                            id="filter-category"
+                            class="appearance-none bg-white border border-slate-200 text-slate-700 text-sm rounded-full px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
+                            hx-get="{% url 'books:all' %}"
+                            hx-trigger="change"
+                            hx-target="#book-all-content"
+                            hx-swap="outerHTML transition:true"
+                            hx-push-url="true"
+                            hx-indicator="#global-loader"
+                            hx-include="[name='q'], [name='transferability']">
+                        <option value="" {% if not current_category %}selected{% endif %}>全部分類</option>
+                        {% for value, label in categories %}
+                            <option value="{{ value }}"
+                                    {% if current_category == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">expand_more</span>
+                </div>
+            </div>
+            <!-- Hidden form for HTMX hx-include to capture all params -->
+            <form id="filter-form">
+                <input type="hidden" name="q" value="{{ search_query }}">
+                <input type="hidden" name="transferability" value="{{ current_transferability }}">
+                <input type="hidden" name="category" value="{{ current_category }}">
+            </form>
+            <!-- Regular form as fallback -->
+            <form id="search-form" method="GET" action="{% url 'books:all' %}">
+                <input type="hidden" name="transferability" value="{{ current_transferability }}">
+                <input type="hidden" name="category" value="{{ current_category }}">
+            </form>
         </div>
-    </header>
-    <!-- Search & Filter Section -->
-    <div class="px-4 py-4 max-w-xl mx-auto">
-        <!-- Search Bar -->
-        <form method="GET"
-              action="{% url 'books:all' %}"
-              class="flex flex-col min-w-40 h-14 w-full mb-4">
-            <div class="flex w-full flex-1 items-stretch rounded-xl h-full shadow-sm">
-                <button type="submit"
-                        class="text-slate-400 flex border-none bg-white items-center justify-center pl-4 rounded-l-xl">
-                    <span class="material-symbols-outlined">search</span>
-                </button>
-                <input name="q"
-                       aria-label="搜尋 ISBN、書名、作者、出版社"
-                       class="form-input flex w-full min-w-0 flex-1 border-none bg-white text-slate-900 focus:ring-0 h-full placeholder:text-slate-400 px-4 rounded-r-xl text-base font-normal"
-                       placeholder="搜尋 ISBN、書名、作者、出版社"
-                       value="{{ search_query }}" />
-            </div>
-            <!-- Retain filters when searching -->
-            {% if current_transferability %}
-                <input type="hidden"
-                       name="transferability"
-                       value="{{ current_transferability }}">
-            {% endif %}
-            {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
-        </form>
-        <!-- Filter Pills -->
-        <div class="flex flex-wrap gap-2 mb-4">
-            <!-- Transferability Filter -->
-            <div class="relative">
-                <select name="transferability"
-                        form="filter-form"
-                        onchange="this.form.submit()"
-                        class="appearance-none bg-white border border-slate-200 text-slate-700 text-sm rounded-full px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer">
-                    <option value="" {% if not current_transferability %}selected{% endif %}>全部流通性</option>
-                    <option value="TRANSFER"
-                            {% if current_transferability == 'TRANSFER' %}selected{% endif %}>開放傳遞</option>
-                    <option value="RETURN"
-                            {% if current_transferability == 'RETURN' %}selected{% endif %}>閱畢即還</option>
-                </select>
-                <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">expand_more</span>
-            </div>
-            <!-- Category Filter -->
-            <div class="relative">
-                <select name="category"
-                        form="filter-form"
-                        onchange="this.form.submit()"
-                        class="appearance-none bg-white border border-slate-200 text-slate-700 text-sm rounded-full px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer">
-                    <option value="" {% if not current_category %}selected{% endif %}>全部分類</option>
-                    {% for value, label in categories %}
-                        <option value="{{ value }}"
-                                {% if current_category == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-                <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">expand_more</span>
-            </div>
-        </div>
-        <!-- Hidden Filter Form -->
-        <form id="filter-form" method="GET" action="{% url 'books:all' %}">
-            <input type="hidden" name="q" value="{{ search_query }}">
-            <!-- Note: <select> elements are bound to this form via form="filter-form" attribute -->
-        </form>
+        <!-- Book List + Pagination (HTMX target) -->
+        {% include 'books/partials/book_all_content.html' %}
     </div>
-    <!-- Book List -->
-    <div class="grid grid-cols-1 gap-4 px-4 pb-4 max-w-xl mx-auto">
-        {% for book in page_obj %}
-            {% include 'partials/_book_card_list.html' with book=book %}
-        {% empty %}
-            {% include 'partials/_empty_state.html' with icon='inbox' message='目前沒有符合條件的書籍' %}
-        {% endfor %}
-    </div>
-    <!-- Pagination -->
-    {% if page_obj.has_other_pages %}
-        <div class="flex items-center justify-center gap-2 px-4 py-6 max-w-xl mx-auto">
-            <!-- Previous Page -->
-            {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
-                   class="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
-                    <span class="material-symbols-outlined text-sm">chevron_left</span>
-                </a>
-            {% else %}
-                <span class="flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed">
-                    <span class="material-symbols-outlined text-sm">chevron_left</span>
-                </span>
-            {% endif %}
-            <!-- Page Numbers -->
-            {% for num in page_obj.paginator.page_range %}
-                {% if num == page_obj.number %}
-                    <span class="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white font-semibold text-sm">{{ num }}</span>
-                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                    <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
-                       class="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors font-medium text-sm">{{ num }}</a>
-                {% elif num == 1 or num == page_obj.paginator.num_pages %}
-                    <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
-                       class="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors font-medium text-sm">{{ num }}</a>
-                {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
-                    <span class="flex items-center justify-center w-10 h-10 text-slate-400 text-sm">...</span>
-                {% endif %}
-            {% endfor %}
-            <!-- Next Page -->
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
-                   class="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
-                    <span class="material-symbols-outlined text-sm">chevron_right</span>
-                </a>
-            {% else %}
-                <span class="flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed">
-                    <span class="material-symbols-outlined text-sm">chevron_right</span>
-                </span>
-            {% endif %}
-        </div>
-    {% endif %}
 {% endblock %}

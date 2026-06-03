@@ -1,0 +1,35 @@
+<div id="notification-list-content">
+    {% if page_obj.object_list %}
+        <div class="divide-y divide-slate-100">
+            {% for notification in page_obj %}
+                {% include 'deals/partials/notification_item.html' %}
+            {% endfor %}
+        </div>
+        {% if page_obj.has_other_pages %}
+            <div class="flex justify-center gap-2 py-4">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&tab={{ current_tab }}"
+                       hx-get="?page={{ page_obj.previous_page_number }}&tab={{ current_tab }}"
+                       hx-target="#notification-list-content"
+                       hx-swap="outerHTML transition:true"
+                       hx-indicator="#global-loader"
+                       class="px-3 py-1 text-sm bg-slate-100 rounded-lg hover:bg-slate-200">上一頁</a>
+                {% endif %}
+                <span class="px-3 py-1 text-sm text-slate-500">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&tab={{ current_tab }}"
+                       hx-get="?page={{ page_obj.next_page_number }}&tab={{ current_tab }}"
+                       hx-target="#notification-list-content"
+                       hx-swap="outerHTML transition:true"
+                       hx-indicator="#global-loader"
+                       class="px-3 py-1 text-sm bg-slate-100 rounded-lg hover:bg-slate-200">下一頁</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="flex flex-col items-center justify-center py-16 text-slate-400">
+            <span class="material-symbols-outlined text-6xl mb-4">notifications_off</span>
+            <p>沒有通知</p>
+        </div>
+    {% endif %}
+</div>

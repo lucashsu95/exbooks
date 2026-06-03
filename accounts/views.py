@@ -125,6 +125,12 @@ def public_profile(request, user_id):
         "overdue_count": overdue_count,
         "violation_count": violation_count,
     }
+
+    if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
+        return render(
+            request, "accounts/partials/public_profile_tabs.html", context
+        )
+
     return render(request, "accounts/public_profile.html", context)
 
 

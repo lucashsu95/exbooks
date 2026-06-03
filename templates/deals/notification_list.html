@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}通知中心 - Exbooks{% endblock %}
 {% block content %}
-    <div class="min-h-screen pb-24">
+    <div id="notification-page" class="min-h-screen pb-24">
         <!-- Header -->
         <header class="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200"
                 style="view-transition-name: page-header">
@@ -21,9 +21,14 @@
                 {% endif %}
             </div>
         </header>
-        <!-- Tabs -->
+        <!-- Tabs with HTMX -->
         <div class="border-b border-slate-200 max-w-xl mx-auto">
-            <nav class="flex">
+            <nav class="flex"
+                 hx-boost="true"
+                 hx-target="#notification-list-content"
+                 hx-select="#notification-list-content"
+                 hx-swap="outerHTML transition:0.2s"
+                 hx-push-url="true">
                 <a href="{% url 'deals:notification_list' %}?tab=all"
                    class="px-4 py-3 text-sm font-medium {% if current_tab == 'all' %}text-primary border-b-2 border-primary{% else %}text-slate-500 hover:text-slate-700{% endif %}">
                     全部
@@ -41,35 +46,9 @@
                 </a>
             </nav>
         </div>
-        <!-- Notification List -->
+        <!-- Notification List (HTMX target) -->
         <div class="max-w-xl mx-auto">
-            {% if page_obj.object_list %}
-                <div class="divide-y divide-slate-100-slate-800">
-                    {% for notification in page_obj %}
-                        {% include 'deals/partials/notification_item.html' %}
-                    {% endfor %}
-                </div>
-                <!-- Pagination -->
-                {% if page_obj.has_other_pages %}
-                    <div class="flex justify-center gap-2 py-4">
-                        {% if page_obj.has_previous %}
-                            <a href="?page={{ page_obj.previous_page_number }}&tab={{ current_tab }}"
-                               class="px-3 py-1 text-sm bg-slate-100 rounded-lg hover:bg-slate-200">上一頁</a>
-                        {% endif %}
-                        <span class="px-3 py-1 text-sm text-slate-500">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-                        {% if page_obj.has_next %}
-                            <a href="?page={{ page_obj.next_page_number }}&tab={{ current_tab }}"
-                               class="px-3 py-1 text-sm bg-slate-100 rounded-lg hover:bg-slate-200">下一頁</a>
-                        {% endif %}
-                    </div>
-                {% endif %}
-            {% else %}
-                <!-- Empty State -->
-                <div class="flex flex-col items-center justify-center py-16 text-slate-400">
-                    <span class="material-symbols-outlined text-6xl mb-4">notifications_off</span>
-                    <p>沒有通知</p>
-                </div>
-            {% endif %}
+            {% include 'deals/partials/notification_list_content.html' %}
         </div>
     </div>
 {% endblock %}

@@ -1,0 +1,67 @@
+<div id="book-all-content">
+    <!-- Book List -->
+    <div class="grid grid-cols-1 gap-4 px-4 pb-4 max-w-xl mx-auto">
+        {% for book in page_obj %}
+            {% include 'partials/_book_card_list.html' with book=book %}
+        {% empty %}
+            {% include 'partials/_empty_state.html' with icon='inbox' message='目前沒有符合條件的書籍' %}
+        {% endfor %}
+    </div>
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+        <div class="flex items-center justify-center gap-2 px-4 py-6 max-w-xl mx-auto">
+            <!-- Previous Page -->
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
+                   hx-get="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
+                   hx-target="#book-all-content"
+                   hx-swap="outerHTML transition:true"
+                   hx-indicator="#global-loader"
+                   class="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
+                    <span class="material-symbols-outlined text-sm">chevron_left</span>
+                </a>
+            {% else %}
+                <span class="flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed">
+                    <span class="material-symbols-outlined text-sm">chevron_left</span>
+                </span>
+            {% endif %}
+            <!-- Page Numbers -->
+            {% for num in page_obj.paginator.page_range %}
+                {% if num == page_obj.number %}
+                    <span class="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white font-semibold text-sm">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
+                       hx-get="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
+                       hx-target="#book-all-content"
+                       hx-swap="outerHTML transition:true"
+                       hx-indicator="#global-loader"
+                       class="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors font-medium text-sm">{{ num }}</a>
+                {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                    <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
+                       hx-get="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
+                       hx-target="#book-all-content"
+                       hx-swap="outerHTML transition:true"
+                       hx-indicator="#global-loader"
+                       class="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors font-medium text-sm">{{ num }}</a>
+                {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+                    <span class="flex items-center justify-center w-10 h-10 text-slate-400 text-sm">...</span>
+                {% endif %}
+            {% endfor %}
+            <!-- Next Page -->
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
+                   hx-get="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_transferability %}&transferability={{ current_transferability }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
+                   hx-target="#book-all-content"
+                   hx-swap="outerHTML transition:true"
+                   hx-indicator="#global-loader"
+                   class="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
+                    <span class="material-symbols-outlined text-sm">chevron_right</span>
+                </a>
+            {% else %}
+                <span class="flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed">
+                    <span class="material-symbols-outlined text-sm">chevron_right</span>
+                </span>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
