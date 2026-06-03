@@ -53,8 +53,9 @@ MIGRATION_MODULES = DisableMigrations()
 # Silence logging during tests
 LOGGING = {}
 
-CELERY_TASK_ALWAYS_EAGER = True
-CELERY_TASK_EAGER_PROPAGATES = True
+# Celery 設定已搬至 exbook/celery_config.py，不再從 Django settings 讀取
+# 改透過環境變數傳遞 eager mode，讓 Celery app 初始化時直接讀取
+os.environ["CELERY_TASK_ALWAYS_EAGER"] = "true"
 
 DEFAULT_FILE_STORAGE = "django.core.files.storage.InMemoryStorage"
 STORAGES = {
