@@ -791,9 +791,7 @@ def notification_list(request):
     }
 
     if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
-        return render(
-            request, "deals/partials/notification_list_content.html", context
-        )
+        return render(request, "deals/partials/notification_list_content.html", context)
 
     return render(request, "deals/notification_list.html", context)
 

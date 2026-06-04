@@ -127,9 +127,7 @@ def public_profile(request, user_id):
     }
 
     if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
-        return render(
-            request, "accounts/partials/public_profile_tabs.html", context
-        )
+        return render(request, "accounts/partials/public_profile_tabs.html", context)
 
     return render(request, "accounts/public_profile.html", context)
 
