@@ -1,0 +1,1603 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-14 08:48+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "密碼"
+msgstr "Password"
+
+msgid "登入"
+msgstr "Log In"
+
+msgid "暱稱"
+msgstr "Nickname"
+
+msgid "顯示在平台上的名稱"
+msgstr "Display Name"
+
+msgid "出生日期"
+msgstr "Date of Birth"
+
+msgid "用於年齡驗證（需年滿 18 歲）"
+msgstr "For age verification (must be 18+)"
+
+msgid "再次確認密碼"
+msgstr "Confirm Password"
+
+msgid "你的暱稱"
+msgstr "Your Nickname"
+
+msgid "註冊"
+msgstr "Register"
+
+msgid "預設取書地點"
+msgstr "Default Meetup Location"
+
+msgid "例如：台北市大安區"
+msgstr "e.g., Da'an District, Taipei"
+
+msgid "完成註冊"
+msgstr "Complete Registration"
+
+msgid "儲存並繼續"
+msgstr "Save & Continue"
+
+msgid "輕微"
+msgstr "Minor"
+
+msgid "中等"
+msgstr "Medium"
+
+msgid "嚴重"
+msgstr "Severe"
+
+msgid "警告"
+msgstr "Warning"
+
+msgid "暫時停權"
+msgstr "Temporary Suspension"
+
+msgid "永久停權"
+msgstr "Permanent Ban"
+
+msgid "未依約定面交"
+msgstr "Missed Meetup"
+
+msgid "延遲歸還"
+msgstr "Late Return"
+
+msgid "書況描述不符"
+msgstr "Book Condition Mismatch"
+
+msgid "無正當理由取消"
+msgstr "Unjustified Cancellation"
+
+msgid "詐欺"
+msgstr "Fraud"
+
+msgid "騷擾"
+msgstr "Harassment"
+
+msgid "惡意破壞"
+msgstr "Malicious Damage"
+
+msgid "冒用身份"
+msgstr "Identity Theft"
+
+msgid "其他"
+msgstr "Other"
+
+msgid "違規用戶"
+msgstr "Violating User"
+
+msgid "處分類型"
+msgstr "Penalty Type"
+
+msgid "違規等級"
+msgstr "Violation Level"
+
+msgid "違規行為"
+msgstr "Violation Type"
+
+msgid "違規描述"
+msgstr "Description"
+
+msgid "停權天數"
+msgstr "Suspension Days"
+
+msgid "暫時停權時必填，7-30 天"
+msgstr "Required for temporary suspension, 7-30 days"
+
+msgid "是否生效中"
+msgstr "Active"
+
+msgid "警告永遠生效；停權在期滿或解除後設為 False"
+msgstr "Warning is permanent; suspension set to False after expiry"
+
+msgid "相關申訴"
+msgstr "Related Appeals"
+
+msgid "處分者"
+msgstr "Issued By"
+
+msgid "解除時間"
+msgstr "Unlock Time"
+
+msgid "解除者"
+msgstr "Unlocked By"
+
+msgid "違規處分"
+msgstr "Violation Penalty"
+
+msgid "已提交"
+msgstr "Submitted"
+
+msgid "審核中"
+msgstr "Under Review"
+
+msgid "已通過"
+msgstr "Approved"
+
+msgid "已駁回"
+msgstr "Rejected"
+
+msgid "已結案"
+msgstr "Closed"
+
+msgid "帳號停權申訴"
+msgstr "Account Suspension Appeal"
+
+msgid "評價爭議"
+msgstr "Rating Dispute"
+
+msgid "逾期爭議"
+msgstr "Overdue Dispute"
+
+msgid "申訴人"
+msgstr "Appellant"
+
+msgid "申訴類型"
+msgstr "Appeal Type"
+
+msgid "標題"
+msgstr "Title"
+
+msgid "描述"
+msgstr "Description"
+
+msgid "證據文件"
+msgstr "Evidence Documents"
+
+msgid "狀態"
+msgstr "Status"
+
+msgid "審核備註"
+msgstr "Review Notes"
+
+msgid "審核者"
+msgstr "Reviewed By"
+
+msgid "審核時間"
+msgstr "Review Time"
+
+msgid "申訴"
+msgstr "Appeal"
+
+msgid "開放傳遞"
+msgstr "Open Transfer"
+
+msgid "閱畢即還"
+msgstr "Return After Reading"
+
+msgid "用戶"
+msgstr "User"
+
+msgid "預設流通性"
+msgstr "Default Availability"
+
+msgid "可取書時間"
+msgstr "Available Pickup Times"
+
+msgid "格式: [{\"weekday\": 1, \"start\": \"09:00\", \"end\": \"12:00\"}, ...]"
+msgstr "Format: [{\"weekday\": 1, \"start\": \"09:00\", \"end\": \"12:00\"}, ...]"
+
+msgid "頭像"
+msgstr "Avatar"
+
+msgid "信用積分"
+msgstr "Trust Score"
+
+msgid "用戶的信用積分，根據交易、評價、逾期等計算"
+msgstr "User trust score, calculated from deals, ratings, overdue records"
+
+msgid "成功歸還次數"
+msgstr "Successful Returns"
+
+msgid "逾期次數"
+msgstr "Overdue Count"
+
+msgid "是否停權中"
+msgstr "Is Suspended"
+
+msgid "用戶目前是否處於停權狀態"
+msgstr "Whether the user is currently suspended"
+
+msgid "停權結束時間"
+msgstr "Suspension End Time"
+
+msgid "暫時停權的結束時間，null 表示永久停權"
+msgstr "End time of temporary suspension (null = permanent)"
+
+msgid "停權原因"
+msgstr "Suspension Reason"
+
+msgid "等級保護起始時間"
+msgstr "Level Protection Start"
+
+msgid "記錄用戶積分跌破門檻後，降級保護期開始計時的時間點"
+msgstr ""
+"Timestamp when demotion protection started after score dropped below "
+"threshold"
+
+msgid "啟用推播通知"
+msgstr "Enable Push Notifications"
+
+msgid "關閉後將不會收到瀏覽器 Push 通知"
+msgstr "Browser push notifications will be disabled"
+
+msgid "啟用 Email 通知"
+msgstr "Enable Email Notifications"
+
+msgid "關閉後將不會收到 Email 通知"
+msgstr "Email notifications will be disabled"
+
+msgid "用戶資料"
+msgstr "User Data"
+
+msgid "等級"
+msgstr "Level"
+
+msgid "對應群組名稱"
+msgstr "Corresponding Group Name"
+
+msgid "顯示名稱"
+msgstr "Display Name"
+
+msgid "最低積分門檻"
+msgstr "Minimum Score Threshold"
+
+msgid "最大持書數量"
+msgstr "Max Holding Count"
+
+msgid "最大借閱天數"
+msgstr "Max Borrow Days"
+
+msgid "降級保護週數"
+msgstr "Demotion Protection (Weeks)"
+
+msgid "達到此等級後的保護期限，期間內若積分不足也不會降級"
+msgstr ""
+"Protection period after reaching this level; won't be demoted even if score "
+"drops"
+
+msgid "徽章圖標"
+msgstr "Badge Icon"
+
+msgid "CSS class 或圖片路徑"
+msgstr "CSS class 或圖片路徑"
+
+msgid "信用等級配置"
+msgstr "Trust Level Config"
+
+msgid "批次／手動重算"
+msgstr "Batch / Manual Recalculate"
+
+msgid "收到評價"
+msgstr "Rating Received"
+
+msgid "交易結案"
+msgstr "Deal Closed"
+
+msgid "逾期處理"
+msgstr "Overdue Handling"
+
+msgid "當下積分"
+msgstr "Current Score"
+
+msgid "當下等級（0-3）"
+msgstr "Current Level (0-3)"
+
+msgid "公式版本"
+msgstr "Formula Version"
+
+msgid "來源"
+msgstr "Source"
+
+msgid "摘要指標"
+msgstr "Summary Metrics"
+
+msgid "信用積分稽核"
+msgstr "Trust Score Audit"
+
+msgid "您的年齡未滿 18 歲，依法規限制無法註冊使用本服務"
+msgstr "You must be 18+ to register"
+
+msgid "排序鍵"
+msgstr "Sort Key"
+
+msgid "空白時以顯示名稱小寫排序"
+msgstr "Lowercase display name used when blank"
+
+msgid "作者"
+msgstr "Author"
+
+msgid "分享書籍"
+msgstr "Share Book"
+
+msgid "交易"
+msgstr "Deal"
+
+msgid "面交時拍攝的照片關聯至交易"
+msgstr "Photos taken at meetup are linked to the deal"
+
+msgid "上傳者"
+msgstr "Uploaded By"
+
+msgid "照片"
+msgstr "Photos"
+
+msgid "照片說明"
+msgstr "Photo Description"
+
+msgid "書況照片"
+msgstr "Condition Photos"
+
+msgid "擁有者"
+msgstr "Owner"
+
+msgid "套書名稱"
+msgstr "Book Set Name"
+
+msgid "套書說明"
+msgstr "Description"
+
+msgid "套書"
+msgstr "Book Set"
+
+msgid "小說"
+msgstr "Fiction"
+
+msgid "科技"
+msgstr "Technology"
+
+msgid "藝術"
+msgstr "Art"
+
+msgid "科學"
+msgstr "Science"
+
+msgid "未分類"
+msgstr "Uncategorized"
+
+msgid "ISBN"
+msgstr "ISBN"
+
+msgid "10 碼或 13 碼 ISBN"
+msgstr "10 or 13 digit ISBN"
+
+msgid "書名"
+msgstr "Title"
+
+msgid "出版社"
+msgstr "Publisher"
+
+msgid "分類"
+msgstr "Category"
+
+msgid "封面圖片"
+msgstr "Cover Image"
+
+msgid "書籍簡介"
+msgstr "About This Book"
+
+msgid "出版社（正規化）"
+msgstr "Publisher (Normalized)"
+
+msgid "作者（正規化）"
+msgstr "Author (Normalized)"
+
+msgid "官方書目"
+msgstr "Official Bibliography"
+
+msgid "譯者"
+msgstr "Translator"
+
+msgid "角色"
+msgstr "Role"
+
+msgid "排序"
+msgstr "Sort"
+
+msgid "書目作者關聯"
+msgstr "Book-Author Association"
+
+msgid "名稱"
+msgstr "Name"
+
+msgid "暫不開放"
+msgstr "Not Available"
+
+msgid "可移轉"
+msgstr "Transferable"
+
+msgid "應返還"
+msgstr "Due for Return"
+
+msgid "已被預約"
+msgstr "Reserved"
+
+msgid "借閱中"
+msgstr "Currently Borrowed"
+
+msgid "例外狀況"
+msgstr "Exception"
+
+msgid "已遺失"
+msgstr "Lost"
+
+msgid "已損毀"
+msgstr "Damaged"
+
+msgid "貢獻者"
+msgstr "Contributor"
+
+msgid "持有者"
+msgstr "Holder"
+
+msgid "所屬套書"
+msgstr "Part of Set"
+
+msgid "流通性"
+msgstr "Availability Type"
+
+msgid "書況描述"
+msgstr "Condition Description"
+
+msgid "借閱天數"
+msgstr "Borrow Days"
+
+msgid "最少 15 天，最多 90 天"
+msgstr "Minimum 15 days, maximum 90 days"
+
+msgid "可延長天數"
+msgstr "Allowable Extension Days"
+
+msgid "最少 7 天，最多 30 天"
+msgstr "Minimum 7 days, maximum 30 days"
+
+msgid "最低信用等級"
+msgstr "Minimum Trust Level"
+
+msgid "申請者信用等級需達 0-3，0 表示不限制"
+msgstr "Applicant trust level must be 0-3 (0 = no restriction)"
+
+msgid "上架時間"
+msgstr "Listed Date"
+
+msgid "願望書車"
+msgstr "Wishlist"
+
+msgid "借用交易"
+msgstr "Borrow Deal"
+
+msgid "返還交易"
+msgstr "Return Deal"
+
+msgid "傳遞交易"
+msgstr "Transfer Deal"
+
+msgid "回歸交易"
+msgstr "Return Deal"
+
+msgid "例外處理"
+msgstr "Exception Handling"
+
+msgid "已請求"
+msgstr "Requested"
+
+msgid "已回應"
+msgstr "Responded"
+
+msgid "已面交"
+msgstr "Met Up"
+
+msgid "已完成"
+msgstr "Completed"
+
+msgid "已取消"
+msgstr "Cancelled"
+
+msgid "交易書籍"
+msgstr "Deal Book"
+
+msgid "若為套書交易，關聯至套書"
+msgstr "Link to book set if applicable"
+
+msgid "交易類別"
+msgstr "Deal Type"
+
+msgid "交易狀態"
+msgstr "Deal Status"
+
+msgid "交易前書籍狀態"
+msgstr "Pre-Deal Book Status"
+
+msgid "用於取消交易時恢復書籍狀態（BR-14）"
+msgstr "Used to restore book status when cancelling a deal (BR-14)"
+
+msgid "申請者"
+msgstr "Applicant"
+
+msgid "回應者"
+msgstr "Respondent"
+
+msgid "面交地點"
+msgstr "Meetup Location"
+
+msgid "面交時間"
+msgstr "Meetup Time"
+
+msgid "到期日"
+msgstr "Due Date"
+
+msgid "僅 LN/TF 類型交易需要"
+msgstr "Only required for LN/TF type deals"
+
+msgid "申請者已評價"
+msgstr "Applicant Rated"
+
+msgid "回應者已評價"
+msgstr "Respondent Rated"
+
+msgid "發送者"
+msgstr "Sender"
+
+msgid "訊息內容"
+msgstr "Message Content"
+
+msgid "交易留言"
+msgstr "Deal Messages"
+
+msgid "交易申請"
+msgstr "Deal Request"
+
+msgid "交易接受"
+msgstr "Deal Accepted"
+
+msgid "交易婉拒"
+msgstr "Deal Declined"
+
+msgid "申請者取消"
+msgstr "Cancelled by Applicant"
+
+msgid "競價替代取消（BR-15）"
+msgstr "Bid Replacement Cancellation (BR-15)"
+
+msgid "面交完成"
+msgstr "Meetup Complete"
+
+msgid "持有者變更"
+msgstr "Holder Changed"
+
+msgid "到期排程處理"
+msgstr "Scheduled Overdue Processing"
+
+msgid "確認歸還／上架"
+msgstr "Confirm Return / Re-list"
+
+msgid "交易結案（DONE）"
+msgstr "Deal Closed (DONE)"
+
+msgid "延長申請"
+msgstr "Extension Request"
+
+msgid "延長核准"
+msgstr "Extension Approved"
+
+msgid "延長拒絕"
+msgstr "Extension Denied"
+
+msgid "延長取消"
+msgstr "Extension Cancelled"
+
+msgid "評價送出"
+msgstr "Rating Submitted"
+
+msgid "事件類型"
+msgstr "Event Type"
+
+msgid "操作者"
+msgstr "Operator"
+
+msgid "附加資料"
+msgstr "Attachments"
+
+msgid "交換事件"
+msgstr "Exchange Event"
+
+msgid "待審核"
+msgstr "Pending Review"
+
+msgid "已核准"
+msgstr "Approved"
+
+msgid "已拒絕"
+msgstr "Rejected"
+
+msgid "延長天數"
+msgstr "Extension Days"
+
+msgid "申請狀態"
+msgstr "Application Status"
+
+msgid "收到交易申請"
+msgstr "New Deal Request"
+
+msgid "交易已被回應"
+msgstr "Deal Has Been Responded To"
+
+msgid "交易被取消"
+msgstr "Deal Cancelled"
+
+msgid "面交完成，請評價"
+msgstr "Meetup Complete — Please Rate"
+
+msgid "書籍即將到期"
+msgstr "Book Due Soon"
+
+msgid "書籍已逾期"
+msgstr "Book Overdue"
+
+msgid "願望書籍已可借閱"
+msgstr "Wishlisted book is now available"
+
+msgid "收到延長申請"
+msgstr "New Extension Request"
+
+msgid "延長申請已核准"
+msgstr "Extension Approved"
+
+msgid "延長申請已拒絕"
+msgstr "Extension Denied"
+
+msgid "申訴已送出"
+msgstr "Appeal Submitted"
+
+msgid "申訴審核完成"
+msgstr "Appeal Reviewed"
+
+msgid "收到新的評價"
+msgstr "New Rating Received"
+
+msgid "收到違規處分"
+msgstr "Violation Issued"
+
+msgid "申訴狀態更新"
+msgstr "Appeal Status Updated"
+
+msgid "接收者"
+msgstr "Receiver"
+
+msgid "相關交易"
+msgstr "Related Deals"
+
+msgid "相關書籍"
+msgstr "Related Books"
+
+msgid "通知類型"
+msgstr "Notification Type"
+
+msgid "通知標題"
+msgstr "Notification Title"
+
+msgid "通知訊息"
+msgstr "Notification Message"
+
+msgid "是否已讀"
+msgstr "Read"
+
+msgid "通知"
+msgstr "Notifications"
+
+msgid "訂閱端點"
+msgstr "Subscription Endpoint"
+
+msgid "Push 服務的唯一端點 URL"
+msgstr "Push Service Endpoint URL"
+
+msgid "p256dh 金鑰"
+msgstr "p256dh Key"
+
+msgid "用戶端的公開金鑰（ECDH P-256）"
+msgstr "Client Public Key (ECDH P-256)"
+
+msgid "auth 金鑰"
+msgstr "auth Key"
+
+msgid "認證金鑰（16 bytes base64 編碼）"
+msgstr "Auth Key (16 bytes base64 encoded)"
+
+msgid "User Agent"
+msgstr "User Agent"
+
+msgid "瀏覽器識別資訊"
+msgstr "Browser User Agent"
+
+msgid "是否啟用"
+msgstr "Enabled"
+
+msgid "停用後將不會收到 Push 通知"
+msgstr "Push notifications will be disabled"
+
+msgid "Push 訂閱"
+msgstr "Push Subscription"
+
+msgid "VAPID 公開金鑰"
+msgstr "VAPID Public Key"
+
+msgid "用於前端註冊 Push 訂閱"
+msgstr "Used for frontend Push subscription registration"
+
+msgid "VAPID 私有金鑰"
+msgstr "VAPID Private Key"
+
+msgid "用於後端發送 Push 通知（請勿洩漏）"
+msgstr "Used for backend Push notifications (do not leak)"
+
+msgid "主體"
+msgstr "Body"
+
+msgid "聯絡信箱或網站 URL（mailto: 或 https://）"
+msgstr "Contact email or website URL (mailto: or https://)"
+
+msgid "Web Push 設定"
+msgstr "Web Push Settings"
+
+msgid "評價者"
+msgstr "Rater"
+
+msgid "被評價者"
+msgstr "Rated User"
+
+msgid "友善評分"
+msgstr "Friendliness Score"
+
+msgid "準時評分"
+msgstr "Punctuality Score"
+
+msgid "書況準確度評分"
+msgstr "Condition Accuracy Score"
+
+msgid "評語"
+msgstr "Comment"
+
+msgid "評價"
+msgstr "Rating"
+
+msgid "繁體中文"
+msgstr "Traditional Chinese"
+
+msgid "English"
+msgstr "English"
+
+msgid "首頁"
+msgstr "Home"
+
+msgid "書架"
+msgstr "Bookshelf"
+
+msgid "個人"
+msgstr "Personal"
+
+msgid "關閉選單"
+msgstr "Close Menu"
+
+msgid "主選單"
+msgstr "Main Menu"
+
+msgid "選單"
+msgstr "Menu"
+
+msgid "使用者資訊"
+msgstr "User Info"
+
+#, python-format
+msgid "%(nickname)s 的頭像"
+msgstr "%(nickname)s's Avatar"
+
+#, python-format
+msgid "%(nickname)s 的 Google 頭像"
+msgstr "%(nickname)s's Google Avatar"
+
+msgid "我的書架"
+msgstr "My Bookshelf"
+
+msgid "通知中心"
+msgstr "Notification Center"
+
+msgid "交易紀錄"
+msgstr "Deal History"
+
+msgid "公開逾期名單"
+msgstr "Public Overdue List"
+
+msgid "設定"
+msgstr "Settings"
+
+msgid "關於與幫助"
+msgstr "About & Help"
+
+msgid "開發中"
+msgstr "Under Development"
+
+msgid "登出"
+msgstr "Log Out"
+
+msgid "登入 / 註冊"
+msgstr "Log In / Register"
+
+msgid "Exbooks 共享書籍 v1.0"
+msgstr "Exbooks 共享書籍 v1.0"
+
+msgid "Confirm Email Address"
+msgstr "Confirm Email Address"
+
+#, python-format
+msgid ""
+"請確認 <span class=\"font-semibold text-slate-900\">%(email)s</span> "
+"是您帳號的電子郵件地址。"
+msgstr ""
+"Please confirm <span class=\"font-semibold text-slate-900\">%(email)s</span>"
+" is your email address."
+
+msgid "Confirm"
+msgstr "Confirm"
+
+#, python-format
+msgid ""
+"此確認連結已過期或無效。請 <a href=\"%(email_url)s\" class=\"text-primary "
+"underline\">重新申請驗證連結</a>。"
+msgstr ""
+"This confirmation link has expired or is invalid. Please <a "
+"href=\"%(email_url)s\" class=\"text-primary underline\">request a new "
+"verification link</a>."
+
+msgid "Sign In"
+msgstr "Sign In"
+
+msgid "Sign Up"
+msgstr "Sign Up"
+
+msgid "Verify Your E-mail Address"
+msgstr "Verify Your E-mail Address"
+
+msgid "我們已寄出一封確認信。請至您的電子信箱點擊連結以完成註冊流程。"
+msgstr ""
+"We've sent a confirmation email. Click the link to complete your "
+"registration."
+
+msgid "Back to Login"
+msgstr "Back to Login"
+
+msgid "Exbooks - 申訴詳情"
+msgstr "Exbooks - 申訴詳情"
+
+msgid "申訴詳情"
+msgstr "Appeal Details"
+
+msgid "審核結果"
+msgstr "Review Result"
+
+#, python-format
+msgid "由 %(email)s 於 %(date)s 審核"
+msgstr "Reviewed by %(email)s on %(date)s"
+
+msgid "取消申訴"
+msgstr "Cancel Appeal"
+
+msgid "Exbooks - 我的申訴"
+msgstr "Exbooks - 我的申訴"
+
+msgid "我的申訴"
+msgstr "My Appeals"
+
+msgid "尚無申訴紀錄"
+msgstr "No appeal records"
+
+msgid "您尚未提交任何申訴"
+msgstr "You haven't submitted any appeals yet"
+
+msgid "提交申訴"
+msgstr "Submit Appeal"
+
+msgid "Exbooks - 個人資料"
+msgstr "Exbooks - 個人資料"
+
+msgid "個人資料"
+msgstr "Profile"
+
+msgid "未設定暱稱"
+msgstr "Nickname Not Set"
+
+msgid "無借閱限制"
+msgstr "No Borrowing Limits"
+
+#, python-format
+msgid "最多借 %(max_books)s 本，最長 %(max_days)s 天"
+msgstr "Max %(max_books)s books, %(max_days)s days"
+
+msgid "活動統計"
+msgstr "Activity Stats"
+
+msgid "貢獻書籍"
+msgstr "Contribute Books"
+
+msgid "借閱次數"
+msgstr "Borrow Count"
+
+msgid "出借次數"
+msgstr "Times Lent"
+
+msgid "交易與信用統計"
+msgstr "Deal & Trust Statistics"
+
+msgid "完成交易"
+msgstr "Complete Deal"
+
+msgid "平均評價"
+msgstr "Average Rating"
+
+msgid "給出評價"
+msgstr "Leave a Rating"
+
+msgid "違規次數"
+msgstr "Violation Count"
+
+msgid "電子信箱"
+msgstr "Email"
+
+msgid "取書地點"
+msgstr "Pickup Location"
+
+msgid "加入時間"
+msgstr "Member Since"
+
+msgid "下載我的資料"
+msgstr "Download My Data"
+
+msgid "今日剩餘 <span id=\"remaining-exports\">--</span> 次"
+msgstr "Remaining today: <span id=\"remaining-exports\">--</span>"
+
+msgid "願望清單"
+msgstr "Wishlist"
+
+msgid "帳號設定"
+msgstr "Account Settings"
+
+msgid "Exbooks - 編輯個人資料"
+msgstr "Exbooks - 編輯個人資料"
+
+msgid "編輯個人資料"
+msgstr "Edit Profile"
+
+msgid "儲存變更"
+msgstr "Save Changes"
+
+msgid "取消"
+msgstr "Cancel"
+
+msgid "Exbooks 共享書籍"
+msgstr "Exbooks 共享書籍"
+
+msgid "Exbooks - 新增書籍"
+msgstr "Exbooks - 新增書籍"
+
+msgid "新增分享書籍"
+msgstr "Add Shared Book"
+
+msgid "查詢中…"
+msgstr "Searching…"
+
+msgid "請稍候"
+msgstr "Please wait…"
+
+msgid "確認新增"
+msgstr "Confirm Add"
+
+msgid "Exbooks - 所有書籍"
+msgstr "Exbooks - 所有書籍"
+
+msgid "返回首頁"
+msgstr "Back to Home"
+
+msgid "所有書籍"
+msgstr "All Books"
+
+msgid "搜尋 ISBN、書名、作者、出版社"
+msgstr "Search ISBN, title, author, publisher"
+
+msgid "全部流通性"
+msgstr "All Availability"
+
+msgid "全部分類"
+msgstr "All Categories"
+
+#, python-format
+msgid "Exbooks - %(title)s"
+msgstr "Exbooks - %(title)s"
+
+msgid "返回"
+msgstr "Back"
+
+msgid "書籍詳情"
+msgstr "Book Details"
+
+msgid "持書人頭像"
+msgstr "Holder Avatar"
+
+msgid "Google 頭像"
+msgstr "Google 頭像"
+
+msgid "目前持有人"
+msgstr "Current Holder"
+
+msgid "查看資料"
+msgstr "View Profile"
+
+msgid "此書籍為套書的一部分，借閱時需整套借出"
+msgstr "This book is part of a set; the entire set must be borrowed together"
+
+msgid "確定要刪除這張照片嗎？"
+msgstr "Are you sure you want to delete this photo?"
+
+msgid "目前尚未上傳書況照片。"
+msgstr "No condition photos uploaded yet."
+
+msgid "申請借用"
+msgstr "Request Borrow"
+
+msgid "申請傳遞"
+msgstr "Request Transfer"
+
+msgid "申請返還"
+msgstr "Request Return"
+
+msgid "申請回歸"
+msgstr "Request Return"
+
+msgid "申請例外處理"
+msgstr "Request Exception"
+
+msgid "目前無法申請交易"
+msgstr "Cannot request a deal at this time"
+
+msgid "編輯書籍資訊"
+msgstr "Edit Book Info"
+
+msgid "新手等級尚無編輯權限"
+msgstr "Beginner level has no edit permissions"
+
+msgid "新手暫無編輯權限"
+msgstr "Beginners cannot edit yet"
+
+#, python-format
+msgid "我想分享這本書給你：%(title)s"
+msgstr "I want to share this book with you: %(title)s"
+
+msgid "已複製分享連結"
+msgstr "Share link copied"
+
+msgid "分享失敗，請手動複製網址"
+msgstr "Share failed, please copy the URL manually"
+
+msgid "Exbooks - 編輯書籍"
+msgstr "Exbooks - 編輯書籍"
+
+msgid "確定要刪除這本書嗎？此操作無法復原。"
+msgstr "Are you sure you want to delete this book? This cannot be undone."
+
+msgid "刪除書籍"
+msgstr "Delete Book"
+
+msgid "Exbooks - 未來感共享體驗"
+msgstr "Exbooks - 未來感共享體驗"
+
+msgid "探索"
+msgstr "Explore"
+
+msgid "新視界"
+msgstr "New Horizon"
+
+msgid "讓知識流動。"
+msgstr "Let Knowledge Flow."
+
+msgid "想看什麼書？"
+msgstr "What book are you looking for?"
+
+msgid "搜尋書籍"
+msgstr "Search Books"
+
+#, python-format
+msgid "%(name)s - Exbooks"
+msgstr "%(name)s — Exbooks"
+
+msgid "編輯"
+msgstr "Edit"
+
+msgid "刪除"
+msgstr "Delete"
+
+#, python-format
+msgid "套書書籍 <span class=\"text-primary ml-1\">(%(count)s)</span>"
+msgstr "Books in Set <span class=\"text-primary ml-1\">(%(count)s)</span>"
+
+msgid "我的套書 - Exbooks"
+msgstr "My Book Sets — Exbooks"
+
+msgid "我的套書"
+msgstr "My Book Sets"
+
+#, python-format
+msgid "%(counter)s 本書籍"
+msgstr "%(counter)s books"
+
+msgid "您還沒有建立任何套書"
+msgstr "No book sets created yet"
+
+msgid "建立套書"
+msgstr "Create Book Set"
+
+msgid "Exbooks - 我的書架"
+msgstr "Exbooks - 我的書架"
+
+msgid "管理套書"
+msgstr "Manage Book Sets"
+
+msgid "目前持有"
+msgstr "Currently Held By"
+
+msgid "我的貢獻"
+msgstr "My Contributions"
+
+msgid "進行中的請求"
+msgstr "Active Requests"
+
+msgid "新手任務"
+msgstr "Beginner Tasks"
+
+msgid "完善個人資料"
+msgstr "Complete Profile"
+
+msgid "前往"
+msgstr "Go"
+
+msgid "上架第一本書"
+msgstr "List Your First Book"
+
+msgid "探索社群好書"
+msgstr "Discover Community Books"
+
+msgid "您目前持有的書籍"
+msgstr "Books You Currently Hold"
+
+msgid "共 "
+msgstr "Total: "
+
+msgid " 本"
+msgstr " volumes"
+
+msgid "目前沒有資料"
+msgstr "No data available"
+
+msgid "您貢獻的書籍"
+msgstr "Books You've Contributed"
+
+msgid "目前持有人："
+msgstr "Current Holder:"
+
+msgid " 筆"
+msgstr " entries"
+
+msgid "狀態："
+msgstr "Status:"
+
+msgid "新增書籍"
+msgstr "Add Book"
+
+msgid "Exbooks - 願望書車"
+msgstr "Exbooks - 願望書車"
+
+msgid "Exbooks 共享書籍 - 讓好書自由流動"
+msgstr "Exbooks — Let Good Books Flow Freely"
+
+msgid "立即加入"
+msgstr "Join Now"
+
+msgid "公益性質的去中心化書籍共享社群"
+msgstr "A non-profit, decentralized book sharing community"
+
+msgid "讓好書"
+msgstr "Let Good Books"
+
+msgid "自由流通"
+msgstr "Free Circulation"
+
+msgid "知識無界限"
+msgstr "Knowledge Without Borders"
+
+msgid "沒有實體圖書館，每一位社員都是圖書管理員。拿出你的閒置藏書，與熱愛閱讀的朋友交換，建立互信的閱讀社群。"
+msgstr ""
+"No physical library — every member is a librarian. Share idle books with "
+"fellow readers and build a trusted reading community."
+
+msgid "開始探索書籍"
+msgstr "Start Exploring Books"
+
+msgid "了解運作機制"
+msgstr "How It Works"
+
+msgid "為什麼選擇 Exbooks？"
+msgstr "Why Exbooks?"
+
+msgid "打破傳統借閱限制，建立以信任為基礎的書籍共享生態系。"
+msgstr ""
+"Breaking traditional borrowing limits to build a trust-based book sharing "
+"ecosystem."
+
+msgid "去中心化管理"
+msgstr "Decentralized Management"
+
+msgid "不再依賴中央圖書館，書籍由擁有者自行保管或在社群間流傳，實現真正的共享經濟。"
+msgstr ""
+"No central library — books are kept by owners or circulate within the "
+"community, enabling true sharing economy."
+
+msgid "雙軌流通模式"
+msgstr "Dual Circulation Model"
+
+msgid "自由設定書籍為「開放傳遞」讓書持續漂流，或「閱畢即還」確保愛書回到身邊。"
+msgstr ""
+"Set books to 'Open Transfer' for ongoing circulation or 'Return After "
+"Reading' to ensure they come back."
+
+msgid "信用評價機制"
+msgstr "Trust & Rating System"
+
+msgid "面交後雙方互評誠信、準時與書況，累積社群信用，確保每一次借閱都令人安心。"
+msgstr ""
+"Rate each other on trust, punctuality, and book condition to build community"
+" credit for worry-free borrowing."
+
+msgid "運作機制"
+msgstr "How It Works"
+
+msgid "簡單四個步驟，開啟你的書籍共享旅程"
+msgstr "Four simple steps to start your book sharing journey"
+
+msgid "上架閒置書籍"
+msgstr "List Idle Books"
+
+msgid "輸入 ISBN 或書名，設定流通方式（開放傳遞/閱畢即還）與可面交時間地點，將愛書分享給社群。"
+msgstr ""
+"Enter ISBN or title, set availability type and meetup details, then share "
+"your book with the community."
+
+msgid "探索與申請"
+msgstr "Discover & Request"
+
+msgid "在平台上尋找感興趣的書籍，發送借閱申請並與書籍目前的持有者確認面交細節。"
+msgstr ""
+"Find books you love, send a borrow request, and arrange a meetup with the "
+"current holder."
+
+msgid "線下面交"
+msgstr "In-Person Meetup"
+
+msgid "雙方在約定的時間地點碰面交書。確認書況無誤後，在平台上點擊「已面交」。"
+msgstr ""
+"Meet at the agreed time and place. Confirm book condition, then tap 'Met Up'"
+" on the platform."
+
+msgid "雙向評價"
+msgstr "Two-Way Rating"
+
+msgid "針對此次交易的友善度、準時度與書況準確度給予評價，共同維護高品質的共享環境。"
+msgstr ""
+"Rate friendliness, punctuality, and condition accuracy to maintain a high-"
+"quality sharing environment."
+
+msgid "準備好開始您的閱讀旅程了嗎？"
+msgstr "Ready to start your reading journey?"
+
+msgid "加入我們，讓閒置的書籍發揮最大價值，遇見更多同樣熱愛閱讀的朋友。"
+msgstr "Join us — give idle books new life and meet fellow book lovers."
+
+msgid "立即免費註冊"
+msgstr "Register Free Now"
+
+msgid "Exbooks - 申請交易"
+msgstr "Exbooks - 申請交易"
+
+msgid "申請交易"
+msgstr "Request Deal"
+
+msgid "持書人"
+msgstr "Book Holder"
+
+msgid "交易類型"
+msgstr "Deal Type"
+
+msgid "借用交易 (LN)"
+msgstr "Borrow Deal (LN)"
+
+msgid "借閱書籍，閱畢後歸還給持書人"
+msgstr "Borrow a book, return to holder after reading"
+
+msgid "傳遞交易 (TF)"
+msgstr "Transfer Deal (TF)"
+
+msgid "書籍傳遞給下一位讀者"
+msgstr "Book Passed to Next Reader"
+
+msgid "返還交易 (RS)"
+msgstr "Return Deal (RS)"
+
+msgid "歸還書籍給貢獻者"
+msgstr "Return Book to Owner"
+
+msgid "回歸交易 (RG)"
+msgstr "Return Deal (RG)"
+
+msgid "貢獻者取回書籍"
+msgstr "Owner Retrieved Book"
+
+msgid "例外處理 (EX)"
+msgstr "Exception Handling (EX)"
+
+msgid "書籍遺失、損毀或尋獲"
+msgstr "Book Lost, Damaged, or Found"
+
+#, python-format
+msgid "預計借閱天數：%(days)s 天"
+msgstr "Expected borrow duration: %(days)s days"
+
+msgid "申請資訊"
+msgstr "Application Info"
+
+msgid "申請須知"
+msgstr "Application Guidelines"
+
+msgid "提交申請後，持書人將收到通知"
+msgstr "The book holder will be notified after you submit"
+
+msgid "對方接受後，您可與持書人協商面交時間地點"
+msgstr "After acceptance, you can arrange meetup with the holder"
+
+msgid "面交時請確認書況，並在系統中完成確認"
+msgstr "Check book condition at meetup, then confirm in the system"
+
+msgid "送出申請"
+msgstr "Submit Request"
+
+msgid "Exbooks - 交易詳情"
+msgstr "Exbooks - 交易詳情"
+
+msgid "返回交易列表"
+msgstr "Back to Deal List"
+
+msgid "交易詳情"
+msgstr "Deal Details"
+
+msgid "交易狀態進度"
+msgstr "Deal Status Progress"
+
+msgid "完成交易進度"
+msgstr "Deal Progress"
+
+msgid "雙方完成互評"
+msgstr "Both Parties Have Rated"
+
+msgid "主人確認歸還書籍"
+msgstr "Owner Confirmed Return"
+
+msgid "提示：即便對方尚未評價，主人仍可先點擊下方「確認歸還」。"
+msgstr "Note: You can confirm return even if the other party hasn't rated yet"
+
+#, python-format
+msgid "建立於 %(date)s"
+msgstr "Created %(date)s"
+
+msgid "查看書籍詳情"
+msgstr "View Book Details"
+
+msgid "交易夥伴"
+msgstr "Deal Partner"
+
+msgid "歷史留言紀錄"
+msgstr "Message History"
+
+msgid "留言溝通"
+msgstr "Send a Message"
+
+msgid "輸入訊息"
+msgstr "Type a message…"
+
+msgid "想跟對方說什麼？"
+msgstr "Any message for the other party?"
+
+msgid "發送訊息"
+msgstr "Send Message"
+
+msgid "延期申請紀錄"
+msgstr "Extension Request History"
+
+msgid "新增申請"
+msgstr "New Request"
+
+msgid "接受申請"
+msgstr "Accept Request"
+
+msgid "婉拒"
+msgstr "Decline"
+
+msgid "取消借閱申請"
+msgstr "Cancel Borrow Request"
+
+msgid "確認面交完成？\\\\n\\\\n確認後交易將進入「已面交」狀態，雙方可以開始互評。"
+msgstr ""
+"Confirm meetup complete?\\n\\nThe deal will enter 'Met Up' status and both "
+"parties can start rating."
+
+msgid "確認面交完成"
+msgstr "Confirm Meetup Complete"
+
+msgid "確認歸還並重新上架"
+msgstr "Confirm Return & Re-list"
+
+msgid "注意：雙方尚未完成互評。如果您已收到書籍，可以強制確認歸還，但這將無法獲得完整的信用積分。確定要繼續嗎？"
+msgstr ""
+"Note: Both parties haven't rated yet. You can force-confirm return, but "
+"won't receive full trust score. Continue?"
+
+msgid "強制確認歸還"
+msgstr "Force Confirm Return"
+
+msgid "提示：待雙方評價完成後，主按鈕才會開啟"
+msgstr "Note: The main button will unlock after both parties have rated"
+
+msgid "等待收書方確認歸還或雙方先完成互評"
+msgstr ""
+"Awaiting the borrower to confirm return or both parties to rate each other"
+
+msgid "上傳照片"
+msgstr "Upload Photos"
+
+msgid "前往評價"
+msgstr "Go to Rating"
+
+msgid "Exbooks - 交易管理"
+msgstr "Exbooks - 交易管理"
+
+msgid "交易管理"
+msgstr "Deal Management"
+
+msgid "待回應"
+msgstr "Pending Response"
+
+msgid "待對方回應"
+msgstr "Awaiting Response"
+
+msgid "待面交"
+msgstr "Pending Meetup"
+
+msgid "待評價"
+msgstr "Pending Rating"
+
+msgid "歷史"
+msgstr "History"
+
+#, python-format
+msgid "有 %(count)s 本書籍收到多筆申請，建議檢視後一併處理"
+msgstr ""
+"%(count)s books have multiple requests — review and process them together"
+
+msgid "需要您處理的申請"
+msgstr "Pending Your Response"
+
+#, python-format
+msgid "%(count)s 筆"
+msgstr "%(count)s entries"
+
+msgid "同一本書的多筆申請"
+msgstr "Multiple applications for the same book"
+
+msgid "目前沒有待處理的交易"
+msgstr "No pending deals"
+
+msgid "您還沒有待對方回應的交易申請"
+msgstr "No pending deal requests"
+
+msgid "目前沒有約定面交的交易"
+msgstr "No scheduled meetups"
+
+msgid "目前沒有待評價的交易"
+msgstr "No deals awaiting rating"
+
+msgid "您還沒有已完成的交易記錄"
+msgstr "No completed deals yet"
+
+#, python-format
+msgid "擁有者：%(owner)s"
+msgstr "Owner: %(owner)s"
+
+msgid "請修正以下錯誤："
+msgstr "Please correct the following errors:"
+
+msgid "預設封面"
+msgstr "Default Cover"
+
+msgid "未知"
+msgstr "Unknown"
+
+msgid "帳號已禁用"
+msgstr "Account Disabled"
+
+msgid "限制中"
+msgstr "Restricted"
+
+msgid "部分功能受限"
+msgstr "Some Features Restricted"
+
+msgid "新手"
+msgstr "Beginner"
+
+msgid "一般"
+msgstr "General"
+
+msgid "可信"
+msgstr "Trustworthy"
+
+msgid "優良"
+msgstr "Excellent"
+
+msgid "Social Network Login Failure"
+msgstr "Social Network Login Failure"
+
+msgid ""
+"An error occurred while attempting to login via your social network account."
+msgstr ""
+"An error occurred while attempting to login via your social network account."
+
+msgid "Login Cancelled"
+msgstr "Login Cancelled"
+
+msgid "You decided to cancel logging in with your social network account."
+msgstr "You decided to cancel logging in with your social network account."
