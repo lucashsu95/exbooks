@@ -1,5 +1,8 @@
+import logging
 from typing import List, Dict, Any
 from django.core.cache import cache
+
+logger = logging.getLogger(__name__)
 
 
 class ConversationCache:
@@ -24,6 +27,13 @@ class ConversationCache:
         """Retrieve conversation history for a user."""
         key = cls._get_key(user_id)
         history = cache.get(key)
+        if history is None:
+            logger.debug("conversation cache miss", extra={"user_id": str(user_id)})
+        else:
+            logger.debug(
+                "conversation cache hit",
+                extra={"user_id": str(user_id), "msg_count": len(history)},
+            )
         return history if history is not None else []
 
     @classmethod
@@ -45,3 +55,4 @@ class ConversationCache:
         """Clear conversation history for a user."""
         key = cls._get_key(user_id)
         cache.delete(key)
+        logger.info("conversation history cleared", extra={"user_id": str(user_id)})

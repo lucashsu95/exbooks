@@ -1,6 +1,9 @@
+import logging
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Any, Callable, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class ConsentRequirement(Enum):
@@ -46,6 +49,7 @@ class ToolRegistry:
                 func=func,
                 consent=consent,
             )
+            logger.debug("tool registered", extra={"tool_name": name})
             return func
 
         return decorator
