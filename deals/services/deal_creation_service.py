@@ -4,6 +4,7 @@
 遵循單一職責原則，將交易建立邏輯從龐大的 deal_service.py 中分離出來。
 """
 
+import logging
 from typing import Optional, Tuple
 from django.db import transaction
 
@@ -19,6 +20,7 @@ from core.constants import (
 )
 from core.exceptions import ValidationError as CoreValidationError, PermissionError
 
+logger = logging.getLogger(__name__)
 
 # ============================================================================
 # 配置常數（從原 deal_service.py 移動過來）
@@ -352,6 +354,16 @@ class DealCreationService:
             metadata={"deal_type": deal_type},
         )
 
+        logger.info(
+            "deal created via DealCreationService",
+            extra={
+                "deal_id": deal.id,
+                "deal_type": deal_type,
+                "applicant_id": applicant.id,
+                "responder_id": responder.id,
+                "book_id": shared_book.id,
+            },
+        )
         return deal
 
     @staticmethod

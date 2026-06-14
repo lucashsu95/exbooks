@@ -2,6 +2,7 @@
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from books.models import SharedBook
 from core.models import BaseModel
@@ -14,27 +15,27 @@ class ExchangeEvent(BaseModel):
     """
 
     class EventType(models.TextChoices):
-        DEAL_REQUESTED = "deal_requested", "交易申請"
-        DEAL_ACCEPTED = "deal_accepted", "交易接受"
-        DEAL_DECLINED = "deal_declined", "交易婉拒"
-        DEAL_CANCELLED_REQUEST = "deal_cancelled_request", "申請者取消"
-        DEAL_SUPERSEDED = "deal_superseded", "競價替代取消（BR-15）"
-        DEAL_MEETING_COMPLETED = "deal_meeting_completed", "面交完成"
-        KEEPER_CHANGED = "keeper_changed", "持有者變更"
-        BOOK_OVERDUE_PROCESSED = "book_overdue_processed", "到期排程處理"
-        DEAL_CONFIRM_RETURN = "deal_confirm_return", "確認歸還／上架"
-        DEAL_COMPLETED = "deal_completed", "交易結案（DONE）"
-        EXTENSION_REQUESTED = "extension_requested", "延長申請"
-        EXTENSION_APPROVED = "extension_approved", "延長核准"
-        EXTENSION_REJECTED = "extension_rejected", "延長拒絕"
-        EXTENSION_CANCELLED = "extension_cancelled", "延長取消"
-        RATING_SUBMITTED = "rating_submitted", "評價送出"
+        DEAL_REQUESTED = "deal_requested", _("交易申請")
+        DEAL_ACCEPTED = "deal_accepted", _("交易接受")
+        DEAL_DECLINED = "deal_declined", _("交易婉拒")
+        DEAL_CANCELLED_REQUEST = "deal_cancelled_request", _("申請者取消")
+        DEAL_SUPERSEDED = "deal_superseded", _("競價替代取消（BR-15）")
+        DEAL_MEETING_COMPLETED = "deal_meeting_completed", _("面交完成")
+        KEEPER_CHANGED = "keeper_changed", _("持有者變更")
+        BOOK_OVERDUE_PROCESSED = "book_overdue_processed", _("到期排程處理")
+        DEAL_CONFIRM_RETURN = "deal_confirm_return", _("確認歸還／上架")
+        DEAL_COMPLETED = "deal_completed", _("交易結案（DONE）")
+        EXTENSION_REQUESTED = "extension_requested", _("延長申請")
+        EXTENSION_APPROVED = "extension_approved", _("延長核准")
+        EXTENSION_REJECTED = "extension_rejected", _("延長拒絕")
+        EXTENSION_CANCELLED = "extension_cancelled", _("延長取消")
+        RATING_SUBMITTED = "rating_submitted", _("評價送出")
 
     shared_book = models.ForeignKey(
         SharedBook,
         on_delete=models.CASCADE,
         related_name="exchange_events",
-        verbose_name="分享書籍",
+        verbose_name=_("分享書籍"),
     )
     deal = models.ForeignKey(
         "deals.Deal",
@@ -42,12 +43,12 @@ class ExchangeEvent(BaseModel):
         null=True,
         blank=True,
         related_name="exchange_events",
-        verbose_name="交易",
+        verbose_name=_("交易"),
     )
     event_type = models.CharField(
         max_length=40,
         choices=EventType.choices,
-        verbose_name="事件類型",
+        verbose_name=_("事件類型"),
         db_index=True,
     )
     actor = models.ForeignKey(
@@ -56,18 +57,18 @@ class ExchangeEvent(BaseModel):
         null=True,
         blank=True,
         related_name="exchange_events",
-        verbose_name="操作者",
+        verbose_name=_("操作者"),
     )
     metadata = models.JSONField(
         default=dict,
         blank=True,
-        verbose_name="附加資料",
+        verbose_name=_("附加資料"),
     )
 
     class Meta:
         db_table = "exbook_exchange_event"
-        verbose_name = "交換事件"
-        verbose_name_plural = "交換事件"
+        verbose_name = _("交換事件")
+        verbose_name_plural = _("交換事件")
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["shared_book", "-created_at"]),

@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.models import BaseModel
 
@@ -14,20 +15,20 @@ class DealMessage(BaseModel):
         "deals.Deal",
         on_delete=models.CASCADE,
         related_name="messages",
-        verbose_name="交易",
+        verbose_name=_("交易"),
     )
     sender = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name="sent_deal_messages",
-        verbose_name="發送者",
+        verbose_name=_("發送者"),
     )
-    content = models.TextField(verbose_name="訊息內容")
+    content = models.TextField(verbose_name=_("訊息內容"))
 
     class Meta:
         db_table = "exbook_deal_message"
-        verbose_name = "交易留言"
-        verbose_name_plural = "交易留言"
+        verbose_name = _("交易留言")
+        verbose_name_plural = _("交易留言")
         ordering = ["created_at"]
 
     def __str__(self):

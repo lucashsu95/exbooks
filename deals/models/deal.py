@@ -1,9 +1,14 @@
+import logging
+
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from django_fsm import FSMField, FSMModelMixin, transition
 
 from books.models.shared_book import SharedBook
 from core.models import UpdatableModel
+
+logger = logging.getLogger(__name__)
 
 
 class Deal(FSMModelMixin, UpdatableModel):
@@ -13,24 +18,24 @@ class Deal(FSMModelMixin, UpdatableModel):
     """
 
     class DealType(models.TextChoices):
-        LOAN = "LN", "借用交易"
-        RESTORE = "RS", "返還交易"
-        TRANSFER = "TF", "傳遞交易"
-        REGRESS = "RG", "回歸交易"
-        EXCEPT = "EX", "例外處理"
+        LOAN = "LN", _("借用交易")
+        RESTORE = "RS", _("返還交易")
+        TRANSFER = "TF", _("傳遞交易")
+        REGRESS = "RG", _("回歸交易")
+        EXCEPT = "EX", _("例外處理")
 
     class Status(models.TextChoices):
-        REQUESTED = "Q", "已請求"
-        RESPONDED = "P", "已回應"
-        MEETED = "M", "已面交"
-        DONE = "D", "已完成"
-        CANCELLED = "X", "已取消"
+        REQUESTED = "Q", _("已請求")
+        RESPONDED = "P", _("已回應")
+        MEETED = "M", _("已面交")
+        DONE = "D", _("已完成")
+        CANCELLED = "X", _("已取消")
 
     shared_book = models.ForeignKey(
         "books.SharedBook",
         on_delete=models.PROTECT,
         related_name="deals",
-        verbose_name="交易書籍",
+        verbose_name=_("交易書籍"),
     )
     book_set = models.ForeignKey(
         "books.BookSet",
@@ -38,69 +43,69 @@ class Deal(FSMModelMixin, UpdatableModel):
         null=True,
         blank=True,
         related_name="deals",
-        verbose_name="套書",
-        help_text="若為套書交易，關聯至套書",
+        verbose_name=_("套書"),
+        help_text=_("若為套書交易，關聯至套書"),
     )
     deal_type = models.CharField(
         max_length=2,
         choices=DealType.choices,
-        verbose_name="交易類別",
+        verbose_name=_("交易類別"),
     )
     status = FSMField(
         max_length=1,
         choices=Status.choices,
         default=Status.REQUESTED,
-        verbose_name="交易狀態",
+        verbose_name=_("交易狀態"),
         protected=True,  # 禁止直接賦值
     )
     previous_book_status = models.CharField(
         max_length=1,
         choices=SharedBook.Status.choices,
         blank=True,
-        verbose_name="交易前書籍狀態",
-        help_text="用於取消交易時恢復書籍狀態（BR-14）",
+        verbose_name=_("交易前書籍狀態"),
+        help_text=_("用於取消交易時恢復書籍狀態（BR-14）"),
     )
     applicant = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name="applied_deals",
-        verbose_name="申請者",
+        verbose_name=_("申請者"),
     )
     responder = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name="responded_deals",
-        verbose_name="回應者",
+        verbose_name=_("回應者"),
     )
     meeting_location = models.CharField(
         max_length=200,
         blank=True,
-        verbose_name="面交地點",
+        verbose_name=_("面交地點"),
     )
     meeting_time = models.DateTimeField(
         null=True,
         blank=True,
-        verbose_name="面交時間",
+        verbose_name=_("面交時間"),
     )
     due_date = models.DateField(
         null=True,
         blank=True,
-        verbose_name="到期日",
-        help_text="僅 LN/TF 類型交易需要",
+        verbose_name=_("到期日"),
+        help_text=_("僅 LN/TF 類型交易需要"),
     )
     applicant_rated = models.BooleanField(
         default=False,
-        verbose_name="申請者已評價",
+        verbose_name=_("申請者已評價"),
     )
     responder_rated = models.BooleanField(
         default=False,
-        verbose_name="回應者已評價",
+        verbose_name=_("回應者已評價"),
     )
 
     class Meta:
         db_table = "exbook_deal"
-        verbose_name = "交易"
-        verbose_name_plural = "交易"
+        verbose_name = _("交易")
+        verbose_name_plural = _("交易")
         indexes = [
             models.Index(fields=["applicant", "status"]),
             models.Index(fields=["responder", "status"]),
@@ -130,6 +135,12 @@ class Deal(FSMModelMixin, UpdatableModel):
         - BR-15: 拒絕同一本書的其他申請
         - 更新共享書狀態為 RESERVED（預約中）
         """
+        logger.info("FSM transition", extra={
+            "model": self.__class__.__name__,
+            "pk": str(self.pk),
+            "from": self.status,
+            "to": Deal.Status.RESPONDED,
+        })
         shared_book = self.shared_book
 
         # BR-15: 拒絕同一本書的其他申請
@@ -163,7 +174,12 @@ class Deal(FSMModelMixin, UpdatableModel):
         副作用（由 signal 處理）：
         - 發送拒絕通知
         """
-        pass
+        logger.info("FSM transition", extra={
+            "model": self.__class__.__name__,
+            "pk": str(self.pk),
+            "from": self.status,
+            "to": Deal.Status.CANCELLED,
+        })
 
     @transition(
         field=status,
@@ -178,6 +194,12 @@ class Deal(FSMModelMixin, UpdatableModel):
         副作用：
         - BR-14: 恢復書籍狀態
         """
+        logger.info("FSM transition", extra={
+            "model": self.__class__.__name__,
+            "pk": str(self.pk),
+            "from": self.status,
+            "to": Deal.Status.CANCELLED,
+        })
         from django.utils import timezone
         from books.models.shared_book import SharedBook
 
@@ -202,6 +224,12 @@ class Deal(FSMModelMixin, UpdatableModel):
         - 書籍狀態依交易類別轉移
         - 重新計算到期日
         """
+        logger.info("FSM transition", extra={
+            "model": self.__class__.__name__,
+            "pk": str(self.pk),
+            "from": self.status,
+            "to": Deal.Status.MEETED,
+        })
         from datetime import timedelta
         from django.utils import timezone
 
@@ -258,7 +286,12 @@ class Deal(FSMModelMixin, UpdatableModel):
         - 更新信用等級
         - 發送完成通知
         """
-        pass
+        logger.info("FSM transition", extra={
+            "model": self.__class__.__name__,
+            "pk": str(self.pk),
+            "from": self.status,
+            "to": Deal.Status.DONE,
+        })
 
     @transition(
         field=status,
@@ -271,7 +304,12 @@ class Deal(FSMModelMixin, UpdatableModel):
 
         狀態轉換：REQUESTED/RESPONDED/MEETED → DONE
         """
-        pass
+        logger.info("FSM transition", extra={
+            "model": self.__class__.__name__,
+            "pk": str(self.pk),
+            "from": self.status,
+            "to": Deal.Status.DONE,
+        })
 
     @transition(
         field=status,
@@ -285,6 +323,12 @@ class Deal(FSMModelMixin, UpdatableModel):
         狀態轉換：REQUESTED/RESPONDED/MEETED → CANCELLED
         副作用：根據來源狀態恢復書籍狀態
         """
+        logger.info("FSM transition", extra={
+            "model": self.__class__.__name__,
+            "pk": str(self.pk),
+            "from": self.status,
+            "to": Deal.Status.CANCELLED,
+        })
         if self.status in [self.Status.REQUESTED, self.Status.RESPONDED]:
             shared_book = self.shared_book
             if self.previous_book_status:

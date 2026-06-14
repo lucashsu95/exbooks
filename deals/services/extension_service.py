@@ -4,6 +4,7 @@
 此模組封裝 LoanExtension 的狀態轉換邏輯，使用 django-fSM。
 """
 
+import logging
 from datetime import timedelta
 
 from django.core.exceptions import ValidationError
@@ -17,6 +18,8 @@ from deals.services.notification_service import (
     notify_extend_requested,
     notify_extend_result,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def request_extension(deal, applicant, extra_days):
@@ -55,6 +58,15 @@ def request_extension(deal, applicant, extra_days):
         metadata={"extra_days": extra_days},
     )
 
+    logger.info(
+        "extension requested",
+        extra={
+            "extension_id": extension.id,
+            "deal_id": deal.id,
+            "applicant_id": applicant.id,
+            "extra_days": extra_days,
+        },
+    )
     return extension
 
 
@@ -113,6 +125,16 @@ def approve_extension(extension, reviewer):
         },
     )
 
+    logger.info(
+        "extension approved",
+        extra={
+            "extension_id": extension.id,
+            "deal_id": deal.id,
+            "reviewer_id": reviewer.id,
+            "extra_days": extension.extra_days,
+        },
+    )
+
 
 def reject_extension(extension, reviewer):
     """
@@ -148,6 +170,15 @@ def reject_extension(extension, reviewer):
         metadata={"extra_days": extension.extra_days},
     )
 
+    logger.info(
+        "extension rejected",
+        extra={
+            "extension_id": extension.id,
+            "deal_id": deal.id,
+            "reviewer_id": reviewer.id,
+        },
+    )
+
 
 def cancel_extension(extension, applicant):
     """
@@ -176,4 +207,13 @@ def cancel_extension(extension, applicant):
         deal=deal,
         actor=applicant,
         metadata={"extra_days": extension.extra_days},
+    )
+
+    logger.info(
+        "extension cancelled",
+        extra={
+            "extension_id": extension.id,
+            "deal_id": deal.id,
+            "applicant_id": applicant.id,
+        },
     )

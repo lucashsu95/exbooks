@@ -8,8 +8,12 @@
 - 失敗：{"success": false, "error": {"code": "...", "message": "..."}}
 """
 
+import logging
+
 from django.http import JsonResponse
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 
 def api_success(
@@ -33,6 +37,11 @@ def api_success(
         response["data"] = data
     if message is not None:
         response["message"] = message
+
+    logger.debug(
+        "api_success response",
+        extra={"status": status, "has_data": data is not None},
+    )
     return JsonResponse(response, status=status)
 
 
@@ -60,6 +69,10 @@ def api_error(
     if details is not None:
         error["details"] = details
 
+    logger.debug(
+        "api_error response",
+        extra={"status": status, "code": code, "message": message},
+    )
     return JsonResponse(
         {"success": False, "error": error},
         status=status,

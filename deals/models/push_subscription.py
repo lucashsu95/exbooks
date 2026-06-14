@@ -6,6 +6,7 @@ Web Push 訂閱模型。
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.models import BaseModel
 
@@ -21,39 +22,39 @@ class PushSubscription(BaseModel):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="push_subscriptions",
-        verbose_name="用戶",
+        verbose_name=_("用戶"),
     )
     endpoint = models.URLField(
         max_length=500,
-        verbose_name="訂閱端點",
-        help_text="Push 服務的唯一端點 URL",
+        verbose_name=_("訂閱端點"),
+        help_text=_("Push 服務的唯一端點 URL"),
     )
     p256dh = models.CharField(
         max_length=100,
-        verbose_name="p256dh 金鑰",
-        help_text="用戶端的公開金鑰（ECDH P-256）",
+        verbose_name=_("p256dh 金鑰"),
+        help_text=_("用戶端的公開金鑰（ECDH P-256）"),
     )
     auth = models.CharField(
         max_length=30,
-        verbose_name="auth 金鑰",
-        help_text="認證金鑰（16 bytes base64 編碼）",
+        verbose_name=_("auth 金鑰"),
+        help_text=_("認證金鑰（16 bytes base64 編碼）"),
     )
     user_agent = models.CharField(
         max_length=500,
         blank=True,
-        verbose_name="User Agent",
-        help_text="瀏覽器識別資訊",
+        verbose_name=_("User Agent"),
+        help_text=_("瀏覽器識別資訊"),
     )
     is_active = models.BooleanField(
         default=True,
-        verbose_name="是否啟用",
-        help_text="停用後將不會收到 Push 通知",
+        verbose_name=_("是否啟用"),
+        help_text=_("停用後將不會收到 Push 通知"),
     )
 
     class Meta:
         db_table = "exbook_push_subscription"
-        verbose_name = "Push 訂閱"
-        verbose_name_plural = "Push 訂閱"
+        verbose_name = _("Push 訂閱")
+        verbose_name_plural = _("Push 訂閱")
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["user", "is_active"]),
@@ -93,24 +94,24 @@ class WebPushConfig(BaseModel):
 
     vapid_public_key = models.CharField(
         max_length=100,
-        verbose_name="VAPID 公開金鑰",
-        help_text="用於前端註冊 Push 訂閱",
+        verbose_name=_("VAPID 公開金鑰"),
+        help_text=_("用於前端註冊 Push 訂閱"),
     )
     vapid_private_key = models.TextField(
-        verbose_name="VAPID 私有金鑰",
-        help_text="用於後端發送 Push 通知（請勿洩漏）",
+        verbose_name=_("VAPID 私有金鑰"),
+        help_text=_("用於後端發送 Push 通知（請勿洩漏）"),
     )
     subject = models.URLField(
         max_length=200,
         blank=True,
-        verbose_name="主體",
-        help_text="聯絡信箱或網站 URL（mailto: 或 https://）",
+        verbose_name=_("主體"),
+        help_text=_("聯絡信箱或網站 URL（mailto: 或 https://）"),
     )
 
     class Meta:
         db_table = "exbook_web_push_config"
-        verbose_name = "Web Push 設定"
-        verbose_name_plural = "Web Push 設定"
+        verbose_name = _("Web Push 設定")
+        verbose_name_plural = _("Web Push 設定")
 
     def __str__(self):
         return "Web Push 設定"

@@ -1,8 +1,12 @@
+import logging
+
 from django.utils import timezone
 from datetime import timedelta
 
 
 from deals.models import Deal
+
+logger = logging.getLogger(__name__)
 
 
 def get_overdue_books(days=7):
@@ -25,6 +29,10 @@ def get_overdue_books(days=7):
         due_date__isnull=False,
     ).select_related("shared_book", "applicant")
 
+    logger.debug(
+        "overdue books queried",
+        extra={"days": days, "count": overdue_deals.count()},
+    )
     return overdue_deals
 
 
@@ -51,6 +59,13 @@ def get_public_overdue_info(deal):
     if not nickname:
         nickname = deal.applicant.email.split("@")[0]
 
+    logger.debug(
+        "public overdue info",
+        extra={
+            "deal_id": deal.id,
+            "overdue_days": overdue_days,
+        },
+    )
     return {
         "nickname": nickname,
         "book_title": deal.shared_book.official_book.title,
@@ -100,4 +115,11 @@ def batch_process_due_books() -> dict:
             processed += 1
         except Exception:
             errors += 1
+    logger.info(
+        "batch_process_due_books",
+        extra={
+            "processed": processed,
+            "errors": errors,
+        },
+    )
     return {"processed": processed, "errors": errors}

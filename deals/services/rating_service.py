@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 
 from django.core.exceptions import ValidationError
@@ -7,6 +8,8 @@ from accounts.models import TrustScoreLedger
 from deals.models import Deal, Rating, ExchangeEvent
 from deals.services.exchange_event_service import record_exchange_event
 from deals.services.notification_service import notify_rating_pending
+
+logger = logging.getLogger(__name__)
 
 
 def create_rating(
@@ -87,6 +90,16 @@ def create_rating(
 
     # 僅標記已評價，不在此自動觸發交易完成。
     # 交易完成應由「確認歸還」按鈕觸發（閱畢即還）或手動確認。
+    logger.info(
+        "rating created",
+        extra={
+            "rating_id": rating.id,
+            "deal_id": deal.id,
+            "rater_id": rater.id,
+            "ratee_id": ratee.id,
+            "average_score": rating.average_score,
+        },
+    )
     return rating
 
 
@@ -110,6 +123,11 @@ def process_pending_ratings():
     )
 
     from deals.models import Notification
+
+    logger.info(
+        "process_pending_ratings scanning",
+        extra={"deal_count": deals.count()},
+    )
 
     for deal in deals:
         pending_users = []
@@ -138,3 +156,7 @@ def process_pending_ratings():
 
                 if not already_notified_today:
                     notify_rating_pending(deal=deal, user=user)
+                    logger.debug(
+                        "rating reminder sent",
+                        extra={"deal_id": deal.id, "user_id": user.id},
+                    )

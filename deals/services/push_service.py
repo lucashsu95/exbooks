@@ -48,6 +48,15 @@ def send_push_notification(
     Returns:
         bool: 是否發送成功
     """
+    logger.debug(
+        "send_push_notification",
+        extra={
+            "subscription_id": subscription.id,
+            "user_id": subscription.user_id,
+            "title": title,
+            "notification_type": notification_type,
+        },
+    )
     if not WEBPUSH_AVAILABLE:
         logger.warning("pywebpush 未安裝，跳過 Push 發送")
         return False
@@ -85,22 +94,45 @@ def send_push_notification(
                 or f"mailto:noreply@{settings.SITE_ID}.example.com",
             },
         )
-        logger.info(f"Push 發送成功: {subscription.user} - {title}")
+        logger.info(
+            "Push sent successfully",
+            extra={
+                "subscription_id": subscription.id,
+                "user_id": subscription.user_id,
+                "title": title,
+            },
+        )
         return True
 
     except WebPushException as e:
-        logger.error(f"Push 發送失敗: {e}")
+        logger.exception(
+            "Push send failed",
+            extra={
+                "subscription_id": subscription.id,
+                "user_id": subscription.user_id,
+                "title": title,
+            },
+        )
 
         # 如果是 410 Gone，表示訂閱已失效，停用該訂閱
         if e.response and e.response.status_code == 410:
             subscription.is_active = False
             subscription.save(update_fields=["is_active"])
-            logger.info(f"訂閱已失效，已停用: {subscription.id}")
+            logger.info(
+                "subscription deactivated (410)",
+                extra={"subscription_id": subscription.id},
+            )
 
         return False
 
     except Exception as e:
-        logger.error(f"Push 發送發生未知錯誤: {e}")
+        logger.exception(
+            "Push send unexpected error",
+            extra={
+                "subscription_id": subscription.id,
+                "user_id": subscription.user_id,
+            },
+        )
         return False
 
 
@@ -136,6 +168,15 @@ def send_push_to_user(
         is_active=True,
     )
 
+    logger.debug(
+        "send_push_to_user",
+        extra={
+            "user_id": user.id,
+            "subscriptions": subscriptions.count(),
+            "title": title,
+        },
+    )
+
     success_count = 0
     for subscription in subscriptions:
         if send_push_notification(
@@ -149,6 +190,10 @@ def send_push_to_user(
         ):
             success_count += 1
 
+    logger.debug(
+        "send_push_to_user done",
+        extra={"user_id": user.id, "success_count": success_count},
+    )
     return success_count
 
 

@@ -1,8 +1,11 @@
+import logging
 from datetime import timedelta
 
 from django.utils import timezone
 
 from deals.models import Deal, LoanExtension, Notification
+
+logger = logging.getLogger(__name__)
 
 
 def _resolve_notification_url(deal=None, shared_book=None):
@@ -51,6 +54,16 @@ def notify(
         shared_book=shared_book,
     )
 
+    logger.debug(
+        "notification created",
+        extra={
+            "notification_id": notification.id,
+            "recipient_id": recipient.id,
+            "notification_type": notification_type,
+            "deal_id": deal.id if deal else None,
+        },
+    )
+
     profile = getattr(recipient, "profile", None)
 
     if send_push and (not profile or profile.push_enabled):
@@ -76,6 +89,14 @@ def notify(
             message=message,
         )
 
+    logger.debug(
+        "notification channels dispatched",
+        extra={
+            "notification_id": notification.id,
+            "push": send_push,
+            "email": send_email,
+        },
+    )
     return notification
 
 
@@ -176,6 +197,11 @@ def batch_send_due_reminders(days: int = 3) -> dict:
     skipped = 0
     errors = 0
 
+    logger.info(
+        "batch_send_due_reminders found deals",
+        extra={"count": upcoming_deals.count(), "target_date": str(target_date)},
+    )
+
     for deal in upcoming_deals:
         existing = Notification.objects.filter(
             recipient=deal.applicant,
@@ -190,9 +216,17 @@ def batch_send_due_reminders(days: int = 3) -> dict:
         try:
             notify_book_due_soon(deal)
             sent += 1
-        except Exception:
+        except Exception as e:
+            logger.exception(
+                "batch_send_due_reminders error",
+                extra={"deal_id": deal.id},
+            )
             errors += 1
 
+    logger.info(
+        "batch_send_due_reminders done",
+        extra={"sent": sent, "skipped": skipped, "errors": errors},
+    )
     return {"sent": sent, "skipped": skipped, "errors": errors}
 
 
@@ -261,14 +295,19 @@ def mark_as_read(notification):
     """標記通知為已讀"""
     notification.is_read = True
     notification.save(update_fields=["is_read"])
+    logger.debug("notification marked as read", extra={"notification_id": notification.id})
 
 
 def mark_all_as_read(user):
     """標記使用者所有未讀通知為已讀"""
-    Notification._default_manager.filter(
+    updated = Notification._default_manager.filter(
         recipient=user,
         is_read=False,
     ).update(is_read=True)
+    logger.debug(
+        "all notifications marked as read",
+        extra={"user_id": user.id, "count": updated},
+    )
 
 
 def notify_rating_created(rating):

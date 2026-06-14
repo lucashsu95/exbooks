@@ -10,6 +10,7 @@
 - **分頁與過濾整合**：在單一介面提供高度整合的狀態與類型過濾，提升大數據量下的查詢效率。
 """
 
+import logging
 from typing import Optional, List, Dict, Any
 from django.db import models
 from django.db.models import Q, QuerySet
@@ -21,6 +22,8 @@ from core.constants import PAGE_SIZE_DEFAULT, PAGE_NUMBER_DEFAULT
 from core.exceptions import ValidationError as CoreValidationError
 
 User = get_user_model()
+
+logger = logging.getLogger(__name__)
 
 
 class DealQueryService:
@@ -79,6 +82,17 @@ class DealQueryService:
         total_count = deals.count()
         start_idx = (page - 1) * page_size
         end_idx = start_idx + page_size
+
+        logger.debug(
+            "deals queried for user",
+            extra={
+                "user_id": user.id,
+                "status_filter": status_filter,
+                "deal_type_filter": deal_type_filter,
+                "total_count": total_count,
+                "page": page,
+            },
+        )
 
         return {
             "deals": deals[start_idx:end_idx],
@@ -147,6 +161,10 @@ class DealQueryService:
         Returns:
             進行中借閱交易的 QuerySet
         """
+        logger.debug(
+            "getting active loans for user",
+            extra={"user_id": user.id},
+        )
         return (
             Deal.objects.filter(
                 applicant=user,

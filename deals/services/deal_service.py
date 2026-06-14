@@ -10,6 +10,7 @@ Service 層負責：
 副作用（通知、書籍狀態更新）由 Signal 處理。
 """
 
+import logging
 from datetime import timedelta
 
 from django.core.exceptions import ValidationError
@@ -27,6 +28,8 @@ from deals.services.notification_service import (
     notify_deal_requested,
     notify_book_overdue,
 )
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================================================
@@ -128,6 +131,14 @@ def create_deal(
     Returns:
         Deal: 建立的交易
     """
+    logger.info(
+        "create_deal requested",
+        extra={
+            "applicant_id": applicant.id,
+            "book_id": shared_book.id,
+            "deal_type": deal_type,
+        },
+    )
     # 借閱權限檢查 (Trust Level - Groups)
     if deal_type in (Deal.DealType.LOAN, Deal.DealType.TRANSFER):
         # 檢查是否被限制或封鎖
@@ -256,6 +267,15 @@ def create_deal(
         },
     )
 
+    logger.info(
+        "deal created",
+        extra={
+            "deal_id": deal.id,
+            "deal_type": deal_type,
+            "applicant_id": applicant.id,
+            "responder_id": deal.responder_id,
+        },
+    )
     return deal
 
 
@@ -279,6 +299,7 @@ def accept_deal(deal):
     Raises:
         ValidationError: 如果狀態轉換不允許
     """
+    logger.info("accept_deal", extra={"deal_id": deal.id})
     # 行鎖：確保接受流程原子性，防止併發接受 (Phase 1-4)
     deal = Deal.objects.select_for_update().get(id=deal.id)
     SharedBook.objects.select_for_update().get(id=deal.shared_book_id)
@@ -297,6 +318,7 @@ def accept_deal(deal):
         metadata={"deal_type": deal.deal_type},
     )
 
+    cancelled_count = len(getattr(deal, "_auto_cancelled_deals", []) or [])
     for other in getattr(deal, "_auto_cancelled_deals", []) or []:
         record_exchange_event(
             shared_book=other.shared_book,
@@ -306,6 +328,13 @@ def accept_deal(deal):
             metadata={"superseded_by_deal_id": str(deal.id)},
         )
 
+    logger.debug(
+        "deal accepted",
+        extra={
+            "deal_id": deal.id,
+            "auto_cancelled": cancelled_count,
+        },
+    )
     return deal
 
 
@@ -321,6 +350,7 @@ def decline_deal(deal):
     Raises:
         ValidationError: 如果狀態轉換不允許
     """
+    logger.info("decline_deal", extra={"deal_id": deal.id})
     if not can_proceed(deal.decline):
         raise ValidationError("只有「已請求」狀態的交易可以拒絕")
 
@@ -335,6 +365,7 @@ def decline_deal(deal):
         metadata={"deal_type": deal.deal_type},
     )
 
+    logger.debug("deal declined", extra={"deal_id": deal.id})
     return deal
 
 
@@ -351,6 +382,7 @@ def cancel_deal(deal):
     Raises:
         ValidationError: 如果狀態轉換不允許
     """
+    logger.info("cancel_deal", extra={"deal_id": deal.id})
     if not can_proceed(deal.cancel_request):
         raise ValidationError("只有「已請求」狀態的交易可以取消")
 
@@ -365,6 +397,7 @@ def cancel_deal(deal):
         metadata={"deal_type": deal.deal_type},
     )
 
+    logger.debug("deal cancelled", extra={"deal_id": deal.id})
     return deal
 
 
@@ -384,6 +417,7 @@ def complete_meeting(deal):
     Raises:
         ValidationError: 如果狀態轉換不允許
     """
+    logger.info("complete_meeting", extra={"deal_id": deal.id})
     if not can_proceed(deal.complete_meeting):
         raise ValidationError("只有「已回應」狀態的交易可以確認面交")
 
@@ -412,6 +446,14 @@ def complete_meeting(deal):
         },
     )
 
+    logger.debug(
+        "meeting completed",
+        extra={
+            "deal_id": deal.id,
+            "book_status": shared_book.status,
+            "deal_type": deal.deal_type,
+        },
+    )
     return deal
 
 
@@ -435,10 +477,12 @@ def process_book_due(deal):
     Note: 此函式不變更 Deal 狀態，只更新 SharedBook 狀態。
     """
     if deal.status != Deal.Status.MEETED:
-        return  # 僅處理已面交的交易
+        logger.debug("process_book_due skipped: not MEETED", extra={"deal_id": deal.id})
+        return
 
     if not deal.due_date or deal.due_date > timezone.now().date():
-        return  # 未到期
+        logger.debug("process_book_due skipped: not due yet", extra={"deal_id": deal.id})
+        return
 
     shared_book = deal.shared_book
 
@@ -459,6 +503,16 @@ def process_book_due(deal):
         shared_book.mark_as_returned()
 
     shared_book.save(update_fields=["status", "updated_at"])
+
+    logger.info(
+        "book due processed",
+        extra={
+            "deal_id": deal.id,
+            "book_id": shared_book.id,
+            "new_status": shared_book.status,
+            "transferability": shared_book.transferability,
+        },
+    )
 
     record_exchange_event(
         shared_book=shared_book,
@@ -496,6 +550,14 @@ def confirm_return(deal, confirmed_by, force=False):
     Raises:
         ValidationError: 如果交易狀態不符或權限不足
     """
+    logger.info(
+        "confirm_return",
+        extra={
+            "deal_id": deal.id,
+            "confirmed_by_id": confirmed_by.id,
+            "force": force,
+        },
+    )
     # 狀態檢查：只有 MEETED 狀態可以確認歸還
     if deal.status != Deal.Status.MEETED:
         raise ValidationError("只有「已面交」狀態的交易可以確認歸還")
@@ -606,6 +668,15 @@ def confirm_return(deal, confirmed_by, force=False):
         update_trust_score(
             deal.responder,
             ledger_source=TrustScoreLedger.Source.DEAL_COMPLETED,
+        )
+
+        logger.info(
+            "return confirmed, deal completed",
+            extra={
+                "deal_id": deal.id,
+                "force": force,
+                "book_id": shared_book.id,
+            },
         )
 
     return deal
