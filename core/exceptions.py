@@ -4,8 +4,11 @@
 遵循「好的程式碼不需要註解」原則，透過清晰的命名使異常自解釋。
 """
 
+import logging
 from typing import Optional, Any
 from django.core.exceptions import ValidationError as DjangoValidationError
+
+logger = logging.getLogger(__name__)
 
 
 class ServiceError(Exception):
@@ -210,6 +213,10 @@ def raise_if_invalid(condition: bool, exception_class: type, message: str, **kwa
         指定的異常類別
     """
     if not condition:
+        logger.warning("Validation check failed", extra={
+            "exception_class": exception_class.__name__,
+            "message": message,
+        })
         raise exception_class(message, **kwargs)
 
 
@@ -225,6 +232,9 @@ def convert_validation_error(
     Returns:
         ValidationError: 自定義驗證異常
     """
+    logger.warning("Django ValidationError converted", extra={
+        "error": str(validation_error),
+    })
     # 提取錯誤訊息
     if hasattr(validation_error, "message_dict"):
         # 表單驗證錯誤
@@ -254,6 +264,10 @@ def create_not_found(resource_type: str, resource_id: Any) -> NotFoundError:
     Returns:
         NotFoundError: 未找到異常
     """
+    logger.warning("Resource not found", extra={
+        "resource_type": resource_type,
+        "resource_id": str(resource_id),
+    })
     message = f"{resource_type} 未找到（ID: {resource_id}）"
     return NotFoundError(
         message=message,
@@ -273,6 +287,10 @@ def create_permission_denied(action: str, resource: str = None) -> PermissionErr
     Returns:
         PermissionError: 權限異常
     """
+    logger.warning("Permission denied", extra={
+        "action": action,
+        "resource": resource,
+    })
     if resource:
         message = f"沒有權限對 {resource} 執行 {action}"
     else:

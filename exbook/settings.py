@@ -77,6 +77,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -84,6 +85,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # allauth middleware
     "allauth.account.middleware.AccountMiddleware",
+    # Request/response logging
+    "core.middleware.request_logging.RequestLoggingMiddleware",
 ]
 
 ROOT_URLCONF = "exbook.urls"
@@ -146,6 +149,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
+from django.utils.translation import gettext_lazy as _
+
 LANGUAGE_CODE = "zh-hant"
 
 TIME_ZONE = "Asia/Taipei"
@@ -153,6 +158,16 @@ TIME_ZONE = "Asia/Taipei"
 USE_I18N = True
 
 USE_TZ = True
+
+LANGUAGES = [
+    ("zh-hant", _("繁體中文")),
+    ("en", _("English")),
+    ("ko", _("한국어")),
+]
+
+LOCALE_PATHS = [
+    BASE_DIR / "locale",
+]
 
 
 # Static files (CSS, JavaScript, Images)
@@ -392,3 +407,10 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 # Celery
 # ============================================================================
 # Celery 設定已移至 exbook/celery_config.py。
+
+# ============================================================================
+# Logging
+# ============================================================================
+from core.logging_config import build_dev_logging  # noqa: E402
+
+LOGGING = build_dev_logging()

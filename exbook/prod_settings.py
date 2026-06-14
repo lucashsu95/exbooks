@@ -29,33 +29,9 @@ ACCOUNT_RATE_LIMITS = {
 }
 
 # ── Logging / Monitoring ────────────────────────────────────────
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {
-            "format": "{levelname} {asctime} {name} {message}",
-            "style": "{",
-        },
-    },
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "formatter": "verbose",
-        },
-    },
-    "root": {
-        "handlers": ["console"],
-        "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO"),
-    },
-    "loggers": {
-        "django": {
-            "handlers": ["console"],
-            "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO"),
-            "propagate": False,
-        },
-    },
-}
+from core.logging_config import build_prod_logging  # noqa: E402
+
+LOGGING = build_prod_logging(log_dir="/var/log/exbook")
 
 SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
 if SENTRY_DSN:

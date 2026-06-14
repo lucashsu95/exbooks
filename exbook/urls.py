@@ -1,8 +1,10 @@
 from django.conf import settings
+from django.conf.urls.i18n import i18n_patterns
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
+from django.views.i18n import set_language
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -30,10 +32,15 @@ urlpatterns = [
         name="django.contrib.sitemaps.views.sitemap",
     ),
     path("admin/", admin.site.urls),
+    path("set-language/", set_language, name="set_language"),
     # JWT Auth
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-    # django-allauth URLs (包含 login, logout, signup, email verification, social auth)
+]
+
+# Language-prefixed URLs (e.g., /en/books/, /zh-hant/deals/)
+urlpatterns += i18n_patterns(
+    # django-allauth URLs (login, logout, signup, email verification, social auth)
     path("accounts/", include("allauth.urls")),
     # Local apps
     path("", core_views.landing_page, name="landing"),
@@ -42,7 +49,8 @@ urlpatterns = [
     path("books/", include("books.urls")),
     path("deals/", include("deals.urls")),
     path("ai/", include("ai.urls")),
-]
+    prefix_default_language=False,
+)
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
