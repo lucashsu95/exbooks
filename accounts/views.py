@@ -1,6 +1,9 @@
 import json
+import logging
 
 from django.contrib import messages
+
+logger = logging.getLogger(__name__)
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Q
@@ -20,6 +23,7 @@ from .services import user_stats_service
 @login_required
 def profile(request):
     """查看個人資料。"""
+    logger.info("profile", extra={"user_id": request.user.pk})
     profile_obj = request.user.profile
 
     # 統計資料
@@ -58,12 +62,14 @@ def profile(request):
 def profile_edit(request):
     """編輯個人資料。"""
     profile, created = UserProfile.objects.get_or_create(user=request.user)
+    logger.info("profile_edit", extra={"user_id": request.user.pk, "created": created})
 
     if request.method == "POST":
         form = ProfileForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
             form.save()
             messages.success(request, "個人資料已更新。")
+            logger.info("profile_edit saved", extra={"user_id": request.user.pk})
             return redirect("accounts:profile")
     else:
         form = ProfileForm(instance=profile)
@@ -75,6 +81,7 @@ def profile_edit(request):
 def public_profile(request, user_id):
     """查看他人公開資料。"""
     user = get_object_or_404(User, pk=user_id)
+    logger.info("public_profile", extra={"request_user_id": request.user.pk, "viewed_user_id": user_id})
     tab = request.GET.get("tab", "books")
 
     # 嘗試取得 profile，若無則使用預設值
@@ -136,6 +143,7 @@ def public_profile(request, user_id):
 def user_ratings(request, user_id):
     """用戶評價詳情頁。"""
     user = get_object_or_404(User, pk=user_id)
+    logger.info("user_ratings", extra={"request_user_id": request.user.pk, "viewed_user_id": user_id})
 
     # 評價摘要
     rating_summary = user_stats_service.get_user_rating_summary(user)
@@ -168,6 +176,8 @@ def complete_profile(request):
     1. 現有用戶補填 birth_date（BR-11 年齡驗證）
     2. OAuth 登入後收集額外資訊
     """
+    logger.info("complete_profile", extra={"user_id": request.user.pk})
+
     # 檢查是否已有完整的 profile
     try:
         profile = request.user.profile
@@ -182,6 +192,7 @@ def complete_profile(request):
         if form.is_valid():
             form.save()
             messages.success(request, "個人資料已更新，歡迎使用 Exbooks！")
+            logger.info("complete_profile saved", extra={"user_id": request.user.pk})
             return redirect("books:list")
     else:
         form = CompleteProfileForm(instance=profile)
@@ -196,6 +207,7 @@ def complete_profile(request):
 def appeal_list(request):
     """申訴列表"""
     status_filter = request.GET.get("status")
+    logger.info("appeal_list", extra={"user_id": request.user.pk, "status_filter": status_filter})
     appeals = appeal_service.get_user_appeals(request.user, status=status_filter)
     return render(request, "accounts/appeal_list.html", {"appeals": appeals})
 
@@ -215,8 +227,10 @@ def appeal_create(request):
                     evidence=form.cleaned_data.get("evidence"),
                 )
                 messages.success(request, "申訴已送出")
+                logger.info("appeal_create", extra={"user_id": request.user.pk, "appeal_id": str(appeal.id), "appeal_type": form.cleaned_data["appeal_type"]})
                 return redirect("accounts:appeal_detail", appeal_id=appeal.id)
             except Exception as e:
+                logger.exception("appeal_create failed", extra={"user_id": request.user.pk})
                 messages.error(request, str(e))
     else:
         form = AppealForm()
@@ -227,7 +241,9 @@ def appeal_create(request):
 def appeal_detail(request, appeal_id):
     """申訴詳情"""
     appeal = get_object_or_404(Appeal, id=appeal_id)
+    logger.info("appeal_detail", extra={"user_id": request.user.pk, "appeal_id": str(appeal_id)})
     if appeal.user != request.user:
+        logger.warning("appeal_detail forbidden", extra={"user_id": request.user.pk, "appeal_id": str(appeal_id), "owner_id": appeal.user.pk})
         return HttpResponseForbidden("您無權查看此申訴")
     return render(request, "accounts/appeal_detail.html", {"appeal": appeal})
 
@@ -238,8 +254,10 @@ def appeal_cancel(request, appeal_id):
     if request.method == "POST":
         try:
             appeal_service.cancel_appeal(appeal_id, request.user)
+            logger.info("appeal_cancel", extra={"user_id": request.user.pk, "appeal_id": str(appeal_id)})
             messages.success(request, "申訴已取消")
         except Exception as e:
+            logger.exception("appeal_cancel failed", extra={"user_id": request.user.pk, "appeal_id": str(appeal_id)})
             messages.error(request, str(e))
         return redirect("accounts:appeal_list")
 
@@ -255,13 +273,9 @@ def export_user_data(request):
         return redirect("accounts:profile")
 
     try:
-        # 執行匯出
         data = export_service.export_user_data(request.user)
-
-        # 產生 JSON 檔案名稱
         filename = f"exbook_data_{request.user.id}_{data['exported_at'][:10]}.json"
-
-        # 回傳 JSON 檔案
+        logger.info("export_user_data", extra={"user_id": request.user.pk, "format": "json"})
         response = HttpResponse(
             json.dumps(data, ensure_ascii=False, indent=2),
             content_type="application/json",
@@ -271,6 +285,7 @@ def export_user_data(request):
         return response
 
     except export_service.ExportLimitExceededError as e:
+        logger.warning("export_user_data limit exceeded", extra={"user_id": request.user.pk})
         messages.error(request, str(e))
         return redirect("accounts:profile")
 
@@ -291,18 +306,16 @@ def download_user_data(request, format="json"):
         return redirect("accounts:profile")
 
     try:
-        # 執行匯出
         data = export_service.export_user_data(request.user, format=format)
+        logger.info("download_user_data", extra={"user_id": request.user.pk, "format": format})
 
         if format == "json":
-            # JSON 格式
             filename = f"exbook_data_{request.user.id}_{data['exported_at'][:10]}.json"
             response = HttpResponse(
                 json.dumps(data, ensure_ascii=False, indent=2),
                 content_type="application/json",
             )
-        else:  # csv
-            # CSV 格式
+        else:
             filename = f"exbook_data_{request.user.id}_{timezone.now().strftime('%Y-%m-%d')}.csv"
             response = HttpResponse(data, content_type="text/csv; charset=utf-8-sig")
 
@@ -311,9 +324,11 @@ def download_user_data(request, format="json"):
         return response
 
     except export_service.ExportLimitExceededError as e:
+        logger.warning("download_user_data limit exceeded", extra={"user_id": request.user.pk, "format": format})
         messages.error(request, str(e))
         return redirect("accounts:profile")
     except ValueError as e:
+        logger.warning("download_user_data value error", extra={"user_id": request.user.pk, "format": format})
         messages.error(request, str(e))
         return redirect("accounts:profile")
 
@@ -322,6 +337,7 @@ def download_user_data(request, format="json"):
 def get_export_status(request):
     """取得今日剩餘匯出次數"""
     remaining = export_service.get_remaining_exports(request.user)
+    logger.debug("get_export_status", extra={"user_id": request.user.pk, "remaining": remaining})
     return JsonResponse(
         {"remaining": remaining, "limit": export_service.EXPORT_LIMIT_PER_DAY}
     )

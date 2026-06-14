@@ -5,6 +5,7 @@
 配置可在 Django settings 中覆寫。
 """
 
+import logging
 import math
 from dataclasses import dataclass
 
@@ -18,6 +19,7 @@ from deals.models import Deal, Rating
 
 from accounts.models import TrustLevelConfig, TrustScoreLedger
 
+logger = logging.getLogger(__name__)
 
 # ============================================================================
 # 積分配置（從 settings 讀取，提供預設值）
@@ -321,7 +323,7 @@ def update_trust_score(
         ledger_source: 寫入 TrustScoreLedger 的來源（對應 TrustScoreLedger.Source）
 
     Returns:
-        int: 新的信用積分
+        int: 信用積分
     """
     metrics = get_user_metrics(user)
     new_score = calculate_trust_score(user)
@@ -329,6 +331,20 @@ def update_trust_score(
     # 更新資料庫
     user.profile.trust_score = new_score
     user.profile.save(update_fields=["trust_score", "updated_at"])
+
+    logger.info(
+        "trust score updated",
+        extra={
+            "user_id": user.id,
+            "new_score": new_score,
+            "source": ledger_source,
+            "metrics": {
+                "completed_deals": metrics.completed_deals,
+                "overdue_count": metrics.overdue_count,
+                "avg_rating": metrics.avg_rating,
+            },
+        },
+    )
 
     # 同步信用等級 Group
     sync_trust_group(user)
@@ -484,6 +500,10 @@ def sync_trust_group(user) -> None:
         user.groups.add(target_group)
         profile.trust_level_protected_since = None
         profile.save(update_fields=["trust_level_protected_since", "updated_at"])
+        logger.debug(
+            "trust group set (no previous group)",
+            extra={"user_id": user.id, "target_group": target_group_name},
+        )
         return
 
     current_level = int(current_group[-1])  # trust_lv3 -> 3
@@ -496,12 +516,28 @@ def sync_trust_group(user) -> None:
         user.groups.add(target_group_obj)
         profile.trust_level_protected_since = None
         profile.save(update_fields=["trust_level_protected_since", "updated_at"])
+        logger.info(
+            "trust group upgraded",
+            extra={
+                "user_id": user.id,
+                "from": current_group,
+                "to": target_group_name,
+            },
+        )
     elif target_level < current_level:
         # 降級邏輯：檢查 protected_since
         if profile.trust_level_protected_since is None:
             # 第一次低於門檻，設定 protected_since
             profile.trust_level_protected_since = now
             profile.save(update_fields=["trust_level_protected_since", "updated_at"])
+            logger.info(
+                "trust group demotion protection started",
+                extra={
+                    "user_id": user.id,
+                    "current_group": current_group,
+                    "target_group": target_group_name,
+                },
+            )
         else:
             # 已存在 protected_since，檢查是否已滿 26 週
             weeks_elapsed = (now - profile.trust_level_protected_since).days // 7
@@ -515,6 +551,15 @@ def sync_trust_group(user) -> None:
                 profile.save(
                     update_fields=["trust_level_protected_since", "updated_at"]
                 )
+                logger.info(
+                    "trust group demoted",
+                    extra={
+                        "user_id": user.id,
+                        "from": current_group,
+                        "to": target_group_name,
+                        "weeks_elapsed": weeks_elapsed,
+                    },
+                )
             # 否則維持現狀
 
 
@@ -526,6 +571,8 @@ def recalculate_all_trust_scores() -> dict:
     users = list(User.objects.filter(is_active=True))
     increased = decreased = unchanged = 0
 
+    logger.info("recalculating trust scores", extra={"active_users": len(users)})
+
     for user in users:
         old_score = user.profile.trust_score
         new_score = update_trust_score(user)
@@ -536,6 +583,15 @@ def recalculate_all_trust_scores() -> dict:
         else:
             unchanged += 1
 
+    logger.info(
+        "trust score recalculation complete",
+        extra={
+            "total": len(users),
+            "increased": increased,
+            "decreased": decreased,
+            "unchanged": unchanged,
+        },
+    )
     return {
         "users": len(users),
         "increased": increased,

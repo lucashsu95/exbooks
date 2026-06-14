@@ -4,6 +4,8 @@
 使用 django-fsm 管理狀態轉換。
 """
 
+import logging
+
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
@@ -13,6 +15,8 @@ from accounts.models import Appeal
 from deals.models import Notification
 from deals.services.notification_service import notify
 
+
+logger = logging.getLogger(__name__)
 
 MIN_DESCRIPTION_LENGTH = 50
 
@@ -53,6 +57,14 @@ def create_appeal(user, appeal_type, title, description, evidence=None):
         message=f"您的申訴「{title}」已送出，我們將儘快處理。",
     )
 
+    logger.info(
+        "appeal created",
+        extra={
+            "appeal_id": appeal.id,
+            "user_id": user.id,
+            "appeal_type": appeal_type,
+        },
+    )
     return appeal
 
 
@@ -79,6 +91,10 @@ def submit_for_review(appeal_id):
     appeal.start_review()
     appeal.save()
 
+    logger.info(
+        "appeal submitted for review",
+        extra={"appeal_id": appeal_id},
+    )
     return appeal
 
 
@@ -128,6 +144,14 @@ def review_appeal(appeal_id, reviewer, decision, notes=""):
         message=f"您的申訴「{appeal.title}」審核結果為{appeal.get_status_display()}。",
     )
 
+    logger.info(
+        "appeal reviewed",
+        extra={
+            "appeal_id": appeal_id,
+            "reviewer_id": reviewer.id,
+            "decision": decision,
+        },
+    )
     return appeal
 
 
@@ -191,4 +215,8 @@ def cancel_appeal(appeal_id, user):
     appeal.close()
     appeal.save()
 
+    logger.info(
+        "appeal cancelled",
+        extra={"appeal_id": appeal_id, "user_id": user.id},
+    )
     return appeal

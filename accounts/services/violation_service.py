@@ -3,6 +3,7 @@
 處理用戶違規處分的建立、查詢、解除等業務邏輯。
 """
 
+import logging
 from typing import Optional, TYPE_CHECKING
 from django.utils import timezone
 from django.db import transaction
@@ -11,6 +12,8 @@ from django.contrib.auth import get_user_model
 
 from accounts.models import TrustScoreLedger, UserProfile, Violation
 from accounts.services.trust_service import record_trust_snapshot
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from accounts.models import Appeal
@@ -95,6 +98,15 @@ class ViolationService:
                 },
             )
 
+            logger.info(
+                "violation created",
+                extra={
+                    "violation_id": violation.id,
+                    "user_id": user.id,
+                    "action_type": action_type,
+                    "violation_type": violation_type,
+                },
+            )
             return violation
 
     @staticmethod
@@ -121,6 +133,14 @@ class ViolationService:
 
             if not active_suspensions.exists():
                 # 沒有其他生效中的停權處分，解除用戶停權狀態
+                logger.info(
+                    "violation lifted, user unsuspended",
+                    extra={
+                        "violation_id": violation.id,
+                        "user_id": violation.user_id,
+                        "lifted_by_id": lifted_by.id,
+                    },
+                )
                 profile = UserProfile.objects.get(user=violation.user)
                 profile.is_suspended = False
                 profile.suspension_end_date = None
@@ -209,6 +229,10 @@ class ViolationService:
             violation.save(update_fields=["is_active", "lifted_at", "updated_at"])
             count += 1
 
+        logger.info(
+            "expired suspensions lifted",
+            extra={"count": count},
+        )
         return count
 
 

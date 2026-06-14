@@ -5,10 +5,14 @@
 根據 DR-5，信用積分不獨立建表，透過聚合計算。
 """
 
+import logging
+
 from django.db.models import Avg, Count, Q
 
 from books.models import SharedBook
 from deals.models import Deal, Rating
+
+logger = logging.getLogger(__name__)
 
 
 def get_user_rating_summary(user):
@@ -46,6 +50,10 @@ def get_user_rating_summary(user):
     else:
         result["overall_average"] = None
 
+    logger.debug(
+        "rating summary computed",
+        extra={"user_id": user.id, "total_ratings": result["total_ratings"]},
+    )
     return result
 
 
@@ -70,7 +78,16 @@ def get_user_rating_history(user, page=1, per_page=10):
     )
 
     paginator = Paginator(ratings, per_page)
-    return paginator.get_page(page)
+    page_obj = paginator.get_page(page)
+    logger.debug(
+        "rating history fetched",
+        extra={
+            "user_id": user.id,
+            "page": page,
+            "total": paginator.count,
+        },
+    )
+    return page_obj
 
 
 def get_user_activity_stats(user):

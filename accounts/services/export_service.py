@@ -6,6 +6,8 @@
 
 import csv
 import io
+import logging
+
 from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
@@ -13,6 +15,8 @@ from django.utils import timezone
 from books.models import SharedBook
 from deals.models import Deal, Rating
 
+
+logger = logging.getLogger(__name__)
 
 EXPORT_LIMIT_KEY_PREFIX = "export_limit"
 EXPORT_LIMIT_PER_DAY = 3
@@ -51,6 +55,11 @@ def export_user_data(user, format="json"):
 
     # 增加匯出次數
     increment_export_count(user)
+
+    logger.info(
+        "user data exported",
+        extra={"user_id": user.id, "format": format},
+    )
 
     if format == "csv":
         return convert_to_csv(data, user)
