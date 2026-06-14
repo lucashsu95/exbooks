@@ -1,6 +1,7 @@
 """公開書籍瀏覽（免登入，供 SEO／社群預覽）。不包含持有者個資。"""
 
 import json
+import logging
 
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -9,6 +10,8 @@ from django.views.decorators.http import require_GET
 
 from .models import SharedBook
 from .views import PILL_CATEGORIES
+
+logger = logging.getLogger(__name__)
 
 
 def _public_book_queryset():
@@ -24,6 +27,7 @@ def public_book_list(request):
     """可索引的書籍列表（僅顯示可移轉中的分享冊）。"""
     q = request.GET.get("q", "").strip()
     category = request.GET.get("category", "").strip()
+    logger.info("public_book_list", extra={"q": q, "category": category})
 
     base = _public_book_queryset()
     filtered = base
@@ -71,6 +75,7 @@ def public_book_detail(request, pk):
         .prefetch_related("official_book__author_links__author"),
         pk=pk,
     )
+    logger.info("public_book_detail", extra={"book_pk": str(pk), "title": book.official_book.title})
     ob = book.official_book
     title = ob.title
     desc = (ob.description or "")[:300]

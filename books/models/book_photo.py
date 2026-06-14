@@ -3,6 +3,7 @@ from uuid import uuid4
 from django.conf import settings
 from django.db import models
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 
 from core.models import BaseModel
 
@@ -23,7 +24,7 @@ class BookPhoto(BaseModel):
         "books.SharedBook",
         on_delete=models.CASCADE,
         related_name="photos",
-        verbose_name="分享書籍",
+        verbose_name=_("分享書籍"),
     )
     deal = models.ForeignKey(
         "deals.Deal",
@@ -31,29 +32,29 @@ class BookPhoto(BaseModel):
         null=True,
         blank=True,
         related_name="photos",
-        verbose_name="交易",
-        help_text="面交時拍攝的照片關聯至交易",
+        verbose_name=_("交易"),
+        help_text=_("面交時拍攝的照片關聯至交易"),
     )
     uploader = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name="uploaded_photos",
-        verbose_name="上傳者",
+        verbose_name=_("上傳者"),
     )
     photo = models.ImageField(
         upload_to=book_photo_upload_path,
-        verbose_name="照片",
+        verbose_name=_("照片"),
     )
     caption = models.CharField(
         max_length=200,
         blank=True,
-        verbose_name="照片說明",
+        verbose_name=_("照片說明"),
     )
 
     class Meta:
         db_table = "exbook_book_photo"
-        verbose_name = "書況照片"
-        verbose_name_plural = "書況照片"
+        verbose_name = _("書況照片")
+        verbose_name_plural = _("書況照片")
         ordering = ["-created_at"]
 
     def __str__(self):

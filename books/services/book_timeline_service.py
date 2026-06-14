@@ -4,6 +4,7 @@
 遵循單一職責原則，將複雜的時間線構建邏輯從視圖中分離出來。
 """
 
+import logging
 from typing import Dict, List, Any, Optional
 
 from django.db.models import QuerySet
@@ -14,6 +15,8 @@ from deals.models import Deal, LoanExtension, ExchangeEvent
 from core.constants import MAX_PHOTOS_PER_BOOK
 
 User = get_user_model()
+
+logger = logging.getLogger(__name__)
 
 
 class BookTimelineService:
@@ -51,6 +54,13 @@ class BookTimelineService:
         # 按時間排序（新到舊）
         timeline_events.sort(key=lambda x: x["time"], reverse=True)
 
+        logger.debug(
+            "timeline events built",
+            extra={
+                "book_id": book.id,
+                "event_count": len(timeline_events),
+            },
+        )
         return timeline_events
 
     @staticmethod

@@ -73,14 +73,15 @@ def lookup_by_isbn(isbn: str) -> Optional[Dict[str, Any]]:
     # 正規化 ISBN
     normalized_isbn = normalize_isbn(isbn)
     if not normalized_isbn:
-        logger.warning(f"Invalid ISBN format: {isbn}")
+        logger.warning("Invalid ISBN format", extra={"isbn": isbn})
         return None
 
     # 1. 優先查詢本地資料庫 (OfficialBook)
     try:
         official_book = OfficialBook.objects.get(isbn=normalized_isbn)
         logger.info(
-            f"Book found in database: {official_book.title} (ISBN: {normalized_isbn})"
+            "Book found in database",
+            extra={"isbn": normalized_isbn, "title": official_book.title},
         )
         result = {
             "title": official_book.title,
@@ -94,18 +95,24 @@ def lookup_by_isbn(isbn: str) -> Optional[Dict[str, Any]]:
         }
         return result
     except OfficialBook.DoesNotExist:
-        logger.info(f"ISBN not found in database: {normalized_isbn}, checking cache...")
+        logger.info(
+            "ISBN not found in database, checking cache",
+            extra={"isbn": normalized_isbn},
+        )
     except Exception as e:
-        logger.error(f"Error querying database for ISBN {normalized_isbn}: {e}")
+        logger.exception(
+            "Error querying database for ISBN",
+            extra={"isbn": normalized_isbn},
+        )
 
     # 2. 檢查快取（避免重複 API 呼叫）
     cache_key = get_isbn_cache_key(normalized_isbn)
     cached_result = cache.get(cache_key)
     if cached_result is not None:
-        logger.info(f"Book found in cache: {normalized_isbn}")
+        logger.info("Book found in cache", extra={"isbn": normalized_isbn})
         return cached_result
 
-    logger.info(f"Querying Google Books API for ISBN: {normalized_isbn}...")
+    logger.info("Querying Google Books API", extra={"isbn": normalized_isbn})
     # 準備 API 請求
     params = {
         "q": f"isbn:{normalized_isbn}",
@@ -121,7 +128,10 @@ def lookup_by_isbn(isbn: str) -> Optional[Dict[str, Any]]:
 
         # 檢查是否有結果
         if not data.get("items"):
-            logger.info(f"No book found for ISBN: {normalized_isbn}")
+            logger.info(
+                "No book found from Google Books API",
+                extra={"isbn": normalized_isbn},
+            )
             cache.set(cache_key, None, CACHE_TIMEOUT)
             return None
 
@@ -143,27 +153,32 @@ def lookup_by_isbn(isbn: str) -> Optional[Dict[str, Any]]:
         return result
 
     except httpx.TimeoutException:
-        logger.error(
-            f"Timeout when querying Google Books API for ISBN: {normalized_isbn}"
+        logger.warning(
+            "Google Books API timeout",
+            extra={"isbn": normalized_isbn},
         )
         return {"error": "timeout"}
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 429:
             logger.warning(
-                f"Rate limited by Google Books API for ISBN: {normalized_isbn}"
+                "Rate limited by Google Books API",
+                extra={"isbn": normalized_isbn},
             )
             return {"error": "rate_limit"}
         logger.error(
-            f"HTTP error when querying Google Books API for ISBN {normalized_isbn}: {e}"
+            "HTTP error from Google Books API",
+            extra={"isbn": normalized_isbn, "status_code": e.response.status_code},
         )
         return {"error": "http_error"}
     except httpx.RequestError as e:
-        logger.error(
-            f"Network error when querying Google Books API for ISBN {normalized_isbn}: {e}"
+        logger.warning(
+            "Network error querying Google Books API",
+            extra={"isbn": normalized_isbn},
         )
         return {"error": "network_error"}
     except Exception as e:
-        logger.error(
-            f"Unexpected error when querying Google Books API for ISBN {normalized_isbn}: {e}"
+        logger.exception(
+            "Unexpected error querying Google Books API",
+            extra={"isbn": normalized_isbn},
         )
         return {"error": "unknown"}

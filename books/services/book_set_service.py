@@ -4,12 +4,15 @@
 處理套書的建立、編輯、刪除及書籍加入/移除等業務邏輯。
 """
 
+import logging
+
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from books.models import BookSet, SharedBook
 from deals.models import Deal
 
+logger = logging.getLogger(__name__)
 
 # 進行中交易的狀態列表
 ACTIVE_DEAL_STATUSES = [
@@ -47,6 +50,15 @@ def create_book_set(owner, name, description="", book_ids=None):
         for book in books:
             add_book_to_set(book_set, book)
 
+    logger.info(
+        "book set created",
+        extra={
+            "book_set_id": book_set.id,
+            "owner_id": owner.id,
+            "name": name,
+            "book_count": len(book_ids) if book_ids else 0,
+        },
+    )
     return book_set
 
 
@@ -70,6 +82,14 @@ def add_book_to_set(book_set, shared_book):
 
     shared_book.book_set = book_set
     shared_book.save(update_fields=["book_set", "updated_at"])
+
+    logger.debug(
+        "book added to set",
+        extra={
+            "book_set_id": book_set.id,
+            "book_id": shared_book.id,
+        },
+    )
 
 
 @transaction.atomic
@@ -99,6 +119,14 @@ def remove_book_from_set(book_set, shared_book):
     shared_book.book_set = None
     shared_book.save(update_fields=["book_set", "updated_at"])
 
+    logger.debug(
+        "book removed from set",
+        extra={
+            "book_set_id": book_set.id,
+            "book_id": shared_book.id,
+        },
+    )
+
 
 @transaction.atomic
 def delete_book_set(book_set):
@@ -124,6 +152,11 @@ def delete_book_set(book_set):
     SharedBook.objects.filter(book_set=book_set).update(book_set=None)
 
     book_set.delete()
+
+    logger.info(
+        "book set deleted",
+        extra={"book_set_id": book_set.id},
+    )
 
 
 def get_user_book_sets(user):

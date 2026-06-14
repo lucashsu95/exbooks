@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.models import BaseModel
 
@@ -14,20 +15,20 @@ class WishListItem(BaseModel):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="wish_list",
-        verbose_name="用戶",
+        verbose_name=_("用戶"),
     )
     official_book = models.ForeignKey(
         "books.OfficialBook",
         on_delete=models.PROTECT,
         related_name="wished_by",
-        verbose_name="官方書目",
+        verbose_name=_("官方書目"),
     )
 
     class Meta(BaseModel.Meta):
         abstract = False
         db_table = "exbook_wish_list_item"
-        verbose_name = "願望書車"
-        verbose_name_plural = "願望書車"
+        verbose_name = _("願望書車")
+        verbose_name_plural = _("願望書車")
         constraints = [
             models.UniqueConstraint(
                 fields=["user", "official_book"],

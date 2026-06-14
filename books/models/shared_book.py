@@ -1,11 +1,16 @@
 # pyright: reportArgumentType=false, reportAttributeAccessIssue=false, reportIncompatibleVariableOverride=false
 
+import logging
+
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from django_fsm import FSMField, FSMModelMixin, transition
 
 from core.models import UpdatableModel
+
+logger = logging.getLogger(__name__)
 
 
 class SharedBook(FSMModelMixin, UpdatableModel):
@@ -15,36 +20,36 @@ class SharedBook(FSMModelMixin, UpdatableModel):
     """
 
     class Transferability(models.TextChoices):
-        TRANSFER = "TRANSFER", "開放傳遞"
-        RETURN = "RETURN", "閱畢即還"
+        TRANSFER = "TRANSFER", _("開放傳遞")
+        RETURN = "RETURN", _("閱畢即還")
 
     class Status(models.TextChoices):
-        SUSPENDED = "S", "暫不開放"
-        TRANSFERABLE = "T", "可移轉"
-        RESTORABLE = "R", "應返還"
-        RESERVED = "V", "已被預約"
-        OCCUPIED = "O", "借閱中"
-        EXCEPTION = "E", "例外狀況"
-        LOST = "L", "已遺失"
-        DESTROYED = "D", "已損毀"
+        SUSPENDED = "S", _("暫不開放")
+        TRANSFERABLE = "T", _("可移轉")
+        RESTORABLE = "R", _("應返還")
+        RESERVED = "V", _("已被預約")
+        OCCUPIED = "O", _("借閱中")
+        EXCEPTION = "E", _("例外狀況")
+        LOST = "L", _("已遺失")
+        DESTROYED = "D", _("已損毀")
 
     official_book = models.ForeignKey(
         "books.OfficialBook",
         on_delete=models.PROTECT,
         related_name="shared_books",
-        verbose_name="官方書目",
+        verbose_name=_("官方書目"),
     )
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name="owned_books",
-        verbose_name="貢獻者",
+        verbose_name=_("貢獻者"),
     )
     keeper = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name="kept_books",
-        verbose_name="持有者",
+        verbose_name=_("持有者"),
     )
     book_set = models.ForeignKey(
         "books.BookSet",
@@ -52,53 +57,53 @@ class SharedBook(FSMModelMixin, UpdatableModel):
         null=True,
         blank=True,
         related_name="books",
-        verbose_name="所屬套書",
+        verbose_name=_("所屬套書"),
     )
     transferability = models.CharField(
         max_length=10,
         choices=Transferability.choices,
         default=Transferability.RETURN,
-        verbose_name="流通性",
+        verbose_name=_("流通性"),
     )
     status = FSMField(
         max_length=1,
         choices=Status.choices,
         default=Status.SUSPENDED,
-        verbose_name="狀態",
+        verbose_name=_("狀態"),
         protected=True,  # 禁止直接賦值，強制使用 FSM transition
     )
     condition_description = models.TextField(
         blank=True,
-        verbose_name="書況描述",
+        verbose_name=_("書況描述"),
     )
     loan_duration_days = models.PositiveIntegerField(
         default=30,  # pyright: ignore[reportArgumentType]
         validators=[MinValueValidator(15), MaxValueValidator(90)],
-        verbose_name="借閱天數",
-        help_text="最少 15 天，最多 90 天",
+        verbose_name=_("借閱天數"),
+        help_text=_("最少 15 天，最多 90 天"),
     )
     extend_duration_days = models.PositiveIntegerField(
         default=14,  # pyright: ignore[reportArgumentType]
         validators=[MinValueValidator(7), MaxValueValidator(30)],
-        verbose_name="可延長天數",
-        help_text="最少 7 天，最多 30 天",
+        verbose_name=_("可延長天數"),
+        help_text=_("最少 7 天，最多 30 天"),
     )
     min_trust_level = models.PositiveSmallIntegerField(
         default=0,  # pyright: ignore[reportArgumentType]
         validators=[MinValueValidator(0), MaxValueValidator(3)],
-        verbose_name="最低信用等級",
-        help_text="申請者信用等級需達 0-3，0 表示不限制",
+        verbose_name=_("最低信用等級"),
+        help_text=_("申請者信用等級需達 0-3，0 表示不限制"),
     )
     listed_at = models.DateTimeField(
         null=True,
         blank=True,
-        verbose_name="上架時間",
+        verbose_name=_("上架時間"),
     )
 
     class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
         db_table = "exbook_shared_book"
-        verbose_name = "分享書籍"
-        verbose_name_plural = "分享書籍"
+        verbose_name = _("分享書籍")
+        verbose_name_plural = _("分享書籍")
         indexes = [
             models.Index(fields=["status"]),
             models.Index(fields=["owner", "status"]),
@@ -128,7 +133,12 @@ class SharedBook(FSMModelMixin, UpdatableModel):
         - 記錄上架時間
         - 通知願望清單中的使用者
         """
-        pass
+        logger.info("FSM transition", extra={
+            "model": self.__class__.__name__,
+            "pk": str(self.pk),
+            "from": self.status,
+            "to": SharedBook.Status.TRANSFERABLE,
+        })
 
     @transition(
         field=status,
@@ -141,7 +151,12 @@ class SharedBook(FSMModelMixin, UpdatableModel):
 
         狀態轉換：TRANSFERABLE → SUSPENDED
         """
-        pass
+        logger.info("FSM transition", extra={
+            "model": self.__class__.__name__,
+            "pk": str(self.pk),
+            "from": self.status,
+            "to": SharedBook.Status.SUSPENDED,
+        })
 
     @transition(
         field=status,
@@ -154,7 +169,12 @@ class SharedBook(FSMModelMixin, UpdatableModel):
 
         狀態轉換：TRANSFERABLE/OCCUPIED/RESTORABLE → EXCEPTION
         """
-        pass
+        logger.info("FSM transition", extra={
+            "model": self.__class__.__name__,
+            "pk": str(self.pk),
+            "from": self.status,
+            "to": SharedBook.Status.EXCEPTION,
+        })
 
     @transition(
         field=status,
@@ -167,7 +187,12 @@ class SharedBook(FSMModelMixin, UpdatableModel):
 
         狀態轉換：EXCEPTION → LOST
         """
-        pass
+        logger.info("FSM transition", extra={
+            "model": self.__class__.__name__,
+            "pk": str(self.pk),
+            "from": self.status,
+            "to": SharedBook.Status.LOST,
+        })
 
     @transition(
         field=status,
@@ -180,7 +205,12 @@ class SharedBook(FSMModelMixin, UpdatableModel):
 
         狀態轉換：EXCEPTION → DESTROYED
         """
-        pass
+        logger.info("FSM transition", extra={
+            "model": self.__class__.__name__,
+            "pk": str(self.pk),
+            "from": self.status,
+            "to": SharedBook.Status.DESTROYED,
+        })
 
     @transition(
         field=status,
@@ -193,7 +223,12 @@ class SharedBook(FSMModelMixin, UpdatableModel):
 
         狀態轉換：EXCEPTION → SUSPENDED
         """
-        pass
+        logger.info("FSM transition", extra={
+            "model": self.__class__.__name__,
+            "pk": str(self.pk),
+            "from": self.status,
+            "to": SharedBook.Status.SUSPENDED,
+        })
 
     # Deal 相關的狀態轉換（由 deal_service 的 signal 觸發）
 
@@ -208,7 +243,12 @@ class SharedBook(FSMModelMixin, UpdatableModel):
 
         狀態轉換：TRANSFERABLE → RESERVED
         """
-        pass
+        logger.info("FSM transition", extra={
+            "model": self.__class__.__name__,
+            "pk": str(self.pk),
+            "from": self.status,
+            "to": SharedBook.Status.RESERVED,
+        })
 
     @transition(
         field=status,
@@ -221,7 +261,12 @@ class SharedBook(FSMModelMixin, UpdatableModel):
 
         狀態轉換：RESERVED → OCCUPIED
         """
-        pass
+        logger.info("FSM transition", extra={
+            "model": self.__class__.__name__,
+            "pk": str(self.pk),
+            "from": self.status,
+            "to": SharedBook.Status.OCCUPIED,
+        })
 
     @transition(
         field=status,
@@ -234,7 +279,12 @@ class SharedBook(FSMModelMixin, UpdatableModel):
 
         狀態轉換：RESTORABLE/RESERVED → SUSPENDED
         """
-        pass
+        logger.info("FSM transition", extra={
+            "model": self.__class__.__name__,
+            "pk": str(self.pk),
+            "from": self.status,
+            "to": SharedBook.Status.SUSPENDED,
+        })
 
     @transition(
         field=status,
@@ -247,7 +297,12 @@ class SharedBook(FSMModelMixin, UpdatableModel):
 
         狀態轉換：OCCUPIED → RESTORABLE
         """
-        pass
+        logger.info("FSM transition", extra={
+            "model": self.__class__.__name__,
+            "pk": str(self.pk),
+            "from": self.status,
+            "to": SharedBook.Status.RESTORABLE,
+        })
 
     @transition(
         field=status,
@@ -260,4 +315,9 @@ class SharedBook(FSMModelMixin, UpdatableModel):
 
         狀態轉換：OCCUPIED → TRANSFERABLE
         """
-        pass
+        logger.info("FSM transition", extra={
+            "model": self.__class__.__name__,
+            "pk": str(self.pk),
+            "from": self.status,
+            "to": SharedBook.Status.TRANSFERABLE,
+        })

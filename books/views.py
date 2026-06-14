@@ -1,5 +1,9 @@
+import logging
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
+
+logger = logging.getLogger(__name__)
 from django.db import transaction
 from django.db.models import Q, Count
 from django.contrib import messages
@@ -31,8 +35,8 @@ def overdue_list(request):
     """公開逾期書籍展示頁面。"""
     from deals.services import overdue_service
 
-    # 取得逾期 7 天以上的交易
     overdue_deals = overdue_service.get_overdue_books(days=7)
+    logger.info("overdue_list", extra={"overdue_count": len(overdue_deals)})
 
     # 格式化公開資訊
     overdue_info_list = [
@@ -53,8 +57,8 @@ def book_list(request):
     """首頁：探索與最新上架 (支援搜尋與分類)"""
     q = request.GET.get("q", "").strip()
     category = request.GET.get("category", "").strip()
+    logger.info("book_list", extra={"user_id": request.user.pk, "q": q, "category": category})
 
-    # 1. 基礎查詢：排除使用者自己的書
     base_query = (
         SharedBook.objects.select_related("official_book", "keeper__profile")
         .prefetch_related("photos")
@@ -108,6 +112,7 @@ def book_detail(request, pk):
     """書籍詳情"""
     from books.services.book_timeline_service import BookTimelineService
 
+    logger.info("book_detail", extra={"user_id": request.user.pk, "book_pk": str(pk)})
     book = get_object_or_404(
         SharedBook.objects.select_related(
             "official_book", "keeper__profile", "owner__profile"
@@ -146,6 +151,7 @@ def book_detail(request, pk):
 def my_bookshelf(request):
     """我的書架：目前持有的書籍、我的貢獻、進行中的請求"""
     tab = request.GET.get("tab", "keeping")
+    logger.info("my_bookshelf", extra={"user_id": request.user.pk, "tab": tab})
     from deals.models import Deal
 
     keeping_books = []
@@ -204,10 +210,8 @@ def my_bookshelf(request):
 @login_required
 def book_all(request):
     """查看全部（支援搜尋、篩選、分頁）"""
-    # 使用 BookSearchForm 處理 GET 參數
     form = BookSearchForm(request.GET)
-
-    # 基礎查詢
+    logger.info("book_all", extra={"user_id": request.user.pk})
     all_books = (
         SharedBook.objects.select_related(
             "official_book", "keeper__profile", "owner__profile"
@@ -311,12 +315,12 @@ def book_add(request):
                             uploaded_cover.name, uploaded_cover, save=True
                         )
                     elif cover_url and not off_book.cover_image:
-                        # Google Books 有封面 URL 且 OfficialBook 尚無封面，自動下載儲存
                         try:
                             import httpx
                             from django.core.files.base import ContentFile
                             import os
 
+                            logger.info("book_add downloading cover", extra={"user_id": request.user.pk, "isbn": isbn, "cover_url": cover_url})
                             resp = httpx.get(
                                 cover_url, timeout=10, follow_redirects=True
                             )
@@ -327,7 +331,7 @@ def book_add(request):
                                 filename, ContentFile(resp.content), save=True
                             )
                         except Exception:
-                            # 封面下載失敗不影響上架流程
+                            logger.exception("book_add cover download failed", extra={"user_id": request.user.pk, "isbn": isbn})
                             pass
 
                     shared = form.save(commit=False)
@@ -346,9 +350,11 @@ def book_add(request):
                             photo=processed,
                         )
             except ValidationError as e:
+                logger.exception("book_add validation error", extra={"user_id": request.user.pk, "isbn": isbn})
                 messages.error(request, str(e))
                 return render(request, "books/book_add.html", {"form": form})
 
+            logger.info("book_add success", extra={"user_id": request.user.pk, "shared_book_id": str(shared.pk), "isbn": isbn, "title": title})
             messages.success(request, "書籍已成功上架分享！")
             return redirect("books:bookshelf")
         messages.error(request, "書籍資料有誤，請檢查後再送出。")
@@ -390,6 +396,8 @@ def book_add(request):
 def book_edit(request, pk):
     from .forms import BookEditForm
 
+    logger.info("book_edit", extra={"user_id": request.user.pk, "book_pk": str(pk)})
+
     if request.user.profile.trust_level == 0:
         messages.error(
             request, "新手等級 (Level 0) 尚無權限編輯書籍資訊，請多參與交易提升等級。"
@@ -410,7 +418,6 @@ def book_edit(request, pk):
         if form.is_valid():
             try:
                 with transaction.atomic():
-                    # 1. 更新 OfficialBook
                     official_book = book.official_book
                     official_book.title = form.cleaned_data["title"]
                     official_book.author = form.cleaned_data["author"]
@@ -418,10 +425,8 @@ def book_edit(request, pk):
                     official_book.category = form.cleaned_data["category"]
                     official_book.save()
 
-                    # 2. 保存 SharedBook (包含其他欄位)
                     shared_book = form.save()
 
-                    # 3. 處理新上傳的照片
                     for image in request.FILES.getlist("photos"):
                         processed = process_book_photo(image)
                         BookPhoto.objects.create(
@@ -430,6 +435,7 @@ def book_edit(request, pk):
                             photo=processed,
                         )
             except ValidationError as e:
+                logger.exception("book_edit validation error", extra={"user_id": request.user.pk, "book_pk": str(pk)})
                 messages.error(request, str(e))
                 return render(
                     request,
@@ -440,6 +446,7 @@ def book_edit(request, pk):
                     },
                 )
 
+            logger.info("book_edit success", extra={"user_id": request.user.pk, "book_pk": str(pk)})
             messages.success(request, "書籍資料已更新。")
             return redirect("books:detail", pk=book.pk)
         messages.error(request, "更新失敗，請檢查欄位內容。")
@@ -462,6 +469,7 @@ def book_delete(request, pk):
     """刪除書籍（僅 owner 可刪除）"""
     book = get_object_or_404(SharedBook, pk=pk, owner=request.user)
     title = book.official_book.title
+    logger.info("book_delete", extra={"user_id": request.user.pk, "book_pk": str(pk), "title": title})
     book.delete()
     messages.success(request, f"已刪除「{title}」")
     return redirect("books:bookshelf")
@@ -472,6 +480,7 @@ def isbn_lookup(request):
     """HTMX endpoint: ISBN 查詢"""
     isbn = request.GET.get("isbn", "").strip()
     result = lookup_by_isbn(isbn) if isbn else None
+    logger.info("isbn_lookup", extra={"isbn": isbn, "found": result is not None})
     return render(
         request,
         "books/partials/isbn_result.html",
@@ -500,17 +509,17 @@ def serve_protected_photo(request, pk):
         and request.user != photo.deal.applicant
         and request.user != photo.deal.responder
     ):
+        logger.warning("serve_protected_photo forbidden", extra={"user_id": request.user.pk, "photo_pk": str(pk)})
         return HttpResponse(status=403)
 
     if settings.DEBUG:
-        # Local development: serve file directly from storage
         try:
             file = default_storage.open(photo.photo.name)
             return FileResponse(file)
         except Exception:
+            logger.exception("serve_protected_photo file not found", extra={"photo_pk": str(pk), "path": photo.photo.name})
             return HttpResponse(status=404)
 
-    # Production: Use Nginx X-Accel-Redirect
     response = HttpResponse()
     response["X-Accel-Redirect"] = f"/internal-media/{photo.photo.name}"
     return response
@@ -521,10 +530,12 @@ def serve_protected_photo(request, pk):
 def toggle_status(request, pk):
     """切換書籍狀態 S ↔ T"""
     if request.user.profile.trust_level == 0:
+        logger.warning("toggle_status forbidden (trust_level 0)", extra={"user_id": request.user.pk, "book_pk": str(pk)})
         messages.error(request, "新手等級 (Level 0) 尚無權限切換書籍狀態。")
         return HttpResponse("新手等級尚無權限", status=403)
 
     book = get_object_or_404(SharedBook, pk=pk, owner=request.user)
+    old_status = book.status
     if book.status == SharedBook.Status.SUSPENDED:
         list_book(book)
         messages.success(request, "書籍已開放借閱")
@@ -534,6 +545,7 @@ def toggle_status(request, pk):
     else:
         messages.error(request, "書籍狀態無法切換")
         return HttpResponse("書籍狀態無法切換", status=400)
+    logger.info("toggle_status", extra={"user_id": request.user.pk, "book_pk": str(pk), "old_status": old_status, "new_status": book.status})
     return render(request, "books/partials/status_toggle.html", {"book": book})
 
 
@@ -548,7 +560,7 @@ from .models import WishListItem  # noqa: E402
 @login_required
 def wishlist_list(request):
     """願望書車列表頁"""
-    # 使用 annotation 一次性計算可借閱冊數，避免 N+1 查詢
+    logger.info("wishlist_list", extra={"user_id": request.user.pk})
     wishlist_items = (
         WishListItem.objects.filter(user=request.user)
         .select_related("official_book")
@@ -589,27 +601,29 @@ def wishlist_toggle(request, pk):
     from django.core.exceptions import ValidationError
 
     official_book = get_object_or_404(OfficialBook, pk=pk)
-
-    # 檢查是否已在願望書車中
     existing = WishListItem.objects.filter(
         user=request.user,
         official_book=official_book,
     ).first()
 
     if existing:
-        # 移除
         remove_wish(request.user, official_book)
         messages.success(request, "已從願望書車移除")
         in_wishlist = False
+        action = "removed"
     else:
-        # 加入
         try:
             add_wish(request.user, official_book)
             messages.success(request, "已加入願望書車")
             in_wishlist = True
+            action = "added"
         except ValidationError as e:
+            logger.warning("wishlist_toggle failed", extra={"user_id": request.user.pk, "official_book_pk": str(pk)})
             messages.error(request, str(e))
             in_wishlist = False
+            action = "failed"
+
+    logger.info("wishlist_toggle", extra={"user_id": request.user.pk, "official_book_pk": str(pk), "action": action})
 
     return render(
         request,
@@ -628,8 +642,10 @@ def wishlist_remove(request, pk):
 
     try:
         remove_wish(request.user, official_book)
+        logger.info("wishlist_remove", extra={"user_id": request.user.pk, "official_book_pk": str(pk)})
         messages.success(request, "已從願望書車移除")
     except ValidationError as e:
+        logger.warning("wishlist_remove failed", extra={"user_id": request.user.pk, "official_book_pk": str(pk)})
         messages.error(request, str(e))
 
     return redirect("books:wishlist")
@@ -646,12 +662,11 @@ def due_soon_list(request):
     from deals.models import Deal
     from datetime import timedelta
 
-    # 計算提醒門檻（例如 7 天內到期）
     remind_days = int(request.GET.get("days", 7))
     now = timezone.now()
     deadline = now + timedelta(days=remind_days)
+    logger.info("due_soon_list", extra={"user_id": request.user.pk, "remind_days": remind_days})
 
-    # 查詢使用者作為借閱者且即將到期的交易
     due_soon_deals = (
         Deal.objects.filter(
             applicant=request.user,
@@ -706,6 +721,7 @@ from .forms import BookSetCreateForm  # noqa: E402
 def book_set_list(request):
     """套書列表頁"""
     book_sets = get_user_book_sets(request.user)
+    logger.info("book_set_list", extra={"user_id": request.user.pk, "count": len(book_sets)})
     return render(
         request,
         "books/book_set_list.html",
@@ -716,7 +732,6 @@ def book_set_list(request):
 @login_required
 def book_set_create(request):
     """建立套書"""
-
     if request.method == "POST":
         form = BookSetCreateForm(request.POST, user=request.user)
         if form.is_valid():
@@ -726,11 +741,11 @@ def book_set_create(request):
                     name=form.cleaned_data["name"],
                     description=form.cleaned_data.get("description", ""),
                 )
-                # 處理批次加入書籍
                 selected_books = form.cleaned_data.get("books", [])
                 for book in selected_books:
                     add_book_to_set(book_set, book)
 
+            logger.info("book_set_create", extra={"user_id": request.user.pk, "book_set_id": str(book_set.pk), "name": book_set.name, "book_count": len(selected_books)})
             messages.success(request, "套書已建立並加入書籍")
             return redirect("books:book_set_detail", pk=book_set.pk)
     else:
@@ -746,21 +761,20 @@ def book_set_create(request):
 @login_required
 def book_set_edit(request, pk):
     """編輯套書"""
-
     book_set = get_object_or_404(BookSet, pk=pk, owner=request.user)
+    logger.info("book_set_edit", extra={"user_id": request.user.pk, "book_set_id": str(pk)})
 
     if request.method == "POST":
         form = BookSetCreateForm(request.POST, instance=book_set, user=request.user)
         if form.is_valid():
             with transaction.atomic():
                 form.save()
-                # 處理書籍更新：先清除再重新加入（或差異比對）
-                # 這裡採簡單策略：清除目前的並按表單重新加入
                 book_set.books.update(book_set=None)
                 selected_books = form.cleaned_data.get("books", [])
                 for book in selected_books:
                     add_book_to_set(book_set, book)
 
+            logger.info("book_set_edit success", extra={"user_id": request.user.pk, "book_set_id": str(pk)})
             messages.success(request, "套書已更新")
             return redirect("books:book_set_detail", pk=pk)
     else:
@@ -781,7 +795,9 @@ def book_set_detail(request, pk):
     """套書詳情"""
     try:
         book_set = get_book_set_detail(pk, request.user)
+        logger.info("book_set_detail", extra={"user_id": request.user.pk, "book_set_id": str(pk)})
     except Exception as e:
+        logger.exception("book_set_detail failed", extra={"user_id": request.user.pk, "book_set_id": str(pk)})
         messages.error(request, str(e))
         return redirect("books:book_set_list")
 
@@ -802,8 +818,10 @@ def book_set_delete(request, pk):
     if request.method == "POST":
         try:
             delete_book_set(book_set)
+            logger.info("book_set_delete", extra={"user_id": request.user.pk, "book_set_id": str(pk), "name": book_set.name})
             messages.success(request, "套書已刪除")
         except Exception as e:
+            logger.exception("book_set_delete failed", extra={"user_id": request.user.pk, "book_set_id": str(pk)})
             messages.error(request, str(e))
         return redirect("books:book_set_list")
 
@@ -820,6 +838,7 @@ def book_set_add_book(request, pk):
     """加入書籍到套書（HTMX）"""
     book_set = get_object_or_404(BookSet, pk=pk, owner=request.user)
     book_id = request.POST.get("book_id")
+    logger.info("book_set_add_book", extra={"user_id": request.user.pk, "book_set_id": str(pk), "shared_book_id": book_id})
 
     if book_id:
         book = get_object_or_404(SharedBook, pk=book_id, owner=request.user)
@@ -827,6 +846,7 @@ def book_set_add_book(request, pk):
             add_book_to_set(book_set, book)
             messages.success(request, f"已加入「{book.official_book.title}」")
         except Exception as e:
+            logger.exception("book_set_add_book failed", extra={"user_id": request.user.pk, "book_set_id": str(pk), "shared_book_id": book_id})
             messages.error(request, str(e))
 
     books = book_set.books.select_related("official_book").all()
@@ -851,8 +871,10 @@ def book_set_remove_book(request, pk, book_id):
 
     try:
         remove_book_from_set(book_set, book)
+        logger.info("book_set_remove_book", extra={"user_id": request.user.pk, "book_set_id": str(pk), "shared_book_id": str(book_id)})
         messages.success(request, f"已移除「{book.official_book.title}」")
     except Exception as e:
+        logger.exception("book_set_remove_book failed", extra={"user_id": request.user.pk, "book_set_id": str(pk), "shared_book_id": str(book_id)})
         messages.error(request, str(e))
 
     books = book_set.books.select_related("official_book").all()
@@ -875,9 +897,10 @@ def book_photo_delete(request, pk):
     photo = get_object_or_404(BookPhoto.objects.select_related("shared_book"), pk=pk)
 
     if request.user != photo.uploader and request.user != photo.shared_book.owner:
+        logger.warning("book_photo_delete forbidden", extra={"user_id": request.user.pk, "photo_pk": str(pk)})
         return HttpResponse(status=403)
 
     photo.photo.delete(save=False)
     photo.delete()
-
+    logger.info("book_photo_delete", extra={"user_id": request.user.pk, "photo_pk": str(pk)})
     return HttpResponse(status=200)

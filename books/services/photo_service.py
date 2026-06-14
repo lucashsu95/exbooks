@@ -1,9 +1,12 @@
 import io
+import logging
 import os
 
 from django.core.exceptions import ValidationError
 from django.core.files.images import ImageFile
 from PIL import Image, ImageOps
+
+logger = logging.getLogger(__name__)
 
 MAX_SIZE_MB = 5
 MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024
@@ -24,6 +27,15 @@ def validate_and_process(image_file):
     ext = os.path.splitext(image_file.name)[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
         raise ValidationError(f"不支援的檔案格式：{ext}。僅支援 JPG 和 PNG。")
+
+    logger.debug(
+        "validating photo",
+        extra={
+            "filename": image_file.name,
+            "size": image_file.size,
+            "mime": image_file.content_type,
+        },
+    )
 
     # 2. 驗證 MIME type（含 iOS 降級方案）
     mime_type = image_file.content_type
@@ -102,4 +114,13 @@ def validate_and_process(image_file):
 
     # 建立新的 ImageFile，統一使用 .jpg 副檔名
     new_filename = os.path.splitext(image_file.name)[0] + ".jpg"
+
+    logger.info(
+        "photo processed",
+        extra={
+            "original_name": image_file.name,
+            "final_size": output.tell(),
+            "quality": quality,
+        },
+    )
     return ImageFile(output, name=new_filename)

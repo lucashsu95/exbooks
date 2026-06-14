@@ -10,6 +10,8 @@ Service 層負責：
 副作用（通知）由 Signal 處理。
 """
 
+import logging
+
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django_fsm import can_proceed
@@ -17,6 +19,7 @@ from django_fsm import can_proceed
 from books.models import SharedBook, WishListItem
 from deals.services.notification_service import notify_book_available
 
+logger = logging.getLogger(__name__)
 
 # ============================================================================
 # 書籍上架/下架
@@ -53,6 +56,15 @@ def list_book(shared_book):
     for item in wish_items:
         notify_book_available(item.user, shared_book)
 
+    logger.info(
+        "book listed",
+        extra={
+            "book_id": shared_book.id,
+            "owner_id": shared_book.owner_id,
+            "wish_notified": wish_items.count(),
+        },
+    )
+
 
 def suspend_book(shared_book):
     """
@@ -71,6 +83,7 @@ def suspend_book(shared_book):
     shared_book.suspend()
     shared_book.save()
 
+    logger.info("book suspended", extra={"book_id": shared_book.id})
 
 # ============================================================================
 # 套書驗證
@@ -91,16 +104,28 @@ def validate_book_set_completeness(book_set):
     books = list(book_set.books.select_related("official_book"))
 
     if not books:
+        logger.warning("validate_book_set_completeness: empty set", extra={"book_set_id": book_set.id})
         raise ValidationError("此套書沒有包含任何書籍")
 
     unavailable = [b for b in books if b.status != SharedBook.Status.TRANSFERABLE]
 
     if unavailable:
         titles = ", ".join(str(b) for b in unavailable)
+        logger.warning(
+            "validate_book_set_completeness: books unavailable",
+            extra={
+                "book_set_id": book_set.id,
+                "unavailable_count": len(unavailable),
+            },
+        )
         raise ValidationError(
             f"套書中以下書籍目前無法借出：{titles}。套書必須整套借出。"
         )
 
+    logger.debug(
+        "validate_book_set_completeness: ok",
+        extra={"book_set_id": book_set.id, "book_count": len(books)},
+    )
     return books
 
 
@@ -125,6 +150,8 @@ def declare_exception(shared_book):
 
     shared_book.declare_exception()
     shared_book.save()
+
+    logger.info("exception declared", extra={"book_id": shared_book.id})
 
 
 def resolve_exception(shared_book, resolution):
@@ -153,3 +180,8 @@ def resolve_exception(shared_book, resolution):
 
     method()
     shared_book.save()
+
+    logger.info(
+        "exception resolved",
+        extra={"book_id": shared_book.id, "resolution": resolution},
+    )
