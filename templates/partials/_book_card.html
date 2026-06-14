@@ -1,3 +1,4 @@
+{% load i18n %}
 {% comment %}
   Book Card Component (Bookshelf Style)
   用於「我的書架」等列表的垂直卡片
@@ -19,7 +20,7 @@
             {% endif %}
             {% if subtitle %}<p class="text-xs text-slate-500 mt-1 truncate">{{ subtitle_prefix }}{{ subtitle }}</p>{% endif %}
             {% if show_owner %}
-                <p class="text-xs text-slate-400 mt-0.5 truncate">擁有者：{{ book.owner.profile.nickname|default:book.owner.email }}</p>
+                <p class="text-xs text-slate-400 mt-0.5 truncate">{% blocktrans with owner=book.owner.profile.nickname|default:book.owner.email %}擁有者：{{ owner }}{% endblocktrans %}</p>
             {% endif %}
         </div>
         <div class="text-slate-300 shrink-0">

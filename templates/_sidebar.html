@@ -1,39 +1,40 @@
+{% load i18n %}
 <!-- Sidebar Overlay - 使用 button 以支援鍵盤互動 -->
 <button type="button"
         id="sidebar-overlay"
-        aria-label="關閉選單"
+        aria-label="{% trans '關閉選單' %}"
         class="fixed inset-0 bg-black/50 z-40 opacity-0 pointer-events-none transition-opacity duration-300 cursor-default"
         onclick="toggleSidebar()"></button>
 <!-- Sidebar - 使用 aside 語義標籤 -->
 <aside id="sidebar"
        role="dialog"
        aria-modal="true"
-       aria-label="主選單"
+       aria-label="{% trans '主選單' %}"
        class="fixed top-0 left-0 h-full w-72 bg-white z-50 transform -translate-x-full transition-transform duration-300 shadow-xl flex flex-col overscroll-contain">
     <!-- Header - 使用 header 語義標籤 -->
     <header class="p-4 border-b border-slate-200 flex items-center justify-between">
-        <h2 class="text-lg font-bold text-slate-900">選單</h2>
+        <h2 class="text-lg font-bold text-slate-900">{% trans "選單" %}</h2>
         <button type="button"
                 onclick="toggleSidebar()"
-                aria-label="關閉選單"
+                aria-label="{% trans '關閉選單' %}"
                 class="p-2 rounded-lg hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
             <span class="material-symbols-outlined text-slate-500" aria-hidden="true">close</span>
         </button>
     </header>
     <!-- User Info (if logged in) -->
     {% if user.is_authenticated %}
-        <section class="p-4 border-b border-slate-200" aria-label="使用者資訊">
+        <section class="p-4 border-b border-slate-200" aria-label="{% trans '使用者資訊' %}">
             <div class="flex items-center gap-3">
                 <div class="size-12 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border-2 border-primary">
                     {% if user.profile.avatar %}
                         <img src="{{ user.profile.avatar.url }}"
-                             alt="{{ user.profile.nickname|default:user.email }} 的頭像"
+                             alt="{% blocktrans with nickname=user.profile.nickname|default:user.email %}{{ nickname }} 的頭像{% endblocktrans %}"
                              width="48"
                              height="48"
                              class="w-full h-full object-cover" />
                     {% elif user.socialaccount_set.all.0.extra_data.picture %}
                         <img src="{{ user.socialaccount_set.all.0.extra_data.picture }}"
-                             alt="{{ user.profile.nickname|default:user.email }} 的 Google 頭像"
+                             alt="{% blocktrans with nickname=user.profile.nickname|default:user.email %}{{ nickname }} 的 Google 頭像{% endblocktrans %}"
                              width="48"
                              height="48"
                              class="w-full h-full object-cover" />
@@ -49,23 +50,23 @@
         </section>
     {% endif %}
     <!-- Menu Items - 使用 nav 語義標籤 -->
-    <nav class="flex-1 overflow-y-auto py-2" aria-label="主選單">
+    <nav class="flex-1 overflow-y-auto py-2" aria-label="{% trans '主選單' %}">
         {% if user.is_authenticated %}
             <a href="{% url 'books:bookshelf' %}"
                class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 transition-colors">
                 <span class="material-symbols-outlined text-primary" aria-hidden="true">auto_stories</span>
-                <span class="text-slate-900">我的書架</span>
+                 <span class="text-slate-900">{% trans "我的書架" %}</span>
             </a>
         {% endif %}
         <a href="{% url 'books:wishlist' %}"
            class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 transition-colors">
             <span class="material-symbols-outlined text-slate-500" aria-hidden="true">favorite</span>
-            <span class="text-slate-900">願望書車</span>
+             <span class="text-slate-900">{% trans "願望書車" %}</span>
         </a>
         <a href="{% url 'deals:notification_list' %}"
            class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 transition-colors relative">
             <span class="material-symbols-outlined text-slate-500" aria-hidden="true">notifications</span>
-            <span class="text-slate-900">通知中心</span>
+             <span class="text-slate-900">{% trans "通知中心" %}</span>
             {% if user.is_authenticated %}
                 <span id="notification-badge-sidebar"
                       hx-get="{% url 'deals:notification_count' %}"
@@ -78,26 +79,26 @@
         <a href="{% url 'deals:list' %}"
            class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 transition-colors">
             <span class="material-symbols-outlined text-slate-500" aria-hidden="true">swap_horiz</span>
-            <span class="text-slate-900">交易紀錄</span>
+             <span class="text-slate-900">{% trans "交易紀錄" %}</span>
         </a>
         <a href="{% url 'books:overdue_list' %}"
            class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 transition-colors">
             <span class="material-symbols-outlined text-amber-600" aria-hidden="true">event_busy</span>
-            <span class="text-slate-900">公開逾期名單</span>
+             <span class="text-slate-900">{% trans "公開逾期名單" %}</span>
         </a>
         {% if user.is_authenticated %}
             <a href="{% url 'accounts:profile_edit' %}"
                class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 transition-colors">
                 <span class="material-symbols-outlined text-slate-500" aria-hidden="true">settings</span>
-                <span class="text-slate-900">設定</span>
+                 <span class="text-slate-900">{% trans "設定" %}</span>
             </a>
         {% endif %}
         <button type="button"
                 onclick="alert('關於與幫助功能開發中');"
                 class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-100 transition-colors text-left">
             <span class="material-symbols-outlined text-slate-500" aria-hidden="true">help</span>
-            <span class="text-slate-900">關於與幫助</span>
-            <span class="ml-auto text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">開發中</span>
+             <span class="text-slate-900">{% trans "關於與幫助" %}</span>
+             <span class="ml-auto text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">{% trans "開發中" %}</span>
         </button>
         {% if user.is_authenticated %}
             <form method="post" action="{% url 'account_logout' %}" class="block">
@@ -105,20 +106,20 @@
                 <button type="submit"
                         class="w-full flex items-center gap-3 px-4 py-3 hover:bg-rose-50 transition-colors text-rose-600">
                     <span class="material-symbols-outlined" aria-hidden="true">logout</span>
-                    <span>登出</span>
+                     <span>{% trans "登出" %}</span>
                 </button>
             </form>
         {% else %}
             <a href="{% url 'account_login' %}"
                class="flex items-center gap-3 px-4 py-3 hover:bg-slate-100 transition-colors">
                 <span class="material-symbols-outlined text-primary" aria-hidden="true">login</span>
-                <span class="text-slate-900">登入 / 註冊</span>
+                 <span class="text-slate-900">{% trans "登入 / 註冊" %}</span>
             </a>
         {% endif %}
     </nav>
     <!-- Footer -->
     <footer class="p-4 border-t border-slate-200 text-center">
-        <p class="text-xs text-slate-400">Exbooks 共享書籍 v1.0</p>
+        <p class="text-xs text-slate-400">{% trans "Exbooks 共享書籍 v1.0" %}</p>
     </footer>
 </aside>
 <script>

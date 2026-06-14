@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
-{% block title %}Exbooks - 交易管理{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Exbooks - 交易管理" %}{% endblock %}
 {% block content %}
     <div class="mesh-aura"></div>
     <div id="deal-list-page" class="relative min-h-screen">
@@ -7,7 +8,7 @@
                 style="view-transition-name: page-header">
             <div class="flex items-center p-4 justify-start max-w-xl mx-auto">
                 <h1 class="text-xl font-bold tracking-tight text-slate-900"
-                    style="view-transition-name: page-title">交易管理</h1>
+                    style="view-transition-name: page-title">{% trans "交易管理" %}</h1>
             </div>
             <div class="w-full overflow-x-auto no-scrollbar scroll-smooth mask-edge border-b border-white/20">
                 <div class="max-w-xl mx-auto">
@@ -20,7 +21,7 @@
                             <a class="{{ tab_class }} {% if current_tab == 'pending' %}text-primary{% else %}text-slate-500 hover:text-slate-800{% endif %}"
                                href="?tab=pending">
                                 <div class="flex items-center gap-1.5">
-                                    <span class="text-sm font-bold tracking-tight">待回應</span>
+                                    <span class="text-sm font-bold tracking-tight">{% trans "待回應" %}</span>
                                     {% if pending_responder.count > 0 %}
                                         <span class="min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-primary text-[10px] font-black text-white shadow-sm shadow-primary/20">{{ pending_responder.count }}</span>
                                     {% endif %}
@@ -33,7 +34,7 @@
                             <a class="{{ tab_class }} {% if current_tab == 'pending_applicant' %}text-primary{% else %}text-slate-500 hover:text-slate-800{% endif %}"
                                href="?tab=pending_applicant">
                                 <div class="flex items-center gap-1.5">
-                                    <span class="text-sm font-bold tracking-tight">待對方回應</span>
+                                    <span class="text-sm font-bold tracking-tight">{% trans "待對方回應" %}</span>
                                     {% if pending_applicant.count > 0 %}
                                         <span class="min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-primary text-[10px] font-black text-white shadow-sm shadow-primary/20">{{ pending_applicant.count }}</span>
                                     {% endif %}
@@ -46,7 +47,7 @@
                             <a class="{{ tab_class }} {% if current_tab == 'meeting' %}text-primary{% else %}text-slate-500 hover:text-slate-800{% endif %}"
                                href="?tab=meeting">
                                 <div class="flex items-center gap-1.5">
-                                    <span class="text-sm font-bold tracking-tight">待面交</span>
+                                    <span class="text-sm font-bold tracking-tight">{% trans "待面交" %}</span>
                                     {% if pending_meeting.count > 0 %}
                                         <span class="min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-primary text-[10px] font-black text-white shadow-sm shadow-primary/20">{{ pending_meeting.count }}</span>
                                     {% endif %}
@@ -59,7 +60,7 @@
                             <a class="{{ tab_class }} {% if current_tab == 'rating' %}text-primary{% else %}text-slate-500 hover:text-slate-800{% endif %}"
                                href="?tab=rating">
                                 <div class="flex items-center gap-1.5">
-                                    <span class="text-sm font-bold tracking-tight">待評價</span>
+                                    <span class="text-sm font-bold tracking-tight">{% trans "待評價" %}</span>
                                     {% if pending_rating.count > 0 %}
                                         <span class="min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-primary text-[10px] font-black text-white shadow-sm shadow-primary/20">{{ pending_rating.count }}</span>
                                     {% endif %}
@@ -71,7 +72,7 @@
                             </a>
                             <a class="{{ tab_class }} {% if current_tab == 'history' %}text-primary{% else %}text-slate-500 hover:text-slate-800{% endif %}"
                                href="?tab=history">
-                                <span class="text-sm font-bold tracking-tight">歷史</span>
+                                <span class="text-sm font-bold tracking-tight">{% trans "歷史" %}</span>
                                 {% if current_tab == 'history' %}
                                     <div class="absolute bottom-0 left-6 right-6 h-0.5 bg-primary rounded-full shadow-[0_-4px_8px_rgba(20,184,166,0.3)]">
                                     </div>
@@ -87,14 +88,14 @@
                 <div class="mb-4 rounded-2xl border border-amber-200/80 bg-amber-50/90 p-4 shadow-sm backdrop-blur-sm">
                     <p class="flex items-center gap-2 text-sm text-amber-800">
                         <span class="material-symbols-outlined text-base leading-none">info</span>
-                        有 {{ grouped_pending|length }} 本書籍收到多筆申請，建議檢視後一併處理
+                        {% blocktrans with count=grouped_pending|length %}有 {{ count }} 本書籍收到多筆申請，建議檢視後一併處理{% endblocktrans %}
                     </p>
                 </div>
             {% endif %}
             {% if current_tab == 'pending' and pending_responder %}
                 <div class="flex items-center justify-between mb-2">
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">需要您處理的申請</p>
-                    <span class="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">{{ pending_responder.count }} 筆</span>
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">{% trans "需要您處理的申請" %}</p>
+                    <span class="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">{% blocktrans with count=pending_responder.count %}{{ count }} 筆{% endblocktrans %}</span>
                 </div>
             {% endif %}
             {% if deals %}
@@ -104,11 +105,11 @@
                             <section class="rounded-3xl border border-primary/20 bg-white/60 p-3 shadow-lg shadow-slate-200/40 backdrop-blur-md">
                                 <div class="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-white/80 bg-white/75 px-3 py-2">
                                     <div class="min-w-0">
-                                        <p class="text-[11px] font-bold uppercase tracking-wider text-primary/80">同一本書的多筆申請</p>
+                                        <p class="text-[11px] font-bold uppercase tracking-wider text-primary/80">{% trans "同一本書的多筆申請" %}</p>
                                         <p class="truncate text-sm font-semibold text-slate-800">{{ book.official_book.title }}</p>
                                     </div>
                                     <span class="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
-                                        {{ grouped_deals|length }} 筆
+                                        {% blocktrans with count=grouped_deals|length %}{{ count }} 筆{% endblocktrans %}
                                     </span>
                                 </div>
                                 <div class="space-y-3">
@@ -130,15 +131,15 @@
                 {% endif %}
             {% else %}
                 {% if current_tab == 'pending' %}
-                    {% include 'partials/_empty_state.html' with icon='request_page' message='目前沒有待處理的交易' %}
+                    {% include 'partials/_empty_state.html' with icon='request_page' message=message|default:_("目前沒有待處理的交易") %}
                 {% elif current_tab == 'pending_applicant' %}
-                    {% include 'partials/_empty_state.html' with icon='hourglass_empty' message='您還沒有待對方回應的交易申請' %}
+                    {% include 'partials/_empty_state.html' with icon='hourglass_empty' message=message|default:_("您還沒有待對方回應的交易申請") %}
                 {% elif current_tab == 'meeting' %}
-                    {% include 'partials/_empty_state.html' with icon='event' message='目前沒有約定面交的交易' %}
+                    {% include 'partials/_empty_state.html' with icon='event' message=message|default:_("目前沒有約定面交的交易") %}
                 {% elif current_tab == 'rating' %}
-                    {% include 'partials/_empty_state.html' with icon='star' message='目前沒有待評價的交易' %}
+                    {% include 'partials/_empty_state.html' with icon='star' message=message|default:_("目前沒有待評價的交易") %}
                 {% elif current_tab == 'history' %}
-                    {% include 'partials/_empty_state.html' with icon='history' message='您還沒有已完成的交易記錄' %}
+                    {% include 'partials/_empty_state.html' with icon='history' message=message|default:_("您還沒有已完成的交易記錄") %}
                 {% endif %}
             {% endif %}
         </main>

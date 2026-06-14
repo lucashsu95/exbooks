@@ -1,3 +1,4 @@
+{% load i18n %}
 {# templates/partials/trust_badge.html #}
 {# Full trust level badge with icon circle, label, and Lv indicator #}
 {# Usage: {% include "partials/trust_badge.html" with prefix="信用等級：" %} #}
@@ -16,7 +17,7 @@
             <span class="material-symbols-outlined text-2xl text-gray-400">help</span>
         </div>
         <div class="flex-1">
-            <p class="text-sm font-bold text-slate-900">{% if prefix %}{{ prefix }}{% endif %}未知</p>
+            <p class="text-sm font-bold text-slate-900">{% if prefix %}{{ prefix }}{% endif %}{% trans "未知" %}</p>
         </div>
     </div>
 {% else %}
@@ -27,8 +28,8 @@
                     <span class="material-symbols-outlined text-2xl text-rose-500">block</span>
                 </div>
                 <div class="flex-1">
-                    <p class="text-sm font-bold text-rose-600">永久停權</p>
-                    <p class="text-xs text-rose-400">帳號已禁用</p>
+                    <p class="text-sm font-bold text-rose-600">{% trans "永久停權" %}</p>
+                    <p class="text-xs text-rose-400">{% trans "帳號已禁用" %}</p>
                 </div>
             </div>
         {% elif group.name == 'restricted' %}
@@ -37,8 +38,8 @@
                     <span class="material-symbols-outlined text-2xl text-amber-500">warning</span>
                 </div>
                 <div class="flex-1">
-                    <p class="text-sm font-bold text-amber-600">限制中</p>
-                    <p class="text-xs text-amber-400">部分功能受限</p>
+                    <p class="text-sm font-bold text-amber-600">{% trans "限制中" %}</p>
+                    <p class="text-xs text-amber-400">{% trans "部分功能受限" %}</p>
                 </div>
             </div>
         {% elif group.name|slice:":8" == "trust_lv" %}

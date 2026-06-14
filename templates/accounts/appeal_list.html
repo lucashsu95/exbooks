@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Exbooks - 我的申訴{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Exbooks - 我的申訴" %}{% endblock %}
 {% block content %}
     <!-- Header Section -->
     <header class="flex items-center bg-background-light-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
@@ -7,7 +8,7 @@
            class="text-slate-900 flex size-12 shrink-0 items-center cursor-pointer">
             <span class="material-symbols-outlined">arrow_back</span>
         </a>
-        <h2 class="text-slate-900 text-xl font-bold leading-tight tracking-tight flex-1 text-center">我的申訴</h2>
+        <h2 class="text-slate-900 text-xl font-bold leading-tight tracking-tight flex-1 text-center">{% trans "我的申訴" %}</h2>
         <a href="{% url 'accounts:appeal_create' %}"
            class="flex size-12 items-center justify-end text-primary">
             <span class="material-symbols-outlined">add</span>
@@ -50,10 +51,10 @@
         {% else %}
             <div class="bg-white rounded-xl p-8 text-center">
                 <span class="material-symbols-outlined text-6xl text-slate-300-slate-600 mb-4">gavel</span>
-                <h3 class="text-slate-900 font-bold mb-2">尚無申訴紀錄</h3>
-                <p class="text-slate-500 text-sm">您尚未提交任何申訴</p>
+                <h3 class="text-slate-900 font-bold mb-2">{% trans "尚無申訴紀錄" %}</h3>
+                <p class="text-slate-500 text-sm">{% trans "您尚未提交任何申訴" %}</p>
                 <a href="{% url 'accounts:appeal_create' %}"
-                   class="inline-block mt-4 px-6 py-2 bg-primary text-white font-bold rounded-xl">提交申訴</a>
+                   class="inline-block mt-4 px-6 py-2 bg-primary text-white font-bold rounded-xl">{% trans "提交申訴" %}</a>
             </div>
         {% endif %}
     </main>

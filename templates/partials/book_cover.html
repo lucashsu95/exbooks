@@ -1,4 +1,4 @@
-{% load static %}
+{% load static i18n %}
 {# 傳入: book (SharedBook), class (CSS) #}
 {# 優先順序：官方封面 cover_image > 預設封面圖 #}
 {% if book.official_book.cover_image %}
@@ -7,6 +7,6 @@
          src="{{ book.official_book.cover_image.url }}" />
 {% else %}
     <img class="{{ class|default:'w-full h-full object-cover' }}"
-         alt="預設封面"
+         alt="{% trans '預設封面' %}"
          src="{% static 'book-placeholder.jpg' %}" />
 {% endif %}

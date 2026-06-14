@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags %}
-{% block title %}Exbooks - 新增書籍{% endblock %}
+{% load crispy_forms_tags i18n %}
+{% block title %}{% trans "Exbooks - 新增書籍" %}{% endblock %}
 {% block content %}
     {% url 'books:bookshelf' as shelf_url %}
-    {% include 'partials/_header.html' with title="新增分享書籍" back_url=request.META.HTTP_REFERER|default:shelf_url %}
+    {% include 'partials/_header.html' with title=title|default:_("新增分享書籍") back_url=request.META.HTTP_REFERER|default:shelf_url %}
     <main class="max-w-xl mx-auto p-4 pb-24">
         <form method="POST" enctype="multipart/form-data" class="space-y-4">
             {% csrf_token %}
@@ -12,15 +12,15 @@
                 <span class="htmx-indicator text-sm text-slate-500 mb-2">
                     <span class="material-symbols-outlined animate-spin align-middle"
                           aria-hidden="true">sync</span>
-                    查詢中…
-                    <span class="sr-only">請稍候</span>
+                    {% trans "查詢中…" %}
+                    <span class="sr-only">{% trans "請稍候" %}</span>
                 </span>
                 {% crispy form %}
                 <div id="photo-preview" class="grid grid-cols-3 gap-2 mt-3"></div>
             </div>
             <button type="submit"
                     class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-transform">
-                確認新增
+                {% trans "確認新增" %}
             </button>
         </form>
     </main>

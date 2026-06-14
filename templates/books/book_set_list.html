@@ -1,16 +1,17 @@
 {% extends "base.html" %}
-{% block title %}我的套書 - Exbooks{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "我的套書 - Exbooks" %}{% endblock %}
 {% block content %}
     <!-- Sticky top bar -->
     <header class="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
             <nav class="flex items-center gap-3">
                 <a href="{% url 'books:bookshelf' %}"
-                   aria-label="返回"
+                   aria-label="{% trans '返回' %}"
                    class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
                     <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
                 </a>
-                <h1 class="text-xl font-bold tracking-tight">我的套書</h1>
+                <h1 class="text-xl font-bold tracking-tight">{% trans "我的套書" %}</h1>
             </nav>
         </div>
     </header>
@@ -30,7 +31,8 @@
                                     <p class="text-sm text-slate-500 mt-1 line-clamp-2">{{ book_set.description }}</p>
                                 {% endif %}
                                 <div class="mt-3 flex items-center gap-2">
-                                    {% include 'partials/_badge.html' with text=book_set.books.count|add:' 本書籍' icon='auto_stories' %}
+                                    {% blocktrans with counter=book_set.books.count asvar badge_text %}{{ counter }} 本書籍{% endblocktrans %}
+                    {% include 'partials/_badge.html' with text=badge_text icon='auto_stories' %}
                                 </div>
                             </div>
                             <div class="flex gap-2 relative z-10 shrink-0">
@@ -45,12 +47,12 @@
                 {% endfor %}
             </div>
         {% else %}
-            {% include 'partials/_empty_state.html' with icon='library_books' message='您還沒有建立任何套書' %}
+            {% include 'partials/_empty_state.html' with icon='library_books' message=message|default:_("您還沒有建立任何套書") %}
         {% endif %}
     </div>
     <!-- Floating Action Button -->
     <a href="{% url 'books:book_set_create' %}"
-       aria-label="建立套書"
+       aria-label="{% trans '建立套書' %}"
        class="fixed right-4 fab-safe-bottom bg-primary text-white size-14 rounded-full shadow-lg flex items-center justify-center hover:scale-105 transition-transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 z-30">
         <span class="material-symbols-outlined text-3xl" aria-hidden="true">add</span>
     </a>

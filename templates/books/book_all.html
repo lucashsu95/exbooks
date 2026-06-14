@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
-{% block title %}Exbooks - 所有書籍{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Exbooks - 所有書籍" %}{% endblock %}
 {% block content %}
     <div id="book-all-page">
         <!-- Header -->
@@ -7,11 +8,11 @@
             <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
                 <nav class="flex items-center gap-3">
                     <a href="{% url 'books:list' %}"
-                       aria-label="返回首頁"
+                        aria-label="{% trans '返回首頁' %}"
                        class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary">
                         <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
                     </a>
-                    <h1 class="text-xl font-bold tracking-tight">所有書籍</h1>
+                    <h1 class="text-xl font-bold tracking-tight">{% trans "所有書籍" %}</h1>
                 </nav>
             </div>
         </header>
@@ -27,9 +28,9 @@
                     </button>
                     <input name="q"
                            form="search-form"
-                           aria-label="搜尋 ISBN、書名、作者、出版社"
-                           class="form-input flex w-full min-w-0 flex-1 border-none bg-white text-slate-900 focus:ring-0 h-full placeholder:text-slate-400 px-4 rounded-r-xl text-base font-normal"
-                           placeholder="搜尋 ISBN、書名、作者、出版社"
+                            aria-label="{% trans '搜尋 ISBN、書名、作者、出版社' %}"
+                            class="form-input flex w-full min-w-0 flex-1 border-none bg-white text-slate-900 focus:ring-0 h-full placeholder:text-slate-400 px-4 rounded-r-xl text-base font-normal"
+                            placeholder="{% trans '搜尋 ISBN、書名、作者、出版社' %}"
                            value="{{ search_query }}"
                            hx-get="{% url 'books:all' %}"
                            hx-trigger="keyup changed delay:500ms, search"
@@ -54,11 +55,11 @@
                             hx-push-url="true"
                             hx-indicator="#global-loader"
                             hx-include="[name='q'], [name='category']">
-                        <option value="" {% if not current_transferability %}selected{% endif %}>全部流通性</option>
+                        <option value="" {% if not current_transferability %}selected{% endif %}>{% trans "全部流通性" %}</option>
                         <option value="TRANSFER"
-                                {% if current_transferability == 'TRANSFER' %}selected{% endif %}>開放傳遞</option>
+                                {% if current_transferability == 'TRANSFER' %}selected{% endif %}>{% trans "開放傳遞" %}</option>
                         <option value="RETURN"
-                                {% if current_transferability == 'RETURN' %}selected{% endif %}>閱畢即還</option>
+                                {% if current_transferability == 'RETURN' %}selected{% endif %}>{% trans "閱畢即還" %}</option>
                     </select>
                     <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">expand_more</span>
                 </div>
@@ -74,7 +75,7 @@
                             hx-push-url="true"
                             hx-indicator="#global-loader"
                             hx-include="[name='q'], [name='transferability']">
-                        <option value="" {% if not current_category %}selected{% endif %}>全部分類</option>
+                        <option value="" {% if not current_category %}selected{% endif %}>{% trans "全部分類" %}</option>
                         {% for value, label in categories %}
                             <option value="{{ value }}"
                                     {% if current_category == value %}selected{% endif %}>{{ label }}</option>

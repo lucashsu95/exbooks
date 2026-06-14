@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags %}
-{% block title %}Exbooks - 編輯個人資料{% endblock %}
+{% load crispy_forms_tags i18n %}
+{% block title %}{% trans "Exbooks - 編輯個人資料" %}{% endblock %}
 {% block content %}
     <!-- Header -->
     <header class="sticky top-0 z-10 bg-white border-b border-slate-200">
@@ -8,7 +8,7 @@
             <div class="flex items-center gap-3">
                 <a href="{% url 'accounts:profile' %}"
                    class="material-symbols-outlined text-slate-600 cursor-pointer">arrow_back</a>
-                <h1 class="text-xl font-bold tracking-tight">編輯個人資料</h1>
+                <h1 class="text-xl font-bold tracking-tight">{% trans "編輯個人資料" %}</h1>
             </div>
         </div>
     </header>
@@ -19,11 +19,11 @@
             <div class="flex gap-3">
                 <button type="submit"
                         class="flex-1 bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-transform">
-                    儲存變更
+                    {% trans "儲存變更" %}
                 </button>
                 <a href="{% url 'accounts:profile' %}"
                    class="flex-1 text-center bg-white text-slate-700 font-bold py-4 rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-colors">
-                    取消
+                    {% trans "取消" %}
                 </a>
             </div>
         </form>

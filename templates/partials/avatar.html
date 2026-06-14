@@ -1,12 +1,13 @@
+{% load i18n %}
 {# 統一的使用者大頭貼顯示組件 #}
 {# 傳入參數: user (User 物件), class (自定義 CSS 類別, 預設為 'w-full h-full object-cover') #}
 {% if user.profile.avatar %}
     <img src="{{ user.profile.avatar.url }}"
-         alt="{{ user.profile.nickname|default:user.email }} 的頭像"
+         alt="{% blocktrans with nickname=user.profile.nickname|default:user.email %}{{ nickname }} 的頭像{% endblocktrans %}"
          class="{{ class|default:'w-full h-full object-cover rounded-full' }}">
 {% elif user.profile.avatar_url %}
     <img src="{{ user.profile.avatar_url }}"
-         alt="{{ user.profile.nickname|default:user.email }} 的頭像"
+         alt="{% blocktrans with nickname=user.profile.nickname|default:user.email %}{{ nickname }} 的頭像{% endblocktrans %}"
          class="{{ class|default:'w-full h-full object-cover rounded-full' }}">
 {% else %}
     <div class="flex items-center justify-center {{ class|default:'w-full h-full rounded-full' }} bg-primary/10 text-primary font-bold">

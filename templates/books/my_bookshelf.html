@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
-{% block title %}Exbooks - 我的書架{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Exbooks - 我的書架" %}{% endblock %}
 {% block body_class %}pb-24{% endblock %}
 {% block content %}
     <div id="bookshelf-page">
@@ -8,13 +9,13 @@
                 style="view-transition-name: page-header">
             <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
                 <h1 class="text-xl font-bold tracking-tight"
-                    style="view-transition-name: page-title">我的書架</h1>
+                    style="view-transition-name: page-title">{% trans "我的書架" %}</h1>
                 <!-- 套書管理入口 -->
                 <a href="{% url 'books:book_set_list' %}"
                    class="flex items-center gap-1 text-sm text-primary font-medium hover:underline"
-                   title="管理套書">
-                    <span class="material-symbols-outlined text-lg">library_books</span>
-                    套書
+                    title="{% trans '管理套書' %}">                     
+                     <span class="material-symbols-outlined text-lg">library_books</span>
+                     {% trans "套書" %}
                 </a>
             </div>
             <!-- Tabs - HTMX 即時切換 -->
@@ -26,15 +27,15 @@
                      hx-swap="outerHTML transition:0.2s">
                     <a class="flex flex-col items-center justify-center border-b-[3px] {% if current_tab == 'keeping' %}border-primary text-primary{% else %}border-transparent text-slate-500 hover:text-primary{% endif %} py-3 transition-colors"
                        href="?tab=keeping">
-                        <span class="text-sm font-semibold">目前持有</span>
+                        <span class="text-sm font-semibold">{% trans "目前持有" %}</span>
                     </a>
                     <a class="flex flex-col items-center justify-center border-b-[3px] {% if current_tab == 'contributions' %}border-primary text-primary{% else %}border-transparent text-slate-500 hover:text-primary{% endif %} py-3 transition-colors"
                        href="?tab=contributions">
-                        <span class="text-sm font-semibold">我的貢獻</span>
+                        <span class="text-sm font-semibold">{% trans "我的貢獻" %}</span>
                     </a>
                     <a class="flex flex-col items-center justify-center border-b-[3px] {% if current_tab == 'requests' %}border-primary text-primary{% else %}border-transparent text-slate-500 hover:text-primary{% endif %} py-3 transition-colors"
                        href="?tab=requests">
-                        <span class="text-sm font-semibold">進行中的請求</span>
+                        <span class="text-sm font-semibold">{% trans "進行中的請求" %}</span>
                     </a>
                 </nav>
             </div>
@@ -48,7 +49,7 @@
                     <div class="flex items-center justify-between mb-4 relative z-10">
                         <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
                             <span class="material-symbols-outlined text-primary">rocket_launch</span>
-                            新手任務
+                            {% trans "新手任務" %}
                         </h2>
                     </div>
                     <div class="space-y-3 relative z-10">
@@ -62,11 +63,11 @@
                                         <span class="text-xs font-bold">1</span>
                                     {% endif %}
                                 </div>
-                                <span class="text-sm font-medium {% if onboarding_step1 %}text-slate-500 line-through{% else %}text-slate-700{% endif %}">完善個人資料</span>
+                                <span class="text-sm font-medium {% if onboarding_step1 %}text-slate-500 line-through{% else %}text-slate-700{% endif %}">{% trans "完善個人資料" %}</span>
                             </div>
                             {% if not onboarding_step1 %}
                                 <a href="{% url 'accounts:profile_edit' %}"
-                                   class="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full hover:bg-primary/20 transition-colors">前往</a>
+                                    class="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full hover:bg-primary/20 transition-colors">{% trans "前往" %}</a>
                             {% endif %}
                         </div>
                         <!-- Step 2 -->
@@ -79,11 +80,11 @@
                                         <span class="text-xs font-bold">2</span>
                                     {% endif %}
                                 </div>
-                                <span class="text-sm font-medium {% if onboarding_step2 %}text-slate-500 line-through{% else %}text-slate-700{% endif %}">上架第一本書</span>
+                                <span class="text-sm font-medium {% if onboarding_step2 %}text-slate-500 line-through{% else %}text-slate-700{% endif %}">{% trans "上架第一本書" %}</span>
                             </div>
                             {% if not onboarding_step2 %}
                                 <a href="{% url 'books:add' %}"
-                                   class="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full hover:bg-primary/20 transition-colors">前往</a>
+                                    class="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full hover:bg-primary/20 transition-colors">{% trans "前往" %}</a>
                             {% endif %}
                         </div>
                         <!-- Step 3 -->
@@ -92,7 +93,7 @@
                                 <div class="flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-400">
                                     <span class="text-xs font-bold">3</span>
                                 </div>
-                                <span class="text-sm font-medium text-slate-700">探索社群好書</span>
+                                <span class="text-sm font-medium text-slate-700">{% trans "探索社群好書" %}</span>
                             </div>
                             <a href="{% url 'books:all' %}"
                                class="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full hover:bg-primary/20 transition-colors">前往</a>
@@ -105,43 +106,48 @@
         <main class="max-w-xl mx-auto p-4 space-y-4" id="bookshelf-content">
             {% if current_tab == 'keeping' %}
                 <div class="flex items-center justify-between mb-2">
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">您目前持有的書籍</p>
-                    {% include 'partials/_badge.html' with text=keeping_books|length prefix='共 ' suffix=' 本' color='primary' %}
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">{% trans "您目前持有的書籍" %}</p>
+                    {% trans "共 " as badge_prefix %}{% trans " 本" as badge_suffix %}
+                    {% include 'partials/_badge.html' with text=keeping_books|length prefix=badge_prefix suffix=badge_suffix color='primary' %}
                 </div>
                 {% for book in keeping_books %}
                     {% url 'books:detail' book.id as book_url %}
                     {% include 'partials/_book_card.html' with book=book url=book_url badge_text=book.get_status_display show_owner=True %}
                 {% empty %}
-                    {% include 'partials/_empty_state.html' with icon='inbox' message='目前沒有資料' %}
+                    {% include 'partials/_empty_state.html' with icon='inbox' message=message|default:_("目前沒有資料") %}
                 {% endfor %}
             {% elif current_tab == 'contributions' %}
                 <div class="flex items-center justify-between mb-2">
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">您貢獻的書籍</p>
-                    {% include 'partials/_badge.html' with text=contributions_books|length prefix='共 ' suffix=' 本' color='primary' %}
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">{% trans "您貢獻的書籍" %}</p>
+                    {% trans "共 " as badge_prefix %}{% trans " 本" as badge_suffix %}
+                    {% include 'partials/_badge.html' with text=contributions_books|length prefix=badge_prefix suffix=badge_suffix color='primary' %}
                 </div>
                 {% for book in contributions_books %}
                     {% url 'books:detail' book.id as book_url %}
-                    {% include 'partials/_book_card.html' with book=book url=book_url subtitle_prefix='目前持有人：' subtitle=book.keeper.profile.nickname|default:book.keeper.email badge_text=book.get_status_display %}
+                    {% trans "目前持有人：" as owner_prefix %}
+                    {% include 'partials/_book_card.html' with book=book url=book_url subtitle_prefix=owner_prefix subtitle=book.keeper.profile.nickname|default:book.keeper.email badge_text=book.get_status_display %}
                 {% empty %}
-                    {% include 'partials/_empty_state.html' with icon='inbox' message='目前沒有資料' %}
+                    {% include 'partials/_empty_state.html' with icon='inbox' message=message|default:_("目前沒有資料") %}
                 {% endfor %}
             {% elif current_tab == 'requests' %}
                 <div class="flex items-center justify-between mb-2">
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">進行中的請求</p>
-                    {% include 'partials/_badge.html' with text=active_requests|length prefix='共 ' suffix=' 筆' color='primary' %}
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">{% trans "進行中的請求" %}</p>
+                    {% trans "共 " as badge_prefix %}{% trans " 筆" as badge_suffix %}
+                    {% include 'partials/_badge.html' with text=active_requests|length prefix=badge_prefix suffix=badge_suffix color='primary' %}
                 </div>
                 {% for deal in active_requests %}
                     {% url 'deals:detail' deal.id as deal_url %}
-                    {% include 'partials/_book_card.html' with book=deal.shared_book url=deal_url badge_text=deal.get_deal_type_display badge_icon='swap_horiz' subtitle_prefix='狀態：' subtitle=deal.get_status_display badge_color='primary' %}
+                    {% trans "狀態：" as status_prefix %}
+                    {% include 'partials/_book_card.html' with book=deal.shared_book url=deal_url badge_text=deal.get_deal_type_display badge_icon='swap_horiz' subtitle_prefix=status_prefix subtitle=deal.get_status_display badge_color='primary' %}
                 {% empty %}
-                    {% include 'partials/_empty_state.html' with icon='inbox' message='目前沒有資料' %}
+                    {% include 'partials/_empty_state.html' with icon='inbox' message=message|default:_("目前沒有資料") %}
                 {% endfor %}
             {% endif %}
         </main>
     </div>
     <!-- Floating Action Button -->
     <a href="{% url 'books:add' %}"
-       aria-label="新增書籍"
+       aria-label="{% trans '新增書籍' %}"
        class="fixed right-4 fab-safe-bottom bg-primary text-white size-14 rounded-full shadow-lg flex items-center justify-center hover:scale-105 transition-transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
         <span class="material-symbols-outlined text-3xl" aria-hidden="true">add</span>
     </a>

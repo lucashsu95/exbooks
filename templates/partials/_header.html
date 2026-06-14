@@ -1,6 +1,7 @@
+{% load i18n %}
 <header class="flex items-center bg-white/80 backdrop-blur-md p-4 pb-2 justify-between sticky top-0 z-50 border-b border-slate-200"
         style="view-transition-name: page-header">
-    <nav aria-label="返回">
+     <nav aria-label="{% trans '返回' %}">
         <a href="{{ back_url|default:'javascript:history.back() ' }}"
            aria-label="返回"
            class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"

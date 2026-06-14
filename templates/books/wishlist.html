@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
-{% block title %}Exbooks - 願望書車{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Exbooks - 願望書車" %}{% endblock %}
 {% block body_class %}pb-24{% endblock %}
 {% block content %}
     <header class="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200"
@@ -7,11 +8,11 @@
         <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
             <div class="flex items-center gap-3">
                 <a href="{% url 'books:list' %}"
-                   aria-label="返回首頁"
+                   aria-label="{% trans '返回首頁' %}"
                    class="material-symbols-outlined text-slate-600 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary rounded-lg"
                    style="view-transition-name: back-button">arrow_back</a>
                 <h1 class="text-xl font-bold tracking-tight"
-                    style="view-transition-name: page-title">願望書車</h1>
+                    style="view-transition-name: page-title">{% trans "願望書車" %}</h1>
             </div>
         </div>
     </header>

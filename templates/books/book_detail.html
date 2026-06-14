@@ -1,24 +1,25 @@
 {% extends 'base.html' %}
-{% block title %}Exbooks - {{ book.official_book.title|default:'大亨小傳' }}{% endblock %}
+{% load i18n %}
+{% block title %}{% blocktrans with title=book.official_book.title|default:'大亨小傳' %}Exbooks - {{ title }}{% endblocktrans %}{% endblock %}
 {% block content %}
     <article class="relative min-h-screen pb-32 sm:pb-40">
         <div class="absolute inset-0 bg-gradient-to-br from-primary/10 via-background-light to-primary/5 h-72"></div>
         <header class="relative flex items-center p-4 justify-between sticky top-0 z-50">
-            <nav aria-label="返回" class="w-10">
+             <nav aria-label="{% trans '返回' %}" class="w-10">
                 <a href="{% url 'books:list' %}"
-                   aria-label="返回首頁"
+                   aria-label="{% trans '返回首頁' %}"
                    class="flex size-10 items-center justify-center rounded-xl bg-white/60 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary">
                     <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
                 </a>
             </nav>
-            <h1 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">書籍詳情</h1>
+            <h1 class="text-slate-900 text-lg font-bold leading-tight tracking-tight flex-1 text-center">{% trans "書籍詳情" %}</h1>
             <div class="w-10 flex justify-end gap-2">
                 {% if book.keeper != request.user %}
                     {% include 'books/partials/wishlist_button_icon.html' with official_book=book.official_book in_wishlist=in_wishlist %}
                 {% endif %}
                 <button type="button"
                         id="share-book-btn"
-                        aria-label="分享書籍"
+                         aria-label="{% trans '分享書籍' %}"
                         class="flex size-10 items-center justify-center rounded-xl bg-white/60 backdrop-blur-md shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary">
                     <span class="material-symbols-outlined" aria-hidden="true">share</span>
                 </button>
@@ -65,11 +66,11 @@
                 <div class="flex items-center gap-4">
                     <div class="size-14 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center overflow-hidden border-2 border-white shadow-lg">
                         {% if book.keeper.profile.avatar %}
-                            <img alt="持書人頭像"
+                            <img alt="{% trans '持書人頭像' %}"
                                  class="w-full h-full object-cover"
                                  src="{{ book.keeper.profile.avatar.url }}" />
                         {% elif book.keeper.socialaccount_set.all.0.extra_data.picture %}
-                            <img alt="Google 頭像"
+                            <img alt="{% trans 'Google 頭像' %}"
                                  class="w-full h-full object-cover"
                                  src="{{ book.keeper.socialaccount_set.all.0.extra_data.picture }}" />
                         {% else %}
@@ -79,13 +80,13 @@
                         {% endif %}
                     </div>
                     <div>
-                        <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">目前持有人</p>
+                         <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">{% trans "目前持有人" %}</p>
                         <p class="text-slate-900 font-bold text-lg">{{ book.keeper.profile.nickname|default:book.keeper.email }}</p>
                     </div>
                 </div>
                 <a href="{% url 'accounts:public_profile' book.keeper.id %}"
                    class="flex items-center gap-2 text-primary font-bold text-sm px-4 py-2.5 hover:bg-primary/10 rounded-xl transition-all duration-300 group">
-                    查看資料
+                    {% trans "查看資料" %}
                     <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
                 </a>
             </div>
@@ -96,12 +97,12 @@
                     <div class="flex items-center gap-3">
                         <span class="material-symbols-outlined text-blue-600">collections_bookmark</span>
                         <div>
-                            <p class="text-xs text-blue-600 font-bold uppercase tracking-wider">所屬套書</p>
+                            <p class="text-xs text-blue-600 font-bold uppercase tracking-wider">{% trans "所屬套書" %}</p>
                             <a href="{% url 'books:book_set_detail' book.book_set.pk %}"
                                class="text-blue-800 font-bold hover:underline">{{ book.book_set.name }}</a>
                         </div>
                     </div>
-                    <p class="text-sm text-blue-600 mt-2">此書籍為套書的一部分，借閱時需整套借出</p>
+                    <p class="text-sm text-blue-600 mt-2">{% trans "此書籍為套書的一部分，借閱時需整套借出" %}</p>
                 </div>
             </div>
         {% endif %}
@@ -112,7 +113,7 @@
         <div class="px-4 mt-6 mb-32">
             <div class="flex items-center gap-2 mb-4">
                 <span class="material-symbols-outlined text-primary">description</span>
-                <h3 class="text-slate-900 text-lg font-bold">書況描述</h3>
+                <h3 class="text-slate-900 text-lg font-bold">{% trans "書況描述" %}</h3>
             </div>
             <div class="bg-white/70 backdrop-blur-xl rounded-2xl p-5 border border-white/50 shadow-xl">
                 <div class="flex gap-4 mb-4">
@@ -133,14 +134,14 @@
                                    target="_blank"
                                    class="block w-full h-full">
                                     <img src="{{ photo.serve_url }}"
-                                         alt="書況照片"
+                                         alt="{% trans '書況照片' %}"
                                          class="w-full h-full object-cover hover:scale-[1.02] transition-all duration-300" />
                                 </a>
                                 {% if request.user == photo.uploader or request.user == book.owner %}
                                     <button hx-post="{% url 'books:photo_delete' photo.pk %}"
                                             hx-target="#photo-{{ photo.pk }}"
                                             hx-swap="outerHTML"
-                                            hx-confirm="確定要刪除這張照片嗎？"
+                                            hx-confirm="{% trans '確定要刪除這張照片嗎？' %}"
                                             hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                                             class="absolute top-1.5 right-1.5 size-7 bg-black/60 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200">
                                         <span class="material-symbols-outlined text-sm">close</span>
@@ -150,7 +151,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div class="mt-4 rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500">目前尚未上傳書況照片。</div>
+                    <div class="mt-4 rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500">{% trans "目前尚未上傳書況照片。" %}</div>
                 {% endif %}
             </div>
         </div>
@@ -160,42 +161,42 @@
                     <a href="{% url 'deals:create' book.id 'LN' %}"
                        class="w-full bg-gradient-to-r from-primary to-primary/80 text-white font-bold py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-primary/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all duration-300 hover:shadow-xl hover:shadow-primary/40">
                         <span class="material-symbols-outlined text-xl sm:text-2xl">auto_stories</span>
-                        申請借用
+                        {% trans "申請借用" %}
                     </a>
                 {% elif book.status == 'T' and book.transferability == 'TRANSFER' %}
                     <a href="{% url 'deals:create' book.id 'TF' %}"
                        class="w-full bg-gradient-to-r from-primary to-primary/80 text-white font-bold py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-primary/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all duration-300 hover:shadow-xl hover:shadow-primary/40">
                         <span class="material-symbols-outlined text-xl sm:text-2xl">swap_horiz</span>
-                        申請傳遞
+                        {% trans "申請傳遞" %}
                     </a>
                 {% elif book.status == 'R' %}
                     <a href="{% url 'deals:create' book.id 'RS' %}"
                        class="w-full bg-gradient-to-r from-primary to-primary/80 text-white font-bold py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-primary/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all duration-300 hover:shadow-xl hover:shadow-primary/40">
                         <span class="material-symbols-outlined text-xl sm:text-2xl">assignment_return</span>
-                        申請返還
+                        {% trans "申請返還" %}
                     </a>
                 {% elif book.status == 'T' and book.transferability == 'TRANSFER' and book.owner == request.user and book.keeper != book.owner %}
                     <a href="{% url 'deals:create' book.id 'RG' %}"
                        class="w-full bg-gradient-to-r from-primary to-primary/80 text-white font-bold py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-primary/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all duration-300 hover:shadow-xl hover:shadow-primary/40">
                         <span class="material-symbols-outlined text-xl sm:text-2xl">home</span>
-                        申請回歸
+                        {% trans "申請回歸" %}
                     </a>
                 {% elif book.status in 'T,O,R' and book.keeper == request.user %}
                     <a href="{% url 'deals:exception_create' book.id %}"
                        class="w-full bg-gradient-to-r from-rose-500 to-rose-600 text-white font-bold py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-rose-500/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all duration-300 hover:shadow-xl hover:shadow-rose-500/40">
                         <span class="material-symbols-outlined text-xl sm:text-2xl">report_problem</span>
-                        申請例外處理
+                        {% trans "申請例外處理" %}
                     </a>
                 {% elif book.status in 'E,L,D' %}
                     <a href="{% url 'deals:create' book.id 'EX' %}"
                        class="w-full bg-gradient-to-r from-rose-500 to-rose-600 text-white font-bold py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-rose-500/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all duration-300 hover:shadow-xl hover:shadow-rose-500/40">
                         <span class="material-symbols-outlined text-xl sm:text-2xl">report_problem</span>
-                        申請例外處理
+                        {% trans "申請例外處理" %}
                     </a>
                 {% else %}
                     <div class="w-full bg-slate-200/80 backdrop-blur-md text-slate-500 font-bold py-2.5 sm:py-4 rounded-2xl flex items-center justify-center gap-3">
                         <span class="material-symbols-outlined text-xl sm:text-2xl">block</span>
-                        目前無法申請交易
+                        {% trans "目前無法申請交易" %}
                     </div>
                 {% endif %}
             {% else %}
@@ -203,13 +204,13 @@
                     <a href="{% url 'books:edit' book.id %}"
                        class="w-full bg-white/80 backdrop-blur-md border border-primary/30 text-primary font-bold py-2.5 sm:py-3.5 rounded-2xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-300 hover:bg-primary/10 hover:border-primary">
                         <span class="material-symbols-outlined text-xl sm:text-2xl">edit</span>
-                        編輯書籍資訊
+                        {% trans "編輯書籍資訊" %}
                     </a>
                 {% else %}
                     <div class="w-full bg-slate-100 text-slate-400 font-medium py-2.5 sm:py-3.5 rounded-2xl flex items-center justify-center gap-2 cursor-not-allowed"
-                         title="新手等級尚無編輯權限">
+                                                   title="{% trans '新手等級尚無編輯權限' %}">
                         <span class="material-symbols-outlined text-xl sm:text-2xl">lock</span>
-                        新手暫無編輯權限
+                        {% trans "新手暫無編輯權限" %}
                     </div>
                 {% endif %}
             {% endif %}
@@ -227,7 +228,7 @@
             shareButton.addEventListener('click', async function() {
                 var shareData = {
                     title: '{{ book.official_book.title|escapejs }}',
-                    text: '我想分享這本書給你：{{ book.official_book.title|escapejs }}',
+                    text: '{% blocktrans with title=book.official_book.title|escapejs %}我想分享這本書給你：{{ title }}{% endblocktrans %}',
                     url: window.location.href
                 };
 
@@ -244,9 +245,9 @@
 
                 try {
                     await navigator.clipboard.writeText(window.location.href);
-                    alert('已複製分享連結');
+                    alert('{% trans "已複製分享連結" %}');
                 } catch (err) {
-                    alert('分享失敗，請手動複製網址');
+                    alert('{% trans "分享失敗，請手動複製網址" %}');
                 }
             });
         });

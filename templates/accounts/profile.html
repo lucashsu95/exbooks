@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Exbooks - 個人資料{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Exbooks - 個人資料" %}{% endblock %}
 {% block content %}
     <!-- Header Section -->
     <header class="flex items-center bg-background-light-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
@@ -7,7 +8,7 @@
             <!-- 漢堡選單已移除 - 手機版使用 Bottom Nav -->
         </div>
         <h2 class="text-slate-900 text-xl font-bold leading-tight tracking-tight flex-1 text-center"
-            style="view-transition-name: page-title">個人資料</h2>
+            style="view-transition-name: page-title">{% trans "個人資料" %}</h2>
         <div class="flex w-12 items-center justify-end">
             <a href="{% url 'accounts:profile_edit' %}"
                class="flex size-10 cursor-pointer items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20">
@@ -33,7 +34,7 @@
                     </div>
                 {% endif %}
             </div>
-            <h2 class="text-2xl font-bold text-slate-900 mb-1">{{ user.profile.nickname|default:"未設定暱稱" }}</h2>
+            <h2 class="text-2xl font-bold text-slate-900 mb-1">{{ user.profile.nickname|default:_("未設定暱稱") }}</h2>
             <p class="text-sm text-slate-500">{{ user.email }}</p>
         </div>
         <!-- Trust Level Card -->
@@ -41,66 +42,66 @@
             {% include "partials/trust_progress.html" with upgrade_progress=upgrade_progress %}
             <p class="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
                 {% if borrowing_limits.max_books == 999 %}
-                    無借閱限制
+                    {% trans "無借閱限制" %}
                 {% else %}
-                    最多借 {{ borrowing_limits.max_books }} 本，最長 {{ borrowing_limits.max_days }} 天
+                    {% blocktrans with max_books=borrowing_limits.max_books max_days=borrowing_limits.max_days %}最多借 {{ max_books }} 本，最長 {{ max_days }} 天{% endblocktrans %}
                 {% endif %}
             </p>
         </div>
         <!-- Activity Stats Card -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-            <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">活動統計</h3>
+            <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">{% trans "活動統計" %}</h3>
             <div class="grid grid-cols-3 gap-4">
                 <div class="text-center">
                     <p class="text-2xl font-bold text-primary">{{ activity_stats.books_contributed }}</p>
-                    <p class="text-xs text-slate-500">貢獻書籍</p>
+                    <p class="text-xs text-slate-500">{% trans "貢獻書籍" %}</p>
                 </div>
                 <div class="text-center">
                     <p class="text-2xl font-bold text-primary">{{ activity_stats.books_borrowed }}</p>
-                    <p class="text-xs text-slate-500">借閱次數</p>
+                    <p class="text-xs text-slate-500">{% trans "借閱次數" %}</p>
                 </div>
                 <div class="text-center">
                     <p class="text-2xl font-bold text-primary">{{ activity_stats.books_lent }}</p>
-                    <p class="text-xs text-slate-500">出借次數</p>
+                    <p class="text-xs text-slate-500">{% trans "出借次數" %}</p>
                 </div>
             </div>
         </div>
         <!-- Credit & Transaction Stats Card -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-            <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">交易與信用統計</h3>
+            <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">{% trans "交易與信用統計" %}</h3>
             <div class="grid grid-cols-2 gap-4 border-b border-slate-100 pb-4 mb-4">
                 <div class="text-center">
                     <p class="text-2xl font-bold text-emerald-600">{{ completed_deals }}</p>
-                    <p class="text-xs text-slate-500">完成交易</p>
+                    <p class="text-xs text-slate-500">{% trans "完成交易" %}</p>
                 </div>
                 <div class="text-center">
                     <div class="flex items-center justify-center gap-1 text-amber-500">
                         <span class="text-2xl font-bold">{{ rating_stats.average_rating|default:"0.0"|floatformat:1 }}</span>
                         <span class="material-symbols-outlined text-sm">star</span>
                     </div>
-                    <p class="text-xs text-slate-500">平均評價</p>
+                    <p class="text-xs text-slate-500">{% trans "平均評價" %}</p>
                 </div>
             </div>
             <div class="grid grid-cols-4 gap-2">
                 <div class="text-center">
                     <p class="text-lg font-bold text-slate-700">{{ rating_stats.ratings_given }}</p>
-                    <p class="text-xs text-slate-500">給出評價</p>
+                    <p class="text-xs text-slate-500">{% trans "給出評價" %}</p>
                 </div>
                 <div class="text-center">
                     <p class="text-lg font-bold text-slate-700">{{ rating_stats.ratings_received }}</p>
-                    <p class="text-xs text-slate-500">收到評價</p>
+                    <p class="text-xs text-slate-500">{% trans "收到評價" %}</p>
                 </div>
                 <div class="text-center">
                     <p class="text-lg font-bold {% if overdue_count > 0 %}text-rose-500{% else %}text-slate-700{% endif %}">
                         {{ overdue_count }}
                     </p>
-                    <p class="text-xs text-slate-500">逾期次數</p>
+                    <p class="text-xs text-slate-500">{% trans "逾期次數" %}</p>
                 </div>
                 <div class="text-center">
                     <p class="text-lg font-bold {% if violation_count > 0 %}text-rose-500{% else %}text-slate-700{% endif %}">
                         {{ violation_count }}
                     </p>
-                    <p class="text-xs text-slate-500">違規次數</p>
+                    <p class="text-xs text-slate-500">{% trans "違規次數" %}</p>
                 </div>
             </div>
         </div>
@@ -111,7 +112,7 @@
                     <span class="material-symbols-outlined">mail</span>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">電子信箱</p>
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">{% trans "電子信箱" %}</p>
                     <p class="text-sm font-medium text-slate-900 truncate">{{ user.email|default:"未設定" }}</p>
                 </div>
             </div>
@@ -120,7 +121,7 @@
                     <span class="material-symbols-outlined">swap_horiz</span>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">預設流通性</p>
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">{% trans "預設流通性" %}</p>
                     <div>
                         <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-bold tracking-wider uppercase {% if user.profile.default_transferability == 'TRANSFER' %}bg-emerald-100 text-emerald-700-emerald-900/30-emerald-400 {% else %}bg-amber-100 text-amber-700{% endif %}">
                             {{ user.profile.get_default_transferability_display }}
@@ -133,7 +134,7 @@
                     <span class="material-symbols-outlined">location_on</span>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">取書地點</p>
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">{% trans "取書地點" %}</p>
                     <p class="text-sm font-medium text-slate-900 truncate">{{ user.profile.default_location|default:"未設定" }}</p>
                 </div>
             </div>
@@ -142,8 +143,8 @@
                     <span class="material-symbols-outlined">calendar_today</span>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">加入時間</p>
-                    <p class="text-sm font-medium text-slate-900 truncate">{{ user.date_joined|date:"Y 年 n 月 j 日" }}</p>
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">{% trans "加入時間" %}</p>
+                    <p class="text-sm font-medium text-slate-900 truncate">{{ user.date_joined|date:"Y/m/d" }}</p>
                 </div>
             </div>
         </div>
@@ -155,9 +156,9 @@
                         <span class="material-symbols-outlined text-primary">download</span>
                     </div>
                     <div class="flex-1">
-                        <p class="text-sm font-bold text-slate-900">下載我的資料</p>
+                        <p class="text-sm font-bold text-slate-900">{% trans "下載我的資料" %}</p>
                         <p class="text-xs text-slate-500">
-                            今日剩餘 <span id="remaining-exports">--</span> 次
+                            {% blocktrans %}今日剩餘 <span id="remaining-exports">--</span> 次{% endblocktrans %}
                         </p>
                     </div>
                 </div>
@@ -188,19 +189,19 @@
             <a href="{% url 'books:wishlist' %}"
                class="w-full bg-white text-slate-900 font-bold py-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
                 <span class="material-symbols-outlined">favorite</span>
-                願望清單
+                {% trans "願望清單" %}
             </a>
             <a href="{% url 'accounts:profile_edit' %}"
                class="w-full bg-white text-slate-900 font-bold py-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
                 <span class="material-symbols-outlined">settings</span>
-                帳號設定
+                {% trans "帳號設定" %}
             </a>
             <form method="post" action="{% url 'account_logout' %}">
                 {% csrf_token %}
                 <button type="submit"
                         class="w-full bg-rose-50 text-rose-600 font-bold py-3.5 rounded-xl shadow-sm border border-rose-100-rose-900/30 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
                     <span class="material-symbols-outlined">logout</span>
-                    登出
+                    {% trans "登出" %}
                 </button>
             </form>
         </div>

@@ -1,4 +1,4 @@
-{% load static %}
+{% load static i18n %}
 {# 傳入: book (OfficialBook), class (CSS) #}
 {% if book.cover_image %}
     <img class="{{ class|default:'w-full h-full object-cover' }}"
@@ -6,6 +6,6 @@
          src="{{ book.cover_image.url }}" />
 {% else %}
     <img class="{{ class|default:'w-full h-full object-cover' }}"
-         alt="預設封面"
+         alt="{% trans '預設封面' %}"
          src="{% static 'book-placeholder.jpg' %}" />
 {% endif %}

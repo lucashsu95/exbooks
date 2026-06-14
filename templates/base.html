@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="zh-Hant" class="h-full">
     <head>
-        {% load static %}
+        {% load static i18n %}
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>
-            {% block title %}Exbooks 共享書籍{% endblock %}
+            {% block title %}{% trans "Exbooks 共享書籍" %}{% endblock %}
         </title>
         {% block meta_seo %}{% endblock %}
         <!-- PWA Meta Tags -->
@@ -230,6 +230,25 @@
                 }
             })();
         </script>
+        <!-- Global Loading Indicator -->
+        <div class="fixed top-4 left-4 z-[100] flex items-center gap-2">
+            {% get_current_language as LANGUAGE_CODE %}
+            {% get_available_languages as LANGUAGES %}
+            {% get_language_info_list for LANGUAGES as languages %}
+            <form action="{% url 'set_language' %}" method="post" class="inline-block">
+                {% csrf_token %}
+                <input name="next" type="hidden" value="{{ request.get_full_path }}">
+                <select name="language"
+                        onchange="this.form.submit()"
+                        class="text-xs border border-slate-300 rounded px-1 py-0.5 bg-white text-slate-700">
+                    {% for language in languages %}
+                    <option value="{{ language.code }}" {% if language.code == LANGUAGE_CODE %}selected{% endif %}>
+                        {{ language.name_local }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
         <!-- Global Loading Indicator - 頁面頂部進度條 -->
         <div id="global-loader"
              class="fixed top-0 left-0 right-0 h-1 z-[100] opacity-0 transition-opacity duration-200 pointer-events-none">

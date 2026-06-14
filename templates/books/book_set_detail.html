@@ -1,12 +1,13 @@
 {% extends "base.html" %}
-{% block title %}{{ book_set.name }} - Exbooks{% endblock %}
+{% load i18n %}
+{% block title %}{% blocktrans with name=book_set.name %}{{ name }} - Exbooks{% endblocktrans %}{% endblock %}
 {% block content %}
     <!-- Sticky top bar -->
     <header class="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
             <nav class="flex items-center gap-3 min-w-0">
                 <a href="{% url 'books:book_set_list' %}"
-                   aria-label="返回"
+                   aria-label="{% trans '返回' %}"
                    class="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary shrink-0">
                     <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
                 </a>
@@ -15,12 +16,12 @@
             <div class="flex gap-1 shrink-0">
                 <a href="{% url 'books:book_set_edit' book_set.pk %}"
                    class="text-slate-500 hover:text-primary p-2 bg-slate-50 rounded-full hover:bg-primary/10 transition-colors flex items-center justify-center"
-                   aria-label="編輯">
+                   aria-label="{% trans '編輯' %}">
                     <span class="material-symbols-outlined text-xl">edit</span>
                 </a>
                 <a href="{% url 'books:book_set_delete' book_set.pk %}"
                    class="text-red-500 hover:text-red-600 p-2 bg-red-50 rounded-full hover:bg-red-100 transition-colors flex items-center justify-center"
-                   aria-label="刪除">
+                   aria-label="{% trans '刪除' %}">
                     <span class="material-symbols-outlined text-xl">delete</span>
                 </a>
             </div>
@@ -31,7 +32,7 @@
         <!-- 套書資訊 -->
         {% if book_set.description %}
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
-                <h2 class="text-sm font-semibold text-slate-500 mb-2">描述</h2>
+                <h2 class="text-sm font-semibold text-slate-500 mb-2">{% trans "描述" %}</h2>
                 <p class="text-base text-slate-800">{{ book_set.description }}</p>
             </div>
         {% endif %}
@@ -40,7 +41,7 @@
             <div class="px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
                 <span class="material-symbols-outlined text-primary text-lg">auto_stories</span>
                 <h2 class="text-sm font-bold text-slate-700">
-                    套書書籍 <span class="text-primary ml-1">({{ books|length }})</span>
+                    {% blocktrans with count=books|length %}套書書籍 <span class="text-primary ml-1">({{ count }})</span>{% endblocktrans %}
                 </h2>
             </div>
             {% include "books/partials/book_set_books.html" %}

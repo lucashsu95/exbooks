@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
-{% block title %}Exbooks - 交易詳情{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Exbooks - 交易詳情" %}{% endblock %}
 {% block content %}
     <div class="mesh-aura"></div>
     <article class="relative min-h-screen pb-56 sm:pb-64">
@@ -9,16 +10,16 @@
         <!-- Top Navigation -->
         <header class="flex items-center p-4 justify-between sticky top-0 z-50 bg-white/60 backdrop-blur-xl border-b border-white/20 shadow-sm"
                 style="view-transition-name: page-header">
-            <nav aria-label="返回" class="w-10">
+             <nav aria-label="{% trans '返回' %}" class="w-10">
                 <a href="{% url 'deals:list' %}"
-                   aria-label="返回交易列表"
+                   aria-label="{% trans '返回交易列表' %}"
                    class="flex size-10 items-center justify-center rounded-xl bg-white/80 text-slate-700 shadow-sm hover:bg-white transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary"
                    style="view-transition-name: back-button">
                     <span class="material-symbols-outlined leading-none" aria-hidden="true">arrow_back</span>
                 </a>
             </nav>
             <h1 class="text-slate-900 text-lg font-bold tracking-tight flex-1 text-center"
-                style="view-transition-name: page-title">交易詳情</h1>
+                style="view-transition-name: page-title">{% trans "交易詳情" %}</h1>
             <div class="w-10"></div>
         </header>
         <!-- Status Hero Section -->
@@ -43,7 +44,7 @@
             </div>
         </section>
         <!-- Status Timeline -->
-        <div class="px-4 pb-6" role="region" aria-label="交易狀態進度">
+        <div class="px-4 pb-6" role="region" aria-label="{% trans '交易狀態進度' %}">
             <div class="bg-white/80 backdrop-blur-md rounded-2xl p-5 border border-white/50 shadow-xl shadow-slate-200/50">
                 <ol class="flex items-center justify-between" role="list">
                     <!-- 已請求 -->
@@ -51,7 +52,7 @@
                         <div class="size-9 rounded-full bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
                             <span class="material-symbols-outlined text-sm leading-none">check</span>
                         </div>
-                        <span class="text-[11px] font-bold text-slate-600">已請求</span>
+                        <span class="text-[11px] font-bold text-slate-600">{% trans "已請求" %}</span>
                     </li>
                     <li class="flex-1 h-1 bg-slate-100 mx-1 rounded-full overflow-hidden"
                         aria-hidden="true">
@@ -63,7 +64,7 @@
                         <div class="size-9 rounded-full {% if deal.status != 'Q' %}bg-primary text-white shadow-lg shadow-primary/20{% else %}bg-slate-50 border-2 border-slate-200 text-slate-300{% endif %} flex items-center justify-center">
                             <span class="material-symbols-outlined text-sm leading-none">how_to_reg</span>
                         </div>
-                        <span class="text-[11px] font-bold {% if deal.status == 'Q' %}text-slate-400{% else %}text-slate-600{% endif %}">已回應</span>
+                        <span class="text-[11px] font-bold {% if deal.status == 'Q' %}text-slate-400{% else %}text-slate-600{% endif %}">{% trans "已回應" %}</span>
                     </li>
                     <li class="flex-1 h-1 bg-slate-100 mx-1 rounded-full overflow-hidden"
                         aria-hidden="true">
@@ -76,7 +77,7 @@
                         <div class="size-9 rounded-full {% if deal.status in 'MD' %}bg-primary text-white shadow-lg shadow-primary/20{% else %}bg-slate-50 border-2 border-slate-200 text-slate-300{% endif %} flex items-center justify-center">
                             <span class="material-symbols-outlined text-sm leading-none">handshake</span>
                         </div>
-                        <span class="text-[11px] font-bold {% if deal.status in 'QP' %}text-slate-400{% else %}text-slate-600{% endif %}">已面交</span>
+                        <span class="text-[11px] font-bold {% if deal.status in 'QP' %}text-slate-400{% else %}text-slate-600{% endif %}">{% trans "已面交" %}</span>
                     </li>
                     <li class="flex-1 h-1 bg-slate-100 mx-1 rounded-full overflow-hidden"
                         aria-hidden="true">
@@ -88,7 +89,7 @@
                         <div class="size-9 rounded-full {% if deal.status == 'D' %}bg-primary text-white shadow-lg shadow-primary/20{% else %}bg-slate-50 border-2 border-slate-200 text-slate-300{% endif %} flex items-center justify-center">
                             <span class="material-symbols-outlined text-sm leading-none">done_all</span>
                         </div>
-                        <span class="text-[11px] font-bold {% if deal.status == 'D' %}text-slate-600{% else %}text-slate-400{% endif %}">已完成</span>
+                        <span class="text-[11px] font-bold {% if deal.status == 'D' %}text-slate-600{% else %}text-slate-400{% endif %}">{% trans "已完成" %}</span>
                     </li>
                 </ol>
             </div>
@@ -99,7 +100,7 @@
                 <div class="bg-primary/5 rounded-2xl p-5 border border-primary/20 backdrop-blur-sm shadow-inner">
                     <h4 class="text-primary font-bold text-sm mb-3 flex items-center gap-2">
                         <span class="material-symbols-outlined text-sm">assignment_turned_in</span>
-                        完成交易進度
+                        {% trans "完成交易進度" %}
                     </h4>
                     <div class="space-y-3">
                         <div class="flex items-center gap-3">
@@ -110,7 +111,7 @@
                                     radio_button_unchecked
                                 {% endif %}
                             </span>
-                            <span class="text-sm font-medium {% if deal.applicant_rated and deal.responder_rated %}text-slate-400 line-through{% else %}text-slate-700{% endif %}">雙方完成互評</span>
+                            <span class="text-sm font-medium {% if deal.applicant_rated and deal.responder_rated %}text-slate-400 line-through{% else %}text-slate-700{% endif %}">{% trans "雙方完成互評" %}</span>
                         </div>
                         <div class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-lg {% if deal.shared_book.status == 'T' %}text-green-500{% else %}text-slate-300{% endif %}">
@@ -120,13 +121,13 @@
                                     radio_button_unchecked
                                 {% endif %}
                             </span>
-                            <span class="text-sm font-medium {% if deal.shared_book.status == 'T' %}text-slate-400 line-through{% else %}text-slate-700{% endif %}">主人確認歸還書籍</span>
+                            <span class="text-sm font-medium {% if deal.shared_book.status == 'T' %}text-slate-400 line-through{% else %}text-slate-700{% endif %}">{% trans "主人確認歸還書籍" %}</span>
                         </div>
                     </div>
                     <div class="mt-4 pt-4 border-t border-primary/10">
                         <p class="text-[11px] text-primary/60 italic flex items-center gap-1">
                             <span class="material-symbols-outlined text-xs">info</span>
-                            提示：即便對方尚未評價，主人仍可先點擊下方「確認歸還」。
+                            {% trans "提示：即便對方尚未評價，主人仍可先點擊下方「確認歸還」。" %}
                         </p>
                     </div>
                 </div>
@@ -151,26 +152,26 @@
                         </div>
                         <div class="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
                             <span class="material-symbols-outlined text-[16px] leading-none">calendar_today</span>
-                            建立於 {{ deal.created_at|date:"Y/m/d H:i" }}
+                            {% blocktrans with date=deal.created_at|date:"Y/m/d H:i" %}建立於 {{ date }}{% endblocktrans %}
                         </div>
                     </div>
                 </div>
                 <a href="{% url 'books:detail' deal.shared_book.id %}"
                    class="absolute inset-0 z-10"
-                   aria-label="查看書籍詳情"></a>
+                   aria-label="{% trans '查看書籍詳情' %}"></a>
             </div>
         </div>
         <!-- Participants Section -->
         <div class="px-4 mb-8">
             <h4 class="text-slate-900 font-black text-sm uppercase tracking-widest mb-4 flex items-center gap-2">
                 <span class="material-symbols-outlined text-primary text-xl leading-none">group</span>
-                交易夥伴
+                {% trans "交易夥伴" %}
             </h4>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <!-- Applicant -->
-                {% include 'deals/partials/_participant_card.html' with user=deal.applicant role_label='申請者' rating_info=applicant_rating %}
+                {% include 'deals/partials/_participant_card.html' with user=deal.applicant role_label=role_label|default:_("申請者") rating_info=applicant_rating %}
                 <!-- Responder -->
-                {% include 'deals/partials/_participant_card.html' with user=deal.responder role_label='回應者' rating_info=responder_rating %}
+                {% include 'deals/partials/_participant_card.html' with user=deal.responder role_label=role_label|default:_("回應者") rating_info=responder_rating %}
             </div>
         </div>
         <!-- Message Section (留言協商區) -->
@@ -180,9 +181,9 @@
                     <h4 class="text-slate-900 font-black text-sm uppercase tracking-widest flex items-center gap-2">
                         <span class="material-symbols-outlined text-primary text-xl leading-none">forum</span>
                         {% if deal.status == 'D' %}
-                            歷史留言紀錄
+                            {% trans "歷史留言紀錄" %}
                         {% else %}
-                            留言溝通
+                            {% trans "留言溝通" %}
                         {% endif %}
                     </h4>
                 </div>
@@ -205,14 +206,14 @@
                                     <input type="text"
                                            name="content"
                                            id="message-input"
-                                           aria-label="輸入訊息"
+                                            aria-label="{% trans '輸入訊息' %}"
                                            class="w-full rounded-2xl border-none bg-white px-5 py-3 text-sm text-slate-900 shadow-inner focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-slate-300"
-                                           placeholder="想跟對方說什麼？"
+                                            placeholder="{% trans '想跟對方說什麼？' %}"
                                            autocomplete="off"
                                            required>
                                 </div>
                                 <button type="submit"
-                                        aria-label="發送訊息"
+                                         aria-label="{% trans '發送訊息' %}"
                                         class="size-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20 active:scale-[0.9] transition-all hover:bg-primary/90">
                                     <span class="material-symbols-outlined" aria-hidden="true">send</span>
                                 </button>
@@ -228,13 +229,13 @@
                 <div class="flex items-center justify-between mb-4">
                     <h4 class="text-slate-900 font-black text-sm uppercase tracking-widest flex items-center gap-2">
                         <span class="material-symbols-outlined text-primary text-xl leading-none">history_toggle_off</span>
-                        延期申請紀錄
+                                        {% trans "延期申請紀錄" %}
                     </h4>
                     {% if deal.status == 'O' and is_applicant %}
                         <a href="{% url 'deals:extension_request' deal.id %}"
                            class="text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-lg font-bold hover:bg-primary/20 transition-colors flex items-center gap-1">
                             <span class="material-symbols-outlined text-sm leading-none">add_circle</span>
-                            新增申請
+                            {% trans "新增申請" %}
                         </a>
                     {% endif %}
                 </div>
@@ -257,7 +258,7 @@
                                     <button type="submit"
                                             class="w-full bg-primary text-white font-black py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-primary/25 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:brightness-105">
                                         <span class="material-symbols-outlined text-xl sm:text-2xl leading-none">check_circle</span>
-                                        接受申請
+                                        {% trans "接受申請" %}
                                     </button>
                                 </form>
                                 <form method="post"
@@ -267,7 +268,7 @@
                                     <button type="submit"
                                             class="w-full bg-white text-rose-500 font-black py-2.5 sm:py-4 rounded-2xl border-2 border-rose-100 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:bg-rose-50">
                                         <span class="material-symbols-outlined text-xl sm:text-2xl leading-none">cancel</span>
-                                        婉拒
+                                        {% trans "婉拒" %}
                                     </button>
                                 </form>
                             </div>
@@ -277,7 +278,7 @@
                                 <button type="submit"
                                         class="w-full bg-white text-slate-500 font-black py-2.5 sm:py-4 rounded-2xl border-2 border-slate-100 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:bg-slate-50">
                                     <span class="material-symbols-outlined text-xl sm:text-2xl leading-none">backspace</span>
-                                    取消借閱申請
+                                    {% trans "取消借閱申請" %}
                                 </button>
                             </form>
                         {% endif %}
@@ -285,10 +286,10 @@
                         <form method="post" action="{% url 'deals:complete' deal.id %}">
                             {% csrf_token %}
                             <button type="submit"
-                                    onclick="return confirm('確認面交完成？\n\n確認後交易將進入「已面交」狀態，雙方可以開始互評。')"
+                                    onclick="return confirm('{% trans "確認面交完成？\\n\\n確認後交易將進入「已面交」狀態，雙方可以開始互評。" %}')"
                                     class="w-full bg-primary text-white font-black py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-primary/25 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:brightness-105">
                                 <span class="material-symbols-outlined text-xl sm:text-2xl leading-none">handshake</span>
-                                確認面交完成
+                                {% trans "確認面交完成" %}
                             </button>
                         </form>
                     {% elif deal.status == 'M' %}
@@ -299,7 +300,7 @@
                                     <button type="submit"
                                             class="w-full bg-green-600 text-white font-black py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-green-600/25 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:brightness-105">
                                         <span class="material-symbols-outlined text-xl sm:text-2xl leading-none">assignment_return</span>
-                                        確認歸還並重新上架
+                                        {% trans "確認歸還並重新上架" %}
                                     </button>
                                 </form>
                             {% elif is_force_return_receiver %}
@@ -309,15 +310,15 @@
                                         <input type="hidden" name="force" value="true">
                                         <button type="submit"
                                                 class="w-full bg-slate-100 text-slate-500 font-black py-2.5 sm:py-4 rounded-2xl border-2 border-slate-200 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:bg-slate-200"
-                                                onclick="return confirm('注意：雙方尚未完成互評。如果您已收到書籍，可以強制確認歸還，但這將無法獲得完整的信用積分。確定要繼續嗎？')">
+                                                onclick="return confirm('{% trans "注意：雙方尚未完成互評。如果您已收到書籍，可以強制確認歸還，但這將無法獲得完整的信用積分。確定要繼續嗎？" %}')">
                                             <span class="material-symbols-outlined text-xl sm:text-2xl leading-none">fast_forward</span>
-                                            強制確認歸還
+                                            {% trans "強制確認歸還" %}
                                         </button>
                                     </form>
-                                    <p class="text-[11px] text-slate-400 text-center italic">提示：待雙方評價完成後，主按鈕才會開啟</p>
+                                    <p class="text-[11px] text-slate-400 text-center italic">{% trans "提示：待雙方評價完成後，主按鈕才會開啟" %}</p>
                                 </div>
                             {% else %}
-                                <p class="text-[11px] text-slate-400 text-center italic">等待收書方確認歸還或雙方先完成互評</p>
+                                <p class="text-[11px] text-slate-400 text-center italic">{% trans "等待收書方確認歸還或雙方先完成互評" %}</p>
                             {% endif %}
                         {% endif %}
                         <div class="flex gap-2 sm:gap-3">
@@ -325,14 +326,14 @@
                                 <a href="{% url 'deals:upload_photos' deal.id %}"
                                    class="flex-1 bg-amber-500 text-white font-black py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:brightness-105">
                                     <span class="material-symbols-outlined text-xl sm:text-2xl leading-none">add_a_photo</span>
-                                    上傳照片
+                                    {% trans "上傳照片" %}
                                 </a>
                             {% endif %}
                             {% if is_applicant and not deal.applicant_rated or is_responder and not deal.responder_rated %}
                                 <a href="{% url 'deals:rating_create' deal.id %}"
                                    class="{% if is_applicant %}flex-1{% else %}w-full{% endif %} bg-primary text-white font-black py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-primary/25 flex items-center justify-center gap-2 active:scale-[0.97] transition-all hover:brightness-105">
                                     <span class="material-symbols-outlined text-xl sm:text-2xl leading-none">star</span>
-                                    前往評價
+                                    {% trans "前往評價" %}
                                 </a>
                             {% endif %}
                         </div>
