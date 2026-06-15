@@ -134,8 +134,8 @@ services:
     cpus: "1.00"
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "9002:9000"
+      - "9003:9001"
     env_file: .env
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}

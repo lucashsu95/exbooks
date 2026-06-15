@@ -26,8 +26,8 @@ WORKDIR /app
 COPY . .
 
 # collectstatic 在 entrypoint 執行（需要環境變數）
-RUN mkdir -p /app/staticfiles /app/media \
-    && chown -R django:django /app
+RUN mkdir -p /app/staticfiles /app/media /var/log/exbook \
+    && chown -R django:django /app /var/log/exbook
 
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
