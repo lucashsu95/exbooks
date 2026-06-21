@@ -230,8 +230,8 @@
                 }
             })();
         </script>
-        <!-- Global Loading Indicator -->
-        <div class="fixed top-4 left-4 z-[100] flex items-center gap-2">
+        <!-- Language Switcher -->
+        <div class="fixed top-4 left-4 z-[60] flex items-center gap-2">
             {% get_current_language as LANGUAGE_CODE %}
             {% get_available_languages as LANGUAGES %}
             {% get_language_info_list for LANGUAGES as languages %}
@@ -251,7 +251,7 @@
         </div>
         <!-- Global Loading Indicator - 頁面頂部進度條 -->
         <div id="global-loader"
-             class="fixed top-0 left-0 right-0 h-1 z-[100] opacity-0 transition-opacity duration-200 pointer-events-none">
+             class="fixed top-0 left-0 right-0 h-1 z-[40] opacity-0 transition-opacity duration-200 pointer-events-none">
             <div id="global-loader-bar"
                  class="h-full bg-primary transition-all duration-300"
                  style="width: 0%"></div>

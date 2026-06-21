@@ -162,4 +162,4 @@ nul
 AGENTS.md
 docs/progress.md
 .opencode/
-scripts/harness/
+scripts/harness/\n\n# V8 Heap Snapshots\n*.heapsnapshot

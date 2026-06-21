@@ -4,7 +4,6 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
-from django.views.i18n import set_language
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -32,7 +31,7 @@ urlpatterns = [
         name="django.contrib.sitemaps.views.sitemap",
     ),
     path("admin/", admin.site.urls),
-    path("set-language/", set_language, name="set_language"),
+    path("set-language/", core_views.set_language, name="set_language"),
     # JWT Auth
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),

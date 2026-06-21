@@ -30,6 +30,7 @@ services:
     env_file: .env
     environment:
       DJANGO_SETTINGS_MODULE: exbook.prod_settings
+      HOME: /app
     volumes:
       - static_data:/app/staticfiles
       - media_data:/app/media
@@ -163,8 +164,19 @@ services:
       - ./scripts/backup_redis.sh:/backup.sh:ro
     entrypoint: ["/bin/sh", "/backup.sh"]
 
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    mem_limit: 128m
+    cpus: "0.25"
+    ports:
+      - "8025:8025"
+    volumes:
+      - mailpit_data:/data
+
 volumes:
   db_data:
+  mailpit_data:
   static_data:
   media_data:
   redis_data:

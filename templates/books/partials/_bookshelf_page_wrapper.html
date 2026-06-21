@@ -5,13 +5,15 @@
         <div class="flex items-center p-4 justify-between max-w-xl mx-auto">
             <h1 class="text-xl font-bold tracking-tight"
                 style="view-transition-name: page-title">我的書架</h1>
-            <!-- 套書管理入口 -->
+            <!-- 套書管理入口（暫時隱藏） -->
+            {% comment %}
             <a href="{% url 'books:book_set_list' %}"
                class="flex items-center gap-1 text-sm text-primary font-medium hover:underline"
                title="管理套書">
                 <span class="material-symbols-outlined text-lg">library_books</span>
                 套書
             </a>
+            {% endcomment %}
         </div>
         <!-- Tabs - HTMX 即時切換 -->
         <div class="max-w-xl mx-auto overflow-x-auto no-scrollbar">

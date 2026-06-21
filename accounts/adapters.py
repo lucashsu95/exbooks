@@ -68,7 +68,12 @@ class ExbookAccountAdapter(DefaultAccountAdapter):
         儲存用戶時，同步處理 UserProfile。
 
         確保 UserProfile 在 User 儲存後立即建立。
+        同時為 email-only 註冊生成唯一的 username。
         """
+        if not user.username:
+            email = form.cleaned_data.get("email", "")
+            base = email.split("@")[0][:30] if email else f"user_{uuid.uuid4().hex[:8]}"
+            user.username = f"{base}_{uuid.uuid4().hex[:8]}"
         user = super().save_user(request, user, form, commit=commit)
 
         if commit:

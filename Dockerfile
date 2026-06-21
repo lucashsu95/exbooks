@@ -8,8 +8,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /build
 COPY pyproject.toml .
 
-# 安裝正式 + 生產依賴到 /install，方便後續 COPY
-RUN pip install --no-cache-dir --prefix=/install . ".[prod]"
+# 安裝正式 + 生產 + 測試依賴到 /install，方便後續 COPY
+RUN pip install --no-cache-dir --prefix=/install . ".[prod,test]"  # 包含 factory-boy、faker 等測試工具
 
 # ---- Runtime Stage ----
 FROM python:3.12-slim
