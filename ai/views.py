@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 from typing import Generator
 
 from django.http import JsonResponse, StreamingHttpResponse
@@ -25,6 +26,12 @@ class ChatSSEView(LoginRequiredMixin, View):
 
         def event_stream():
             yield f"event: connection\ndata: {json.dumps({'status': 'connected'})}\n\n"
+            try:
+                while True:
+                    time.sleep(30)
+                    yield f": keepalive\n\n"
+            except GeneratorExit:
+                logger.info("chat_sse disconnected", extra={"user_id": request.user.pk})
 
         return StreamingHttpResponse(event_stream(), content_type="text/event-stream")
 
