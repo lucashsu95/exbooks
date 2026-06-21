@@ -24,7 +24,7 @@ class ChatSSEView(LoginRequiredMixin, View):
         logger.info("chat_sse connected", extra={"user_id": request.user.pk})
 
         def event_stream():
-            yield f"data: {json.dumps({'type': 'connection', 'status': 'connected'})}\n\n"
+            yield f"event: connection\ndata: {json.dumps({'status': 'connected'})}\n\n"
 
         return StreamingHttpResponse(event_stream(), content_type="text/event-stream")
 
@@ -59,22 +59,22 @@ class ChatSSEView(LoginRequiredMixin, View):
 
                     if tool_def and tool_def.consent == ConsentRequirement.USER_CONFIRM:
                         # Need user confirmation
-                        yield f"data: {json.dumps({'type': 'consent_required', 'tool': tool_name, 'args': arguments})}\n\n"
+                        yield f"event: consent_required\ndata: {json.dumps({'tool': tool_name, 'args': arguments})}\n\n"
                     elif tool_def:
                         # Execute immediately
                         result = tool_def.func(**arguments)
-                        yield f"data: {json.dumps({'type': 'tool_result', 'tool': tool_name, 'result': result})}\n\n"
+                        yield f"event: tool_result\ndata: {json.dumps({'tool': tool_name, 'result': result})}\n\n"
 
             # 2. Stream Content
             # Simulated streaming for T2-5
             full_content = response.content
             # To simulate streaming, we could split by words/chars but for simplicity:
-            yield f"data: {json.dumps({'type': 'content', 'delta': full_content})}\n\n"
+            yield f"event: content\ndata: {json.dumps({'delta': full_content})}\n\n"
 
             # Add AI response to history
             ConversationCache.add_message(user_id, "assistant", full_content)
 
-            yield f"data: {json.dumps({'type': 'done'})}\n\n"
+            yield f"event: done\ndata: {json.dumps({})}\n\n"
 
         return StreamingHttpResponse(
             stream_response(), content_type="text/event-stream"
