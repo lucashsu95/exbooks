@@ -43,4 +43,9 @@ beat_schedule = {
         "task": "accounts.recalculate_trust_scores",
         "schedule": crontab(day_of_week="mon", hour=2, minute=0),
     },
+    # --- Anomaly Detection ---
+    "run-anomaly-detection-hourly": {
+        "task": "core.run_anomaly_detection",
+        "schedule": crontab(minute=0),  # Every hour at minute 0
+    },
 }

@@ -14,10 +14,20 @@ RUN pip install --no-cache-dir --prefix=/install . ".[prod,test]"  # 包含 fact
 # ---- Runtime Stage ----
 FROM python:3.12-slim
 
+# 安裝系統依賴、Node.js 以及 Playwright 瀏覽器環境
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libmariadb3 libjpeg62-turbo zlib1g \
+    libmariadb3 libjpeg62-turbo zlib1g curl \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g playwright \
+    && npx playwright install-deps chromium \
+    && PLAYWRIGHT_BROWSERS_PATH=/ms-playwright npx playwright install chromium \
     && rm -rf /var/lib/apt/lists/* \
-    && addgroup --system django && adduser --system --ingroup django django
+    && addgroup --system django && adduser --system --ingroup django django \
+    && chown -R django:django /ms-playwright
+
+# 設定 Playwright 瀏覽器路徑環境變數
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 # 複製已編譯的 Python 套件
 COPY --from=builder /install /usr/local
