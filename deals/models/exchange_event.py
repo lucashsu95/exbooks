@@ -59,6 +59,13 @@ class ExchangeEvent(BaseModel):
         related_name="exchange_events",
         verbose_name=_("操作者"),
     )
+    trace_id = models.CharField(
+        max_length=32,
+        blank=True,
+        default="",
+        db_index=True,
+        verbose_name=_("追蹤ID"),
+    )
     metadata = models.JSONField(
         default=dict,
         blank=True,
