@@ -515,6 +515,13 @@ class TrustScoreLedger(BaseModel):
         verbose_name=_("來源"),
         db_index=True,
     )
+    trace_id = models.CharField(
+        max_length=32,
+        blank=True,
+        default="",
+        db_index=True,
+        verbose_name=_("追蹤ID"),
+    )
     payload = models.JSONField(default=dict, blank=True, verbose_name=_("摘要指標"))
 
     class Meta:
