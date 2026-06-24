@@ -1601,3 +1601,57 @@ msgstr "Login Cancelled"
 
 msgid "You decided to cancel logging in with your social network account."
 msgstr "You decided to cancel logging in with your social network account."
+
+msgid "關閉搜尋"
+msgstr "Close Search"
+
+msgid "搜尋 ISBN、書名、作者"
+msgstr "Search ISBN, title, author"
+
+msgid "搜尋 ISBN、書名、作者…"
+msgstr "Search ISBN, title, author…"
+
+msgid "搜尋結果"
+msgstr "Search Results"
+
+msgid "載入中…"
+msgstr "Loading…"
+
+msgid "輸入關鍵字搜尋書籍"
+msgstr "Enter keywords to search books"
+
+msgid "支援書名、作者、ISBN"
+msgstr "Supports title, author, ISBN"
+
+msgid "公開書單"
+msgstr "Public Book List"
+
+msgid "加入"
+msgstr "Join"
+
+msgid "精選書籍"
+msgstr "Featured Books"
+
+msgid "新上架精選"
+msgstr "New Arrivals"
+
+msgid "搜尋書名、作者、ISBN"
+msgstr "Search title, author, ISBN"
+
+msgid "全部"
+msgstr "All"
+
+msgid "分頁"
+msgstr "Pagination"
+
+msgid "上一頁"
+msgstr "Previous"
+
+msgid "下一頁"
+msgstr "Next"
+
+msgid "目前沒有符合條件的公開書籍"
+msgstr "No public books match your criteria."
+
+msgid "搜尋"
+msgstr "Search"

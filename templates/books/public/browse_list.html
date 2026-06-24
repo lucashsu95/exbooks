@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static i18n %}
 {% block title %}{{ page_title }} | Exbooks{% endblock %}
 {% block meta_seo %}
     <link rel="canonical" href="{{ canonical_url }}">
@@ -22,11 +22,11 @@
         </a>
         <div class="flex items-center gap-3 text-sm">
             <a href="{% url 'books:public_list' %}"
-               class="text-primary font-medium">公開書單</a>
+               class="text-primary font-medium">{% trans '公開書單' %}</a>
             <a href="{% url 'account_login' %}"
-               class="text-slate-600 hover:text-primary">登入</a>
+               class="text-slate-600 hover:text-primary">{% trans '登入' %}</a>
             <a href="{% url 'account_signup' %}"
-               class="rounded-full bg-primary text-white px-4 py-2 shadow-sm hover:opacity-90">加入</a>
+               class="rounded-full bg-primary text-white px-4 py-2 shadow-sm hover:opacity-90">{% trans '加入' %}</a>
         </div>
     </header>
     <div class="px-6 pt-8 pb-4">
@@ -35,8 +35,8 @@
     </div>
     {% if featured_books %}
         <section class="px-6 pb-6"
-                 aria-label="精選書籍">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">新上架精選</h2>
+                 aria-label="{% trans '精選書籍' %}">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">{% trans '新上架精選' %}</h2>
             <div class="flex gap-4 overflow-x-auto pb-2 snap-x">
                 {% for book in featured_books %}
                     <a href="{% url 'books:public_detail' book.pk %}"
@@ -57,15 +57,15 @@
             <input type="search"
                    name="q"
                    value="{{ search_query }}"
-                   placeholder="搜尋書名、作者、ISBN"
+                   placeholder="{% trans '搜尋書名、作者、ISBN' %}"
                    class="flex-1 min-w-[200px] rounded-xl border border-slate-200 px-4 py-2 text-sm">
             {% if current_category != '全部' %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
             <button type="submit"
-                    class="rounded-xl bg-slate-900 text-white px-4 py-2 text-sm">搜尋</button>
+                    class="rounded-xl bg-slate-900 text-white px-4 py-2 text-sm">{% trans '搜尋' %}</button>
         </form>
         <div class="flex gap-2 flex-wrap mt-4">
             <a href="{% url 'books:public_list' %}"
-               class="text-xs px-3 py-1 rounded-full {% if current_category == '全部' %}bg-primary text-white{% else %}bg-slate-100 text-slate-600{% endif %}">全部</a>
+               class="text-xs px-3 py-1 rounded-full {% if current_category == '全部' %}bg-primary text-white{% else %}bg-slate-100 text-slate-600{% endif %}">{% trans '全部' %}</a>
             {% for val, label in categories %}
                 <a href="?category={{ val|urlencode }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
                    class="text-xs px-3 py-1 rounded-full {% if current_category == val %}bg-primary text-white{% else %}bg-slate-100 text-slate-600{% endif %}">{{ label }}</a>
@@ -88,20 +88,20 @@
                     <span class="material-symbols-outlined text-slate-300 self-center">chevron_right</span>
                 </a>
             {% empty %}
-                <p class="text-center text-slate-500 py-16">目前沒有符合條件的公開書籍。</p>
+                <p class="text-center text-slate-500 py-16">{% trans '目前沒有符合條件的公開書籍' %}</p>
             {% endfor %}
         </div>
         {% if page_obj.has_other_pages %}
             <nav class="flex justify-center gap-4 mt-8 text-sm"
-                 aria-label="分頁">
+                 aria-label="{% trans '分頁' %}">
                 {% if page_obj.has_previous %}
                     <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if current_category != '全部' %}&category={{ current_category|urlencode }}{% endif %}"
-                       class="text-primary font-medium">上一頁</a>
+                       class="text-primary font-medium">{% trans '上一頁' %}</a>
                 {% endif %}
                 <span class="text-slate-500">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
                 {% if page_obj.has_next %}
                     <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if current_category != '全部' %}&category={{ current_category|urlencode }}{% endif %}"
-                       class="text-primary font-medium">下一頁</a>
+                       class="text-primary font-medium">{% trans '下一頁' %}</a>
                 {% endif %}
             </nav>
         {% endif %}
