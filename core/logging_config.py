@@ -92,6 +92,10 @@ def build_dev_logging() -> dict:
             "ai": {"handlers": ["console"], "level": get_log_level(), "propagate": False},
             # Celery
             "celery": {"handlers": ["console"], "level": "INFO", "propagate": False},
+            # System loggers
+            "system": {"handlers": ["console"], "level": get_log_level(), "propagate": False},
+            "audit": {"handlers": ["console"], "level": "INFO", "propagate": False},
+            "business": {"handlers": ["console"], "level": "INFO", "propagate": False},
         },
     }
 
@@ -107,6 +111,11 @@ def build_prod_logging(log_dir: str | Path | None = None) -> dict:
         "json": {
             "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
             "format": "%(asctime)s %(levelname)s %(name)s %(funcName)s:%(lineno)d %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+        "audit": {
+            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+            "format": "%(asctime)s %(levelname)s %(name)s %(message)s",
             "datefmt": "%Y-%m-%d %H:%M:%S",
         },
         "verbose": {
@@ -150,6 +159,23 @@ def build_prod_logging(log_dir: str | Path | None = None) -> dict:
             "backupCount": 5,
             "formatter": "json",
             "level": "ERROR",
+        }
+        # Add audit and business file handlers
+        handlers["audit_file"] = {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": str(log_path / "audit.log"),
+            "maxBytes": 50 * 1024 * 1024,
+            "backupCount": 30,
+            "formatter": "json",
+            "level": "INFO",
+        }
+        handlers["business_file"] = {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": str(log_path / "business.log"),
+            "maxBytes": 100 * 1024 * 1024,
+            "backupCount": 14,
+            "formatter": "json",
+            "level": "INFO",
         }
 
     default_handlers = ["json_console"]
@@ -219,6 +245,21 @@ def build_prod_logging(log_dir: str | Path | None = None) -> dict:
             "celery.task": {
                 "handlers": default_handlers,
                 "level": "WARNING",
+                "propagate": False,
+            },
+            "system": {
+                "handlers": default_handlers,
+                "level": log_level,
+                "propagate": False,
+            },
+            "audit": {
+                "handlers": ["audit_file"] if log_dir else ["json_console"],
+                "level": "INFO",
+                "propagate": False,
+            },
+            "business": {
+                "handlers": ["business_file", "json_console"] if log_dir else ["json_console"],
+                "level": "INFO",
                 "propagate": False,
             },
         },
