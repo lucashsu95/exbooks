@@ -3,6 +3,7 @@ import time
 import uuid
 
 from django.utils.deprecation import MiddlewareMixin
+from core.observability.trace_context import new_trace, set_request_id, get_trace_id, get_span_id
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,8 @@ class RequestLoggingMiddleware(MiddlewareMixin):
 
     def process_request(self, request):
         request.request_id = str(uuid.uuid4())[:8]
+        new_trace()
+        set_request_id(request.request_id)
         request._request_start_time = time.perf_counter()
 
     def process_response(self, request, response):
@@ -36,6 +39,8 @@ class RequestLoggingMiddleware(MiddlewareMixin):
             "path": request.path,
             "status": response.status_code,
             "user": user_info,
+            "trace_id": get_trace_id(),
+            "span_id": get_span_id(),
         }
         if duration is not None:
             log_extra["duration_ms"] = round(duration * 1000, 2)
