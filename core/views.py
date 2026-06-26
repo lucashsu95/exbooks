@@ -57,12 +57,25 @@ def robots_txt(request):
 def health_check(request):
     """Return app and database health status for deploy probes."""
     from django.db import connection
+    from core.observability.business_events import emit_business_event
+    from core.observability.business_events import emit_audit_event
 
     try:
         connection.ensure_connection()
         db_status = "ok" if connection.is_usable() else "unhealthy"
         status_code = 200 if db_status == "ok" else 503
         logger.info("health_check", extra={"db_status": db_status, "status_code": status_code})
+        
+        # --- TEMPORARY FOR OBSERVABILITY VERIFICATION ---
+        emit_business_event("obs.verify_health", {"status": "triggered"})
+        emit_audit_event("obs.verify_health", {"action": "verification_access"})
+        # -----------------------------------------------
+        
+    except Exception:
+        db_status = "unhealthy"
+        status_code = 503
+        logger.exception("health_check failed", extra={"db_status": db_status, "status_code": status_code})
+
     except Exception:
         db_status = "unhealthy"
         status_code = 503
