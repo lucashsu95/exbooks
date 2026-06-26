@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     "deals",
     "ai",
     "rules.apps.AutodiscoverRulesConfig",
+    "captcha",
     "rest_framework",
     "django_filters",
 ]

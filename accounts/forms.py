@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from allauth.account.forms import SignupForm as AllauthSignupForm
 from allauth.account.forms import LoginForm as AllauthLoginForm
 from allauth.socialaccount.forms import SignupForm as SocialSignupForm
-
+from captcha.fields import CaptchaField
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field, Submit, HTML
 
@@ -86,7 +86,10 @@ class CustomLoginForm(AllauthLoginForm):
     """
     自定義登入表單。
     利用 FormHelper 與 Layout 統一處理 non_field_errors 與欄位樣式。
+    使用 django-simple-captcha 提供圖形驗證碼防護。
     """
+
+    captcha = CaptchaField(label=_("驗證碼"))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -95,6 +98,7 @@ class CustomLoginForm(AllauthLoginForm):
         self.helper.layout = Layout(
             Field("login", placeholder=_("Email")),
             Field("password", placeholder=_("密碼")),
+            Field("captcha", placeholder=_("請輸入圖片中的文字")),
             HTML(
                 """
                 <div class="flex items-center justify-between mb-4">

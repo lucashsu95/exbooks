@@ -2,6 +2,7 @@
 {% load socialaccount %}
 {% load crispy_forms_tags %}
 {% load i18n %}
+{% load static %}
 {% block title %}
     {% trans "Sign In" %} - Exbooks
 {% endblock %}
@@ -63,4 +64,63 @@
         <a href="{% url 'account_signup' %}"
            class="text-primary font-semibold hover:text-primary-hover hover:underline transition-colors">立即註冊</a>
     </p>
+{% endblock %}
+{% block extra_css %}
+    {{ block.super }}
+    <style>
+        /* CAPTCHA 圖片與輸入框排列 */
+        #div_id_captcha .controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        #div_id_captcha img {
+            border-radius: 0.75rem;
+            border: 1.5px solid #e2e8f0;
+            max-width: 100%;
+            height: auto;
+        }
+        #div_id_captcha input[type="text"] {
+            width: 140px !important;
+        }
+        .captcha-refresh {
+            font-size: 0.8rem;
+            color: #14b8a6;
+            cursor: pointer;
+            text-decoration: underline;
+            transition: color 0.2s;
+            white-space: nowrap;
+        }
+        .captcha-refresh:hover {
+            color: #0d9488;
+        }
+    </style>
+{% endblock %}
+{% block extra_js %}
+    {{ block.super }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            function addCaptchaRefresh(container) {
+                const captchaImg = container ? container.querySelector('img') : document.querySelector('#div_id_captcha img');
+                if (captchaImg && !captchaImg.parentNode.querySelector('.captcha-refresh')) {
+                    const refreshLink = document.createElement('a');
+                    refreshLink.href = '#';
+                    refreshLink.className = 'captcha-refresh';
+                    refreshLink.textContent = '↻ 更換驗證碼';
+                    refreshLink.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        captchaImg.src = captchaImg.src.split('?')[0] + '?' + new Date().getTime();
+                    });
+                    captchaImg.parentNode.appendChild(refreshLink);
+                }
+            }
+
+            addCaptchaRefresh();
+
+            document.body.addEventListener('htmx:afterSwap', function() {
+                addCaptchaRefresh();
+            });
+        });
+    </script>
 {% endblock %}

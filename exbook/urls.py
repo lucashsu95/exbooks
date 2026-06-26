@@ -22,6 +22,7 @@ admin.site.site_title = "Exbooks 管理者介面"
 admin.site.index_title = "歡迎使用 Exbooks 共享書籍後台"
 
 urlpatterns = [
+    path("captcha/", include("captcha.urls")),
     path("robots.txt", core_views.robots_txt),
     path("health/", core_views.health_check, name="health_check"),
     path(
