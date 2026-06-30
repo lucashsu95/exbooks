@@ -127,11 +127,11 @@ function login(username, password) {
 
   const res = http.post(url, payload, params);
   authDuration.add(res.timings.duration);
-  failRate.add(!res.hasOwnProperty("json") || !res.json().access);
+  failRate.add(res.status >= 400);
 
   const success = check(res, {
     "login status 200": (r) => r.status === 200,
-    "login has access token": (r) => r.json("access") !== undefined,
+    "login has access token": (r) => r.status === 200 && r.json("access") !== undefined,
   });
 
   if (!success) {
@@ -165,7 +165,7 @@ function browsePublicPages() {
     bookListDuration.add(res.timings.duration);
     check(res, {
       "official books status 200": (r) => r.status === 200,
-      "official books has results": (r) => r.json("results") !== undefined,
+      "official books has results": (r) => r.status === 200 && r.json("results") !== undefined,
     });
     failRate.add(res.status >= 400);
     sleep(0.5);
@@ -176,7 +176,7 @@ function browsePublicPages() {
     bookListDuration.add(res.timings.duration);
     check(res, {
       "shared books status 200": (r) => r.status === 200,
-      "shared books has results": (r) => r.json("results") !== undefined,
+      "shared books has results": (r) => r.status === 200 && r.json("results") !== undefined,
     });
     failRate.add(res.status >= 400);
     sleep(1);

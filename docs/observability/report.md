@@ -49,7 +49,7 @@
 
 ### 3.2 視覺化儀表板證明 (Visualization Dashboard)
 **生成腳本**：`scripts/render_evidence.py`
-**輸出圖片**：`docs/evidence_dashboard.png`
+**輸出圖片**：`docs/observability/evidence_dashboard.png`
 
 透過 Playwright 渲染真實日誌 JSONL，產出互動式儀表板截圖：
 - **全鏈路關聯**：同一 `trace_id` 同時出現在四層日誌，可依 Trace ID 過濾查看完整鏈路
