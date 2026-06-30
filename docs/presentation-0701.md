@@ -12,8 +12,8 @@ size: 16:9
 :root {
   --color-background: #ffffff;
   --color-foreground: #1f2937;
-  --color-heading: #1e40af;
-  --color-accent: #3b82f6;
+  --color-heading: #0f766e;
+  --color-accent: #14b8a6;
   --color-border: #d1d5db;
   --font-default: 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', sans-serif;
 }
@@ -229,32 +229,47 @@ strong {
 }
 </style>
 
-<!-- _class: lead -->
-# Exbooks 功能進度報告
-## 2025 年 7 月
 
-<!-- _note: 各位好，我是本次簡報的主講者。今天要向大家報告 Exbooks 平台自上次簡報以來在架構現代化、AI 整合與生產力提升方面的重大進展。本次報告涵蓋 65 個 commits、超過一萬七千行新增程式碼，以及九大功能類別的全面升級。預計約二十分鐘，最後保留五分鐘問答時間。 -->
+<!-- _class: lead -->
+# Exbooks 期末簡報
+## 2025 年 7 月 1 日
 
 ---
 
-<!-- _note: 這是今天的議程。我們從 AI 聊天機器人這個最亮眼的新功能開始，接著介紹完整的 REST API 生態系、多語系支援、觀測性基建、生產強化、效能改善和資安措施，最後以架構總覽和三個附錄收尾。各位可以參考手上的投影片跟著進度。 -->
-
+<!-- _class: lead -->
 # 目錄
 
-1. AI 聊天機器人與 Gemini 整合
-2. REST API 生態系
-3. 多語系支援 (i18n)
-4. 觀測性與日誌架構
-5. 生產環境強化
-6. 效能與架構改善
-7. 資安與合規強化
-8. 部署自動化
-9. 架構總覽
-10. 附錄與結語
+<div class="columns">
+<div>
+
+### 上半場：新功能與基礎設施
+
+1. **執行摘要**
+2. **AI 聊天機器人** — Gemini 整合
+3. **Django 發信機制** — Celery 非同步郵件
+4. **觀測性與日誌**
+   - 三層日誌分流
+   - E2E 驗證儀表板
+
+</div>
+<div>
+
+### 下半場：效能、架構與安全
+
+5. **效能與架構改善**
+6. **Celery 非同步任務**
+7. **壓力測試** — k6 腳本
+8. **資安與合規強化**
+9. **架構總覽**
+   - 全系統視角
+   - 媒體雙軌存取
+   - MinIO 選型
+10. **開發工具 Mailpit**
+
+</div>
+</div>
 
 ---
-
-<!-- _note: 先看宏觀數據。過去這個週期我們完成了 65 個 commits，新增一萬七千多行程式碼，變動 203 個檔案。這些工作分布在九大功能類別，從 AI 應用到生產部署，從國際化到資安合規，可以說是一次全方面的升級。 -->
 
 # 執行摘要
 
@@ -345,6 +360,117 @@ strong {
 
 <!-- _note: 觀測性是這個週期的重點基建項目。我們建立了從請求進來到離開的完整追蹤鏈。首先 Request Logging Middleware 會為每個請求注入 trace_id 和 span_id，記錄 method、path、status 和耗時。接著各服務層使用結構化 logger 記錄業務事件。最後所有日誌透過 JSON Formatter 輸出，便於後續的日誌分析平台整合。Sentry 的整合也已就緒。 -->
 
+<!-- _note: Exbooks 的通知系統採用 Django + Celery 的非同步郵件發送。當交易狀態改變、到期提醒、註冊驗證時，系統不會阻塞主執行緒，而是把郵件任務丟進 Redis，由 Celery Worker 在背景發送。 -->
+
+# Django 怎麼發信？
+
+**Celery + Django send_mail，非同步不阻塞**
+
+### 發信流程
+
+<div class="columns">
+<div class="card">
+<h3>1️⃣ 觸發事件</h3>
+<p>交易建立、到期提醒、註冊驗證</p>
+</div>
+<div class="card">
+<h3>2️⃣ 通知服務</h3>
+<p><code>notify()</code> 檢查用戶設定</p>
+<p>決定要不要發 Email</p>
+</div>
+<div class="card">
+<h3>3️⃣ Celery 排隊</h3>
+<p><code>send_email.delay()</code></p>
+<p>任務進 Redis，立即回傳</p>
+</div>
+<div class="card">
+<h3>4️⃣ Worker 發送</h3>
+<p>Django <code>send_mail()</code></p>
+<p>透過 Mailpit / SMTP</p>
+</div>
+</div>
+
+---
+
+### 程式碼：通知服務層
+
+```python
+# deals/services/notification_service.py
+def notify(recipient, title, message, send_email=True, ...):
+    # 1. 寫入資料庫（通知列表）
+    notification = Notification.objects.create(
+        recipient=recipient, title=title, ...
+    )
+    
+    # 2. 檢查用戶是否啟用 Email 通知
+    if send_email and profile.email_notifications_enabled:
+        # 3. 丟進 Celery，不阻塞主執行緒
+        send_email_notification_task.delay(
+            user_id=recipient.pk,
+            title=title,
+            message=message,
+        )
+```
+
+---
+
+### 程式碼：Celery 郵件任務
+
+```python
+# deals/tasks.py
+@shared_task(
+    name="deals.send_email_notification",
+    bind=True,
+    max_retries=3,          # 失敗重試 3 次
+    default_retry_delay=10,   # 每次間隔 10 秒
+)
+def send_email_notification_task(self, user_id, title, message):
+    """非同步發送 Email 通知。"""
+    user = User.objects.get(pk=user_id)
+    
+    if not user.email:
+        return
+    
+    try:
+        send_mail(
+            subject=f"[Exbooks] {title}",
+            message=message or title,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+    except Exception as exc:
+        # 發送失敗 → 自動重試
+        raise self.retry(exc=exc)
+```
+
+---
+
+### 設定：Django Email
+
+```python
+# exbook/settings.py
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.console.EmailBackend",  # 開發：印到終端
+)
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "mailpit")   # Docker: mailpit
+DEFAULT_FROM_EMAIL = "Exbooks <noreply@exbook.example.com>"
+```
+
+### 何時會收到信？
+
+| 事件 | 收件人 | 內容 |
+|------|--------|------|
+| 交易被接受 | 申請人 | 「對方已同意你的借閱申請」 |
+| 3 天後到期 | 借閱人 | 「書籍即將到期，請安排歸還」 |
+| 註冊驗證 | 新用戶 | 「點擊連結完成信箱驗證」 |
+| 信任分變動 | 用戶 | 「你的信任分數已更新」 |
+
+> **失敗重試**：郵件發不出去時自動重試 3 次，確保重要通知不遺失。
+
+---
+
 # 企業級觀測性與日誌
 
 **端到端請求追蹤架構**
@@ -380,12 +506,12 @@ stdout / 檔案 / Sentry (可切換)
 ```python
 import logging
 
-# 這行決定「這筆日誌要進哪個檔案」
+### 這行決定「這筆日誌要進哪個檔案」
 logger = logging.getLogger("audit")   # → audit.log
 logger = logging.getLogger("business") # → business.log
 logger = logging.getLogger("system")   # → exbook.log
 
-# 寫入時自動帶上 trace_id、事件類型、額外欄位
+### 寫入時自動帶上 trace_id、事件類型、額外欄位
 logger.info(
     "deal.created",
     extra={
@@ -402,7 +528,7 @@ logger.info(
 ### `logging_config.py` 的分流設定
 
 ```python
-# 生產環境：三個 logger → 三個獨立檔案
+### 生產環境：三個 logger → 三個獨立檔案
 "handlers": {
     "file":       { "filename": "exbook.log" },      # System 共用
     "audit_file": { "filename": "audit.log" },        # Audit 專屬
@@ -487,6 +613,18 @@ logger.info(
 
 ---
 
+<!-- _note: 用一張圖總結：我們的可觀測性系統做到了什麼。 -->
+
+# 一圖看懂：可觀測性達成了什麼
+
+**一句話：「同一筆交易，從 HTTP 進來到 Celery 結束，全程有跡可循」**
+
+![可觀測性驗證儀表板](observability/evidence_dashboard.png)
+
+> 藍底 = 同一個 trace_id 橫跨四層日誌，證明追蹤鏈路沒斷
+
+---
+
 <!-- _note: E2E 測試跑完會產生四份 JSONL 日誌，但純文字沒人想看。render_evidence.py 把「同一個 trace_id 出現在四層日誌」這個關鍵證據，變成一張可視化截圖，直接放進報告或簡報。 -->
 
 # 可觀測性證據：自動化儀表板
@@ -549,134 +687,6 @@ python scripts/render_evidence.py --evidence-dir <dir> --output dashboard.png
 ---
 
 <!-- _note: k6 是 Exbooks 的負載測試基礎設施。我們寫了三支腳本對應不同場景：日常回歸用 k6_test.js，極限壓力用 k6_stress.js，部署驗證用 k6_verify.js。關鍵不是「能跑多快」，而是「在什麼條件下會壞」以及「壞之前系統的行為長什麼樣子」。 -->
-
-# 壓力測試：k6 腳本家族
-
-**三支腳本、四種強度，幫我們知道「系統什麼時候會撐不住」**
-
-### 腳本定位
-
-<div class="columns">
-<div class="card">
-<h3>k6_test.js</h3>
-<p><strong>日常回歸測試（主腳本）</strong></p>
-<ul>
-<li>自動從 10 組測試帳號輪替登入</li>
-<li>覆蓋匿名瀏覽 + 登入後操作完整流程</li>
-<li>內建四種強度：快速驗證、日常流量、逐步加壓、瞬間高峰</li>
-</ul>
-</div>
-<div class="card">
-<h3>k6_stress.js</h3>
-<p><strong>極限壓力測試</strong></p>
-<ul>
-<li>可預先帶入登入憑證，跳過登入步驟</li>
-<li>專注在「人很多時，哪個功能先變慢」</li>
-<li>及格線較寬鬆（95% 請求在 5 秒內完成即可）</li>
-</ul>
-</div>
-<div class="card">
-<h3>k6_verify.js</h3>
-<p><strong>部署後驗證（乾淨版）</strong></p>
-<ul>
-<li>關閉流量限制，專注確認「功能有沒有壞」</li>
-<li>每個頁面獨立計時，精準定位問題</li>
-<li>快速判定「這次部署有沒有壞東西」</li>
-</ul>
-</div>
-</div>
-
----
-
-### 四種測試強度
-
-| 強度 | 同時幾個人 | 持續多久 | 什麼時候用 |
-|------|-----------|----------|-----------|
-| **快速驗證smoke** | 1 人 | 30 秒 | 剛部署完：「系統有沒有站起來」 |
-| **日常流量load** | 5 → 20 人 | 3 分鐘 | 每週回歸：確認基線穩定 |
-| **逐步加壓stress** | 5 → 50 人 | 4 分鐘 | 大改版後：找出「多少人才會壞」 |
-| **瞬間高峰peak** | 每秒 50 個請求 | 80 秒 | 活動前：模擬公告發布時的搶購潮 |
-
----
-
-### 看指標
-
-不是只看「平均多快」，而是為每個重要頁面獨立計時：
-
-<div class="columns">
-<div class="card">
-<h3>🩺 健康檢查 </h3>
-<p>最輕量的頁面，反映網路延遲</p>
-<p>及格線：95% 在 0.5 秒內</p>
-</div>
-<div class="card">
-<h3>🏠 首頁</h3>
-<p>有資料庫查詢（熱門書籍）</p>
-<p>及格線：95% 在 2 秒內</p>
-</div>
-<div class="card">
-<h3>📚 書目列表</h3>
-<p>大筆資料 + 分頁</p>
-<p>及格線：95% 在 2 秒內</p>
-</div>
-<div class="card">
-<h3>🤝 交易列表</h3>
-<p>個人化查詢，權限檢查較重</p>
-<p>及格線：95% 在 3 秒內</p>
-</div>
-</div>
-
-> **為什麼看「95%」不看平均？** 平均會被快取命中拉低，95% 才反映「大多數使用者的真實感受」。
-
----
-
-<!-- ### 跑完自動判定：紅燈或綠燈
-
-腳本結尾會自動比對「實際結果 vs 及格線」：
-
-- ✅ **綠燈** — 所有頁面 95% 請求都在時間內完成，失敗率 < 1%
-- ❌ **紅燈** — 某個頁面超時或錯誤率過高，直接標出哪裡出問題
-
-不需要人工看報表，跑完就知道能不能上線。
-
-### 測試覆蓋哪些頁面？
-
-<pre>
-不用登入就能看的                        登入後才能看的
-─────────────────                      ─────────────────
-健康狀態頁面                             我的個人檔案
-平台首頁                                 我的交易紀錄
-官方書目列表                             通知列表
-共享書籍列表                             申請展期紀錄
-</pre>
-
-**模擬真實流程**：每個假使用者先四處逛逛 → 登入 → 看自己的交易和通知 → 休息 1~2 秒 → 重複。
-
---- -->
-
-### 何時跑哪支腳本？
-
-<div class="highlight-box">
-<h4>🚀 每次部署後</h4>
-<p><code>k6 run --env SCENARIO=smoke scripts/k6_test.js</code></p>
-<p>30 秒快速驗證，確認沒有壞掉的基本功能。</p>
-</div>
-
-<div class="highlight-box">
-<h4>📊 每週回歸 / 發布前</h4>
-<p><code>k6 run --env SCENARIO=load scripts/k6_test.js</code></p>
-<p>模擬 20 人同時使用，確認效能沒有變慢。</p>
-</div>
-
-<div class="highlight-box">
-<h4>🔥 重大變更後（快取策略、資料庫索引、查詢重構）</h4>
-<p><code>k6 run --env SCENARIO=stress scripts/k6_stress.js</code></p>
-<p>加到 50 個模擬使用者，看哪個功能先變慢，確認優化真的有效。</p>
-</div>
-
----
-
-<!-- _note: 效能改善是這個週期最有感的成果。我們用實際數據證明每一項優化：ISBN 查詢透過三層架構將外部 API 呼叫降到最低，書籍列表用 select_related 消滅 N+1 問題，熱門書籍從即時計算改為 Celery 排程。以下是用 Django Debug Toolbar 和實際壓測蒐集的改善數據。 -->
 
 # 效能與架構改善
 
@@ -821,7 +831,139 @@ python scripts/render_evidence.py --evidence-dir <dir> --output dashboard.png
 
 <!-- _note: 資安方面我們用視覺化圖解展示防護機制。(1) 環境驅動安全：一組設定檔，DEBUG 旗標自動切換開發/生產模式，零人工介入；(2) 登入雙層防護：DRF 應用層 + nginx 入口層雙重限流，暴力破解無效；(3) 媒體保護已獨立為專頁介紹。 -->
 
-### ② 登入保護 — 雙層節流：入口層 + 應用層
+# 壓力測試：k6 腳本家族
+
+**三支腳本、四種強度，幫我們知道「系統什麼時候會撐不住」**
+
+### 腳本定位
+
+<div class="columns">
+<div class="card">
+<h3>k6_test.js</h3>
+<p><strong>日常回歸測試（主腳本）</strong></p>
+<ul>
+<li>自動從 10 組測試帳號輪替登入</li>
+<li>覆蓋匿名瀏覽 + 登入後操作完整流程</li>
+<li>內建四種強度：快速驗證、日常流量、逐步加壓、瞬間高峰</li>
+</ul>
+</div>
+<div class="card">
+<h3>k6_stress.js</h3>
+<p><strong>極限壓力測試</strong></p>
+<ul>
+<li>可預先帶入登入憑證，跳過登入步驟</li>
+<li>專注在「人很多時，哪個功能先變慢」</li>
+<li>及格線較寬鬆（95% 請求在 5 秒內完成即可）</li>
+</ul>
+</div>
+<div class="card">
+<h3>k6_verify.js</h3>
+<p><strong>部署後驗證（乾淨版）</strong></p>
+<ul>
+<li>關閉流量限制，專注確認「功能有沒有壞」</li>
+<li>每個頁面獨立計時，精準定位問題</li>
+<li>快速判定「這次部署有沒有壞東西」</li>
+</ul>
+</div>
+</div>
+
+---
+
+### 四種測試強度
+
+| 強度 | 同時幾個人 | 持續多久 | 什麼時候用 |
+|------|-----------|----------|-----------|
+| **快速驗證smoke** | 1 人 | 30 秒 | 剛部署完：「系統有沒有站起來」 |
+| **日常流量load** | 5 → 20 人 | 3 分鐘 | 每週回歸：確認基線穩定 |
+| **逐步加壓stress** | 5 → 50 人 | 4 分鐘 | 大改版後：找出「多少人才會壞」 |
+| **瞬間高峰peak** | 每秒 50 個請求 | 80 秒 | 活動前：模擬公告發布時的搶購潮 |
+
+---
+
+### 看指標
+
+不是只看「平均多快」，而是為每個重要頁面獨立計時：
+
+<div class="columns">
+<div class="card">
+<h3>🩺 健康檢查 </h3>
+<p>最輕量的頁面，反映網路延遲</p>
+<p>及格線：95% 在 0.5 秒內</p>
+</div>
+<div class="card">
+<h3>🏠 首頁</h3>
+<p>有資料庫查詢（熱門書籍）</p>
+<p>及格線：95% 在 2 秒內</p>
+</div>
+<div class="card">
+<h3>📚 書目列表</h3>
+<p>大筆資料 + 分頁</p>
+<p>及格線：95% 在 2 秒內</p>
+</div>
+<div class="card">
+<h3>🤝 交易列表</h3>
+<p>個人化查詢，權限檢查較重</p>
+<p>及格線：95% 在 3 秒內</p>
+</div>
+</div>
+
+> **為什麼看「95%」不看平均？** 平均會被快取命中拉低，95% 才反映「大多數使用者的真實感受」。
+
+---
+
+<!-- ### 跑完自動判定：紅燈或綠燈
+
+腳本結尾會自動比對「實際結果 vs 及格線」：
+
+- ✅ **綠燈** — 所有頁面 95% 請求都在時間內完成，失敗率 < 1%
+- ❌ **紅燈** — 某個頁面超時或錯誤率過高，直接標出哪裡出問題
+
+不需要人工看報表，跑完就知道能不能上線。
+
+### 測試覆蓋哪些頁面？
+
+<pre>
+不用登入就能看的                        登入後才能看的
+─────────────────                      ─────────────────
+健康狀態頁面                             我的個人檔案
+平台首頁                                 我的交易紀錄
+官方書目列表                             通知列表
+共享書籍列表                             申請展期紀錄
+</pre>
+
+**模擬真實流程**：每個假使用者先四處逛逛 → 登入 → 看自己的交易和通知 → 休息 1~2 秒 → 重複。
+
+--- -->
+
+### 何時跑哪支腳本？
+
+<div class="highlight-box">
+<h4>🚀 每次部署後</h4>
+<p><code>k6 run --env SCENARIO=smoke scripts/k6_test.js</code></p>
+<p>30 秒快速驗證，確認沒有壞掉的基本功能。</p>
+</div>
+
+<div class="highlight-box">
+<h4>📊 每週回歸 / 發布前</h4>
+<p><code>k6 run --env SCENARIO=load scripts/k6_test.js</code></p>
+<p>模擬 20 人同時使用，確認效能沒有變慢。</p>
+</div>
+
+<div class="highlight-box">
+<h4>🔥 重大變更後（快取策略、資料庫索引、查詢重構）</h4>
+<p><code>k6 run --env SCENARIO=stress scripts/k6_stress.js</code></p>
+<p>加到 50 個模擬使用者，看哪個功能先變慢，確認優化真的有效。</p>
+</div>
+
+---
+
+<!-- _note: 效能改善是這個週期最有感的成果。我們用實際數據證明每一項優化：ISBN 查詢透過三層架構將外部 API 呼叫降到最低，書籍列表用 select_related 消滅 N+1 問題，熱門書籍從即時計算改為 Celery 排程。以下是用 Django Debug Toolbar 和實際壓測蒐集的改善數據。 -->
+
+# 資安與合規強化
+
+**雙層節流：入口層 + 應用層，暴力破解無效**
+
+### 登入保護
 
 <div class="col-2-2-1">
 <div>
@@ -833,7 +975,7 @@ python scripts/render_evidence.py --evidence-dir <dir> --output dashboard.png
 <div>
 
 ```nginx
-# nginx/default.conf
+### nginx/default.conf
 limit_req_zone $binary_remote_addr
   zone=login:10m rate=5r/m;
 
@@ -844,13 +986,13 @@ location ~ ^/accounts/(login|signup|password) {
 ```
 
 ```python
-# exbook/settings.py
+### exbook/settings.py
 REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = [
     "AnonRateThrottle",     # 100/h
     "UserRateThrottle",     # 1000/h
 ]
 
-# exbook/prod_settings.py
+### exbook/prod_settings.py
 ACCOUNT_RATE_LIMITS = {
     "login_failed": "5/m/ip,5/5m/key",
 }
@@ -858,102 +1000,8 @@ ACCOUNT_RATE_LIMITS = {
 
 </div>
 </div>
-</div>
 
 nginx 擋大流量攻擊（5r/m 超頻直接 503），DRF 控 API 使用額度（100/h · 1000/h），兩層分工、各司其職。
-
----
-
-<!-- _note: DRF 負責所有 REST API 端點，涵蓋三個 app。ViewSet 提供標準 CRUD + 自訂 action，Serializer 負責輸入驗證與輸出格式化，Service layer 處理實際業務邏輯。全域設定統一管理 throttle、auth、pagination。 -->
-
-### DRF 分層架構 — ViewSet × Serializer × Service
-
-**一條 HTTP 請求在 Exbooks 中的旅程**
-
-<div class="columns">
-<div class="card">
-<h3>🌐 ViewSet</h3>
-<p><strong>HTTP 入口 + 權限守門員</strong></p>
-<ul>
-<li>決定接受哪些 method（GET / POST / PATCH）</li>
-<li>檢查物件級權限（<code>rules</code> 或 <code>IsOwner</code>）</li>
-<li>呼叫 Serializer 與 Service，回傳 Response</li>
-<li>自訂 action：<code>accept</code>、<code>cancel</code> 等</li>
-</ul>
-<p><em>不做業務邏輯，只負責「能不能進」</em></p>
-</div>
-<div class="card">
-<h3>🔄 Serializer</h3>
-<p><strong>資料翻譯官 + 格式驗證</strong></p>
-<ul>
-<li>Python model ↔ JSON 雙向轉換</li>
-<li>驗證欄位類型、必填、唯一性</li>
-<li>控制暴露欄位（owner 看全部 / guest 看摘要）</li>
-<li>巢狀序列化（Deal → SharedBook → OfficialBook）</li>
-</ul>
-<p><em>不管「為什麼」，只管「對不對」</em></p>
-</div>
-<div class="card">
-<h3>⚙️ Service</h3>
-<p><strong>業務邏輯核心</strong></p>
-<ul>
-<li>狀態機轉換（REQUESTED → ACCEPTED）</li>
-<li>跨 model 操作（交易完成 → 更新信任分數）</li>
-<li>觸發副作用（發通知、寫 log、扣款）</li>
-<li>複雜查詢封裝（N+1 防禦、聚合計算）</li>
-</ul>
-<p><em>最厚的一層，可脫離 DRF 單獨測試</em></p>
-</div>
-</div>
-
----
-
-### 請求生命週期：以「接受交易」為例
-
-<pre>
-POST /api/deals/550e8400/accept/
-        │
-        ▼
-┌───────────────┐
-│  DealViewSet  │  ① 檢查登入、節流（1000/h）
-│  @action      │  ② 呼叫 rules：只有 responder 可以 accept
-└───────┬───────┘
-        │
-        ▼
-┌───────────────┐
-│ DealSerializer│  ③ 驗證 payload（此例無 body，略過）
-│               │  ④ 序列化回傳欄位（deal_id, status, updated_at）
-└───────┬───────┘
-        │
-        ▼
-┌───────────────┐
-│ DealService   │  ⑤ 業務邏輯：狀態轉換 REQUESTED → ACCEPTED
-│  .accept()    │  ⑥ 副作用：發推播通知給 applicant
-│               │  ⑦ 寫結構化 log（trace_id, actor, event）
-└───────┬───────┘
-        │
-        ▼
-     Response 200
-</pre>
-
----
-
-### 為什麼要拆三層？
-
-<div class="highlight-box">
-<h4>🧪 Service 可獨立測試</h4>
-<p>DealService 不依賴 HTTP 上下文，直接用 pytest 寫單元測試，不需啟動 Django test client。</p>
-</div>
-
-<div class="highlight-box">
-<h4>🔒 權限與邏輯分離</h4>
-<p>ViewSet 管「誰能做」；Service 管「做了什麼」。換成 CLI 腳本或 Celery task 時，直接呼叫同一個 Service，不需複製邏輯。</p>
-</div>
-
-<div class="highlight-box">
-<h4>📦 全域設定統一</h4>
-<p>JWT 認證、匿名 100/h / 登入 1000/h 節流、每頁 20 筆分頁 — 全部集中在 <code>exbook/settings.py</code>，所有 ViewSet 自動繼承。</p>
-</div>
 
 ---
 
@@ -1018,13 +1066,64 @@ POST /api/deals/550e8400/accept/
 ### 兩條路徑比較
 
 | | 公開檔案 | 受保護檔案 |
-|---|---------|-----------|
+|---|---|---------|
 | **觸發條件** | `deal_id is None` | `deal_id is not None` |
 | **經過 Django？** | ❌ 直接 Nginx → MinIO | ✅ Django 權限檢查 |
 | **回應速度** | 即時（毫秒級） | 略慢（含驗權） |
 | **快取策略** | `Cache-Control: public`, expires 7d | `Cache-Control: private` |
 | **適用對象** | 書封、無交易關聯照片 | 面交照片、交易憑證 |
 | **可存取者** | 所有人 | uploader、applicant、responder 三方 |
+
+---
+
+### 程式碼實作：Model 層分流
+
+```python
+### books/models/book_photo.py
+@property
+def serve_url(self):
+    """
+    根據照片是否與交易關聯，回傳對應的存取 URL。
+    """
+    if self.deal_id:
+        # 受保護檔案 → 經 Django 權限檢查
+        return reverse("serve_protected_photo", kwargs={"pk": self.pk})
+    # 公開檔案 → Nginx 直接代理 MinIO
+    return self.photo.url
+```
+
+---
+
+### 程式碼實作：View 層權限檢查
+
+```python
+### books/views.py
+@login_required
+def serve_protected_photo(request, pk):
+    """
+    提供面交照片的權限檢查存取。
+    - 權限通過後，回傳 X-Accel-Redirect 由 Nginx 內部轉發 MinIO。
+    - Local Dev (DEBUG=True) 則直接由 Django serve。
+    """
+    photo = get_object_or_404(
+        BookPhoto.objects.select_related("deal", "uploader", "deal__applicant", "deal__responder"),
+        pk=pk,
+        deal__isnull=False,
+    )
+
+    ### 只有三方可以存取
+    if (
+        request.user != photo.uploader
+        and request.user != photo.deal.applicant
+        and request.user != photo.deal.responder
+    ):
+        return HttpResponse(status=403)
+
+    ### 生產環境：回傳 X-Accel-Redirect
+    response = HttpResponse()
+    response["X-Accel-Redirect"] = f"/internal-media/{photo.photo.name}"
+    return response
+```
 
 ---
 
@@ -1085,6 +1184,40 @@ Exbooks 每張照片被瀏覽一次，系統就去讀一次檔案。用戶愈活
 <p><strong>省錢</strong> ─ 固定成本，用戶愈多愈划算</p>
 <p><strong>安心</strong> ─ 資料在自己家，不用擔心服務條款改變</p>
 <p><strong>簡單</strong> ─ 就是一台 Docker，已經在跑了，不用改任何程式碼</p>
+</div>
+
+---
+
+<!-- _note: Mailpit 是 Exbooks 开发环境中的重要基础设施。它拦截所有发送的邮件，让开发者在不打扰真实用户的情况下验证邮件内容和格式。 -->
+
+# 開發環境郵件捕獲：Mailpit
+
+**不讓測試郵件打擾真實用戶**
+
+### 為什麼需要 Mailpit？
+
+Exbooks 的交易通知、註冊驗證、密碼重置都會發送 Email。開發/測試時不能讓這些信跑到真實信箱。
+
+---
+
+### 運作方式
+
+<div class="columns">
+<div class="card">
+<h3>📨 捕獲所有郵件</h3>
+<p>Django 發出的每一封信，全部進 Mailpit</p>
+<p>不論是交易提醒、註冊確認、密碼重置</p>
+</div>
+<div class="card">
+<h3>🔍 網頁預覽</h3>
+<p>打開 http://localhost:8025 即可查看所有郵件</p>
+<p>支援 HTML 預覽、原始碼檢視、附件下載</p>
+</div>
+<div class="card">
+<h3>🛡️ 零外洩風險</h3>
+<p>開發環境絕不寄到真實信箱</p>
+<p>測試帳號的註冊信、重置信都在本地</p>
+</div>
 </div>
 
 ---
