@@ -457,9 +457,8 @@ logger.info(
 ### 實際日誌長什麼樣子？
 
 ```json
-// audit.log — 權限變更紀錄
 {
-  "timestamp": "2025-07-01T01:14:06",
+  "timestamp": "2025-07-01T01:14:06", // audit.log — 權限變更紀錄
   "level": "INFO",
   "name": "audit",
   "message": "keeper.transferred",
@@ -471,9 +470,8 @@ logger.info(
   }
 }
 
-// business.log — 業務事件
 {
-  "timestamp": "2025-07-01T01:14:06",
+  "timestamp": "2025-07-01T01:14:06", // business.log — 業務事件
   "level": "INFO",
   "name": "business",
   "message": "deal.created",
@@ -547,18 +545,6 @@ python scripts/render_evidence.py --evidence-dir <dir> --output dashboard.png
 ![Exbooks 可觀測性驗證儀表板](observability/evidence_dashboard.png)
 
 > 由 `render_evidence.py` 自動產出：四層日誌、Trace ID 過濾、異常高亮、JSON 詳情展開
-
----
-
-### 驗證成果（E2E 測試產出）
-
-| 驗證項目 | 結果 |
-|----------|------|
-| 同一 `trace_id` 出現在 system / audit / business / alerts 四份日誌 | ✅ 通過 |
-| System 日誌含 8 筆追蹤記錄（HTTP + FSM + Celery） | ✅ 通過 |
-| Audit 日誌含 6 筆稽核事件（deal 生命週期） | ✅ 通過 |
-| Business 日誌含 7 筆領域事件 | ✅ 通過 |
-| Alerts 日誌含 1 筆異常檢測告警 | ✅ 通過 |
 
 ---
 
@@ -644,7 +630,7 @@ python scripts/render_evidence.py --evidence-dir <dir> --output dashboard.png
 
 ---
 
-### 跑完自動判定：紅燈或綠燈
+<!-- ### 跑完自動判定：紅燈或綠燈
 
 腳本結尾會自動比對「實際結果 vs 及格線」：
 
@@ -666,7 +652,7 @@ python scripts/render_evidence.py --evidence-dir <dir> --output dashboard.png
 
 **模擬真實流程**：每個假使用者先四處逛逛 → 登入 → 看自己的交易和通知 → 休息 1~2 秒 → 重複。
 
----
+--- -->
 
 ### 何時跑哪支腳本？
 
