@@ -102,18 +102,29 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             function addCaptchaRefresh(container) {
-                const captchaImg = container ? container.querySelector('img') : document.querySelector('#div_id_captcha img');
-                if (captchaImg && !captchaImg.parentNode.querySelector('.captcha-refresh')) {
-                    const refreshLink = document.createElement('a');
-                    refreshLink.href = '#';
-                    refreshLink.className = 'captcha-refresh';
-                    refreshLink.textContent = '↻ 更換驗證碼';
-                    refreshLink.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        captchaImg.src = captchaImg.src.split('?')[0] + '?' + new Date().getTime();
-                    });
-                    captchaImg.parentNode.appendChild(refreshLink);
-                }
+                const captchaDiv = container || document.querySelector('#div_id_captcha');
+                if (!captchaDiv) return;
+                const captchaImg = captchaDiv.querySelector('img');
+                const captchaInput = captchaDiv.querySelector('input[name="captcha_0"]');
+                if (!captchaImg || captchaDiv.querySelector('.captcha-refresh')) return;
+
+                const refreshLink = document.createElement('a');
+                refreshLink.href = '#';
+                refreshLink.className = 'captcha-refresh';
+                refreshLink.textContent = '↻ 更換驗證碼';
+                refreshLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    fetch('/captcha/refresh/', {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        captchaImg.src = data.image_url;
+                        if (captchaInput) captchaInput.value = data.key;
+                    })
+                    .catch(() => { /* silent fail */ });
+                });
+                captchaImg.parentNode.appendChild(refreshLink);
             }
 
             addCaptchaRefresh();
