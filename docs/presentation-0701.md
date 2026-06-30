@@ -369,15 +369,6 @@ stdout / 檔案 / Sentry (可切換)
 
 ---
 
-### 核心檔案
-
-| 檔案 | 行數 | 說明 |
-|------|------|------|
-| `core/logging_config.py` | 225 | 集中式 logging 設定：格式、等級、Handler、Filter |
-| `core/middleware/request_logging.py` | 71 | 請求追蹤中介軟體 |
-
----
-
 <!-- _note: 三層日誌的實作並不複雜，用的是 Python 標準函式庫 logging 的 logger 名稱分流機制。核心概念是：用不同的 logger 名稱（system、audit、business）作為閘道，每個名稱綁定不同的檔案 handler，程式碼只要 import logging; logger = logging.getLogger("audit")，日誌就會自動寫入 audit.log。 -->
 
 # 三層日誌怎麼分流？
