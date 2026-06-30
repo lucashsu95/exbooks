@@ -378,6 +378,126 @@ stdout / 檔案 / Sentry (可切換)
 
 ---
 
+<!-- _note: 三層日誌的實作並不複雜，用的是 Python 標準函式庫 logging 的 logger 名稱分流機制。核心概念是：用不同的 logger 名稱（system、audit、business）作為閘道，每個名稱綁定不同的檔案 handler，程式碼只要 import logging; logger = logging.getLogger("audit")，日誌就會自動寫入 audit.log。 -->
+
+# 三層日誌怎麼分流？
+
+**Python 標準函式庫 `logging` 的名稱閘道機制**
+
+### 程式碼裡的一行決定日誌去哪裡
+
+```python
+import logging
+
+# 這行決定「這筆日誌要進哪個檔案」
+logger = logging.getLogger("audit")   # → audit.log
+logger = logging.getLogger("business") # → business.log
+logger = logging.getLogger("system")   # → exbook.log
+
+# 寫入時自動帶上 trace_id、事件類型、額外欄位
+logger.info(
+    "deal.created",
+    extra={
+        "trace_id": "a1b2c3d4",
+        "event_type": "deal.created",
+        "deal_id": "550e8400",
+        "actor_id": "user123",
+    }
+)
+```
+
+---
+
+### `logging_config.py` 的分流設定
+
+```python
+# 生產環境：三個 logger → 三個獨立檔案
+"handlers": {
+    "file":       { "filename": "exbook.log" },      # System 共用
+    "audit_file": { "filename": "audit.log" },        # Audit 專屬
+    "business_file": { "filename": "business.log" },  # Business 專屬
+}
+
+"loggers": {
+    "system": {
+        "handlers": ["file"],           # 進 exbook.log
+        "propagate": False,             # 不往上層傳，避免重複
+    },
+    "audit": {
+        "handlers": ["audit_file"],     # 進 audit.log
+        "propagate": False,
+    },
+    "business": {
+        "handlers": ["business_file"],  # 進 business.log
+        "propagate": False,
+    },
+}
+```
+
+---
+
+### 為什麼這樣設計？
+
+<div class="columns">
+<div class="card">
+<h3>🔵 System</h3>
+<p><code>exbook.log</code></p>
+<p>10 MB 自動輪轉，保留 10 份</p>
+<p>給工程師看錯誤、效能、除錯</p>
+</div>
+<div class="card">
+<h3>🟣 Audit</h3>
+<p><code>audit.log</code></p>
+<p>50 MB 自動輪轉，保留 30 份</p>
+<p>給稽核員看權限變更、資產轉移</p>
+</div>
+<div class="card">
+<h3>🟢 Business</h3>
+<p><code>business.log</code></p>
+<p>100 MB 自動輪轉，保留 14 份</p>
+<p>給 PM 看使用者行為、業務轉化</p>
+</div>
+</div>
+
+> **輪轉（Rotating）**：檔案滿了就自動開新檔，舊的壓縮保留。不會因為日誌無限增長塞爆硬碟。
+
+---
+
+### 實際日誌長什麼樣子？
+
+```json
+// audit.log — 權限變更紀錄
+{
+  "timestamp": "2025-07-01T01:14:06",
+  "level": "INFO",
+  "name": "audit",
+  "message": "keeper.transferred",
+  "trace_id": "a1b2c3d4e5f67890",
+  "extra": {
+    "deal_id": "550e8400",
+    "old_keeper": "userA",
+    "new_keeper": "userB"
+  }
+}
+
+// business.log — 業務事件
+{
+  "timestamp": "2025-07-01T01:14:06",
+  "level": "INFO",
+  "name": "business",
+  "message": "deal.created",
+  "trace_id": "a1b2c3d4e5f67890",
+  "extra": {
+    "book_id": "book123",
+    "applicant_id": "userC"
+  }
+}
+```
+
+**同一個 `trace_id` 出現在兩個檔案** → 這就是「追蹤鏈路未斷裂」的客觀證據。
+
+---
+
 <!-- _note: E2E 測試跑完會產生四份 JSONL 日誌，但純文字沒人想看。render_evidence.py 把「同一個 trace_id 出現在四層日誌」這個關鍵證據，變成一張可視化截圖，直接放進報告或簡報。 -->
 
 # 可觀測性證據：自動化儀表板
