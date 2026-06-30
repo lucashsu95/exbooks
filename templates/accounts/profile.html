@@ -148,6 +148,33 @@
                 </div>
             </div>
         </div>
+        <!-- Language Switcher -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+            <div class="flex items-center gap-3">
+                <div class="size-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                    <span class="material-symbols-outlined">language</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">{% trans "語言設定" %}</p>
+                    {% get_current_language as LANGUAGE_CODE %}
+                    {% get_available_languages as LANGUAGES %}
+                    {% get_language_info_list for LANGUAGES as languages %}
+                    <form action="{% url 'set_language' %}" method="post" class="inline-block">
+                        {% csrf_token %}
+                        <input name="next" type="hidden" value="{{ request.get_full_path }}">
+                        <select name="language"
+                                onchange="this.form.submit()"
+                                class="text-sm border border-slate-300 rounded-lg px-2 py-1 bg-white text-slate-700 w-full max-w-[200px]">
+                            {% for language in languages %}
+                            <option value="{{ language.code }}" {% if language.code == LANGUAGE_CODE %}selected{% endif %}>
+                                {{ language.name_local }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </div>
+            </div>
+        </div>
         <!-- Data Export Section -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
             <div class="space-y-4">
