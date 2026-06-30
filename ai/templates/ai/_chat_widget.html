@@ -133,7 +133,8 @@ function chatWidget() {
 
         init() {
             this.loadHistory();
-            this.connectSSE();
+            // SSE 延遲到用戶主動打開聊天視窗時才連線，
+            // 避免每個頁面都佔用一個 Gunicorn sync worker
         },
 
         toggleChat() {
@@ -141,11 +142,26 @@ function chatWidget() {
             if (this.isOpen && !this.eventSource) {
                 this.connectSSE();
             }
+            // 關閉聊天時斷開 SSE，釋放 worker
+            if (!this.isOpen && this.eventSource) {
+                this.eventSource.close();
+                this.eventSource = null;
+                this.isConnected = false;
+                this.connectionStatus = 'Disconnected';
+            }
         },
 
         connectSSE() {
             this.connectionStatus = 'Connecting...';
             this.eventSource = new EventSource('/ai/chat/');
+
+            // 頁面卸載時主動關閉，避免殘留連線佔用 worker
+            window.addEventListener('beforeunload', () => {
+                if (this.eventSource) {
+                    this.eventSource.close();
+                    this.eventSource = null;
+                }
+            });
 
             this.eventSource.addEventListener('connection', (e) => {
                 const data = JSON.parse(e.data);
@@ -288,4 +304,9 @@ function chatWidget() {
     }
 }
 </script>
+<!--
+  🐱 彩蛋觸發方式：
+  在聊天框輸入「喵」或「cat」，AI 會給你一個特別的回應～
+  這是給細心使用者的驚喜 ✨
+-->
 

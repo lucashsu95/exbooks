@@ -230,25 +230,18 @@
                 }
             })();
         </script>
-        <!-- Language Switcher -->
-        <div class="fixed top-4 left-4 z-[60] flex items-center gap-2">
-            {% get_current_language as LANGUAGE_CODE %}
-            {% get_available_languages as LANGUAGES %}
-            {% get_language_info_list for LANGUAGES as languages %}
-            <form action="{% url 'set_language' %}" method="post" class="inline-block">
-                {% csrf_token %}
-                <input name="next" type="hidden" value="{{ request.get_full_path }}">
-                <select name="language"
-                        onchange="this.form.submit()"
-                        class="text-xs border border-slate-300 rounded px-1 py-0.5 bg-white text-slate-700">
-                    {% for language in languages %}
-                    <option value="{{ language.code }}" {% if language.code == LANGUAGE_CODE %}selected{% endif %}>
-                        {{ language.name_local }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </form>
-        </div>
+        <!-- 給好奇的開發者：打開 console 看看有什麼驚喜 ✨ -->
+        <script>
+            (function() {
+                var styles = [
+                    "color: #14b8a6; font-size: 20px; font-weight: bold;",
+                    "color: #64748b; font-size: 12px;"
+                ];
+                console.log("%c🐱 喵！你發現了 Exbooks 的隱藏訊息！", styles[0]);
+                console.log("%c這隻貓咪守護著每一本被分享的書。", styles[1]);
+                console.log("%c如果你喜歡這個專案，歡迎成為貢獻者 🐾", styles[1]);
+            })();
+        </script>
         <!-- Global Loading Indicator - 頁面頂部進度條 -->
         <div id="global-loader"
              class="fixed top-0 left-0 right-0 h-1 z-[40] opacity-0 transition-opacity duration-200 pointer-events-none">

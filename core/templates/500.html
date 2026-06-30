@@ -3,11 +3,41 @@
   <head>
     <meta charset="utf-8" />
     <title>伺服器錯誤｜Exbooks</title>
+    <style>
+      body {
+        font-family: "Noto Sans TC", sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        background: #1e293b;
+        color: #e2e8f0;
+      }
+      .container { text-align: center; padding: 2rem; }
+      h1 { font-size: 4rem; margin: 0; color: #f87171; }
+      .glitch {
+        font-size: 1.1rem;
+        margin: 1rem 0;
+        color: #94a3b8;
+      }
+      a { color: #38bdf8; text-decoration: none; }
+      .tiny {
+        font-size: 10px;
+        color: #475569;
+        margin-top: 3rem;
+      }
+    </style>
   </head>
   <body>
-    <main>
+    <main class="container">
       <h1>500</h1>
-      <p>伺服器發生錯誤，請稍後再試。</p>
+      <p class="glitch">伺服器正在午睡，請稍後再試 💤</p>
+      <p><a href="/">← 回到首頁</a></p>
+      <p class="tiny">
+        Error Code: NAP_IN_PROGRESS<br>
+        Server Status: 😴🐱💤
+      </p>
     </main>
   </body>
 </html>

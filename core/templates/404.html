@@ -3,11 +3,72 @@
   <head>
     <meta charset="utf-8" />
     <title>找不到頁面｜Exbooks</title>
+    <style>
+      body {
+        font-family: "Noto Sans TC", sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        background: #f6f7f8;
+        color: #334155;
+      }
+      .container {
+        text-align: center;
+        padding: 2rem;
+      }
+      .cat {
+        font-family: monospace;
+        white-space: pre;
+        line-height: 1.2;
+        color: #64748b;
+        margin: 1.5rem 0;
+        font-size: 14px;
+      }
+      h1 {
+        font-size: 4rem;
+        margin: 0;
+        color: #14b8a6;
+      }
+      p {
+        font-size: 1.1rem;
+        margin: 0.5rem 0 1.5rem;
+      }
+      a {
+        color: #0d9488;
+        text-decoration: none;
+        border-bottom: 1px solid #0d9488;
+      }
+      a:hover { color: #0f766e; }
+      /* Hidden message for curious developers */
+      .secret { display: none; }
+    </style>
   </head>
   <body>
-    <main>
+    <main class="container">
       <h1>404</h1>
-      <p>找不到你要的頁面。</p>
+      <p>這本書…似乎被某隻貓咪借走了 🐱</p>
+      <div class="cat">
+    /|_╱|
+   ( •̀ㅅ •́ )
+  ＿ノ ヽ ノ＼＿
+ /　`/ ⌒Ｙ⌒ Ｙ　 \
+( 　(三ヽ人　 /　 　|
+|　ﾉ⌒＼ ￣￣ヽ　 ノ
+ヽ＿＿＿＞､＿＿／
+      </div>
+      <p>
+        <a href="/">回到首頁</a>
+        <span style="color:#94a3b8;margin:0 0.5rem;">｜</span>
+        <a href="/books/">去書架找找</a>
+      </p>
+      <!--
+        🐾 你發現了隱藏訊息！
+        這隻貓咪是 Exbooks 的守護靈。
+        如果你看到這段訊息，代表你是個好奇的開發者。
+        來我們的 GitHub 看看貓咪推薦的書單吧！
+      -->
     </main>
   </body>
 </html>

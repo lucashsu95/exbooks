@@ -21,6 +21,7 @@ const STATIC_ASSETS = [
 // 安裝事件 - 預先快取靜態資源
 self.addEventListener('install', (event) => {
   console.log('[SW] 安裝中...');
+  console.log('[SW] 🐱 貓咪正在整理書架...');
   event.waitUntil(
     caches.open(STATIC_CACHE_NAME).then((cache) => {
       console.log('[SW] 預先快取靜態資源');

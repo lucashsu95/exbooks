@@ -48,6 +48,7 @@ test = [
 ]
 prod = [
     "gunicorn>=23.0",
+    "gevent>=24.0",
 ]
 
 [tool.pytest.ini_options]

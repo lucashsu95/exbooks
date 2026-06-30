@@ -85,7 +85,10 @@ def health_check(request):
         "status": "ok" if db_status == "ok" else "unhealthy",
         "database": db_status,
     }
-    return JsonResponse(payload, status=status_code)
+    response = JsonResponse(payload, status=status_code)
+    if request.GET.get("meow") == "1":
+        response["X-Exbooks-Cat"] = "🐱 喵！系統很健康，貓咪也很開心～"
+    return response
 
 
 SUPPORTED_LANGS = {code for code, _ in settings.LANGUAGES}

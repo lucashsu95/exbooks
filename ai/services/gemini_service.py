@@ -73,6 +73,26 @@ class GeminiService:
 
         # Placeholder for implementation logic
         logger.debug("GeminiService returning mock response")
+
+        # 🐱 Easter egg: cat meow keyword
+        msg_lower = message.strip().lower()
+        if msg_lower in ("喵", "cat", "meow", "🐱"):
+            return GeminiResponse(
+                content=(
+                    "喵～你發現了隱藏彩蛋！\n\n"
+                    "    /|_╱|\n"
+                    "   ( •̀ㅅ •́ )\n"
+                    "  ＿ノ ヽ ノ＼＿\n"
+                    " /　`/ ⌒Ｙ⌒ Ｙ　 \\\n"
+                    "( 　(三ヽ人　 /　 　|\n"
+                    "|　ﾉ⌒＼ ￣￣ヽ　 ノ\n"
+                    "ヽ＿＿＿＞､＿＿／\n\n"
+                    "這隻貓咪是 Exbooks 的守護靈，謝謝你來分享書籍 🐾"
+                ),
+                tool_calls=[],
+                raw_response=None,
+            )
+
         return GeminiResponse(
             content=f"已收到您的訊息：'{message}'。 (這是 GeminiService 的模擬回應)",
             tool_calls=[],
