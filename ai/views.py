@@ -69,13 +69,22 @@ class ChatSSEView(LoginRequiredMixin, View):
                         yield f"event: consent_required\ndata: {json.dumps({'tool': tool_name, 'args': arguments})}\n\n"
                     elif tool_def:
                         # Execute immediately
-                        result = tool_def.func(**arguments)
-                        yield f"event: tool_result\ndata: {json.dumps({'tool': tool_name, 'result': result})}\n\n"
+                        try:
+                            result = tool_def.func(**arguments)
+                            # Ensure result is JSON-serializable
+                            if not isinstance(result, (str, int, float, bool, list, dict, type(None))):
+                                result = str(result)
+                            yield f"event: tool_result\ndata: {json.dumps({'tool': tool_name, 'result': result})}\n\n"
+                        except Exception as e:
+                            logger.exception("Tool execution failed", extra={"tool_name": tool_name})
+                            yield f"event: tool_result\ndata: {json.dumps({'tool': tool_name, 'error': str(e)})}\n\n"
 
             # 2. Stream Content
-            # Simulated streaming for T2-5
             full_content = response.content
-            # To simulate streaming, we could split by words/chars but for simplicity:
+            # Ensure content is never empty
+            if not full_content:
+                full_content = "（AI 正在思考中，請稍後再試）"
+            
             yield f"event: content\ndata: {json.dumps({'delta': full_content})}\n\n"
 
             # Add AI response to history
