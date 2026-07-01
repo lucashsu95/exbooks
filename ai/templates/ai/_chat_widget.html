@@ -227,10 +227,51 @@ function chatWidget() {
                 });
 
                 if (!response.ok) throw new Error('Failed to send message');
+
+                // POST returns SSE stream; parse events and update UI
+                const responseText = await response.text();
+                const events = this.parseSSE(responseText);
+
+                for (const { event, data } of events) {
+                    if (event === 'content' && data.delta) {
+                        this.addMessage('assistant', data.delta, 'text');
+                    } else if (event === 'consent_required') {
+                        this.addMessage('assistant', 'This action requires your confirmation.', 'consent');
+                        this.pendingAction = { tool: data.tool, args: data.args };
+                    } else if (event === 'tool_result') {
+                        this.addMessage('assistant', `Tool result: ${JSON.stringify(data.result)}`, 'text');
+                    } else if (event === 'done') {
+                        this.isTyping = false;
+                    }
+                }
             } catch (error) {
                 this.addMessage('assistant', 'Sorry, I encountered an error sending your message.');
                 this.isTyping = false;
             }
+        },
+
+        parseSSE(text) {
+            const events = [];
+            const rawEvents = text.trim().split('\n\n');
+            for (const rawEvent of rawEvents) {
+                if (!rawEvent.trim()) continue;
+                const lines = rawEvent.split('\n');
+                let eventName = 'message';
+                let dataStr = '';
+                for (const line of lines) {
+                    if (line.startsWith('event: ')) {
+                        eventName = line.slice(7);
+                    } else if (line.startsWith('data: ')) {
+                        dataStr = line.slice(6);
+                    }
+                }
+                try {
+                    events.push({ event: eventName, data: JSON.parse(dataStr) });
+                } catch (e) {
+                    events.push({ event: eventName, data: dataStr });
+                }
+            }
+            return events;
         },
 
         async sendAction(action) {
