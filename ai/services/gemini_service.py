@@ -31,8 +31,8 @@ class GeminiService:
         "請使用繁體中文（台灣習慣）回答，口氣親切專業。如果需要用戶確認敏感操作，請明確說明。"
     )
 
-    BASE_URL = "https://integrate.api.nvidia.com/v1"
-    MODEL = "meta/llama-3.1-70b-instruct"
+    BASE_URL = "https://api.groq.com/openai/v1"
+    MODEL = "llama-3.1-70b-versatile"
 
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.environ.get("NVIDIA_API_KEY")
