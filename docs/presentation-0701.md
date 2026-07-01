@@ -2,6 +2,7 @@
 marp: true
 theme: business
 size: 16:9
+paginate: true
 ---
 
 <style>
@@ -394,6 +395,8 @@ strong {
 
 ### 程式碼：通知服務層
 
+當交易狀態改變時，系統先寫一筆通知到資料庫，再判斷用戶是否啟用 Email。如果啟用，就把發信任務丟給 Celery，主執行緒立刻回傳，不等郵件真正寄出。
+
 ```python
 # deals/services/notification_service.py
 def notify(recipient, title, message, send_email=True, ...):
@@ -415,6 +418,8 @@ def notify(recipient, title, message, send_email=True, ...):
 ---
 
 ### 程式碼：Celery 郵件任務
+
+Celery Worker 從 Redis 取出任務後，實際呼叫 Django 的 `send_mail()`。如果 SMTP 連線失敗或對方伺服器拒收，會自動重試 3 次，每次間隔 10 秒。
 
 ```python
 # deals/tasks.py
@@ -527,8 +532,10 @@ logger.info(
 
 ### `logging_config.py` 的分流設定
 
+Python 的 `logging` 模組用「名稱」作為閘道。`logging.getLogger("audit")` 寫入的記錄只會進 `audit.log`，不會混入 `exbook.log`。`propagate=False` 確保不會往上層傳遞造成重複。
+
 ```python
-### 生產環境：三個 logger → 三個獨立檔案
+# 生產環境：三個 logger → 三個獨立檔案
 "handlers": {
     "file":       { "filename": "exbook.log" },      # System 共用
     "audit_file": { "filename": "audit.log" },        # Audit 專屬
@@ -554,6 +561,8 @@ logger.info(
 ---
 
 ### 為什麼這樣設計？
+
+不同職能的人需要不同資訊。工程師追錯誤要看 Request ID 和堆疊；稽核員查帳要認證權限變更不可抵賴；PM 分析轉化要看使用者行為。混在一起等於所有人都在垃圾堆裡翻找。分流讓每個人只看自己該看的，同時用 `trace_id` 把同一筆交易的碎片串回來。
 
 <div class="columns">
 <div class="card">
@@ -581,6 +590,8 @@ logger.info(
 ---
 
 ### 實際日誌長什麼樣子？
+
+每條記錄都是 JSON，統一有 `trace_id` 和 `timestamp`。`extra` 欄位放該層關心的欄位：audit 記誰把書交給誰，business 記誰申請了哪本書。下面這兩筆記錄來自同一筆交易，但寫進不同檔案——這就是分流後的實際長相。
 
 ```json
 {
@@ -726,33 +737,33 @@ python scripts/render_evidence.py --evidence-dir <dir> --output dashboard.png
 | ISBN 查詢 | Google Books API (500-2000ms) | Redis 快取命中 (<2ms) | ↓ 99.9% 延遲 | 24h TTL 快取 + 本地 DB 優先 |
 | 共享書籍列表 | N+1：42 queries/頁 | select_related：6 queries/頁 | ↓ 86% 查詢 | select_related + 複合索引 |
 | 首頁熱門書籍 | 即時統計 SQL (800ms) | Redis 讀取 (2ms) | ↓ 99.7% 載入 | Celery + Redis 快取 |
-| Redis 測試隔離 | DB 0 共用（碰撞風險） | DB 1 專用（隔離） | 並行測試零衝突 | celery_config 強制分離 |
+| Redis 測試隔離 | 都放在 DB 0（碰撞風險） | 分兩個空間存放（隔離） | 並行測試零衝突 | celery_config 自動改編號 |
 
 ### 快取策略
 
 | 層級 | 項目 | 更新策略 | 生效指標 |
 |------|------|----------|----------|
-| Redis (DB 1) | 熱門書籍 | Celery 每小時排程更新 | 首頁 2ms 回應 |
-| Redis (DB 1) | ISBN 查詢 | TTL 24 小時（首次查詢快取） | API 呼叫趨近於 0 |
-| Redis (DB 1) | 用戶統計 | TTL 30 分鐘 | 儀表板即時載入 |
-| Redis (DB 1) | AI 對話上下文 | Token 預算動態管理 | 上下文不超限 |
+| 同一台 Redis 第 1 號空間 | 熱門書籍 | Celery 每小時排程更新 | 首頁 2ms 回應 |
+| 同一台 Redis 第 1 號空間 | ISBN 查詢 | TTL 24 小時（首次查詢快取） | API 呼叫趨近於 0 |
+| 同一台 Redis 第 1 號空間 | 用戶統計 | TTL 30 分鐘 | 儀表板即時載入 |
+| 同一台 Redis 第 1 號空間 | AI 對話上下文 | Token 預算動態管理 | 上下文不超限 |
 | 資料庫索引 | 共享書籍排序 (listed_at) | 遷移時建立 | ORDER BY 走 Index Scan |
 | 資料庫索引 | 交易狀態查詢 (status) | 遷移時建立 | WHERE status 走 Index Seek |
 
 ---
 
-<!-- _note: Celery 是 Exbooks 的非同步任務引擎，負責五項定時排程和兩種事件驅動任務。Beat 排程器根據 crontab 觸發批次作業，應用程式則在需要時呼叫 delay() 觸發非同步通知。所有任務共用 Redis DB 1 作為 Broker 和 Backend，與快取 DB 0 完全隔離。測試時透過 CELERY_TASK_ALWAYS_EAGER 同步執行，不需真實 Redis。 -->
+<!-- _note: Celery 是 Exbooks 的非同步任務引擎，負責五項定時排程和兩種事件驅動任務。Beat 排程器根據 crontab 觸發批次作業，應用程式則在需要時呼叫 delay() 觸發非同步通知。Celery 的 Broker 和 Backend 使用同一台 Redis 的第 1 號空間（DB 1），快取則使用第 0 號（DB 0）——同一個 Redis 裡面兩個獨立編號，互不干涉。測試時透過 CELERY_TASK_ALWAYS_EAGER 同步執行，不需真實 Redis。 -->
 
 # Celery 非同步任務架構
 
-**Redis 驅動的排程 + 事件引擎** — Broker／Backend 使用 Redis DB 1
+**Redis 驅動的排程 + 事件引擎** — Broker／Backend 用 Redis 第 1 號空間
 
 ### Beat 排程圖
 
 <pre>
 ┌─────────────────────────────────────────────────────────────┐
-│                     Celery Beat Scheduler                     │
-│                    (exbook/celery_config.py)                  │
+│                     Celery Beat Scheduler                   │
+│                    (exbook/celery_config.py)                │
 └──────────────────┬──────────────────────────────────────────┘
                    │
     ┌──────────────┼──────────────┬──────────────┬────────────┐
@@ -795,10 +806,10 @@ python scripts/render_evidence.py --evidence-dir <dir> --output dashboard.png
 <p>不等待結果，立即回傳 <code>task_id</code> 給使用者。</p>
 </div>
 <div class="card">
-<h3>📬 Broker（Redis DB 1）</h3>
+<h3>📬 Broker（Redis 第 1 號空間）</h3>
 <p><strong>任務佇列</strong></p>
 <p>Redis 作為「郵局」，先進先出暫存待執行的任務。</p>
-<p>與快取 DB 0 完全隔離，避免測試衝突。</p>
+<p>與快取共用同一台 Redis，但分兩個空間存放，互不干涉。</p>
 </div>
 <div class="card">
 <h3>🤖 Worker（Celery）</h3>
@@ -810,16 +821,16 @@ python scripts/render_evidence.py --evidence-dir <dir> --output dashboard.png
 
 ---
 
-### 為什麼要拆兩個 Redis DB？
+### 為什麼同一台 Redis 要分兩個空間？
 
 <div class="highlight-box">
 <h4>🛡️ 測試隔離</h4>
-<p>快取使用 <strong>DB 0</strong>，Celery 使用 <strong>DB 1</strong>。並行測試時，某個測試 flush 快取不會把另一個測試的任務佇列一併清空。</p>
+<p>同一台 Redis 裡面分兩個空間：快取用 <strong>第 0 號</strong>，Celery 用 <strong>第 1 號</strong>。並行測試時，某個測試 flush 快取不會把另一個測試的任務佇列一併清空。</p>
 </div>
 
 <div class="highlight-box">
 <h4>🔍 故障定位</h4>
-<p>任務卡住時，直接連 Redis DB 1 看佇列長度：<code>LLEN celery</code>。不用擔心快取資料干擾判斷。</p>
+<p>任務卡住時，直接進 Redis 選 DB 1 看佇列長度：<code>SELECT 1</code> 再 <code>LLEN celery</code>。不用擔心快取資料干擾判斷。</p>
 </div>
 
 <div class="highlight-box">
@@ -1078,8 +1089,10 @@ nginx 擋大流量攻擊（5r/m 超頻直接 503），DRF 控 API 使用額度�
 
 ### 程式碼實作：Model 層分流
 
+`serve_url` 是一個 property，由模板或 API 呼叫。它只做一件事：判斷這張照片有沒有綁定交易。沒綁定 → 回傳 MinIO 公開 URL（Nginx 直接代理）；有綁定 → 回傳 Django 的權限檢查路由。分流邏輯集中在 Model，View 和模板不需要知道背後規則。
+
 ```python
-### books/models/book_photo.py
+# books/models/book_photo.py
 @property
 def serve_url(self):
     """
@@ -1096,22 +1109,18 @@ def serve_url(self):
 
 ### 程式碼實作：View 層權限檢查
 
+受保護照片不走 Nginx 公開路由，而是進 Django 檢查。`select_related` 一口氣把交易關係撈齊，避免查詢爆炸。權限通過後回傳 `X-Accel-Redirect`——這是 Nginx 的內部轉發指令，Django 只負責「說可以」，實際傳檔案還是 Nginx 處理，不占 Django Worker。
+
 ```python
-### books/views.py
+# books/views.py
 @login_required
 def serve_protected_photo(request, pk):
-    """
-    提供面交照片的權限檢查存取。
-    - 權限通過後，回傳 X-Accel-Redirect 由 Nginx 內部轉發 MinIO。
-    - Local Dev (DEBUG=True) 則直接由 Django serve。
-    """
     photo = get_object_or_404(
         BookPhoto.objects.select_related("deal", "uploader", "deal__applicant", "deal__responder"),
         pk=pk,
         deal__isnull=False,
     )
 
-    ### 只有三方可以存取
     if (
         request.user != photo.uploader
         and request.user != photo.deal.applicant
@@ -1119,7 +1128,7 @@ def serve_protected_photo(request, pk):
     ):
         return HttpResponse(status=403)
 
-    ### 生產環境：回傳 X-Accel-Redirect
+    # 生產環境：回傳 X-Accel-Redirect
     response = HttpResponse()
     response["X-Accel-Redirect"] = f"/internal-media/{photo.photo.name}"
     return response
@@ -1221,6 +1230,157 @@ Exbooks 的交易通知、註冊驗證、密碼重置都會發送 Email。開發
 </div>
 
 ---
+
+<!-- _note: Web Push 是 Exbooks 通知系統的即時層，與 Celery 郵件並列。目前程式碼已完整（模型、Service Worker、VAPID 金鑰），但尚未在簡報主流程中啟用。 -->
+
+<!-- # Web Push 即時通知
+
+**交易發生當下，手機跳出通知**
+
+<div class="columns">
+<div class="card">
+<h3>⚡ 即時到達</h3>
+<p>借閱申請送出，對方手機 3 秒內收到</p>
+<p>不用開 Email、不用登入網站</p>
+</div>
+<div class="card">
+<h3>🔒 隱私優先</h3>
+<p>瀏覽器原生機制，不走第三方 SDK</p>
+<p>VAPID 金鑰識別伺服器身份</p>
+</div>
+</div>
+
+<!-- --- -->
+
+### 為什麼需要 Web Push？
+
+Email 通知有延遲：Celery 排隊 → SMTP 握手 → 對方信箱收信 → 開信閱讀。
+Web Push 走瀏覽器通道，交易事件發生後直接喚醒 Service Worker，通知出現在手機鎖定畫面。
+
+| 通知類型 | Email | Web Push |
+|---------|-------|----------|
+| 借閱申請 | ✅ 詳細內文 | ✅ 即時提醒 |
+| 面交提醒 | ✅ 時間地點 | ✅ 當天推播 |
+| 逾期警告 | ✅ 紀錄存查 | ✅ 即時催促 |
+| 評價邀請 | ✅ 後續追蹤 | ✅ 當下引導 | -->
+
+> Web Push 不是取代 Email，是補上「即時層」。重要資訊雙軌發送，確保用戶不錯過。
+
+---
+
+<!-- ### 架構流程
+
+<pre>
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│  交易事件     │────▶│ notification │────▶│ Celery Task  │
+│ (deal.create)│     │ _service     │     │ (async)      │
+└──────────────┘     └──────────────┘     └──────┬───────┘
+                                                 │
+                   ┌─────────────────────────────┘
+                   ▼
+┌────────────────────────────────────────────────────────────┐
+│  push_service.py                                          │
+│  • 查詢用戶 is_active 訂閱                                  │
+│  • pywebpush 加密 Payload + VAPID 簽署                       │
+│  • POST 到瀏覽器 Push Service (FCM / MozPush / APNs)        │
+└────────────────────────────┬───────────────────────────────┘
+                             │ 無線推送
+                             ▼
+┌────────────────────────────────────────────────────────────┐
+│  Service Worker (static/sw.js)                              │
+│  • push 事件 → registration.showNotification()             │
+│  • notificationclick → clients.openWindow(url)             │
+│  • 410 Gone → 自動標記 is_active=False                      │
+└────────────────────────────────────────────────────────────┘
+</pre> -->
+
+<!-- --- -->
+
+<!-- ### 程式碼實作：Service Worker 接收通知
+
+`sw.js` 常駐在瀏覽器背景。即使網站分頁關閉，Push Service 仍能喚醒它來顯示通知。
+
+```javascript
+// static/sw.js
+self.addEventListener('push', (event) => {
+  // 解析伺服器傳來的加密 Payload
+  const data = event.data.json();
+
+  const options = {
+    body: data.message,
+    icon: '/static/icons/icon-192.png',
+    badge: '/static/icons/badge-72.png',
+    vibrate: [100, 50, 100],        // 震動節奏
+    requireInteraction: true,       // 需用戶互動才關閉
+    actions: [
+      { action: 'view', title: '查看' },
+      { action: 'dismiss', title: '忽略' },
+    ],
+    data: { url: data.url, dealId: data.deal_id },
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+// 點擊通知 → 跳轉到對應頁面
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/';
+  event.waitUntil(clients.openWindow(url));
+});
+``` -->
+
+<!-- --- -->
+
+<!-- ### 程式碼實作：後端發送
+
+`send_push_notification()` 負責把一條通知加密並發送到單一訂閱。`send_push_to_user()` 則遍歷該用戶所有啟用中的裝置，逐一發送。收到 410 Gone 表示訂閱已失效，自動停用。
+
+```python
+# deals/services/push_service.py
+def send_push_notification(subscription, title, message, url=None):
+    config = WebPushConfig.get_config()
+    payload = {"title": title, "message": message, "url": url or "/"}
+
+    try:
+        webpush(
+            subscription_info=subscription.subscription_data,
+            data=json.dumps(payload),
+            vapid_private_key=config.vapid_private_key,
+            vapid_claims={"sub": config.subject},
+        )
+        return True
+    except WebPushException as e:
+        if e.response and e.response.status_code == 410:
+            subscription.is_active = False
+            subscription.save(update_fields=["is_active"])
+        return False
+
+def send_push_to_user(user, title, message, url=None):
+    subscriptions = PushSubscription.objects.filter(user=user, is_active=True)
+    success = 0
+    for sub in subscriptions:
+        if send_push_notification(sub, title, message, url):
+            success += 1
+    return success
+``` -->
+
+<!-- --- -->
+
+<!-- ### 資料模型
+
+| 模型 | 用途 |
+|------|------|
+| `PushSubscription` | 儲存用戶訂閱資訊（endpoint、p256dh、auth） |
+| `WebPushConfig` | Singleton，VAPID 金鑰對（public/private） |
+
+初始化指令：
+```bash
+python manage.py generate_vapid_keys
+# 產生 P-256 ECDH 金鑰對 → 寫入 WebPushConfig → 輸出 .env 格式
+``` -->
 
 <!-- _class: lead -->
 # 問題與討論
