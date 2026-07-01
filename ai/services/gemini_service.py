@@ -2,6 +2,7 @@ import logging
 import os
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
+
 from .tool_registry import ToolRegistry
 
 logger = logging.getLogger(__name__)
@@ -20,8 +21,8 @@ class GeminiService:
     """
     Wrapper for Google Gemini API handling chat and function calling.
 
-    Note: Actual API calls are not performed without a valid API key.
-    This class handles the logic for building requests and parsing responses.
+    Uses the ``google-genai`` SDK (``google.genai``). Falls back to mock
+    responses when ``GEMINI_API_KEY`` is not configured.
     """
 
     SYSTEM_PROMPT = (
@@ -30,38 +31,63 @@ class GeminiService:
         "請使用繁體中文（台灣習慣）回答，口氣親切專業。如果需要用戶確認敏感操作，請明確說明。"
     )
 
+    MODEL = "gemini-2.0-flash"
+
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY")
-        if not self.api_key:
+        self._client = None
+        if self.api_key:
+            import google.genai
+
+            self._client = google.genai.Client(api_key=self.api_key)
+        else:
             logger.warning("GEMINI_API_KEY not set, GeminiService will use mock responses")
 
-    def _build_gemini_tools(self) -> List[Dict[str, Any]]:
+    def _build_gemini_tools(self) -> List[Any]:
         """Convert ToolRegistry tools to Gemini function declaration format."""
-        tools = []
+        from google.genai import types
+
+        function_declarations = []
         for tool_def in ToolRegistry.get_all_tools():
-            function_declaration = {
-                "name": tool_def.name,
-                "description": tool_def.description,
-                "parameters": tool_def.parameters,
-            }
-            tools.append({"function_declaration": function_declaration})
-        return tools
+            function_declarations.append(
+                types.FunctionDeclaration(
+                    name=tool_def.name,
+                    description=tool_def.description,
+                    parameters=types.Schema(**tool_def.parameters),
+                )
+            )
+        if function_declarations:
+            return [types.Tool(function_declarations=function_declarations)]
+        return []
+
+    def _to_gemini_contents(
+        self, history: List[Dict[str, str]], current_message: str
+    ) -> List[Any]:
+        """Map conversation history to Gemini ``Content`` objects."""
+        from google.genai import types
+
+        contents: List[types.Content] = []
+        for msg in history:
+            role = msg["role"]
+            text = msg["content"]
+            gemini_role = "model" if role == "assistant" else "user"
+            contents.append(
+                types.Content(role=gemini_role, parts=[types.Part(text=text)])
+            )
+        contents.append(
+            types.Content(role="user", parts=[types.Part(text=current_message)])
+        )
+        return contents
 
     def chat(
         self, user_id: Any, message: str, history: List[Dict[str, str]]
     ) -> GeminiResponse:
         """
         Processes a user message and returns a response from Gemini.
-        In a real scenario, this would call the google-generativeai SDK.
+
+        When ``GEMINI_API_KEY`` is available the real Gemini API is called;
+        otherwise a mock response is returned for local development.
         """
-        # In this task, we don't actually call the API.
-        # We simulate the logic structure.
-
-        # 1. Prepare messages (system + history + current)
-        # 2. Prepare tools (from _build_gemini_tools)
-        # 3. Send to API
-        # 4. Handle response (text or tool_use)
-
         logger.info(
             "Gemini chat called",
             extra={
@@ -70,9 +96,6 @@ class GeminiService:
                 "history_length": len(history),
             },
         )
-
-        # Placeholder for implementation logic
-        logger.debug("GeminiService returning mock response")
 
         # 🐱 Easter egg: cat meow keyword
         msg_lower = message.strip().lower()
@@ -83,7 +106,7 @@ class GeminiService:
                     "    /|_╱|\n"
                     "   ( •̀ㅅ •́ )\n"
                     "  ＿ノ ヽ ノ＼＿\n"
-                    " /　`/ ⌒Ｙ⌒ Ｙ　 \\\n"
+                    " /　`/ ⌒Ｙ⌒ Ｙ　 \\n"
                     "( 　(三ヽ人　 /　 　|\n"
                     "|　ﾉ⌒＼ ￣￣ヽ　 ノ\n"
                     "ヽ＿＿＿＞､＿＿／\n\n"
@@ -93,10 +116,70 @@ class GeminiService:
                 raw_response=None,
             )
 
+        if not self._client:
+            logger.debug("GeminiService returning mock response (no API key)")
+            return GeminiResponse(
+                content=f"已收到您的訊息：'{message}'。 (這是 GeminiService 的模擬回應)",
+                tool_calls=[],
+                raw_response=None,
+            )
+
+        from google.genai import types
+
+        contents = self._to_gemini_contents(history, message)
+        tools = self._build_gemini_tools()
+
+        config = types.GenerateContentConfig(
+            system_instruction=self.SYSTEM_PROMPT,
+        )
+        if tools:
+            config.tools = tools
+
+        try:
+            response = self._client.models.generate_content(
+                model=self.MODEL,
+                contents=contents,
+                config=config,
+            )
+        except Exception as e:
+            logger.exception("Gemini API call failed", extra={"user_id": str(user_id)})
+            return GeminiResponse(
+                content=f"抱歉，AI 服務暫時無法回應，請稍後再試。 ({e})",
+                tool_calls=[],
+                raw_response=None,
+            )
+
+        candidate = response.candidates[0] if response.candidates else None
+        if not candidate or not candidate.content or not candidate.content.parts:
+            logger.warning("Gemini returned empty response", extra={"user_id": str(user_id)})
+            return GeminiResponse(
+                content="抱歉，我沒有收到回應，請再試一次。",
+                tool_calls=[],
+                raw_response=response,
+            )
+
+        content_text = ""
+        tool_calls: List[Dict[str, Any]] = []
+        for part in candidate.content.parts:
+            if part.text:
+                content_text += part.text
+            elif part.function_call:
+                fc = part.function_call
+                tool_calls.append({"name": fc.name, "args": dict(fc.args) if fc.args else {}})
+
+        logger.info(
+            "Gemini response parsed",
+            extra={
+                "user_id": str(user_id),
+                "text_length": len(content_text),
+                "tool_calls_count": len(tool_calls),
+            },
+        )
+
         return GeminiResponse(
-            content=f"已收到您的訊息：'{message}'。 (這是 GeminiService 的模擬回應)",
-            tool_calls=[],
-            raw_response=None,
+            content=content_text,
+            tool_calls=tool_calls,
+            raw_response=response,
         )
 
     def _handle_function_call(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
@@ -109,5 +192,4 @@ class GeminiService:
             "handling function call",
             extra={"tool_name": tool_name},
         )
-        # In a real implementation, we might check consent here or in the view
         return tool_def.func(**arguments)
