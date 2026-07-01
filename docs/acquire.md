@@ -66,6 +66,8 @@
 3. 書籍上架後，初始狀態為 `S`（暫不開放），由 Owner 手動開放為 `T`（可移轉）後，其他用戶方可申請借閱。
 4. Owner 可隨時將書籍狀態切換為 `S`（暫不開放），暫停接受新的借閱申請。
 
+> **實作現況：** `isbn_service.py` 整合 Google Books API，ISBN 不存在於本地時自動抓取書籍元資料（書名、作者、封面等），支援 ISBN-10/13 正規化與 Redis 24 小時快取。`SharedBook` 使用 django-fsm 強制狀態轉換（`list_for_transfer` / `suspend` 等），禁止直接賦值 `status`。
+
 ### 3.4 查詢書籍 (SearchBook)
 
 所有用戶（含非會員）皆可瀏覽與搜尋平臺上的書籍。
@@ -75,6 +77,8 @@
 - 可依 **流通性**（開放傳遞 / 閱畢即還）篩選
 - 搜尋結果顯示書籍基本資訊、書況照片、目前狀態、持有者等
 
+> **實作現況：** `book_service.py` 提供進階搜尋過濾（依狀態、流通性、分類複合篩選），預設以 `updated_at` 倒序排序反映最新動態。`default_location` 相同者優先推薦（附近書籍）。
+
 ### 3.5 願望書車 (WishList)
 
 讀者可將感興趣但目前無法借閱的書籍加入「願望書車」。
@@ -82,6 +86,8 @@
 - 以「官方書目」為單位收藏（而非特定某一冊分享書籍）
 - 同一本書不可重複加入
 - 當願望書車中的書籍有新的可借閱冊數上架時（狀態變為 `T`），系統自動發送通知信提醒讀者
+
+> **實作現況：** `WishListItem` 使用 `(user, official_book)` 聯合唯一約束防止重複收藏。`SharedBook` 的 `list_for_transfer()` FSM 轉換透過 signal 觸發 `BOOK_AVAILABLE` 通知，發送給願望清單中的使用者。
 
 ### 3.6 借閱申請與媒合
 
@@ -95,6 +101,8 @@
 - 當同一冊書籍有 **多位讀者** 同時申請時，持有者（Keeper）或貢獻者（Owner）可從申請列表中 **選擇一位** 接受
 - 被選中的申請進入已回應狀態（`P`），其餘申請自動標記為已取消（`X`）
 - 選擇時可參考申請者的信用評價
+
+> **實作現況：** `deal_service.accept()` FSM 轉換內建 BR-15 競爭申請自動取消：接受一位申請者後，同書籍的其他 `REQUESTED` 交易自動標記為 `CANCELLED`（透過 `Deal.objects.filter(shared_book=..., status=REQUESTED).update(status=CANCELLED)`）。
 
 #### 拒絕交易申請 (DeclineDeal)
 
@@ -126,6 +134,8 @@
   - 其他相關事宜
 - 留言紀錄永久保存，供雙方隨時查閱
 
+> **實作現況：** `DealMessageViewSet` 提供 DRF API 端點，前端以 HTMX 實作即時留言傳送與無重新整理更新。`DealMessage` 按 `created_at` 升序排列，確保對話時間軸正確。
+
 ### 3.8 面交取書
 
 - 借入者需依約定時間地點取書，並在面交時確認書況
@@ -134,11 +144,15 @@
   - 變更書籍持有人（`SharedBook.keeper`）
   - 變更書籍狀態（依交易類別而異）
 
+> **實作現況：** `deal_service.complete_meeting()` 觸發 FSM 轉換至 `MEETED`，並透過 signal 自動更新 `keeper`、`previous_book_status`、以及根據流通性設定到期日（`due_date`）。
+
 ### 3.9 書況確認與照片上傳 (PhotoUpload)
 
 - 借入者須於取書成功後 **拍攝書籍現況照片並上傳** 至系統
 - 照片紀錄關聯至該筆交易，以便後續借閱者了解書籍狀況
 - 每冊書籍的照片歷史累積保存，形成書況追蹤時間線
+
+> **實作現況：** `BookPhoto` 模型提供 `serve_url` property：若照片與交易關聯（`deal_id` 不為空）則回傳受保護 URL（需驗證權限），否則回傳公開媒體 URL。`book_photo_upload_path` 以 UUID 命名避免衝突。
 
 ### 3.10 交易評價 (RateUser)
 
@@ -151,6 +165,8 @@
 - 可附加文字評語
 - 雙方均完成評價後，交易狀態自動變為 `D`（已完成）
 - 評價結果公開於社群供參考
+
+> **實作現況：** `rating_service.py` 實作互評邏輯，當雙方均完成評價後自動呼叫 `deal.complete()` 將交易推進至 `DONE`（BR-9）。強制歸還時由系統自動代評 3 星（BR-18）。
 
 ### 3.11 申請延長借閱 (ExtendLoan)
 
@@ -171,11 +187,15 @@
   - **核准 (APPROVED)**：系統自動延長交易的到期日（`Deal.due_date`），並發送通知信給申請者
   - **拒絕 (REJECTED)**：發送通知信給申請者，借閱到期日不變
 
+> **實作現況：** `extension_service.py` 處理延長申請的審核邏輯，核准後透過 signal 自動更新 `Deal.due_date`。`LoanExtension` 模型使用 django-fsm 保護狀態轉換，只有 `PENDING` 狀態可核准或拒絕。
+
 ### 3.12 書籍歸還與循環
 
 - 各書籍的可借閱天數由貢獻者決定，但需依系統規定：**最少 15 天、最多 90 天、預設 30 天**
 - 借閱期限內，借入者應準時歸還書籍
 - 書籍持有者確認歸還後，可再次上架書籍，供其他用戶借閱
+
+> **實作現況：**「閱畢即還」的 LOAN 交易必須先經 Owner 確認歸還（`confirm_return`）使書籍狀態變回 `T`，系統才會將交易推進至 `DONE`（BR-17）。逾期後 Owner 可發起強制歸還，系統自動補齊未完成評價（代評 3 星，BR-18）。
 
 ### 3.13 系統自動處理
 
@@ -188,7 +208,7 @@
 - 系統發送到期通知信給持有者
 - 若借閱期限到期前未向貢獻者提出「還書申請」（限「閱畢即還」書籍），即視為 **逾期未還**，計入用戶活動紀錄
 
-> **實作現況：** `overdue_service.py` 提供逾期嚴重程度分級（依逾期天數區分：none/warning/public/severe），以及 `batch_process_due_books` 批次處理功能。逾期處理亦整合信用積分扣減與 `ExchangeEvent` 稽核記錄。
+> **實作現況：** `overdue_service.py` 提供逾期嚴重程度分級（依逾期天數區分：none/warning/public/severe），以及 `batch_process_due_books` 批次處理功能。逾期處理亦整合信用積分扣減與 `ExchangeEvent` 稽核記錄。Celery Beat 每日凌晨執行 `process_due_books`、每日上午 9 點執行 `send_due_reminders`。
 
 #### 即將到期提醒
 
@@ -209,8 +229,13 @@
 | 願望書籍已可借閱 | 願望書車的讀者 | 有新的可借閱冊數 |
 | 收到延長申請 | 審核者 | 有人申請延長借閱 |
 | 延長申請結果 | 申請者 | 核准或拒絕通知 |
+| 申訴已送出 | 申訴人 | 確認收到申訴 |
+| 申訴審核完成 | 申訴人 | 核准或駁回通知 |
+| 申訴狀態更新 | 申訴人 | 狀態變更通知 |
+| 收到新的評價 | 被評價者 | 交易對象已給予評價 |
+| 收到違規處分 | 違規用戶 | 處分詳情與申訴期限 |
 
-> **實作現況：** 程式碼實作了 `is_read` 已讀追蹤以及即時 HTMX 未讀徽章（unread badge），超越基礎的推播/Email 通知功能。另有 `notify_violation_created`、`notify_appeal_status_updated`、`notify_rating_created` 等違規/申訴/評價通知。
+> **實作現況：** `Notification` 模型實作 `is_read` 已讀追蹤，前端以 HTMX 即時更新未讀徽章（unread badge）。後端同時支援 Email（django.core.mail）與 Web Push（VAPID/pywebpush）雙軌通知，由 `push_service.py` 統一發送。`notify_violation_created`、`notify_appeal_status_updated`、`notify_rating_created` 等違規/申訴/評價通知已整合至各自 service。
 
 ### 3.14 查詢信用評價 (QueryCredit)
 
@@ -241,6 +266,8 @@
 - 書況照片 — 檔案較大且涉及版權
 - 交易留言內容 — 因涉及雙方隱私
 
+> **實作現況：** 後端 `export_service.py` 已完整實作 JSON/CSV 雙格式匯出、頻率限制（Redis 快取）、活動統計與評價歷史收集；`accounts/views.py` 提供 `download_user_data`（GET）與 `export_status`（GET）端點；前端 Profile 頁面已整合「下載我的資料」按鈕，支援 JSON/CSV 格式選擇與即時剩餘次數顯示。
+
 ### 3.16 帳號管理與申訴 (AccountManagement)
 
 #### 違規處理
@@ -267,6 +294,8 @@
 - 申訴需附上相關證據（交易紀錄、對話截圖等）
 - 管理員需在 **14 天內**回覆申訴結果
 - 申訴期間，暫時停權的帳號維持停權狀態
+
+> **實作現況：** `Violation` 與 `Appeal` 模型均使用 django-fsm 狀態機。`violation_service.py` 實作處分建立、停權計算與解除（`lift`）。`appeal_service.py` 實作申訴提交、審核（approve/reject/close）。管理員後台整合「信用等級過濾器」與批次管理動作（一鍵停權/解除處分/申訴狀態更新）。
 
 ---
 
@@ -304,6 +333,7 @@
 #### 信用積分與等級機制
 
 - **信用積分 (Trust Score)**：貢獻書籍、成功且準時歸還書籍等正向行為可提升分數；違規行為、延遲歸還等負向行為則降低分數。
+  - 計算公式（`trust_service.compute_trust_score`）：`base_score + (完成交易數 × 10) − (逾期次數 × 10) + (評價平均分 × 5)`，最低 0 分。
 - **信用星等 (Trust Stars)**：系統根據積分計算 1 至 5 星等級。
   - 計算公式：`floor(sqrt(信用積分))`，最低 1 星，最高 5 星。
 - **信用等級 (Trust Level)**：
@@ -311,9 +341,14 @@
   - 等級 1：2 星
   - 等級 2：3 星
   - 等級 3：4~5 星（資深誠信用戶）
+- **借閱限制（`BORROWING_LIMITS`）**：
+  - 等級 0：每 30 天限借 1 本
+  - 等級 1：每 60 天限借 3 本
+  - 等級 2：每 90 天限借 5 本
+  - 等級 3：無限制
 - 違規行為將降低信用分數，甚至導致帳號停權。
 
-> **實作現況：** 程式碼擴展此機制，實作「依信用等級限制借閱數量」功能（例如：等級 0 = 每 30 天限借 1 本，等級 3 = 無限制）。
+> **實作現況：** `trust_service.py` 實作純函式 `compute_trust_score`、`compute_trust_stars`、`compute_borrowing_limits`，並透過 `recalculate_trust_scores` Celery 任務每週一凌晨批次重算。`TrustScoreLedger` 記錄每次積分變更的稽核條目。
 
 ---
 
@@ -443,7 +478,7 @@ stateDiagram-v2
 
 本節記錄在開發過程中，為了增強系統完備性與使用者體驗而額外實作的功能，這些功能未在最初的需求文件中定義。
 
-> **註**：§3.16 所載的違規處理與申訴機制已在程式碼中完整實作（Violation/Appeal 模型 + 服務層 + django-fsm 狀態機），並整合通知系統。§3.15 資料匯出功能已有 `export_service.py` 骨架，前端頁面尚未實作。
+> **註**：§3.16 所載的違規處理與申訴機制已在程式碼中完整實作（Violation/Appeal 模型 + 服務層 + django-fsm 狀態機），並整合通知系統。§3.15 資料匯出功能已完整實作：`export_service.py` 處理 JSON/CSV 雙格式匯出、每日 3 次頻率限制（Redis 快取），`accounts/views.py` 提供 `download_user_data` 與 `export_status` 端點，前端 Profile 頁面已內建「下載我的資料」按鈕（含 JSON/CSV 選項與剩餘次數顯示）。
 
 ### 7.1 通訊與通知增強
 1. **即時通知追蹤**：系統實作了通知的已讀/未讀狀態追蹤，並支援 HTMX 即時更新未讀計數徽章。
@@ -453,7 +488,12 @@ stateDiagram-v2
 1. **外部書目整合**：整合 **Google Books API**（`books/services/isbn_service.py`），當 ISBN 不存在於本地資料庫時，系統會自動抓取書籍元數據（書名、作者、封面等）。支援 ISBN-10/13 正規化與 Redis 24 小時快取機制，避免重複呼叫 API。
 2. **社交帳號頭像同步**：提供管理指令 `download_google_avatars` 從 Google OAuth 資訊中自動下載並同步用戶頭像，確保頭像資料與 Google 帳號保持一致。
 3. **自動判定交易角色**：根據交易類別（借用、返還、傳遞等）自動判定回應者為 Owner 或 Keeper，簡化使用者操作。
-4. **Celery Beat 背景任務系統**：使用 Celery Beat + Redis 實作排程任務，包含每日凌晨處理逾期書籍（`process_due_books`）、每日上午發送到期提醒（`send_due_reminders`）、每日上午處理待評價自動代評（`process_pending_ratings`）、以及每週一凌晨重算信用積分（`recalculate_trust_scores`）。另配有 5 個管理指令（`generate_vapid_keys`、`process_due_books` 等）供手動維運。
+4. **Celery Beat 背景任務系統**：使用 Celery Beat + Redis 實作排程任務，具體排程如下：
+   - 每日 **00:00** `process_due_books`：處理逾期書籍
+   - 每日 **09:00** `send_due_reminders`：發送到期提醒
+   - 每日 **08:30** `process_pending_ratings`：處理待評價自動代評
+   - 每週一 **02:00** `recalculate_trust_scores`：重算信用積分
+   另配有 8 種管理指令（`generate_vapid_keys`、`process_due_books`、`run_scheduler`、`seed`、`recalculate_trust_scores` 等）供手動維運。
 5. **全自動 Signal 副作用**：交易狀態轉換會自動觸發相關副作用，如「接受借閱後自動取消同書的其他申請 (BR-15)」、「取消交易後自動還原書籍狀態 (BR-14)」、「面交完成後自動重算到期日」。
 
 ### 7.3 安全與風險管控
@@ -463,21 +503,33 @@ stateDiagram-v2
    - **Level 1**：每 60 天限借 3 本
    - **Level 2**：每 90 天限借 5 本
    - **Level 3**：無限制
-3. **LOAN 交易完成條件**：「閱畢即還」交易必須先確認歸還（`confirm_return`）使書籍狀態變回 `T`，系統才會將交易推進至 `DONE`，確保書籍確實回到貢獻者手中。
-4. **逾期分級管理**：實作逾期嚴重程度分級（警告/公開/嚴重，對應 3/7/14 天門檻），並整合信用積分扣減與到期排程處理。
-5. **競爭申請自動處理**：當一本書籍的某個借閱申請被接受時，系統會自動取消該書籍的其他所有待處理申請（BR-15 寫在 Deal.accept() FSM transition 內）。
-6. **強制歸還機制**：支援逾期後由收書方發起強制歸還，系統自動補齊未完成評價（代評 3 星）。
+3. **LOAN 交易完成條件 (BR-17)**：「閱畢即還」交易必須先經 Owner 確認歸還（`confirm_return`）使書籍狀態變回 `T`，系統才會將交易推進至 `DONE`，確保書籍確實回到貢獻者手中。
+4. **逾期分級管理**：實作逾期嚴重程度分級（`overdue_service.py`）：
+   - **警告**（逾期 3 天）
+   - **公開**（逾期 7 天）
+   - **嚴重**（逾期 14 天）
+   各級別對應不同的信用積分扣減與通知策略，並整合到期排程處理。
+5. **競爭申請自動處理 (BR-15)**：當一本書籍的某個借閱申請被接受時，系統會自動取消該書籍的其他所有待處理申請（`Deal.accept()` FSM transition 內建 `Deal.objects.filter(shared_book=..., status=REQUESTED).update(status=CANCELLED)`）。
+6. **強制歸還機制 (BR-18)**：逾期後 Owner 可發起強制歸還（`confirm_return`），系統自動補齊未完成評價（代評 3 星），確保交易能正常結案。
 
 ### 7.4 技術規範
 1. **UUID 唯一標識**：全系統主要物件均採用 UUID v4，增強資料安全性與分散式擴充潛力。
 2. **狀態機 (FSM) 硬性約束**：Deal、SharedBook、LoanExtension、Appeal 四個模型的狀態轉換均由 django-fsm 強制執行，確保業務流程的完整性。
-3. **管理指令工具組**：提供 8 種維運指令，包含信用積分重算 (`recalculate_trust_scores`)、背景排程啟動 (`run_scheduler`)、開發測試資料生成 (`seed`)、Web Push 金鑰管理 (`generate_vapid_keys`)、到期處理、評分處理、提醒發送等。
+3. **管理指令工具組**：提供 8 種維運指令：
+   - `recalculate_trust_scores`：手動重算信用積分
+   - `run_scheduler`：啟動 Celery Beat 排程
+   - `seed`：生成開發測試資料（small/medium/large）
+   - `generate_vapid_keys`：產生 Web Push VAPID 金鑰對
+   - `process_due_books`：手動執行到期處理
+   - `process_pending_ratings`：手動執行待評價代評
+   - `send_due_reminders`：手動發送到期提醒
+   - `download_google_avatars`：同步 Google OAuth 頭像
 4. **自定義驗證與適配器 (Adapters)**：擴充 Django-allauth 適配器（`accounts/adapters.py`），實作 Google OAuth 登入時自動生成唯一 ID、自動同步頭像，並在出生日期缺失時強制導向補填頁面。
 
 ### 7.5 搜尋與使用者體驗
 1. **進階搜尋過濾**：支援依書籍狀態（可移轉、借閱中等）、流通性（開放傳遞、閱畢即還）、分類進行複合篩選，讓用戶快速找到符合需求的書籍。
 2. **預設排序邏輯**：書籍列表預設以 `updated_at`（最近更新時間）排序而非上架時間，反映最新流通動態，讓用戶優先看到近期有活動的書籍。
-3. **附近書籍推薦**：系統會根據用戶 Profile 中的 `default_location` 自動篩選並優先推薦相同地點的書籍，降低面交成本並提升交易成功率。
+3. **附近書籍推薦**：系統會根據用戶 Profile 中的 `default_location` 自動篩選並優先推薦相同地點的書籍（`NEARBY_BOOKS_LIMIT = 10`），降低面交成本並提升交易成功率。首頁同時展示「新到書籍」（`NEW_ARRIVALS_LIMIT = 10`）與「隨機推薦」（`RANDOM_BOOKS_LIMIT = 10`）區塊。
 
 ### 7.6 管理後台擴充
 1. **進階維運工具**：管理員後台整合了「信用等級過濾器」以及多種「批次管理動作」，可一鍵執行用戶暫時/永久停權、解除處分、以及申訴狀態批次更新。
@@ -495,10 +547,10 @@ stateDiagram-v2
 
 ### 7.9 資料正規化與稽核
 1. **作者/出版社正規化**：`Author`、`Publisher`、`OfficialBookAuthor` 模型將作者與出版社從 OfficialBook 的字串欄位正規化為獨立實體，支援多作者排序與角色標記（作者/譯者）。原有 `OfficialBook.author` 和 `OfficialBook.publisher` 字串欄位仍保留供過渡使用。
-2. **交換稽核事件（ExchangeEvent）**：所有書籍交換與交易操作皆記錄為 append-only 稽核事件，支援書籍時間軸與操作追溯。包含交易申請、接受、拒絕、取消、面交完成、持有者變更、到期處理等 15+ 種事件類型。
-3. **信用積分稽核（TrustScoreLedger）**：每次信用積分變更皆記錄 append-only 稽核條目，包含當下積分、等級、公式版本與摘要指標。
+2. **交換稽核事件（ExchangeEvent）**：所有書籍交換與交易操作皆記錄為 append-only 稽核事件，支援書籍時間軸與操作追溯。包含交易申請、接受、拒絕、取消、面交完成、持有者變更、到期處理等 15+ 種事件類型。每筆事件可附帶 `trace_id` 用於跨系統追蹤。
+3. **信用積分稽核（TrustScoreLedger）**：每次信用積分變更皆記錄 append-only 稽核條目，包含當下積分、等級、公式版本、摘要指標與 `trace_id`（用於關聯批次重算或手動調整的來源）。
 
 ### 7.10 Django REST Framework API
-1. **完整的 DRF API**：實作 Accounts、Books、Deals 三大 API 模組，支援 JWT 認證、分頁、過濾與排序。
-2. **FSM 動作端點**：每個 FSM 動作（接受/拒絕/取消/面交完成等）皆對應獨立 API 端點，保持業務邏輯一致性。
-3. **自訂權限系統**：基於 django-rules 的自訂權限檢查，確保只有合法角色可執行對應操作。
+1. **完整的 DRF API**：實作 Accounts、Books、Deals 三大 API 模組，支援 JWT 認證（`rest_framework_simplejwt`）、分頁（每頁 20 筆）、過濾與排序。
+2. **FSM 動作端點**：每個 FSM 動作（接受/拒絕/取消/面交完成/確認歸還等）皆對應獨立 API 端點，保持業務邏輯一致性。Deal API 支援 `POST /deals/{id}/accept/`、`POST /deals/{id}/reject/`、`POST /deals/{id}/cancel/`、`POST /deals/{id}/complete/`、`POST /deals/{id}/confirm-return/` 等動作端點。
+3. **自訂權限系統**：基於 `django-rules` 的物件級權限檢查（`deals/rules.py`），確保只有合法角色（Owner/Keeper/Reader）可執行對應操作。

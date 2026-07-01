@@ -82,6 +82,7 @@ classDiagram
         +Integer trust_level
         +String formula_version
         +String source
+        +String trace_id
         +Dict payload
     }
     BaseModel <|-- TrustScoreLedger
@@ -96,12 +97,14 @@ classDiagram
         +Image cover_image
         +Text description
         +Publisher publisher_ref
+        +Author[] authors
     }
     UpdatableModel <|-- OfficialBook
 
     class Author {
         +String display_name
         +String sort_key
+        +void save()
     }
     UpdatableModel <|-- Author
 
@@ -146,6 +149,7 @@ classDiagram
         +User uploader
         +Image photo
         +String caption
+        +String serve_url
     }
     BaseModel <|-- BookPhoto
 
@@ -207,6 +211,7 @@ classDiagram
         +Integer punctuality_score
         +Integer accuracy_score
         +Text comment
+        +Float average_score
     }
     BaseModel <|-- Rating
 
@@ -215,6 +220,7 @@ classDiagram
         +Deal deal
         +String event_type
         +User actor
+        +String trace_id
         +Dict metadata
     }
     BaseModel <|-- ExchangeEvent
@@ -226,6 +232,7 @@ classDiagram
         +String auth
         +String user_agent
         +Boolean is_active
+        +Dict subscription_data
     }
     BaseModel <|-- PushSubscription
 
@@ -233,6 +240,8 @@ classDiagram
         +String vapid_public_key
         +Text vapid_private_key
         +String subject
+        +WebPushConfig get_config()
+        +Dict vapid_details
     }
     BaseModel <|-- WebPushConfig
 
@@ -368,6 +377,7 @@ classDiagram
         +Integer trust_level
         +String formula_version
         +String source
+        +String trace_id
         +Dict payload
     }
 
@@ -403,11 +413,13 @@ classDiagram
         +Image cover_image
         +Text description
         +Publisher publisher_ref
+        +Author[] authors
     }
 
     class Author {
         +String display_name
         +String sort_key
+        +void save()
     }
 
     class Publisher {
@@ -447,6 +459,7 @@ classDiagram
         +User uploader
         +Image photo
         +String caption
+        +String serve_url
     }
 
     class WishListItem {
@@ -531,6 +544,7 @@ classDiagram
         +Integer punctuality_score
         +Integer accuracy_score
         +Text comment
+        +Float average_score
     }
 
     class ExchangeEvent {
@@ -538,6 +552,7 @@ classDiagram
         +Deal deal
         +String event_type
         +User actor
+        +String trace_id
         +Dict metadata
     }
 
@@ -548,12 +563,15 @@ classDiagram
         +String auth
         +String user_agent
         +Boolean is_active
+        +Dict subscription_data
     }
 
     class WebPushConfig {
         +String vapid_public_key
         +Text vapid_private_key
         +String subject
+        +WebPushConfig get_config()
+        +Dict vapid_details
     }
 
     UpdatableModel <|-- Deal

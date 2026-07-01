@@ -85,6 +85,7 @@ erDiagram
         INT trust_level
         VARCHAR formula_version
         ENUM source
+        VARCHAR trace_id
         JSON payload
         DATETIME created_at
     }
@@ -294,6 +295,7 @@ erDiagram
         INT deal_id FK
         ENUM event_type
         INT actor_id FK
+        VARCHAR trace_id
         JSON metadata
         DATETIME created_at
     }

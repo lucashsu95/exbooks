@@ -1,6 +1,6 @@
 @startuml use_case
  
-title "<color #1A6><size 15>Exbooks 共享書籍</size></color>\n<color #16A><size 18>Use Case Diagram 用例圖</size></color>\n<color grey>v2.6.0 @2026-03-06</color>\n"
+title "<color #1A6><size 15>Exbooks 共享書籍</size></color>\n<color #16A><size 18>Use Case Diagram 用例圖</size></color>\n<color grey>v2.7.0 @2026-07-01</color>\n"
  
 left to right direction
  
@@ -58,6 +58,11 @@ rectangle "一般功能" {
   usecase Resolve as "回應「例外狀況」\n~ 處置 Resolve" #FCB
  
   usecase Provide as "貢獻書籍\nProvide" #FBD
+  usecase AIChatBot as "AI 書本推薦\n與問答" #9CF
+  usecase WebPushSubscribe as "訂閱 Web Push\n推播通知" #9CF
+  usecase WebPushUnsubscribe as "取消訂閱\nWeb Push" #9CF
+  usecase ExportUserData as "匯出個人資料\nExport Data" #9CF
+  usecase ConfirmReturn as "確認歸還\n強制歸還" #FAA
 }
  
 Member <|-- Reader
@@ -71,6 +76,10 @@ Member --> EditProfile
 Member --> SearchBook
 Member --> QueryCredit
 Member --> RateUser
+Member --> AIChatBot
+Member --> WebPushSubscribe
+Member --> WebPushUnsubscribe
+Member --> ExportUserData
  
 Timer --> ProcessBookDue
 SysAdmin --> OAM
@@ -102,6 +111,7 @@ Owner --> SelectApplicant
 Owner --> Negotiate
 Owner --> ApproveExtend
 Owner --> CancelRequest
+Owner --> ConfirmReturn
  
 ExtendLoan --> ApproveExtend : <<extend>>
  

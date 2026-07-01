@@ -171,6 +171,7 @@ erDiagram
         INT trust_level "當下等級"
         VARCHAR formula_version "公式版本"
         ENUM source "來源 recalculate｜rating｜deal_completed｜overdue_adjust｜violation"
+        VARCHAR trace_id "追蹤ID"
         JSON payload "摘要指標"
         DATETIME created_at "建立時間"
     }
@@ -273,6 +274,7 @@ erDiagram
         VARCHAR photo "照片路徑"
         VARCHAR caption "照片說明"
         DATETIME created_at "上傳時間"
+        %% 計算屬性：serve_url（依 deal 關聯回傳保護 URL 或公開 URL）
     }
 
     Rating {
@@ -323,6 +325,7 @@ erDiagram
         INT deal_id FK "相關交易（可空）"
         ENUM event_type "事件類型"
         INT actor_id FK "操作者（可空）"
+        VARCHAR trace_id "追蹤ID"
         JSON metadata "附加資料"
         DATETIME created_at "建立時間"
     }
@@ -535,10 +538,8 @@ stateDiagram-v2
 | BR-14 | 取消申請後，書籍狀態恢復為取消前的狀態                             | Application Logic       |
 | BR-15 | 多人申請同一冊書時，接受一位後其餘自動標記為 X                     | Application Logic       |
 | BR-16 | 延長申請狀態為 PENDING 時，申請者可取消延長申請                    | Application Logic       |
-
----
-| BR-15 | 多人申請同一冊書時，接受一位後其餘自動標記為 X             | Application Logic       |
-| BR-16 | 延長申請狀態為 PENDING 時，申請者可取消延長申請             | Application Logic       |
+| BR-17 | 「閱畢即還」的 LOAN 交易須經 Owner 確認歸還後，系統才標記為 DONE   | Application Logic       |
+| BR-18 | 逾期後 Owner 可發起強制歸還，系統自動補齊未完成評價（代評 3 星）   | Application Logic       |
 
 ---
 
