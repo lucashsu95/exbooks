@@ -32,7 +32,7 @@ class GeminiService:
     )
 
     BASE_URL = "https://api.groq.com/openai/v1"
-    MODEL = "llama-3.1-70b-versatile"
+    MODEL = "llama-3.3-70b-versatile"
 
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.environ.get("NVIDIA_API_KEY")
