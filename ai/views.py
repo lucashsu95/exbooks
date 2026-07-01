@@ -56,12 +56,15 @@ class ChatSSEView(LoginRequiredMixin, View):
 
         def stream_response() -> Generator[str, None, None]:
             # 1. Handle Tool Calls
+            tool_results = []
             if response.tool_calls:
                 for tool_call in response.tool_calls:
                     tool_name = tool_call.get("name")
                     if not tool_name:
                         continue
-                    arguments = tool_call.get("args", {})
+                    arguments = tool_call.get("args") or {}
+                    if not isinstance(arguments, dict):
+                        arguments = {}
                     tool_def = ToolRegistry.get_tool(tool_name)
 
                     if tool_def and tool_def.consent == ConsentRequirement.USER_CONFIRM:
@@ -74,13 +77,30 @@ class ChatSSEView(LoginRequiredMixin, View):
                             # Ensure result is JSON-serializable
                             if not isinstance(result, (str, int, float, bool, list, dict, type(None))):
                                 result = str(result)
+                            tool_results.append({"tool": tool_name, "result": result})
                             yield f"event: tool_result\ndata: {json.dumps({'tool': tool_name, 'result': result})}\n\n"
                         except Exception as e:
                             logger.exception("Tool execution failed", extra={"tool_name": tool_name})
+                            tool_results.append({"tool": tool_name, "error": str(e)})
                             yield f"event: tool_result\ndata: {json.dumps({'tool': tool_name, 'error': str(e)})}\n\n"
 
             # 2. Stream Content
             full_content = response.content
+            
+            # If AI called tools but didn't provide content, call AI again with tool results
+            if not full_content and tool_results:
+                tool_summary = "\n".join([
+                    f"{r['tool']}: {r.get('result', r.get('error', 'Unknown'))}"
+                    for r in tool_results
+                ])
+                followup_history = history + [
+                    {"role": "user", "content": user_message},
+                    {"role": "assistant", "content": f"[Called tools: {', '.join([r['tool'] for r in tool_results])}]"},
+                    {"role": "user", "content": f"Tool results:\n{tool_summary}\n\nPlease provide a helpful response based on these results."}
+                ]
+                followup_response = service.chat(user_id, "", followup_history)
+                full_content = followup_response.content
+            
             # Ensure content is never empty
             if not full_content:
                 full_content = "（AI 正在思考中，請稍後再試）"
