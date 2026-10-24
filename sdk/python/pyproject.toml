@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-client"
+version = "0.1.0"
+description = "Reusable OpenAI-compatible vLLM client with dependency injection"
+requires-python = ">=3.10"
+dependencies = ["requests>=2.31"]
+optional-dependencies = { dotenv = ["python-dotenv>=1.0"] }
+
+[project.scripts]
+ai-ask = "ai_client.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

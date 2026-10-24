@@ -1,8 +1,10 @@
 import json
 import logging
 import os
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
+
+from ai_client import ChatMessage, ChatResponse as SDKChatResponse
 
 from .tool_registry import ToolRegistry
 
@@ -20,9 +22,10 @@ class GeminiResponse:
 
 class GeminiService:
     """
-    Wrapper for NVIDIA API (OpenAI-compatible) handling chat and function calling.
+    Exbook AI 助手服務 — 底層統一走 ai-client SDK（OpenAI 相容 vLLM 端點）。
 
-    Falls back to mock responses when ``NVIDIA_API_KEY`` is not configured.
+    端點／模型／金鑰由 VLLM_* 環境變數決定（AI-Forge SDK 預設即 BIRC H200 端點）。
+    當 ``VLLM_API_KEY`` 未設定時回傳 mock 回應，方便本地開發。
     """
 
     SYSTEM_PROMPT = (
@@ -31,21 +34,15 @@ class GeminiService:
         "請使用繁體中文（台灣習慣）回答，口氣親切專業。如果需要用戶確認敏感操作，請明確說明。"
     )
 
-    BASE_URL = "https://api.groq.com/openai/v1"
-    MODEL = "llama-3.3-70b-versatile"
-
     def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key or os.environ.get("NVIDIA_API_KEY")
+        self.api_key = api_key or os.environ.get("VLLM_API_KEY")
         self._client = None
         if self.api_key:
-            from openai import OpenAI
+            from ai_client import create_client
 
-            self._client = OpenAI(
-                base_url=self.BASE_URL,
-                api_key=self.api_key,
-            )
+            self._client = create_client()
         else:
-            logger.warning("NVIDIA_API_KEY not set, GeminiService will use mock responses")
+            logger.warning("VLLM_API_KEY not set, GeminiService will use mock responses")
 
     def _build_tools(self) -> List[Dict[str, Any]]:
         """Convert ToolRegistry tools to OpenAI function format."""
@@ -65,17 +62,17 @@ class GeminiService:
 
     def _to_messages(
         self, history: List[Dict[str, str]], current_message: str
-    ) -> List[Dict[str, Any]]:
-        """Map conversation history to OpenAI message objects."""
-        messages: List[Dict[str, Any]] = [
-            {"role": "system", "content": self.SYSTEM_PROMPT}
+    ) -> List[ChatMessage]:
+        """Map conversation history to SDK ChatMessage objects."""
+        messages: List[ChatMessage] = [
+            ChatMessage(role="system", content=self.SYSTEM_PROMPT)
         ]
         for msg in history:
             role = msg["role"]
             text = msg["content"]
-            openai_role = "assistant" if role == "assistant" else "user"
-            messages.append({"role": openai_role, "content": text})
-        messages.append({"role": "user", "content": current_message})
+            sdk_role = "assistant" if role == "assistant" else "user"
+            messages.append(ChatMessage(role=sdk_role, content=text))
+        messages.append(ChatMessage(role="user", content=current_message))
         return messages
 
     def chat(
@@ -84,7 +81,7 @@ class GeminiService:
         """
         Processes a user message and returns a response from the AI backend.
 
-        When ``NVIDIA_API_KEY`` is available the real NVIDIA API is called;
+        When ``VLLM_API_KEY`` is available the real BIRC vLLM endpoint is called;
         otherwise a mock response is returned for local development.
         """
         logger.info(
@@ -126,43 +123,42 @@ class GeminiService:
         tools = self._build_tools()
 
         try:
-            response = self._client.chat.completions.create(
-                model=self.MODEL,
+            response = self._client.chat(
                 messages=messages,
-                tools=tools if tools else None,
+                tools=tools or None,
                 tool_choice="auto" if tools else None,
                 temperature=0.7,
                 max_tokens=1024,
             )
         except Exception as e:
-            logger.exception("NVIDIA API call failed", extra={"user_id": str(user_id)})
+            logger.exception("AI API call failed", extra={"user_id": str(user_id)})
             return GeminiResponse(
                 content=f"抱歉，AI 服務暫時無法回應，請稍後再試。 ({e})",
                 tool_calls=[],
                 raw_response=None,
             )
 
-        choice = response.choices[0] if response.choices else None
-        if not choice or not choice.message:
-            logger.warning("NVIDIA returned empty response", extra={"user_id": str(user_id)})
+        content_text = (response.content or "").strip()
+        if not content_text and not response.tool_calls:
+            logger.warning("AI returned empty response", extra={"user_id": str(user_id)})
             return GeminiResponse(
                 content="抱歉，我沒有收到回應，請再試一次。",
                 tool_calls=[],
                 raw_response=response,
             )
 
-        content_text = choice.message.content or ""
         tool_calls: List[Dict[str, Any]] = []
-        if choice.message.tool_calls:
-            for tc in choice.message.tool_calls:
-                try:
-                    args = json.loads(tc.function.arguments) if tc.function.arguments else {}
-                except json.JSONDecodeError:
-                    args = {}
-                tool_calls.append({"name": tc.function.name, "args": args})
+        for tc in response.tool_calls or []:
+            function = tc.get("function") or {}
+            raw_args = function.get("arguments") or "{}"
+            try:
+                args = json.loads(raw_args)
+            except json.JSONDecodeError:
+                args = {}
+            tool_calls.append({"name": function.get("name"), "args": args})
 
         logger.info(
-            "NVIDIA response parsed",
+            "AI response parsed",
             extra={
                 "user_id": str(user_id),
                 "text_length": len(content_text),
@@ -179,11 +175,13 @@ class GeminiService:
     def _handle_function_call(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
         """Execute a function call requested by the AI."""
         tool_def = ToolRegistry.get_tool(tool_name)
-        if not tool_def:
+        if tool_def is None:
             return f"Error: Tool '{tool_name}' not found."
 
         logger.debug(
             "handling function call",
-            extra={"tool_name": tool_name},
+            extra={
+                "tool_name": tool_name,
+            },
         )
         return tool_def.func(**arguments)
