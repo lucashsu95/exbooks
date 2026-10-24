@@ -178,3 +178,5 @@ tui.heapsnapshot
 .omo
 server.heapsnapshot
 /.DS_Store
+/.agents/skills
+/skills-lock.json
