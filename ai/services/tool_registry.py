@@ -66,6 +66,9 @@ class ToolRegistry:
 
 
 # --- Pre-defined Tools (Placeholders for T2-2) ---
+#
+# 約定：所有 tool 函式的第一個參數是 `user`（由呼叫方注入的當前使用者），
+# 其餘參數才來自 AI 的 function calling arguments。
 
 
 @ToolRegistry.register(
@@ -83,7 +86,7 @@ class ToolRegistry:
         "required": [],
     },
 )
-def get_user_books(status: str = "ALL") -> str:
+def get_user_books(user, status: str = "ALL") -> str:
     """Placeholder for retrieving user books."""
     return "Tool 'get_user_books' executed (Placeholder)"
 
@@ -93,7 +96,7 @@ def get_user_books(status: str = "ALL") -> str:
     description="Get the status of current borrowing requests or active deals for the user.",
     parameters={"type": "object", "properties": {}, "required": []},
 )
-def get_borrowing_status() -> str:
+def get_borrowing_status(user) -> str:
     """Placeholder for retrieving borrowing status."""
     return "Tool 'get_borrowing_status' executed (Placeholder)"
 
@@ -117,6 +120,14 @@ def get_borrowing_status() -> str:
     },
     consent=ConsentRequirement.USER_CONFIRM,
 )
-def request_renewal(deal_id: int, days: int = 7) -> str:
+def request_renewal(user, deal_id: int, days: int = 7) -> str:
     """Placeholder for requesting a book renewal."""
+    from django.core.exceptions import PermissionDenied
+    from deals.models import Deal
+
+    deal = Deal.objects.filter(pk=deal_id).first()
+    if deal is None:
+        return f"Error: deal {deal_id} 不存在。"
+    if user not in (deal.applicant, deal.responder):
+        raise PermissionDenied("您不是此交易的當事人，無法申請延期。")
     return f"Tool 'request_renewal' executed for deal {deal_id} (Placeholder)"

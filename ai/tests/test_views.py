@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from django.test import Client
 from unittest.mock import patch
-from ai.services.gemini_service import GeminiResponse
+from ai.services.chat_service import AIResponse
 
 
 @pytest.mark.django_db
@@ -35,12 +35,12 @@ class TestAIViews:
         first_event = next(iter(response.streaming_content))
         assert "connected" in first_event.decode()
 
-    @patch("ai.views.GeminiService.chat")
+    @patch("ai.services.chat_orchestrator.ChatService.chat")
     def test_chat_view_post_simple_message(self, mock_chat):
         """POST request should process message and return streamed response."""
         self.client.login(username="testuser", password="password")
 
-        mock_chat.return_value = GeminiResponse(
+        mock_chat.return_value = AIResponse(
             content="Hello from AI", tool_calls=[], raw_response=None
         )
 
@@ -56,12 +56,12 @@ class TestAIViews:
         assert "Hello from AI" in content
         assert '"type": "done"' in content
 
-    @patch("ai.views.GeminiService.chat")
+    @patch("ai.services.chat_orchestrator.ChatService.chat")
     def test_chat_view_post_tool_call_immediate(self, mock_chat):
         """Should execute tool immediately if no consent required."""
         self.client.login(username="testuser", password="password")
 
-        mock_chat.return_value = GeminiResponse(
+        mock_chat.return_value = AIResponse(
             content="Checking your books...",
             tool_calls=[{"name": "get_user_books", "args": {"status": "OWNED"}}],
             raw_response=None,
@@ -77,12 +77,12 @@ class TestAIViews:
         assert '"type": "tool_result"' in content
         assert "get_user_books" in content
 
-    @patch("ai.views.GeminiService.chat")
+    @patch("ai.services.chat_orchestrator.ChatService.chat")
     def test_chat_view_post_tool_call_consent_required(self, mock_chat):
         """Should request consent if tool requires it."""
         self.client.login(username="testuser", password="password")
 
-        mock_chat.return_value = GeminiResponse(
+        mock_chat.return_value = AIResponse(
             content="I need your permission to renew.",
             tool_calls=[{"name": "request_renewal", "args": {"deal_id": 1}}],
             raw_response=None,
@@ -102,7 +102,11 @@ class TestAIViews:
         """Should execute tool if user confirms."""
         self.client.login(username="testuser", password="password")
 
-        data = {"args": {"deal_id": 1, "days": 7}, "confirmed": True}
+        # tool 現在帶使用者身份執行：deal 必須存在且使用者是當事人
+        from tests.factories import DealFactory
+
+        deal = DealFactory(applicant=self.user)
+        data = {"args": {"deal_id": str(deal.pk), "days": 7}, "confirmed": True}
         response = self.client.post(
             self.url_consent, data=json.dumps(data), content_type="application/json"
         )

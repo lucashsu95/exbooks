@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from dataclasses import dataclass
 
 from ai_client import ChatMessage, ChatResponse as SDKChatResponse
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class GeminiResponse:
+class AIResponse:
     """Standardized response from AI backend."""
 
     content: str
@@ -20,10 +20,12 @@ class GeminiResponse:
     raw_response: Any
 
 
-class GeminiService:
+class ChatService:
     """
     Exbook AI 助手服務 — 底層統一走 ai-client SDK（OpenAI 相容 vLLM 端點）。
 
+    Seam：``AIClient``。可注入任意 adapter（生產：create_client() 組裝的
+    RequestsTransport；測試：ScriptedTransport fake，見 ai/tests/fakes.py）。
     端點／模型／金鑰由 VLLM_* 環境變數決定（AI-Forge SDK 預設即 BIRC H200 端點）。
     當 ``VLLM_API_KEY`` 未設定時回傳 mock 回應，方便本地開發。
     """
@@ -34,15 +36,20 @@ class GeminiService:
         "請使用繁體中文（台灣習慣）回答，口氣親切專業。如果需要用戶確認敏感操作，請明確說明。"
     )
 
-    def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key or os.environ.get("VLLM_API_KEY")
-        self._client = None
-        if self.api_key:
+    def __init__(self, client=None):
+        """
+        Args:
+            client: 已組裝的 AIClient（任意 Transport adapter）。
+                    未注入時依 VLLM_API_KEY 決定：有 key 走 create_client()，
+                    沒有則用 mock 回應。
+        """
+        self._client = client
+        if self._client is None and os.environ.get("VLLM_API_KEY"):
             from ai_client import create_client
 
             self._client = create_client()
-        else:
-            logger.warning("VLLM_API_KEY not set, GeminiService will use mock responses")
+        if self._client is None:
+            logger.warning("VLLM_API_KEY not set, ChatService will use mock responses")
 
     def _build_tools(self) -> List[Dict[str, Any]]:
         """Convert ToolRegistry tools to OpenAI function format."""
@@ -77,7 +84,7 @@ class GeminiService:
 
     def chat(
         self, user_id: Any, message: str, history: List[Dict[str, str]]
-    ) -> GeminiResponse:
+    ) -> AIResponse:
         """
         Processes a user message and returns a response from the AI backend.
 
@@ -95,7 +102,7 @@ class GeminiService:
 
         msg_lower = message.strip().lower()
         if msg_lower in ("喵", "cat", "meow", "🐱"):
-            return GeminiResponse(
+            return AIResponse(
                 content=(
                     "喵～你發現了隱藏彩蛋！\n\n"
                     "    /|_╱|\n"
@@ -112,9 +119,9 @@ class GeminiService:
             )
 
         if not self._client:
-            logger.debug("GeminiService returning mock response (no API key)")
-            return GeminiResponse(
-                content=f"已收到您的訊息：'{message}'。 (這是 GeminiService 的模擬回應)",
+            logger.debug("ChatService returning mock response (no API key)")
+            return AIResponse(
+                content=f"已收到您的訊息：'{message}'。 (這是 ChatService 的模擬回應)",
                 tool_calls=[],
                 raw_response=None,
             )
@@ -132,7 +139,7 @@ class GeminiService:
             )
         except Exception as e:
             logger.exception("AI API call failed", extra={"user_id": str(user_id)})
-            return GeminiResponse(
+            return AIResponse(
                 content=f"抱歉，AI 服務暫時無法回應，請稍後再試。 ({e})",
                 tool_calls=[],
                 raw_response=None,
@@ -141,7 +148,7 @@ class GeminiService:
         content_text = (response.content or "").strip()
         if not content_text and not response.tool_calls:
             logger.warning("AI returned empty response", extra={"user_id": str(user_id)})
-            return GeminiResponse(
+            return AIResponse(
                 content="抱歉，我沒有收到回應，請再試一次。",
                 tool_calls=[],
                 raw_response=response,
@@ -166,7 +173,7 @@ class GeminiService:
             },
         )
 
-        return GeminiResponse(
+        return AIResponse(
             content=content_text,
             tool_calls=tool_calls,
             raw_response=response,

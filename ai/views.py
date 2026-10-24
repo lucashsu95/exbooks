@@ -7,9 +7,9 @@ from django.http import JsonResponse, StreamingHttpResponse
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from .services.gemini_service import GeminiService
+from .services.chat_orchestrator import ChatOrchestrator
 from .services.conversation_cache import ConversationCache
-from .services.tool_registry import ToolRegistry, ConsentRequirement
+from .services.tool_registry import ToolRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -47,70 +47,13 @@ class ChatSSEView(LoginRequiredMixin, View):
 
         user_id = request.user.id
         logger.info("chat_sse message", extra={"user_id": user_id, "message_length": len(user_message)})
-        history = ConversationCache.get_history(user_id)
 
-        ConversationCache.add_message(user_id, "user", user_message)
-
-        service = GeminiService()
-        response = service.chat(user_id, user_message, history)
+        # 編排（tool loop / consent / follow-up / history）在 orchestrator；
+        # view 只負責 HTTP framing。
+        orchestrator = ChatOrchestrator()
 
         def stream_response() -> Generator[str, None, None]:
-            # 1. Handle Tool Calls
-            tool_results = []
-            if response.tool_calls:
-                for tool_call in response.tool_calls:
-                    tool_name = tool_call.get("name")
-                    if not tool_name:
-                        continue
-                    arguments = tool_call.get("args") or {}
-                    if not isinstance(arguments, dict):
-                        arguments = {}
-                    tool_def = ToolRegistry.get_tool(tool_name)
-
-                    if tool_def and tool_def.consent == ConsentRequirement.USER_CONFIRM:
-                        # Need user confirmation
-                        yield f"event: consent_required\ndata: {json.dumps({'type': 'consent_required', 'tool': tool_name, 'args': arguments})}\n\n"
-                    elif tool_def:
-                        # Execute immediately
-                        try:
-                            result = tool_def.func(**arguments)
-                            # Ensure result is JSON-serializable
-                            if not isinstance(result, (str, int, float, bool, list, dict, type(None))):
-                                result = str(result)
-                            tool_results.append({"tool": tool_name, "result": result})
-                            yield f"event: tool_result\ndata: {json.dumps({'type': 'tool_result', 'tool': tool_name, 'result': result})}\n\n"
-                        except Exception as e:
-                            logger.exception("Tool execution failed", extra={"tool_name": tool_name})
-                            tool_results.append({"tool": tool_name, "error": str(e)})
-                            yield f"event: tool_result\ndata: {json.dumps({'type': 'tool_result', 'tool': tool_name, 'error': str(e)})}\n\n"
-
-            # 2. Stream Content
-            full_content = response.content
-            
-            # If AI called tools but didn't provide content, call AI again with tool results
-            if not full_content and tool_results:
-                tool_summary = "\n".join([
-                    f"{r['tool']}: {r.get('result', r.get('error', 'Unknown'))}"
-                    for r in tool_results
-                ])
-                followup_history = history + [
-                    {"role": "user", "content": user_message},
-                    {"role": "assistant", "content": f"[Called tools: {', '.join([r['tool'] for r in tool_results])}]"},
-                    {"role": "user", "content": f"Tool results:\n{tool_summary}\n\nPlease provide a helpful response based on these results."}
-                ]
-                followup_response = service.chat(user_id, "", followup_history)
-                full_content = followup_response.content
-            
-            # Ensure content is never empty
-            if not full_content:
-                full_content = "（AI 正在思考中，請稍後再試）"
-            
-            yield f"event: content\ndata: {json.dumps({'type': 'content', 'delta': full_content})}\n\n"
-
-            # Add AI response to history
-            ConversationCache.add_message(user_id, "assistant", full_content)
-
-            yield f"event: done\ndata: {json.dumps({'type': 'done'})}\n\n"
+            yield from orchestrator.stream(user=request.user, message=user_message)
 
         return StreamingHttpResponse(
             stream_response(), content_type="text/event-stream"
@@ -141,7 +84,8 @@ class ConsentView(LoginRequiredMixin, View):
             return JsonResponse({"error": "Action not found"}, status=404)
 
         try:
-            result = tool_def.func(**arguments)
+            # 帶著使用者身份執行（ownership 檢查在 tool 內）
+            result = tool_def.func(user=request.user, **arguments)
             ConversationCache.add_message(
                 request.user.id,
                 "system",

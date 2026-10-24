@@ -28,12 +28,15 @@ class ToolRegistryTests(TestCase):
         self.assertEqual(renewal.consent, ConsentRequirement.USER_CONFIRM)
 
     def test_tool_execution(self):
-        """Ensure the placeholder functions can be called."""
+        """Ensure the placeholder functions can be called (with injected user)."""
         get_books = ToolRegistry.get_tool("get_user_books")
-        result = get_books.func(status="OWNED")
+        result = get_books.func(None, status="OWNED")
         self.assertIn("get_user_books", result)
 
         renewal = ToolRegistry.get_tool("request_renewal")
-        result = renewal.func(deal_id=123)
+        from tests.factories import DealFactory
+
+        deal = DealFactory()
+        result = renewal.func(user=deal.applicant, deal_id=deal.pk)
         self.assertIn("request_renewal", result)
-        self.assertIn("123", result)
+        self.assertIn(str(deal.pk), result)
