@@ -31,9 +31,9 @@ class TestAIViews:
         assert response.status_code == 200
         assert response["Content-Type"] == "text/event-stream"
 
-        # Check initial data
-        content = b"".join(response.streaming_content).decode()
-        assert "connected" in content
+        # SSE 串流是無限的（keepalive loop），只能讀第一個 event 就斷言
+        first_event = next(iter(response.streaming_content))
+        assert "connected" in first_event.decode()
 
     @patch("ai.views.GeminiService.chat")
     def test_chat_view_post_simple_message(self, mock_chat):
