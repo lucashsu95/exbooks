@@ -979,7 +979,7 @@ python scripts/render_evidence.py --evidence-dir <dir> --output dashboard.png
 <div class="col-2-2-1">
 <div>
 
-![alt](./image.png)
+![登入保護.png](./登入保護.png)
 
 </div>
 
@@ -1072,7 +1072,7 @@ nginx 擋大流量攻擊（5r/m 超頻直接 503），DRF 控 API 使用額度�
 
 ---
 
-![alt text](image-3.png)
+![alt text](媒體檔案雙軌存取架構.png)
 
 ### 兩條路徑比較
 

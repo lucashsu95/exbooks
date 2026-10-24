@@ -177,7 +177,7 @@ scripts/harness/\n\n# V8 Heap Snapshots\n*.heapsnapshot
 tui.heapsnapshot
 .omo
 server.heapsnapshot
-/.DS_Store
+.DS_Store
 /.agents/skills
 /skills-lock.json
 
@@ -187,3 +187,4 @@ node_modules/
 .vscode/
 .idea/
 /.verify-evidence/20261024-132832-book-list
+/.verify-evidence
