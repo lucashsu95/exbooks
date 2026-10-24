@@ -1,12 +1,44 @@
 import logging
 
+from django.db.models import Q
 from django.utils import timezone
 from datetime import timedelta
 
-
+from books.models import SharedBook
 from deals.models import Deal
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# BR-12 到期查詢骨架（四份到期查詢共用的單一來源）
+# ============================================================================
+
+
+def _meeted_deals(
+    due_date_q: Q,
+    *,
+    book_must_be_occupied: bool = False,
+    applicant=None,
+):
+    """
+    BR-12 骨架查詢：MEETED 狀態 + 日期條件（due_date_q）。
+
+    各 caller 只傳自己的差異：
+    - due_date_q: 日期語意（lt 門檻 / lte 今日 / 等於某天 / 區間）
+    - book_must_be_occupied: 只算書在 O（借閱中）的交易
+    - applicant: 個人視角
+
+    回傳 queryset；caller 自行鏈接 select_related / order_by。
+    """
+    qs = Deal.objects.filter(status=Deal.Status.MEETED, due_date__isnull=False).filter(
+        due_date_q
+    )
+    if book_must_be_occupied:
+        qs = qs.filter(shared_book__status=SharedBook.Status.OCCUPIED)
+    if applicant is not None:
+        qs = qs.filter(applicant=applicant)
+    return qs
 
 
 def get_overdue_books(days=7):
@@ -23,10 +55,8 @@ def get_overdue_books(days=7):
     threshold = today - timedelta(days=days)
 
     # 找出借閱中（MEETED 狀態）且到期的交易
-    overdue_deals = Deal.objects.filter(
-        status=Deal.Status.MEETED,  # 已面交但未完成評價
-        due_date__lt=threshold,
-        due_date__isnull=False,
+    overdue_deals = _meeted_deals(
+        Q(due_date__lt=threshold)
     ).select_related("shared_book", "applicant")
 
     logger.debug(
@@ -102,10 +132,8 @@ def batch_process_due_books() -> dict:
     from deals.services import deal_service
 
     today = timezone.now().date()
-    overdue_deals = Deal.objects.filter(
-        status=Deal.Status.MEETED,
-        due_date__lte=today,
-        shared_book__status="O",
+    overdue_deals = _meeted_deals(
+        Q(due_date__lte=today), book_must_be_occupied=True
     ).select_related("shared_book__official_book", "applicant", "responder")
 
     processed, errors = 0, 0
@@ -123,3 +151,46 @@ def batch_process_due_books() -> dict:
         },
     )
     return {"processed": processed, "errors": errors}
+
+
+def get_due_soon_deals(user, days=7):
+    """
+    借閱者視角的「即將到期」交易。
+
+    條件：applicant = user、MEETED（已面交借閱中）、
+    now < due_date <= now + days。
+
+    Args:
+        user: 借閱者
+        days: 提醒窗口（天）
+
+    Returns:
+        list[dict]: [{'deal', 'days_left', 'is_overdue'}]，依 due_date 排序
+    """
+    now = timezone.now()
+    deadline = now + timedelta(days=days)
+
+    due_soon_deals = (
+        _meeted_deals(
+            Q(due_date__gt=now) & Q(due_date__lte=deadline), applicant=user
+        )
+        .select_related("shared_book__official_book", "responder__profile")
+        .order_by("due_date")
+    )
+
+    result = []
+    for deal in due_soon_deals:
+        days_left = (deal.due_date - now.date()).days
+        result.append(
+            {
+                "deal": deal,
+                "days_left": days_left,
+                "is_overdue": days_left <= 0,
+            }
+        )
+
+    logger.debug(
+        "due soon deals queried",
+        extra={"user_id": user.pk, "days": days, "count": len(result)},
+    )
+    return result

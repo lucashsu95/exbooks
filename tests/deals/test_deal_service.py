@@ -252,6 +252,113 @@ class TestCreateDeal:
         deal = create_deal(applicant, book, Deal.DealType.LOAN)
         assert deal.status == Deal.Status.REQUESTED
 
+    # --- 借閱天數邊界（port from 已刪除的 test_deal_creation_service.py）---
+
+    def test_loan_duration_exceeds_trust_max_days_rejected(self):
+        """借閱天數超過申請者信用等級上限時，應拒絕建立交易。
+
+        Ported from test_validate_invalid_loan_duration（天數太長 case）。
+        注意：現行 deal_service 沒有固定 MIN/MAX 常數，上限改由
+        get_borrowing_limits(trust_level) 決定（trust_lv0 → 30 天）。
+        """
+        owner = UserFactory()
+        applicant = UserFactory()  # 無 trust_lv* group → trust level 0
+        book = SharedBookFactory(
+            owner=owner,
+            status="T",
+            transferability="RETURN",
+        )
+        with pytest.raises(ValidationError, match="最長只能借閱"):
+            create_deal(
+                applicant, book, Deal.DealType.LOAN, loan_duration_days=100
+            )
+
+    def test_loan_duration_uses_book_default_when_not_specified(self):
+        """未指定借閱天數時，回退到書籍預設天數計算到期日。
+
+        Ported from test_validate_invalid_loan_duration（None case），
+        但斷言改為現行行為：live deal_service 對 None 不拋錯，
+        而是回退 shared_book.loan_duration_days。
+        """
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(
+            owner=owner,
+            status="T",
+            transferability="RETURN",
+            loan_duration_days=21,
+        )
+        deal = create_deal(applicant, book, Deal.DealType.LOAN, loan_duration_days=None)
+        assert deal.due_date == timezone.now().date() + timedelta(days=21)
+
+    @pytest.mark.xfail(
+        strict=True,
+        reason=(
+            "Dead DealCreationService enforced BORROWING_DAYS_MIN=7; "
+            "live deal_service has NO minimum, only a trust-level-based maximum. "
+            "If a minimum is re-introduced, un-xfail and assert the live rule."
+        ),
+    )
+    def test_loan_duration_below_dead_module_min_rejected(self):
+        """Ported from test_validate_invalid_loan_duration（天數太短 case）。
+
+        已知分歧：已刪除的 DealCreationService 要求 7 <= 天數 <= 30；
+        現行 deal_service 不檢查下限（僅檢查信用等級天數上限），
+        loan_duration_days=5 可以成功建立。此測試記錄該分歧。
+        """
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(
+            owner=owner,
+            status="T",
+            transferability="RETURN",
+        )
+        with pytest.raises(ValidationError):
+            create_deal(applicant, book, Deal.DealType.LOAN, loan_duration_days=5)
+
+    @pytest.mark.xfail(
+        strict=True,
+        reason=(
+            "Dead DealCreationService validated the book_set argument "
+            "(required for set books, must match, forbidden for non-set "
+            "books and non-loan/transfer deals); live deal_service ignores "
+            "the argument and defaults it to the book's own set. "
+            "If argument validation is re-introduced, un-xfail."
+        ),
+    )
+    def test_book_set_argument_validated(self):
+        """Ported from test_validate_book_set_compatibility。
+
+        已知分歧：現行 deal_service 忽略 caller 傳入的 book_set 參數
+        （僅在書籍本身屬於套書時自動帶上該套書），不會因參數不符而拒絕。
+        """
+        owner = UserFactory()
+        applicant = UserFactory()
+        book_set = BookSetFactory(owner=owner)
+        # Case 1: 書籍不屬於套書，但提供了套書參數 → live 不拒絕
+        non_set_book = SharedBookFactory(
+            owner=owner,
+            status="T",
+            transferability="RETURN",
+            book_set=None,
+        )
+        with pytest.raises(ValidationError):
+            create_deal(
+                applicant,
+                non_set_book,
+                Deal.DealType.LOAN,
+                loan_duration_days=30,
+                book_set=book_set,
+            )
+        # Case 2: EX 交易不應接受套書參數 → live 不拒絕
+        with pytest.raises(ValidationError):
+            create_deal(
+                applicant,
+                non_set_book,
+                Deal.DealType.EXCEPT,
+                book_set=book_set,
+            )
+
     # --- EX 狀態限制 ---
 
     @pytest.mark.parametrize("status", ["S", "V", "E", "L", "D"])

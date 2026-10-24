@@ -185,11 +185,13 @@ def notify_book_due_soon(deal):
 
 def batch_send_due_reminders(days: int = 3) -> dict:
     """發送即將到期借閱提醒，跳過當日已發送者。"""
+    from django.db.models import Q
+
+    from deals.services.overdue_service import _meeted_deals
+
     target_date = timezone.now().date() + timedelta(days=days)
-    upcoming_deals = Deal.objects.filter(
-        status=Deal.Status.MEETED,
-        due_date=target_date,
-        shared_book__status="O",
+    upcoming_deals = _meeted_deals(
+        Q(due_date=target_date), book_must_be_occupied=True
     ).select_related("shared_book__official_book", "applicant", "responder")
 
     today = timezone.now().date()

@@ -1,0 +1,130 @@
+"""
+C3 搬移後的 service 層守衛測試（不經 HTTP）。
+
+涵蓋：
+- resolve_exception_deal（例外處置入口）
+- send_deal_message / upload_deal_photos（原 view 內守衛）
+- confirm_return 互評規則（原 view 內雙重檢查）
+- accept() 的 sibling 取消改走 cancel() 轉換
+"""
+
+import io
+
+import pytest
+from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
+
+from books.models import SharedBook
+from deals.models import Deal, DealMessage
+from deals.services import deal_service
+from tests.factories import DealFactory, SharedBookFactory, UserFactory
+
+pytestmark = pytest.mark.django_db
+
+
+def _jpeg(name="photo.jpg", color=(30, 120, 200)):
+    buf = io.BytesIO()
+    Image.new("RGB", (40, 40), color).save(buf, format="JPEG")
+    return SimpleUploadedFile(name, buf.getvalue(), content_type="image/jpeg")
+
+
+class TestResolveExceptionDeal:
+    def _ex_deal(self, book_status=SharedBook.Status.EXCEPTION, deal_status=Deal.Status.MEETED):
+        user = UserFactory()
+        book = SharedBookFactory(owner=user, status=book_status)
+        deal = DealFactory(
+            shared_book=book, deal_type=Deal.DealType.EXCEPT, status=deal_status
+        )
+        return user, book, deal
+
+    def test_resolve_found(self):
+        user, book, deal = self._ex_deal()
+        deal_service.resolve_exception_deal(deal, "found")
+        deal.refresh_from_db()
+        book.refresh_from_db()
+        assert deal.status == Deal.Status.DONE
+        assert book.status != SharedBook.Status.EXCEPTION
+
+    def test_non_except_deal_rejected(self):
+        user, book, deal = self._ex_deal()
+        deal.deal_type = Deal.DealType.LOAN
+        deal.save(update_fields=["deal_type"])
+        with pytest.raises(ValidationError):
+            deal_service.resolve_exception_deal(deal, "found")
+
+    def test_book_not_in_exception_rejected(self):
+        user, book, deal = self._ex_deal(book_status=SharedBook.Status.TRANSFERABLE)
+        with pytest.raises(ValidationError):
+            deal_service.resolve_exception_deal(deal, "found")
+
+
+class TestSendDealMessage:
+    def test_finished_deals_rejected(self):
+        done = DealFactory(status=Deal.Status.DONE)
+        with pytest.raises(ValidationError):
+            deal_service.send_deal_message(done, done.applicant, "hi")
+
+        cancelled = DealFactory(status=Deal.Status.CANCELLED)
+        with pytest.raises(ValidationError):
+            deal_service.send_deal_message(cancelled, cancelled.applicant, "hi")
+
+    def test_active_deal_creates_message(self):
+        deal = DealFactory()  # REQUESTED
+        deal_service.send_deal_message(deal, deal.applicant, "你好")
+        assert DealMessage.objects.filter(deal=deal, content="你好").exists()
+
+
+class TestUploadDealPhotos:
+    def _transfer_book(self, deal):
+        deal.shared_book.transferability = SharedBook.Transferability.TRANSFER
+        deal.shared_book.save()
+
+    def test_non_meeted_rejected(self):
+        deal = DealFactory(status=Deal.Status.REQUESTED)
+        self._transfer_book(deal)
+        with pytest.raises(ValidationError):
+            deal_service.upload_deal_photos(deal, deal.shared_book.keeper, [_jpeg()])
+
+    def test_return_book_rejected(self):
+        deal = DealFactory(status=Deal.Status.MEETED)  # factory 預設 RETURN
+        assert deal.shared_book.transferability == SharedBook.Transferability.RETURN
+        with pytest.raises(ValidationError):
+            deal_service.upload_deal_photos(deal, deal.shared_book.keeper, [_jpeg()])
+
+    def test_meeted_transfer_book_uploads(self):
+        deal = DealFactory(status=Deal.Status.MEETED)
+        self._transfer_book(deal)
+        created = deal_service.upload_deal_photos(
+            deal, deal.shared_book.keeper, [_jpeg()], caption="ok"
+        )
+        assert len(created) == 1
+        assert created[0].caption == "ok"
+
+
+class TestConfirmReturnRatingRule:
+    def test_unrated_non_force_rejected(self):
+        deal = DealFactory(status=Deal.Status.MEETED)
+        with pytest.raises(ValidationError, match="互評"):
+            deal_service.confirm_return(deal, confirmed_by=deal.responder, force=False)
+
+
+class TestAcceptCancelsSiblingsViaTransition:
+    def test_sibling_request_auto_cancelled(self):
+        """BR-15：接受後同一本書的其他 REQUESTED 申請取消（經 cancel() 轉換）。"""
+        user_a = UserFactory()
+        user_b = UserFactory()
+        book = SharedBookFactory(owner=user_b, status=SharedBook.Status.TRANSFERABLE)
+        deal_a = DealFactory(shared_book=book, applicant=user_a)
+        deal_b = DealFactory(shared_book=book, applicant=UserFactory())
+
+        assert deal_b.status == Deal.Status.REQUESTED
+        deal_service.accept_deal(deal_a)
+
+        deal_b.refresh_from_db()
+        deal_a.refresh_from_db()
+        assert deal_a.status == Deal.Status.RESPONDED
+        assert deal_b.status == Deal.Status.CANCELLED
+        # 書被預約（V），不被 sibling 取消時的還書副作用蓋掉
+        book.refresh_from_db()
+        assert book.status == SharedBook.Status.RESERVED

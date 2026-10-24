@@ -20,8 +20,15 @@ from django_fsm import can_proceed
 
 from accounts.services.trust_service import get_borrowing_limits
 from accounts.models import TrustScoreLedger
-from books.models import SharedBook
-from books.services.book_service import validate_book_set_completeness
+from books.models import BookPhoto, SharedBook
+from books.services.book_service import (
+    declare_exception,
+    resolve_exception,
+    validate_book_set_completeness,
+)
+from books.services.photo_service import (
+    validate_and_process as process_book_photo,
+)
 from deals.models import Deal, DealMessage, ExchangeEvent
 from deals.services.exchange_event_service import record_exchange_event
 from deals.services.notification_service import (
@@ -277,6 +284,121 @@ def create_deal(
         },
     )
     return deal
+
+
+# ============================================================================
+# 例外處理
+# ============================================================================
+
+
+@transaction.atomic
+def create_exception(book, applicant, description=""):
+    """
+    申請例外處理：建立 EX 交易並將書籍狀態轉為 EXCEPTION。
+
+    Args:
+        book: SharedBook（T/O/R 狀態才可申請，由 create_deal 驗證）
+        applicant: 申請者（持有者，由 View 層 can_create_exception 授權）
+        description: 例外描述（存入第一筆交易留言）
+
+    Returns:
+        Deal: EX 交易
+
+    Raises:
+        ValidationError: 書籍狀態不符等
+    """
+    deal = create_deal(
+        applicant=applicant,
+        shared_book=book,
+        deal_type=Deal.DealType.EXCEPT,
+        note=description,
+    )
+    declare_exception(book)
+    return deal
+
+
+@transaction.atomic
+def resolve_exception_deal(deal, resolution):
+    """
+    處置例外：書籍端 resolve_exception + 交易端 resolve_as_exception。
+
+    Args:
+        deal: EX 類型的 Deal（授權由 View 層 can_resolve_exception 保證）
+        resolution: 'lost' | 'destroyed' | 'found'
+
+    Raises:
+        ValidationError: 非例外交易、書籍不在例外狀態、狀態轉換不允許
+    """
+    if deal.deal_type != Deal.DealType.EXCEPT:
+        raise ValidationError("此交易不是例外處理類型")
+
+    if deal.shared_book.status != SharedBook.Status.EXCEPTION:
+        raise ValidationError("書籍不在例外狀態")
+
+    resolve_exception(deal.shared_book, resolution)
+
+    if not can_proceed(deal.resolve_as_exception):
+        raise ValidationError("此交易狀態無法處置例外")
+    deal.resolve_as_exception()
+    deal.save(update_fields=["status", "updated_at"])
+
+    logger.info(
+        "exception deal resolved",
+        extra={"deal_id": deal.id, "resolution": resolution},
+    )
+    return deal
+
+
+# ============================================================================
+# 交易留言 / 面交照片
+# ============================================================================
+
+
+def send_deal_message(deal, sender, content):
+    """
+    發送交易留言（授權由 View 層 can_send_message 保證）。
+
+    Raises:
+        ValidationError: 交易已結束（CANCELLED/DONE）
+    """
+    if deal.status in (Deal.Status.CANCELLED, Deal.Status.DONE):
+        raise ValidationError("此交易已結束，無法再發送留言。")
+
+    return DealMessage.objects.create(deal=deal, sender=sender, content=content)
+
+
+def upload_deal_photos(deal, uploader, photos, caption=""):
+    """
+    面交後上傳書況照片（授權由 View 層 can_upload_deal_photos 保證）。
+
+    條件：交易為 MEETED、書籍為「開放傳遞」。
+
+    Returns:
+        list[BookPhoto]: 已建立的照片
+
+    Raises:
+        ValidationError: 流通性不符、狀態不符、照片驗證/處理失敗
+    """
+    if deal.shared_book.transferability != SharedBook.Transferability.TRANSFER:
+        raise ValidationError("只有「開放傳遞」的書籍可以上傳書況照片。")
+
+    if deal.status != Deal.Status.MEETED:
+        raise ValidationError("此交易狀態無法上傳照片。")
+
+    created = []
+    with transaction.atomic():
+        for photo_file in photos:
+            processed = process_book_photo(photo_file)
+            created.append(
+                BookPhoto.objects.create(
+                    shared_book=deal.shared_book,
+                    deal=deal,
+                    uploader=uploader,
+                    photo=processed,
+                    caption=caption,
+                )
+            )
+    return created
 
 
 # ============================================================================
@@ -573,6 +695,12 @@ def confirm_return(deal, confirmed_by, force=False):
     # 權限檢查：強制模式僅收書方可執行
     if force and confirmed_by != get_force_return_receiver(deal):
         raise ValidationError("只有收書方可以強制確認歸還")
+
+    # 一般模式：雙方完成互評才可確認歸還（強制模式跳過，由系統代評）
+    if not force and not deal.both_parties_rated:
+        raise ValidationError(
+            "請先完成互評後再確認歸還。若對方遲遲不評價，您可以使用強制歸還。"
+        )
 
     # 檢查是否為「閱畢即還」模式（或是開放傳遞中的傳遞交易）
     if (
