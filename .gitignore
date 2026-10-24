@@ -180,3 +180,10 @@ server.heapsnapshot
 /.DS_Store
 /.agents/skills
 /skills-lock.json
+
+# AI-Forge
+.venv/
+node_modules/
+.vscode/
+.idea/
+/.verify-evidence/20261024-132832-book-list
