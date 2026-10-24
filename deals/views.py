@@ -17,8 +17,7 @@ from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator
 from django.utils import timezone
 
-from books.models import SharedBook, BookPhoto
-from books.services import declare_exception, resolve_exception, process_book_photo
+from books.models import SharedBook
 from django.core.exceptions import ValidationError
 from .forms import (
     DealApplicationForm,
@@ -395,25 +394,18 @@ def deal_message_send(request, pk):
             "您無權發送留言。", status=403, content_type="text/plain; charset=utf-8"
         )
 
-    # 檢查交易狀態（取消或完成後不可再發送新留言）
-    if deal.status in [Deal.Status.CANCELLED, Deal.Status.DONE]:
-        return HttpResponse(
-            "此交易已結束，無法再發送留言。",
-            status=400,
-            content_type="text/plain; charset=utf-8",
-        )
-
     content = request.POST.get("content", "").strip()
     if not content:
         return HttpResponse(
             "請輸入留言內容。", status=400, content_type="text/plain; charset=utf-8"
         )
 
-    DealMessage.objects.create(
-        deal=deal,
-        sender=request.user,
-        content=content,
-    )
+    try:
+        deal_service.send_deal_message(deal, request.user, content)
+    except ValidationError as e:
+        return HttpResponse(
+            str(e), status=400, content_type="text/plain; charset=utf-8"
+        )
 
     # 返回更新後的留言列表 partial
     messages_list = DealMessage.objects.filter(deal=deal).select_related("sender")[:50]
@@ -896,13 +888,6 @@ def deal_confirm_return(request, pk):
         messages.error(request, "只有收書方可以強制確認歸還。")
         return redirect("deals:detail", pk)
 
-    # 如果雙方未評價且未強制
-    if not deal.both_parties_rated and not force:
-        messages.warning(
-            request, "請先完成互評後再確認歸還。若對方遲遲不評價，您可以使用強制歸還。"
-        )
-        return redirect("deals:detail", pk)
-
     try:
         deal_service.confirm_return(deal, confirmed_by=request.user, force=force)
         logger.info("deal_confirm_return success", extra={"user_id": request.user.pk, "deal_id": str(pk), "force": force})
@@ -935,26 +920,16 @@ def exception_create(request, book_id):
         messages.error(request, "只有持有者可以申請例外處理")
         return redirect("books:detail", pk=book_id)
 
-    if book.status not in [
-        SharedBook.Status.TRANSFERABLE,
-        SharedBook.Status.OCCUPIED,
-        SharedBook.Status.RESTORABLE,
-    ]:
-        logger.warning("exception_create invalid status", extra={"user_id": request.user.pk, "book_id": str(book_id), "status": book.status})
-        messages.error(request, "此書籍狀態無法申請例外處理")
-        return redirect("books:detail", pk=book_id)
-
     if request.method == "POST":
         form = ExceptionDealForm(request.POST)
         if form.is_valid():
             try:
-                deal = deal_service.create_deal(
-                    deal_type=Deal.DealType.EXCEPT,
-                    shared_book=book,
-                    applicant=request.user,
-                    note=form.cleaned_data.get("description", ""),
+                # 書籍狀態 gate（T/O/R）由 create_deal 負責
+                deal = deal_service.create_exception(
+                    book,
+                    request.user,
+                    form.cleaned_data.get("description", ""),
                 )
-                declare_exception(book)
                 logger.info("exception_create success", extra={"user_id": request.user.pk, "book_id": str(book_id), "deal_id": str(deal.pk)})
                 messages.success(request, "例外處理申請已送出")
                 return redirect("deals:detail", pk=deal.pk)
@@ -985,25 +960,15 @@ def exception_resolve(request, pk):
         messages.error(request, "只有貢獻者可以處置例外")
         return redirect("deals:detail", pk=pk)
 
-    if deal.deal_type != Deal.DealType.EXCEPT:
-        logger.warning("exception_resolve wrong type", extra={"user_id": request.user.pk, "deal_id": str(pk), "deal_type": deal.deal_type})
-        messages.error(request, "此交易不是例外處理類型")
-        return redirect("deals:detail", pk=pk)
-
-    if deal.shared_book.status != SharedBook.Status.EXCEPTION:
-        logger.warning("exception_resolve not in exception status", extra={"user_id": request.user.pk, "deal_id": str(pk), "book_status": deal.shared_book.status})
-        messages.error(request, "書籍不在例外狀態")
-        return redirect("deals:detail", pk=pk)
-
     if request.method == "POST":
         form = ExceptionResolveForm(request.POST)
         if form.is_valid():
             try:
-                resolution = form.cleaned_data["resolution"]
-                resolve_exception(deal.shared_book, resolution)
-                deal.resolve_as_exception()
-                deal.save(update_fields=["status", "updated_at"])
-                logger.info("exception_resolve success", extra={"user_id": request.user.pk, "deal_id": str(pk), "resolution": resolution})
+                # guards（EX 類型、書在 E 狀態）與兩個 transition 都在 service 內
+                deal_service.resolve_exception_deal(
+                    deal, form.cleaned_data["resolution"]
+                )
+                logger.info("exception_resolve success", extra={"user_id": request.user.pk, "deal_id": str(pk), "resolution": form.cleaned_data["resolution"]})
                 messages.success(
                     request,
                     f"已處置為「{dict(ExceptionResolveForm.RESOLUTION_CHOICES).get(resolution)}」",
@@ -1047,43 +1012,28 @@ def deal_upload_photos(request, pk):
         messages.error(request, "只有持有者可以上傳照片。")
         return redirect("deals:detail", pk)
 
-    # 流通性檢查：只有「開放傳遞」可上傳照片
-    if deal.shared_book.transferability != SharedBook.Transferability.TRANSFER:
-        messages.error(request, "只有「開放傳遞」的書籍可以上傳書況照片。")
-        return redirect("deals:detail", pk)
-
-    # 狀態檢查：必須是已面交狀態
-    if deal.status != Deal.Status.MEETED:
-        messages.error(request, "此交易狀態無法上傳照片。")
-        return redirect("deals:detail", pk)
-
     if request.method == "POST":
         form = DealPhotoUploadForm(request.POST, request.FILES)
         if form.is_valid():
-            photos = request.FILES.getlist("photos")
-            caption = form.cleaned_data.get("caption", "")
+            try:
+                # guards（開放傳遞、MEETED 狀態）在 service 內
+                created = deal_service.upload_deal_photos(
+                    deal,
+                    request.user,
+                    request.FILES.getlist("photos"),
+                    caption=form.cleaned_data.get("caption", ""),
+                )
+            except ValidationError as e:
+                logger.exception("deal_upload_photos validation error", extra={"user_id": request.user.pk, "deal_id": str(pk)})
+                messages.error(request, f"照片上傳失敗：{str(e)}")
+                return render(
+                    request,
+                    "deals/deal_upload_photos.html",
+                    {"form": form, "deal": deal},
+                )
 
-            for photo_file in photos:
-                try:
-                    processed = process_book_photo(photo_file)
-                    BookPhoto.objects.create(
-                        shared_book=deal.shared_book,
-                        deal=deal,
-                        uploader=request.user,
-                        photo=processed,
-                        caption=caption,
-                    )
-                except ValidationError as e:
-                    logger.exception("deal_upload_photos validation error", extra={"user_id": request.user.pk, "deal_id": str(pk)})
-                    messages.error(request, f"照片上傳失敗：{str(e)}")
-                    return render(
-                        request,
-                        "deals/deal_upload_photos.html",
-                        {"form": form, "deal": deal},
-                    )
-
-            logger.info("deal_upload_photos success", extra={"user_id": request.user.pk, "deal_id": str(pk), "photo_count": len(photos)})
-            messages.success(request, f"已上傳 {len(photos)} 張照片。")
+            logger.info("deal_upload_photos success", extra={"user_id": request.user.pk, "deal_id": str(pk), "photo_count": len(created)})
+            messages.success(request, f"已上傳 {len(created)} 張照片。")
             return redirect("deals:detail", pk)
     else:
         form = DealPhotoUploadForm()

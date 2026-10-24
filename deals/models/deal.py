@@ -143,19 +143,19 @@ class Deal(FSMModelMixin, UpdatableModel):
         })
         shared_book = self.shared_book
 
-        # BR-15: 拒絕同一本書的其他申請
-        auto_cancelled = list(
+        # BR-15: 拒絕同一本書的其他申請。
+        # 逐筆走已宣告的 cancel() 轉換（各自觸發取消通知與還書狀態副作用），
+        # 不使用 queryset.update 批量繞過 FSM。
+        # _auto_cancelled_deals 僅供 accept_deal 記錄 DEAL_SUPERSEDED 稽核事件。
+        self._auto_cancelled_deals = list(
             Deal.objects.filter(
                 shared_book=shared_book,
                 status=Deal.Status.REQUESTED,
             ).exclude(pk=self.pk)
         )
-        Deal.objects.filter(
-            shared_book=shared_book,
-            status=Deal.Status.REQUESTED,
-        ).exclude(pk=self.pk).update(status=Deal.Status.CANCELLED)
-
-        self._auto_cancelled_deals = auto_cancelled
+        for sibling in self._auto_cancelled_deals:
+            sibling.auto_cancel()
+            sibling.save(update_fields=["status", "updated_at"])
 
         # 更新書籍狀態為 RESERVED (使用 FSM 方法)
         shared_book.reserve()
@@ -246,17 +246,14 @@ class Deal(FSMModelMixin, UpdatableModel):
             # 從申請者(手中有書)交給回應者(Owner)
             shared_book.keeper = self.responder
 
-        # 更新書籍狀態 - 使用 FSM 方法
+        # 更新書籍狀態 - 使用 FSM 方法（MEET_STATUS_MAP 只產生 O/S/E）
         new_status = MEET_STATUS_MAP.get(self.deal_type)
-        if new_status:
-            if new_status == SharedBook.Status.OCCUPIED:
-                shared_book.mark_as_borrowed()
-            elif new_status == SharedBook.Status.SUSPENDED:
-                shared_book.mark_as_suspended()
-            elif new_status == SharedBook.Status.EXCEPTION:
-                shared_book.declare_exception()
-            else:
-                shared_book.status = new_status
+        if new_status == SharedBook.Status.OCCUPIED:
+            shared_book.mark_as_borrowed()
+        elif new_status == SharedBook.Status.SUSPENDED:
+            shared_book.mark_as_suspended()
+        elif new_status == SharedBook.Status.EXCEPTION:
+            shared_book.declare_exception()
 
         shared_book.save()
 
@@ -265,6 +262,29 @@ class Deal(FSMModelMixin, UpdatableModel):
             self.due_date = timezone.now().date() + timedelta(
                 days=shared_book.loan_duration_days
             )
+
+    @transition(
+        field=status,
+        source=Status.REQUESTED,
+        target=Status.CANCELLED,
+    )
+    def auto_cancel(self):
+        """
+        被 BR-15 自動取代而取消（同書另一申請被接受）。
+
+        狀態轉換：REQUESTED → CANCELLED
+        副作用（由 signal 處理）：
+        - 通知被取消的申請者
+
+        注意：不恢復書籍狀態——書即將被 reserve()，
+        也不得跑 cancel() 的還書邏輯。
+        """
+        logger.info("FSM transition", extra={
+            "model": self.__class__.__name__,
+            "pk": str(self.pk),
+            "from": self.status,
+            "to": Deal.Status.CANCELLED,
+        })
 
     def _both_rated(self):
         """FSM 條件：雙方都已評價。"""

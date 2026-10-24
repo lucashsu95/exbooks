@@ -34,6 +34,8 @@ def handle_deal_state_change(sender, instance, name, source, target, **kwargs):
         _handle_accept(instance)
     elif name == "decline":
         _handle_decline(instance)
+    elif name == "auto_cancel":
+        _handle_auto_cancel(instance)
     elif name == "cancel_request":
         _handle_cancel_request(instance)
     elif name == "complete_meeting":
@@ -52,16 +54,19 @@ def handle_deal_state_change(sender, instance, name, source, target, **kwargs):
 def _handle_accept(deal):
     """
     處理接受交易後的副作用。
+
+    被自動取消的 sibling 通知由它們各自的 cancel() 轉換觸發
+    （見 Deal.accept），此處不再重複發送。
     """
     transaction.on_commit(lambda: notify_deal_responded(deal))
 
-    # 通知被自動取消的申請者
-    if hasattr(deal, "_auto_cancelled_deals"):
-        for cancelled_deal in deal._auto_cancelled_deals:
-            # capture local variable in lambda
-            transaction.on_commit(
-                lambda cd=cancelled_deal: notify_deal_cancelled(cd, deal.responder)
-            )
+
+def _handle_auto_cancel(deal):
+    """
+    處理 BR-15 自動取代取消的副作用：通知被取消的申請者。
+    （cancelled_by 傳 responder，故收件人為 applicant）
+    """
+    transaction.on_commit(lambda: notify_deal_cancelled(deal, deal.responder))
 
 
 def _handle_decline(deal):

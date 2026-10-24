@@ -329,6 +329,14 @@ def test_e2e_observability_evidence(capture_three_tier_logs, setup_users, setup_
 
     emit_system_log(trace_id, logging.INFO, f"Deal due_date updated: {deal.due_date}", deal_id=deal_id)
 
+    # ─── Step 5.5: 雙方互評（confirm_return 前置：一般模式需 both_parties_rated） ───
+    from deals.services.rating_service import create_rating
+
+    create_rating(deal, deal.applicant, 5, 5, 5, "e2e 證據測試評價")
+    create_rating(deal, deal.responder, 5, 5, 5, "e2e 證據測試評價")
+    deal.refresh_from_db()
+    print(f"Both parties rated: applicant_rated={deal.applicant_rated}, responder_rated={deal.responder_rated}")
+
     # ─── Step 6: 確認歸還 (由 responder 執行，即原書主) ───
     # 面交後 keeper 變為 applicant，但確認歸還權限是 responder (原 owner)
     deal.refresh_from_db()

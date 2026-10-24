@@ -48,11 +48,9 @@ class DealViewSet(viewsets.ModelViewSet):
         try:
             deal = deal_service.create_deal(
                 applicant=request.user,
-                shared_book_id=serializer.validated_data["shared_book"].id,
+                shared_book=serializer.validated_data["shared_book"],
                 deal_type=serializer.validated_data["deal_type"],
-                book_set_id=serializer.validated_data.get("book_set").id
-                if serializer.validated_data.get("book_set")
-                else None,
+                book_set=serializer.validated_data.get("book_set"),
                 loan_duration_days=serializer.validated_data.get("loan_duration_days"),
                 meeting_location=serializer.validated_data.get("meeting_location", ""),
                 meeting_time=serializer.validated_data.get("meeting_time"),
@@ -73,7 +71,7 @@ class DealViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def accept(self, request, pk=None):
         deal = self.get_object()
-        if deal.responder != request.user:
+        if not request.user.has_perm("deals.can_accept_deal", deal):
             return Response(
                 {"error": "Only the responder can accept the deal."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -90,7 +88,7 @@ class DealViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def decline(self, request, pk=None):
         deal = self.get_object()
-        if deal.responder != request.user:
+        if not request.user.has_perm("deals.can_decline_deal", deal):
             return Response(
                 {"error": "Only the responder can decline the deal."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -107,9 +105,9 @@ class DealViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
         deal = self.get_object()
-        if deal.applicant != request.user and deal.responder != request.user:
+        if not request.user.has_perm("deals.can_cancel_deal", deal):
             return Response(
-                {"error": "You are not a party to this deal."},
+                {"error": "Only the applicant can cancel the deal."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -124,6 +122,11 @@ class DealViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def complete_meeting(self, request, pk=None):
         deal = self.get_object()
+        if not request.user.has_perm("deals.can_complete_meeting", deal):
+            return Response(
+                {"error": "You are not a party to this deal."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         try:
             deal_service.complete_meeting(deal)
             return Response(
@@ -263,7 +266,7 @@ class RatingViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # Ensure rater is part of the deal
         deal = serializer.validated_data["deal"]
-        if self.request.user not in [deal.applicant, deal.responder]:
+        if not self.request.user.has_perm("deals.can_rate_deal", deal):
             from rest_framework.exceptions import PermissionDenied
 
             raise PermissionDenied("Only a party to the deal can provide a rating.")
