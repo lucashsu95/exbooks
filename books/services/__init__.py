@@ -1,6 +1,9 @@
 from .book_service import (
     list_book,
     suspend_book,
+    publish_book,
+    update_book,
+    toggle_listing,
     validate_book_set_completeness,
     declare_exception,
     resolve_exception,
@@ -21,6 +24,9 @@ __all__ = [
     # book_service
     "list_book",
     "suspend_book",
+    "publish_book",
+    "update_book",
+    "toggle_listing",
     "validate_book_set_completeness",
     "declare_exception",
     "resolve_exception",

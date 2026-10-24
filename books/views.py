@@ -11,15 +11,14 @@ from django.utils import timezone
 from django.http import HttpResponse, FileResponse
 from django.views.decorators.http import require_GET, require_POST
 from django.core.paginator import Paginator
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.conf import settings
 from django.core.files.storage import default_storage
 
 from .models import SharedBook, OfficialBook, BookPhoto
 from .services.book_query_service import get_hot_books
 from .services.isbn_service import lookup_by_isbn
-from .services.book_service import list_book, suspend_book
-from .services import process_book_photo
+from .services.book_service import publish_book, update_book, toggle_listing
 from .forms import BookSearchForm
 
 
@@ -276,85 +275,20 @@ def book_add(request):
         form = BookAddForm(request.POST, request.FILES)
         if form.is_valid():
             isbn = form.cleaned_data["isbn"]
-            title = form.cleaned_data["title"]
-            author = form.cleaned_data["author"]
-            publisher = form.cleaned_data["publisher"]
-            category = form.cleaned_data["category"]
-            cover_url = request.POST.get("cover_url", "").strip()
-
             try:
-                with transaction.atomic():
-                    off_book, created = OfficialBook.objects.get_or_create(
-                        isbn=isbn,
-                        defaults={
-                            "title": title,
-                            "author": author,
-                            "publisher": publisher,
-                            "category": category,
-                        },
-                    )
-
-                    if not created:
-                        off_book.title = title
-                        off_book.author = author
-                        off_book.publisher = publisher
-                        off_book.category = category
-                        off_book.save(
-                            update_fields=[
-                                "title",
-                                "author",
-                                "publisher",
-                                "category",
-                                "updated_at",
-                            ]
-                        )
-
-                    uploaded_cover = request.FILES.get("cover_image")
-                    if uploaded_cover:
-                        off_book.cover_image.save(
-                            uploaded_cover.name, uploaded_cover, save=True
-                        )
-                    elif cover_url and not off_book.cover_image:
-                        try:
-                            import httpx
-                            from django.core.files.base import ContentFile
-                            import os
-
-                            logger.info("book_add downloading cover", extra={"user_id": request.user.pk, "isbn": isbn, "cover_url": cover_url})
-                            resp = httpx.get(
-                                cover_url, timeout=10, follow_redirects=True
-                            )
-                            resp.raise_for_status()
-                            ext = os.path.splitext(cover_url.split("?")[0])[1] or ".jpg"
-                            filename = f"{off_book.pk}{ext}"
-                            off_book.cover_image.save(
-                                filename, ContentFile(resp.content), save=True
-                            )
-                        except Exception:
-                            logger.exception("book_add cover download failed", extra={"user_id": request.user.pk, "isbn": isbn})
-                            pass
-
-                    shared = form.save(commit=False)
-                    shared.official_book = off_book
-                    shared.owner = request.user
-                    shared.keeper = request.user
-                    shared.status = SharedBook.Status.TRANSFERABLE
-                    shared.listed_at = timezone.now()
-                    shared.save()
-
-                    for image in request.FILES.getlist("photos"):
-                        processed = process_book_photo(image)
-                        BookPhoto.objects.create(
-                            shared_book=shared,
-                            uploader=request.user,
-                            photo=processed,
-                        )
+                shared = publish_book(
+                    request.user,
+                    form.cleaned_data,
+                    photos=request.FILES.getlist("photos"),
+                    cover=request.FILES.get("cover_image"),
+                    cover_url=request.POST.get("cover_url", "").strip(),
+                )
             except ValidationError as e:
                 logger.exception("book_add validation error", extra={"user_id": request.user.pk, "isbn": isbn})
                 messages.error(request, str(e))
                 return render(request, "books/book_add.html", {"form": form})
 
-            logger.info("book_add success", extra={"user_id": request.user.pk, "shared_book_id": str(shared.pk), "isbn": isbn, "title": title})
+            logger.info("book_add success", extra={"user_id": request.user.pk, "shared_book_id": str(shared.pk), "isbn": isbn})
             messages.success(request, "書籍已成功上架分享！")
             return redirect("books:bookshelf")
         messages.error(request, "書籍資料有誤，請檢查後再送出。")
@@ -417,23 +351,12 @@ def book_edit(request, pk):
         form = BookEditForm(request.POST, request.FILES, instance=book, initial=initial)
         if form.is_valid():
             try:
-                with transaction.atomic():
-                    official_book = book.official_book
-                    official_book.title = form.cleaned_data["title"]
-                    official_book.author = form.cleaned_data["author"]
-                    official_book.publisher = form.cleaned_data["publisher"]
-                    official_book.category = form.cleaned_data["category"]
-                    official_book.save()
-
-                    shared_book = form.save()
-
-                    for image in request.FILES.getlist("photos"):
-                        processed = process_book_photo(image)
-                        BookPhoto.objects.create(
-                            shared_book=shared_book,
-                            uploader=request.user,
-                            photo=processed,
-                        )
+                update_book(
+                    book,
+                    request.user,
+                    form.cleaned_data,
+                    photos=request.FILES.getlist("photos"),
+                )
             except ValidationError as e:
                 logger.exception("book_edit validation error", extra={"user_id": request.user.pk, "book_pk": str(pk)})
                 messages.error(request, str(e))
@@ -536,16 +459,20 @@ def toggle_status(request, pk):
 
     book = get_object_or_404(SharedBook, pk=pk, owner=request.user)
     old_status = book.status
-    if book.status == SharedBook.Status.SUSPENDED:
-        list_book(book)
-        messages.success(request, "書籍已開放借閱")
-    elif book.status == SharedBook.Status.TRANSFERABLE:
-        suspend_book(book)
-        messages.success(request, "書籍已暫停借閱")
-    else:
+    try:
+        new_status = toggle_listing(book, request.user)
+    except PermissionDenied:
+        # 與開頭的 trust_level guard 相同的規則；defense in depth
+        messages.error(request, "新手等級 (Level 0) 尚無權限切換書籍狀態。")
+        return HttpResponse("新手等級尚無權限", status=403)
+    except ValidationError:
         messages.error(request, "書籍狀態無法切換")
         return HttpResponse("書籍狀態無法切換", status=400)
-    logger.info("toggle_status", extra={"user_id": request.user.pk, "book_pk": str(pk), "old_status": old_status, "new_status": book.status})
+    messages.success(
+        request,
+        "書籍已開放借閱" if new_status == SharedBook.Status.TRANSFERABLE else "書籍已暫停借閱",
+    )
+    logger.info("toggle_status", extra={"user_id": request.user.pk, "book_pk": str(pk), "old_status": old_status, "new_status": new_status})
     return render(request, "books/partials/status_toggle.html", {"book": book})
 
 
@@ -659,36 +586,12 @@ def wishlist_remove(request, pk):
 @login_required
 def due_soon_list(request):
     """即將到期提醒：列出即將到期的借閱書籍"""
-    from deals.models import Deal
-    from datetime import timedelta
+    from deals.services.overdue_service import get_due_soon_deals
 
     remind_days = int(request.GET.get("days", 7))
-    now = timezone.now()
-    deadline = now + timedelta(days=remind_days)
     logger.info("due_soon_list", extra={"user_id": request.user.pk, "remind_days": remind_days})
 
-    due_soon_deals = (
-        Deal.objects.filter(
-            applicant=request.user,
-            status=Deal.Status.MEETED,
-            due_date__lte=deadline,
-            due_date__gt=now,
-        )
-        .select_related("shared_book__official_book", "responder__profile")
-        .order_by("due_date")
-    )
-
-    # 計算剩餘天數
-    deals_with_days_left = []
-    for deal in due_soon_deals:
-        days_left = (deal.due_date - now).days
-        deals_with_days_left.append(
-            {
-                "deal": deal,
-                "days_left": days_left,
-                "is_overdue": days_left <= 0,
-            }
-        )
+    deals_with_days_left = get_due_soon_deals(request.user, days=remind_days)
 
     context = {
         "deals_with_days_left": deals_with_days_left,
