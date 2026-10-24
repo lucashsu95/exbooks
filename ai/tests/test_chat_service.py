@@ -1,23 +1,28 @@
-from unittest.mock import MagicMock, patch
+"""
+ChatService 測試 — 透過 Transport seam 注入 ScriptedTransport fake，
+不再 mock 私有屬性。
+"""
 
-from ai.services.gemini_service import GeminiService, GeminiResponse
+from unittest.mock import patch
+
+from ai_client import ChatResponse
+
+from ai.services.chat_service import AIResponse, ChatService
+from ai.tests.fakes import make_client
 
 
-class TestGeminiService:
+class TestChatService:
     def test_build_tools_openai_format(self):
-        """Ensure ToolRegistry tools are correctly converted to OpenAI format."""
-        service = GeminiService(api_key="test_key")
+        """ToolRegistry tools 轉為 OpenAI function format。"""
+        service = ChatService()
         tools = service._build_tools()
 
-        # We expect at least the 3 predefined tools
         assert len(tools) >= 3
-
         tool_names = [t["function"]["name"] for t in tools]
         assert "get_user_books" in tool_names
         assert "get_borrowing_status" in tool_names
         assert "request_renewal" in tool_names
 
-        # Check structure of one tool
         get_books = next(
             t["function"] for t in tools if t["function"]["name"] == "get_user_books"
         )
@@ -25,74 +30,82 @@ class TestGeminiService:
         assert "parameters" in get_books
 
     def test_mock_response_when_no_api_key(self, monkeypatch):
-        """Without VLLM_API_KEY the service returns a mock response."""
+        """無注入 client 且無 VLLM_API_KEY → mock 回應。"""
         monkeypatch.delenv("VLLM_API_KEY", raising=False)
-        service = GeminiService()
+        service = ChatService()
         response = service.chat(user_id=1, message="Hello", history=[])
 
-        assert isinstance(response, GeminiResponse)
+        assert isinstance(response, AIResponse)
         assert "Hello" in response.content
         assert response.tool_calls == []
 
-    def test_chat_uses_sdk_client(self):
-        """With an API key the service routes through the ai-client SDK."""
-        service = GeminiService(api_key="test_key")
-
-        mock_sdk_response = MagicMock()
-        mock_sdk_response.content = "Hi there"
-        mock_sdk_response.tool_calls = None
-        service._client = MagicMock()
-        service._client.chat.return_value = mock_sdk_response
+    def test_chat_routes_through_injected_transport(self):
+        """注入 client 後，request 經由 ScriptedTransport，可斷言 request shape。"""
+        client, transport = make_client(
+            [ChatResponse(content="Hi there", tool_calls=None)]
+        )
+        service = ChatService(client=client)
 
         response = service.chat(user_id=1, message="Hi", history=[])
 
         assert response.content == "Hi there"
         assert response.tool_calls == []
-        service._client.chat.assert_called_once()
-        kwargs = service._client.chat.call_args.kwargs
-        assert kwargs["temperature"] == 0.7
-        assert kwargs["tools"]  # ToolRegistry tools forwarded
-        assert kwargs["messages"][0].role == "system"
+        assert len(transport.requests) == 1
+        req = transport.requests[0]
+        assert req["temperature"] == 0.7
+        assert req["tools"]  # ToolRegistry tools 有轉發
+        assert req["messages"][0].role == "system"
 
     def test_chat_parses_tool_calls(self):
-        """Tool calls from the SDK response are parsed into name/args dicts."""
-        service = GeminiService(api_key="test_key")
-
-        mock_sdk_response = MagicMock()
-        mock_sdk_response.content = ""
-        mock_sdk_response.tool_calls = [
-            {
-                "id": "call_1",
-                "type": "function",
-                "function": {
-                    "name": "get_user_books",
-                    "arguments": '{"status": "OWNED"}',
-                },
-            }
-        ]
-        service._client = MagicMock()
-        service._client.chat.return_value = mock_sdk_response
+        """SDK 回應的 tool_calls 解析為 name/args dicts。"""
+        client, _ = make_client(
+            [
+                ChatResponse(
+                    content="",
+                    tool_calls=[
+                        {
+                            "id": "call_1",
+                            "type": "function",
+                            "function": {
+                                "name": "get_user_books",
+                                "arguments": '{"status": "OWNED"}',
+                            },
+                        }
+                    ],
+                )
+            ]
+        )
+        service = ChatService(client=client)
 
         response = service.chat(user_id=1, message="My books", history=[])
 
-        assert response.tool_calls == [{"name": "get_user_books", "args": {"status": "OWNED"}}]
+        assert response.tool_calls == [
+            {"name": "get_user_books", "args": {"status": "OWNED"}}
+        ]
+
+    def test_easter_egg_bypasses_transport(self):
+        """彩蛋訊息直接回傳，不打 provider。"""
+        client, transport = make_client([])
+        service = ChatService(client=client)
+
+        response = service.chat(user_id=1, message="喵", history=[])
+
+        assert "彩蛋" in response.content
+        assert transport.requests == []
 
     @patch("ai.services.tool_registry.ToolRegistry.get_tool")
     def test_handle_function_call(self, mock_get_tool):
-        """Test function call execution through service."""
-        mock_tool = MagicMock()
+        mock_tool = mock_get_tool.return_value
         mock_tool.func.return_value = "Success"
-        mock_get_tool.return_value = mock_tool
 
-        service = GeminiService(api_key="test_key")
+        service = ChatService()
         result = service._handle_function_call("test_tool", {"arg1": "val1"})
 
         assert result == "Success"
         mock_tool.func.assert_called_once_with(arg1="val1")
 
     def test_handle_function_call_not_found(self):
-        """Test handling of non-existent tools."""
-        service = GeminiService(api_key="test_key")
+        service = ChatService()
         result = service._handle_function_call("non_existent", {})
         assert "Error" in result
         assert "non_existent" in result
