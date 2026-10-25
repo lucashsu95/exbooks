@@ -30,4 +30,5 @@ def test_custom_404_page_renders():
     response = client.get("/definitely-missing/")
 
     assert response.status_code == 404
-    assert "找不到你要的頁面" in response.content.decode("utf-8")
+    # 斷言頁面標題（404 頁為貓咪主題，見 core/templates/404.html）
+    assert "找不到頁面｜Exbooks" in response.content.decode("utf-8")
