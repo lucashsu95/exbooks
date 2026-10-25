@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CI/CD Pipeline 流程 — Exbooks</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Work+Sans:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Noto+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f2f2f7;   /* iOS-grey */
+      --color-ink:     #0f172a;   /* slate-900 */
+      --color-muted:   #475569;   /* slate-600 */
+      --color-soft:    #526175;
+      --color-accent:  #0f766e;   /* teal-700 */
+      --font-sans:     'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', 'Noto Serif TC', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .frame { max-width: 1200px; width: 100%; }
+    /* The SVG holds its readable width (min-width == the viewBox width). This
+       wrapper lets a narrow screen scroll the diagram instead of the page. */
+    .diagram-container { width: 100%; overflow-x: auto; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+
+    svg { width: 100%; min-width: 960px; display: block; }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Flowchart · Exbooks</p>
+    <h1>CI/CD Pipeline 流程</h1>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 960 880" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cicd-flow-title cicd-flow-desc">
+        <title id="cicd-flow-title">CI/CD Pipeline 流程</title>
+        <desc id="cicd-flow-desc">git push 觸發 GitHub webhook，由 VM 上的 self-hosted runner 依序執行 lint 與 test；push 到 main 才繼續 deploy（docker compose build + up）並上線，PR 則在 test 後結束、不觸發部署。</desc>
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#475569"/></marker>
+          <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0f766e"/></marker>
+          <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1d4ed8"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f2f2f7"/>
+
+        <!-- ============ ARROWS (drawn before boxes) ============ -->
+
+        <!-- Developer → GitHub -->
+        <line x1="540" y1="104" x2="540" y2="134" stroke="#475569" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="552" y="110" width="64" height="16" fill="#f2f2f7"/>
+        <text x="584" y="122" text-anchor="middle" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="12" font-weight="500" fill="#526175">webhook</text>
+
+        <!-- GitHub → Runner -->
+        <line x1="540" y1="196" x2="540" y2="226" stroke="#475569" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+        <!-- Runner → lint -->
+        <line x1="540" y1="288" x2="540" y2="326" stroke="#475569" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+        <!-- lint → test -->
+        <line x1="540" y1="388" x2="540" y2="418" stroke="#475569" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+        <!-- test → decision -->
+        <line x1="540" y1="480" x2="540" y2="514" stroke="#475569" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+        <!-- decision → PR end (left) -->
+        <line x1="432" y1="564" x2="304" y2="564" stroke="#475569" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="344" y="540" width="48" height="16" fill="#f2f2f7"/>
+        <text x="368" y="552" text-anchor="middle" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" letter-spacing="0.06em" fill="#526175">PR</text>
+
+        <!-- decision → deploy (main) -->
+        <line x1="540" y1="608" x2="540" y2="642" stroke="#475569" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="552" y="616" width="52" height="16" fill="#f2f2f7"/>
+        <text x="578" y="628" text-anchor="middle" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" letter-spacing="0.06em" fill="#526175">MAIN</text>
+
+        <!-- deploy → production -->
+        <line x1="540" y1="704" x2="540" y2="738" stroke="#475569" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+        <!-- ============ NODES ============ -->
+
+        <!-- Developer (start, oval) -->
+        <ellipse cx="540" cy="76" rx="120" ry="28" fill="rgba(71,85,105,0.10)" stroke="#526175" stroke-width="1"/>
+        <text x="540" y="72" text-anchor="middle" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="12" font-weight="600" fill="#0f172a">開發者</text>
+        <text x="540" y="88" text-anchor="middle" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" fill="#475569">git push</text>
+
+        <!-- GitHub (step) -->
+        <rect x="452" y="140" width="176" height="56" rx="6" fill="#ffffff" stroke="#0f172a" stroke-width="1"/>
+        <text x="540" y="164" text-anchor="middle" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="12" font-weight="600" fill="#0f172a">GitHub</text>
+        <text x="540" y="180" text-anchor="middle" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" fill="#475569">Actions · webhook</text>
+
+        <!-- Runner (focal / step) -->
+        <rect x="444" y="232" width="192" height="56" rx="6" fill="rgba(13,148,136,0.08)" stroke="#0f766e" stroke-width="1.2"/>
+        <text x="540" y="256" text-anchor="middle" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="12" font-weight="600" fill="#0f172a">Self-hosted Runner</text>
+        <text x="540" y="272" text-anchor="middle" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" fill="#475569">on VM · systemd</text>
+
+        <!-- lint (step) -->
+        <rect x="464" y="332" width="152" height="56" rx="6" fill="#ffffff" stroke="#0f172a" stroke-width="1"/>
+        <text x="540" y="356" text-anchor="middle" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="12" font-weight="600" fill="#0f172a">lint</text>
+        <text x="540" y="372" text-anchor="middle" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" fill="#475569">ruff check .</text>
+
+        <!-- test (step) -->
+        <rect x="464" y="424" width="152" height="56" rx="6" fill="#ffffff" stroke="#0f172a" stroke-width="1"/>
+        <text x="540" y="448" text-anchor="middle" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="12" font-weight="600" fill="#0f172a">test</text>
+        <text x="540" y="464" text-anchor="middle" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" fill="#475569">pytest</text>
+
+        <!-- decision (diamond) -->
+        <polygon points="540,520 648,564 540,608 432,564" fill="#ffffff" stroke="#0f172a" stroke-width="1"/>
+        <text x="540" y="568" text-anchor="middle" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="12" font-weight="500" fill="#0f172a">push 到 main？</text>
+
+        <!-- PR end (terminal, oval) -->
+        <ellipse cx="200" cy="564" rx="100" ry="28" fill="rgba(15,23,42,0.03)" stroke="rgba(15,23,42,0.30)" stroke-width="1"/>
+        <text x="200" y="560" text-anchor="middle" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="12" font-weight="600" fill="#0f172a">流程結束</text>
+        <text x="200" y="576" text-anchor="middle" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" fill="#475569">PR · no deploy</text>
+
+        <!-- deploy (step) -->
+        <rect x="432" y="648" width="216" height="56" rx="6" fill="#ffffff" stroke="#0f172a" stroke-width="1"/>
+        <text x="540" y="672" text-anchor="middle" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="12" font-weight="600" fill="#0f172a">deploy</text>
+        <text x="540" y="688" text-anchor="middle" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" fill="#475569">docker compose build + up</text>
+
+        <!-- production (end, oval) -->
+        <ellipse cx="540" cy="772" rx="88" ry="28" fill="rgba(71,85,105,0.10)" stroke="#526175" stroke-width="1"/>
+        <text x="540" y="768" text-anchor="middle" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="12" font-weight="600" fill="#0f172a">服務上線</text>
+        <text x="540" y="784" text-anchor="middle" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" fill="#475569">Nginx · :80</text>
+
+        <!-- ============ LEGEND (bottom strip) ============ -->
+        <line x1="40" y1="840" x2="920" y2="840" stroke="rgba(15,23,42,0.12)" stroke-width="1"/>
+        <ellipse cx="64" cy="858" rx="14" ry="9" fill="#f2f2f7" stroke="#526175" stroke-width="1"/>
+        <text x="88" y="863" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="11" fill="#475569">開始 / 結束</text>
+        <rect x="208" y="850" width="16" height="16" rx="3" fill="#ffffff" stroke="#0f172a" stroke-width="1"/>
+        <text x="232" y="863" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="11" fill="#475569">Pipeline 步驟</text>
+        <polygon points="380,850 396,858 380,866 364,858" fill="#ffffff" stroke="#0f172a" stroke-width="1"/>
+        <text x="404" y="863" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="11" fill="#475569">分支條件</text>
+        <rect x="520" y="850" width="16" height="16" rx="3" fill="rgba(13,148,136,0.08)" stroke="#0f766e" stroke-width="1"/>
+        <text x="544" y="863" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="11" fill="#475569">Self-hosted Runner</text>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>
