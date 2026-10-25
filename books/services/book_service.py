@@ -148,13 +148,17 @@ def publish_book(owner, data, photos=(), cover=None, cover_url=""):
     """
     發布（publish）：將一冊實體書上架為 SharedBook 並進入 TRANSFERABLE 狀態。
 
-    完整流程（單一事務）：
+    完整流程：
     1. OfficialBook 依 ISBN upsert
     2. 附封面（上傳檔優先，其次下載 cover_url；下載失敗不中斷）
     3. 建立 SharedBook（owner = keeper = 發布者，初始狀態 SUSPENDED）
     4. 寫入書況照片
     5. 透過 list_book() 走合法 FSM 通道 S → T
        （副作用：記錄上架時間、通知願望清單使用者）
+
+    步驟 1–4 為單一事務（失敗全回滾）；步驟 5 在事務外執行
+    （通知是 Celery 非同步、不可回滾的副作用）。步驟 5 失敗時書留在
+    SUSPENDED，發布者可用 toggle_listing 重新開放。
 
     Args:
         owner: 發布者（同時成為 owner 與 keeper）
@@ -221,6 +225,28 @@ def publish_book(owner, data, photos=(), cover=None, cover_url=""):
     return shared
 
 
+# ============================================================================
+# Level 0 權限守衛（TrustLevel 編輯/切換規則的單一來源，見 GLOSSARY）
+# ============================================================================
+
+BOOK_EDIT_DENIED = (
+    "新手等級 (Level 0) 尚無權限編輯書籍資訊，請多參與交易提升等級。"
+)
+BOOK_TOGGLE_DENIED = "新手等級 (Level 0) 尚無權限切換書籍狀態。"
+
+
+def assert_book_edit_permission(user):
+    """業務規則：Level 0 使用者不能編輯書籍資訊（book_edit / update_book 共用）。"""
+    if user.profile.trust_level == 0:
+        raise PermissionDenied(BOOK_EDIT_DENIED)
+
+
+def assert_book_toggle_permission(user):
+    """業務規則：Level 0 使用者不能切換書籍狀態（toggle_status / toggle_listing 共用）。"""
+    if user.profile.trust_level == 0:
+        raise PermissionDenied(BOOK_TOGGLE_DENIED)
+
+
 def update_book(book, user, data, photos=()):
     """
     更新書籍資訊（OfficialBook 基本資料 + SharedBook 欄位 + 新增照片）。
@@ -241,10 +267,7 @@ def update_book(book, user, data, photos=()):
         PermissionDenied: Level 0 使用者
         ValidationError: 照片驗證/處理失敗
     """
-    if user.profile.trust_level == 0:
-        raise PermissionDenied(
-            "新手等級 (Level 0) 尚無權限編輯書籍資訊，請多參與交易提升等級。"
-        )
+    assert_book_edit_permission(user)
 
     with transaction.atomic():
         official_book = book.official_book
@@ -285,8 +308,7 @@ def toggle_listing(book, user):
         PermissionDenied: Level 0 使用者
         ValidationError: 目前狀態不可切換
     """
-    if user.profile.trust_level == 0:
-        raise PermissionDenied("新手等級 (Level 0) 尚無權限切換書籍狀態。")
+    assert_book_toggle_permission(user)
 
     if book.status == SharedBook.Status.SUSPENDED:
         list_book(book)

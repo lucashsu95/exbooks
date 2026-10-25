@@ -1,7 +1,6 @@
 import json
 import logging
 import time
-from typing import Generator
 
 from django.http import JsonResponse, StreamingHttpResponse
 from django.views import View
@@ -51,12 +50,9 @@ class ChatSSEView(LoginRequiredMixin, View):
         # 編排（tool loop / consent / follow-up / history）在 orchestrator；
         # view 只負責 HTTP framing。
         orchestrator = ChatOrchestrator()
-
-        def stream_response() -> Generator[str, None, None]:
-            yield from orchestrator.stream(user=request.user, message=user_message)
-
         return StreamingHttpResponse(
-            stream_response(), content_type="text/event-stream"
+            orchestrator.stream(user=request.user, message=user_message),
+            content_type="text/event-stream",
         )
 
 

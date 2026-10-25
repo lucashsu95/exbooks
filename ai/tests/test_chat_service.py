@@ -3,8 +3,6 @@ ChatService 測試 — 透過 Transport seam 注入 ScriptedTransport fake，
 不再 mock 私有屬性。
 """
 
-from unittest.mock import patch
-
 from ai_client import ChatResponse
 
 from ai.services.chat_service import AIResponse, ChatService
@@ -92,20 +90,3 @@ class TestChatService:
 
         assert "彩蛋" in response.content
         assert transport.requests == []
-
-    @patch("ai.services.tool_registry.ToolRegistry.get_tool")
-    def test_handle_function_call(self, mock_get_tool):
-        mock_tool = mock_get_tool.return_value
-        mock_tool.func.return_value = "Success"
-
-        service = ChatService()
-        result = service._handle_function_call("test_tool", {"arg1": "val1"})
-
-        assert result == "Success"
-        mock_tool.func.assert_called_once_with(arg1="val1")
-
-    def test_handle_function_call_not_found(self):
-        service = ChatService()
-        result = service._handle_function_call("non_existent", {})
-        assert "Error" in result
-        assert "non_existent" in result

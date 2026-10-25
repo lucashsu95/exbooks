@@ -7,10 +7,10 @@
 """
 
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 from django.utils import timezone
 
-from deals.models import Deal
-from deals.services.overdue_service import batch_process_due_books
+from deals.services.overdue_service import batch_process_due_books, meeted_deals
 
 
 class Command(BaseCommand):
@@ -26,12 +26,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         dry_run = options["dry_run"]
 
-        # 查詢所有已到期且書籍仍為借閱中的交易
+        # 查詢所有已到期且書籍仍為借閱中的交易（BR-12 骨架，見 meeted_deals）
         today = timezone.now().date()
-        overdue_deals = Deal.objects.filter(
-            status=Deal.Status.MEETED,
-            due_date__lte=today,
-            shared_book__status="O",  # OCCUPIED
+        overdue_deals = meeted_deals(
+            Q(due_date__lte=today), book_must_be_occupied=True
         ).select_related("shared_book__official_book", "applicant", "responder")
 
         count = overdue_deals.count()

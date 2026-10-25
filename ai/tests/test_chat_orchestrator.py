@@ -143,7 +143,6 @@ def test_empty_content_fallback():
 class TestRequestRenewalOwnership:
     def test_non_party_rejected(self):
         user = UserFactory()
-        stranger = UserFactory()
         deal = DealFactory()  # applicant/responder 都不是 user
 
         from ai.services.tool_registry import request_renewal
@@ -160,6 +159,9 @@ class TestRequestRenewalOwnership:
 
     def test_missing_deal(self):
         user = UserFactory()
+        from django.core.exceptions import ValidationError
+
         from ai.services.tool_registry import request_renewal
 
-        assert "不存在" in request_renewal(user, 999999)
+        with pytest.raises(ValidationError, match="不存在"):
+            request_renewal(user, 999999)
