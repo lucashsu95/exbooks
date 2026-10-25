@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from books.models.official_book import OfficialBook
 from books.models.shared_book import SharedBook
 from deals.models.deal import Deal
+from deals.models.deal_message import DealMessage
 
 User = get_user_model()
 
@@ -59,6 +60,52 @@ class TestDealsAPI:
         results = response.data.get("results", response.data)
         assert len(results) >= 1
         assert str(results[0]["id"]) == str(self.deal.id)
+
+    def test_create_message_via_service(self):
+        token = self._get_token(self.user_a)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+
+        url = reverse("deals:message-list")
+        response = self.client.post(
+            url, {"deal": str(self.deal.pk), "content": "面交見"}
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert DealMessage.objects.filter(
+            deal=self.deal, sender=self.user_a, content="面交見"
+        ).exists()
+
+    def test_create_message_rejects_non_party(self):
+        outsider = User.objects.create_user(
+            username="user_c", password="password123", email="c@example.com"
+        )
+        token = self._get_token(outsider)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+
+        url = reverse("deals:message-list")
+        response = self.client.post(
+            url, {"deal": str(self.deal.pk), "content": "hi"}
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert not DealMessage.objects.filter(deal=self.deal).exists()
+
+    def test_create_message_rejects_finished_deal(self):
+        self.deal.decline()
+        self.deal.save()
+        self.deal.refresh_from_db()
+        assert self.deal.status == Deal.Status.CANCELLED
+
+        token = self._get_token(self.user_a)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+
+        url = reverse("deals:message-list")
+        response = self.client.post(
+            url, {"deal": str(self.deal.pk), "content": "too late"}
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert not DealMessage.objects.filter(deal=self.deal).exists()
 
     def test_complete_meeting(self):
         # Correctly transition to RESPONDED state using FSM method

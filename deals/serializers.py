@@ -3,7 +3,6 @@ from deals.models.deal import Deal
 from deals.models.loan_extension import LoanExtension
 from deals.models.deal_message import DealMessage
 from deals.models.notification import Notification
-from deals.models.rating import Rating
 
 
 class LoanExtensionSerializer(serializers.ModelSerializer):
@@ -84,24 +83,4 @@ class NotificationSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at"]
 
 
-class RatingSerializer(serializers.ModelSerializer):
-    rater_nickname = serializers.ReadOnlyField(source="rater.profile.nickname")
-    ratee_nickname = serializers.ReadOnlyField(source="ratee.profile.nickname")
-    average_score = serializers.ReadOnlyField()
 
-    class Meta:
-        model = Rating
-        fields = [
-            "id",
-            "deal",
-            "rater",
-            "rater_nickname",
-            "ratee",
-            "ratee_nickname",
-            "friendliness_score",
-            "punctuality_score",
-            "accuracy_score",
-            "comment",
-            "average_score",
-        ]
-        read_only_fields = ["id", "rater", "ratee"]
