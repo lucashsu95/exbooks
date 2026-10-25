@@ -75,6 +75,7 @@
                 src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
         <!-- Shared Styles -->
         <link rel="stylesheet" href="{% static 'css/shared.css' %}">
+        <link rel="stylesheet" href="{% static 'css/pixel-pet.css' %}">
         {% block extra_css %}
             <link rel="stylesheet" href="{% static 'css/book-ui.css' %}">
             <link rel="stylesheet" href="{% static 'css/deal-ui.css' %}">
@@ -276,7 +277,12 @@
                 {% include '_bottom_nav.html' %}
             {% endif %}
         {% endblock %}
+        <!-- 米豆 MeDou 像素小寵物（右下角浮動） -->
+        <div data-mipet-root
+             class="mipet-float{% if user.is_authenticated %} mipet-float--auth{% endif %}">
+        </div>
         <!-- Shared scripts -->
+        <script src="{% static 'js/pixel-pet.js' %}"></script>
         <script src="{% static 'js/shared.js' %}"></script>
         {% block extra_js %}{% endblock %}
 
