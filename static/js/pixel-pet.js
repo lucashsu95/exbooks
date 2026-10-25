@@ -97,7 +97,12 @@
   let errorTimer = null;
   let lastActivity = Date.now();
   let timer = null;
+  let openChatHandler = null; // 有 AI 聊天時，小版點擊開關聊天視窗（取代隨機反應）
   const roots = [];
+
+  // label 的單點來源：bindOpenChat 可能先於 buildRoot 執行（Alpine x-init 早於
+  // DOMContentLoaded），所以 buildRoot 與 bindOpenChat 都從這裡取
+  const smallLabel = () => NAME + (openChatHandler ? '，點擊開啟 AI 聊天' : '，點擊逗逗我');
 
   function renderAll() {
     const { f, dy, extras } = computeFrame();
@@ -273,12 +278,13 @@
     if (!large) {
       box.setAttribute('role', 'button');
       box.setAttribute('tabindex', '0');
-      box.setAttribute('aria-label', NAME + '，點擊逗逗我');
-      box.addEventListener('click', pet);
+      box.setAttribute('aria-label', smallLabel());
+      const activate = () => (openChatHandler ? openChatHandler() : pet());
+      box.addEventListener('click', activate);
       box.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          pet();
+          activate();
         }
       });
     }
@@ -288,6 +294,7 @@
       sprite: box.querySelector('.mipet-sprite'),
       shadow: box.querySelector('.mipet-shadow'),
       status: large ? box.querySelector('.mipet-status') : null,
+      small: !large,
     });
   }
 
@@ -307,5 +314,15 @@
   window.MiPet = {
     setState(s) { setState(s); },
     cheer() { cheer(); },
+    bindOpenChat(fn) {
+      openChatHandler = fn;
+      for (const r of roots) {
+        if (r.small) r.box.setAttribute('aria-label', smallLabel());
+      }
+    },
+    // SSE 離線紅點的 class 由本模組擁有，chat widget 只傳布林值
+    setSseOffline(off) {
+      document.documentElement.classList.toggle('mipet-sse-offline', !!off);
+    },
   };
 })();

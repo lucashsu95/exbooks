@@ -177,15 +177,9 @@ docker compose down -v
 
 ### 架構圖
 
-```
-┌──────────┐      ┌──────────────┐      ┌──────────┐
-│  Nginx   │─:80──▶│    Django     │─:3306▶│ MariaDB  │
-│ (alpine) │      │ (Gunicorn)   │      │ (10.11)  │
-└────┬─────┘      └──────────────┘      └──────────┘
-     │                    │
-  static/              media/
-  (volume)            (volume)
-```
+使用者請求經 Nginx 反向代理（`:80`）轉發給 Django 應用容器（Gunicorn，內部 `:8000`），再連線至 MariaDB 資料庫容器（內部 `:3306`）；Django 同時讀寫 `static` 與 `media` 兩個 volume。
+
+![Docker 部署架構圖](docs/diagrams/docker-deployment.png)
 
 ## CI/CD（Self-hosted Runner）
 
@@ -193,22 +187,9 @@ docker compose down -v
 
 ### 流程圖
 
-```
-開發者 git push
-    │
-    ▼
-GitHub 觸發 webhook
-    │
-    ▼
-VM 上的 Self-hosted Runner 接收任務
-    │
-    ├─ [1] lint    — ruff check .
-    ├─ [2] test    — pytest
-    └─ [3] deploy  — docker compose build + up
-    │
-    ▼
-服務上線（Nginx :80）
-```
+`git push` 觸發 GitHub webhook，由 VM 上的 Self-hosted Runner 依序執行 `lint`（ruff）與 `test`（pytest）；只有 push 到 `main` 才會繼續 `deploy`（docker compose build + up）並上線（Nginx `:80`），PR 則在 test 後結束、不觸發部署。
+
+![CI/CD Pipeline 流程圖](docs/diagrams/ci-cd-flow.png)
 
 ### VM 環境準備
 
