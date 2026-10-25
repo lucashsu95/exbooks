@@ -1,5 +1,6 @@
 import logging
 
+from core.error_messages import service_error_message
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 
@@ -291,7 +292,7 @@ def book_add(request):
                 )
             except ValidationError as e:
                 logger.exception("book_add validation error", extra={"user_id": request.user.pk, "isbn": isbn})
-                messages.error(request, str(e))
+                messages.error(request, service_error_message(e))
                 return render(request, "books/book_add.html", {"form": form})
 
             logger.info("book_add success", extra={"user_id": request.user.pk, "shared_book_id": str(shared.pk), "isbn": isbn})
@@ -341,7 +342,7 @@ def book_edit(request, pk):
     try:
         assert_book_edit_permission(request.user)
     except PermissionDenied as e:
-        messages.error(request, str(e))
+        messages.error(request, service_error_message(e))
         return redirect("books:detail", pk=pk)
 
     book = get_object_or_404(SharedBook, pk=pk, owner=request.user)
@@ -365,7 +366,7 @@ def book_edit(request, pk):
                 )
             except ValidationError as e:
                 logger.exception("book_edit validation error", extra={"user_id": request.user.pk, "book_pk": str(pk)})
-                messages.error(request, str(e))
+                messages.error(request, service_error_message(e))
                 return render(
                     request,
                     "books/book_edit.html",
@@ -462,7 +463,7 @@ def toggle_status(request, pk):
         assert_book_toggle_permission(request.user)
     except PermissionDenied as e:
         logger.warning("toggle_status forbidden (trust_level 0)", extra={"user_id": request.user.pk, "book_pk": str(pk)})
-        messages.error(request, str(e))
+        messages.error(request, service_error_message(e))
         return HttpResponse("新手等級尚無權限", status=403)
 
     book = get_object_or_404(SharedBook, pk=pk, owner=request.user)
@@ -554,7 +555,7 @@ def wishlist_toggle(request, pk):
             action = "added"
         except ValidationError as e:
             logger.warning("wishlist_toggle failed", extra={"user_id": request.user.pk, "official_book_pk": str(pk)})
-            messages.error(request, str(e))
+            messages.error(request, service_error_message(e))
             in_wishlist = False
             action = "failed"
 
@@ -581,7 +582,7 @@ def wishlist_remove(request, pk):
         messages.success(request, "已從願望書車移除")
     except ValidationError as e:
         logger.warning("wishlist_remove failed", extra={"user_id": request.user.pk, "official_book_pk": str(pk)})
-        messages.error(request, str(e))
+        messages.error(request, service_error_message(e))
 
     return redirect("books:wishlist")
 
@@ -709,7 +710,7 @@ def book_set_detail(request, pk):
         logger.info("book_set_detail", extra={"user_id": request.user.pk, "book_set_id": str(pk)})
     except Exception as e:
         logger.exception("book_set_detail failed", extra={"user_id": request.user.pk, "book_set_id": str(pk)})
-        messages.error(request, str(e))
+        messages.error(request, service_error_message(e))
         return redirect("books:book_set_list")
 
     books = book_set.books.select_related("official_book", "keeper").all()
@@ -733,7 +734,7 @@ def book_set_delete(request, pk):
             messages.success(request, "套書已刪除")
         except Exception as e:
             logger.exception("book_set_delete failed", extra={"user_id": request.user.pk, "book_set_id": str(pk)})
-            messages.error(request, str(e))
+            messages.error(request, service_error_message(e))
         return redirect("books:book_set_list")
 
     return render(
@@ -758,7 +759,7 @@ def book_set_add_book(request, pk):
             messages.success(request, f"已加入「{book.official_book.title}」")
         except Exception as e:
             logger.exception("book_set_add_book failed", extra={"user_id": request.user.pk, "book_set_id": str(pk), "shared_book_id": book_id})
-            messages.error(request, str(e))
+            messages.error(request, service_error_message(e))
 
     books = book_set.books.select_related("official_book").all()
     available_books = SharedBook.objects.filter(
@@ -786,7 +787,7 @@ def book_set_remove_book(request, pk, book_id):
         messages.success(request, f"已移除「{book.official_book.title}」")
     except Exception as e:
         logger.exception("book_set_remove_book failed", extra={"user_id": request.user.pk, "book_set_id": str(pk), "shared_book_id": str(book_id)})
-        messages.error(request, str(e))
+        messages.error(request, service_error_message(e))
 
     books = book_set.books.select_related("official_book").all()
     available_books = SharedBook.objects.filter(

@@ -96,6 +96,21 @@ SDK 不需要自己再做一次）。
 **建議修法**：`DealViewSet.create` 對 API 支援的 `deal_type` 設白名單，
 或為每類型在 `rules.py` 補 applicant predicate 並在 viewset 檢查。
 
+### F-8 · `_attach_cover` 直接抓取使用者輸入的 cover_url（SSRF，既有，建議 P1）
+
+**現象**：`books/services/book_service.py::_attach_cover` 對
+`book_add` 表單傳入的 `cover_url`（`request.POST`）直接
+`httpx.get(cover_url, follow_redirects=True)`，並把回應 body 寫成封面檔。
+攻擊者可指定內部位址（cloud metadata `169.254.169.254`、內部管理埠等），
+讓伺服器代抓，並透過回應內容與 redirect 鏈路徑讀探內部資源。
+
+**現況**：master 的 `book_add` view 已有相同寫法，C2 只是原樣搬進
+service 層，非本 PR regression。
+
+**建議修法**：`cover_url` 限制為 https 白名單網域（或已知封面服務）；
+以 httpx 自訂 transport / `event_hooks` 封鎖內部位址範圍與 localhost；
+redirect 需驗證最終 URL。
+
 ## Consequences
 
 - 這些項目的調查成本（定位、確認影響面）已完成，未來啟動時可直接看本檔。

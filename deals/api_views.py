@@ -18,6 +18,7 @@ from deals.serializers import (
     NotificationSerializer,
     RatingSerializer,
 )
+from core.error_messages import service_error_message
 from deals.services import deal_service, extension_service
 
 
@@ -60,7 +61,7 @@ class DealViewSet(viewsets.ModelViewSet):
                 self.get_serializer(deal).data, status=status.HTTP_201_CREATED
             )
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": service_error_message(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def get_queryset(self):
         return self.queryset.filter(
@@ -83,7 +84,7 @@ class DealViewSet(viewsets.ModelViewSet):
                 {"status": "Deal accepted successfully."}, status=status.HTTP_200_OK
             )
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": service_error_message(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["post"])
     def decline(self, request, pk=None):
@@ -100,7 +101,7 @@ class DealViewSet(viewsets.ModelViewSet):
                 {"status": "Deal declined successfully."}, status=status.HTTP_200_OK
             )
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": service_error_message(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
@@ -117,7 +118,7 @@ class DealViewSet(viewsets.ModelViewSet):
                 {"status": "Deal cancelled successfully."}, status=status.HTTP_200_OK
             )
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": service_error_message(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["post"])
     def complete_meeting(self, request, pk=None):
@@ -133,7 +134,7 @@ class DealViewSet(viewsets.ModelViewSet):
                 {"status": "Meeting marked as complete."}, status=status.HTTP_200_OK
             )
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": service_error_message(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoanExtensionViewSet(viewsets.ModelViewSet):
@@ -169,7 +170,7 @@ class LoanExtensionViewSet(viewsets.ModelViewSet):
         except Exception as e:
             from rest_framework.exceptions import ValidationError
 
-            raise ValidationError(str(e))
+            raise ValidationError(service_error_message(e))
 
     @action(detail=True, methods=["post"])
     def approve(self, request, pk=None):
@@ -180,7 +181,7 @@ class LoanExtensionViewSet(viewsets.ModelViewSet):
                 {"status": "Extension approved."}, status=status.HTTP_200_OK
             )
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": service_error_message(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["post"])
     def reject(self, request, pk=None):
@@ -192,7 +193,7 @@ class LoanExtensionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_200_OK,
             )
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": service_error_message(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class DealMessageViewSet(viewsets.ModelViewSet):

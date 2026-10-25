@@ -18,7 +18,9 @@ from django.core.paginator import Paginator
 from django.utils import timezone
 
 from books.models import SharedBook
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
+
+from core.error_messages import service_error_message
 from .forms import (
     DealApplicationForm,
     RatingForm,
@@ -69,7 +71,7 @@ def deal_create(request, book_id, deal_type):
                 return redirect("deals:detail", deal.id)
             except Exception as e:
                 logger.exception("deal_create failed", extra={"user_id": request.user.pk, "book_id": str(book_id), "deal_type": deal_type})
-                messages.error(request, str(e))
+                messages.error(request, service_error_message(e))
     else:
         profile = request.user.profile
         initial_note = ""
@@ -320,7 +322,7 @@ def deal_accept(request, pk):
         messages.success(request, "交易已接受！")
     except Exception as e:
         logger.exception("deal_accept failed", extra={"user_id": request.user.pk, "deal_id": str(pk)})
-        messages.error(request, str(e))
+        messages.error(request, service_error_message(e))
     return redirect("deals:detail", pk)
 
 
@@ -338,7 +340,7 @@ def deal_reject(request, pk):
         messages.success(request, "交易已拒絕。")
     except Exception as e:
         logger.exception("deal_reject failed", extra={"user_id": request.user.pk, "deal_id": str(pk)})
-        messages.error(request, str(e))
+        messages.error(request, service_error_message(e))
     return redirect("deals:detail", pk)
 
 
@@ -356,7 +358,7 @@ def deal_cancel(request, pk):
         messages.success(request, "交易已取消。")
     except Exception as e:
         logger.exception("deal_cancel failed", extra={"user_id": request.user.pk, "deal_id": str(pk)})
-        messages.error(request, str(e))
+        messages.error(request, service_error_message(e))
     return redirect("deals:list")
 
 
@@ -377,7 +379,7 @@ def deal_complete_meeting(request, pk):
         messages.success(request, "面交已完成！請進行評價。")
     except Exception as e:
         logger.exception("deal_complete_meeting failed", extra={"user_id": request.user.pk, "deal_id": str(pk)})
-        messages.error(request, str(e))
+        messages.error(request, service_error_message(e))
     return redirect("deals:detail", pk)
 
 
@@ -404,7 +406,7 @@ def deal_message_send(request, pk):
         deal_service.send_deal_message(deal, request.user, content)
     except ValidationError as e:
         return HttpResponse(
-            str(e), status=400, content_type="text/plain; charset=utf-8"
+            service_error_message(e), status=400, content_type="text/plain; charset=utf-8"
         )
 
     # 返回更新後的留言列表 partial
@@ -464,7 +466,7 @@ def rating_create(request, pk):
                 if "unique_deal_rater" in str(e):
                     messages.warning(request, "您已經評價過此交易，無法重複評價。")
                 else:
-                    messages.error(request, f"評價送出失敗: {str(e)}")
+                    messages.error(request, f"評價送出失敗: {service_error_message(e)}")
                 return redirect("deals:detail", pk)
         else:
             if form.errors:
@@ -659,7 +661,7 @@ def extension_request(request, deal_pk):
                 messages.success(request, "延長申請已送出！")
                 return redirect("deals:detail", deal_pk)
             except Exception as e:
-                messages.error(request, str(e))
+                messages.error(request, service_error_message(e))
     else:
         form = ExtensionRequestForm()
 
@@ -701,7 +703,7 @@ def extension_approve(request, extension_pk):
         messages.success(request, "延長申請已核准！")
     except Exception as e:
         logger.exception("extension_approve failed", extra={"user_id": request.user.pk, "extension_id": str(extension_pk)})
-        messages.error(request, str(e))
+        messages.error(request, service_error_message(e))
 
     return redirect("deals:detail", extension.deal.id)
 
@@ -734,7 +736,7 @@ def extension_reject(request, extension_pk):
         messages.success(request, "延長申請已拒絕。")
     except Exception as e:
         logger.exception("extension_reject failed", extra={"user_id": request.user.pk, "extension_id": str(extension_pk)})
-        messages.error(request, str(e))
+        messages.error(request, service_error_message(e))
 
     return redirect("deals:detail", extension.deal.id)
 
@@ -762,7 +764,7 @@ def extension_cancel(request, extension_pk):
         messages.success(request, "延長申請已取消。")
     except Exception as e:
         logger.exception("extension_cancel failed", extra={"user_id": request.user.pk, "extension_id": str(extension_pk)})
-        messages.error(request, str(e))
+        messages.error(request, service_error_message(e))
 
     return redirect("deals:detail", extension.deal.id)
 
@@ -897,7 +899,7 @@ def deal_confirm_return(request, pk):
             messages.success(request, "書籍已確認歸還並重新上架！")
     except Exception as e:
         logger.exception("deal_confirm_return failed", extra={"user_id": request.user.pk, "deal_id": str(pk), "force": force})
-        messages.error(request, str(e))
+        messages.error(request, service_error_message(e))
 
     return redirect("deals:detail", pk)
 
@@ -933,9 +935,11 @@ def exception_create(request, book_id):
                 logger.info("exception_create success", extra={"user_id": request.user.pk, "book_id": str(book_id), "deal_id": str(deal.pk)})
                 messages.success(request, "例外處理申請已送出")
                 return redirect("deals:detail", pk=deal.pk)
-            except Exception as e:
-                logger.exception("exception_create failed", extra={"user_id": request.user.pk, "book_id": str(book_id)})
-                messages.error(request, str(e))
+            # 只接 service 層宣告的錯誤（錯誤契約見 GLOSSARY）；
+            # 未預期的例外直接拋給 500 handler，不吞掉
+            except (ValidationError, PermissionDenied) as e:
+                logger.warning("exception_create failed", extra={"user_id": request.user.pk, "book_id": str(book_id)})
+                messages.error(request, service_error_message(e))
     else:
         form = ExceptionDealForm()
 
@@ -973,9 +977,11 @@ def exception_resolve(request, pk):
                     f"已處置為「{dict(ExceptionResolveForm.RESOLUTION_CHOICES).get(resolution)}」",
                 )
                 return redirect("books:detail", pk=deal.shared_book.pk)
-            except Exception as e:
-                logger.exception("exception_resolve failed", extra={"user_id": request.user.pk, "deal_id": str(pk)})
-                messages.error(request, str(e))
+            # 只接 service 層宣告的錯誤（錯誤契約見 GLOSSARY）；
+            # 未預期的例外直接拋給 500 handler，不吞掉
+            except (ValidationError, PermissionDenied) as e:
+                logger.warning("exception_resolve failed", extra={"user_id": request.user.pk, "deal_id": str(pk)})
+                messages.error(request, service_error_message(e))
     else:
         form = ExceptionResolveForm()
 
@@ -1024,7 +1030,7 @@ def deal_upload_photos(request, pk):
                 )
             except ValidationError as e:
                 logger.exception("deal_upload_photos validation error", extra={"user_id": request.user.pk, "deal_id": str(pk)})
-                messages.error(request, f"照片上傳失敗：{str(e)}")
+                messages.error(request, f"照片上傳失敗：{service_error_message(e)}")
                 return render(
                     request,
                     "deals/deal_upload_photos.html",
