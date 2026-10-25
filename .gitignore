@@ -188,3 +188,4 @@ node_modules/
 .idea/
 /.verify-evidence/20261024-132832-book-list
 /.verify-evidence
+/.playwright-mcp
