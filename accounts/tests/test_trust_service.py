@@ -11,6 +11,7 @@ from accounts.services.trust_service import (
     calculate_trust_level,
     update_trust_score,
     get_borrowing_limits,
+    get_upgrade_progress,
 )
 from deals.models import Deal
 from tests.factories import DealFactory, RatingFactory
@@ -164,6 +165,15 @@ class TrustServiceTest(TestCase):
         limits = get_borrowing_limits(0)
         self.assertEqual(limits["max_books"], 1)
         self.assertEqual(limits["max_days"], 30)
+
+    def test_upgrade_progress_requirements_text(self):
+        """升級進度文案是使用者可見文字，需有斷言防回歸（曾發生編碼損傷）。"""
+        progress = get_upgrade_progress(self.user)
+        # 0 分 → 下一星等 2 星，門檻 4 分
+        self.assertEqual(
+            progress["requirements"][0],
+            "再累積 4 分即可升級（門檻 4 分）",
+        )
 
     def test_get_borrowing_limits_level_3(self):
         """測試 Level 3 借閱限制（999 = 無限制哨兵）"""
