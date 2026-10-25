@@ -76,6 +76,8 @@
   function showToast(message, type) {
     const container = document.getElementById('toast-container');
     if (!container) return;
+    if (window.MiPet && type === 'success') window.MiPet.cheer();
+    if (window.MiPet && type === 'error') window.MiPet.setState('error');
     const typeClasses = {
       error:   'border-red-200 bg-red-50 text-red-800',
       warning: 'border-amber-200 bg-amber-50 text-amber-800',
