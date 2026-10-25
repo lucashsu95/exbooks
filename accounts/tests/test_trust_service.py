@@ -28,6 +28,7 @@ class TrustServiceTest(TestCase):
         )
 
         # 建立信用等級配置與對應 Group
+        limits = {0: (1, 30), 1: (3, 60), 2: (5, 90), 3: (999, 999)}
         for level in range(4):
             Group.objects.get_or_create(name=f"trust_lv{level}")
             TrustLevelConfig.objects.get_or_create(
@@ -36,8 +37,8 @@ class TrustServiceTest(TestCase):
                     "group_name": f"trust_lv{level}",
                     "display_name": f"Level {level}",
                     "min_score": level * 10,
-                    "max_books": (level + 1) * 2,
-                    "max_days": 30,
+                    "max_books": limits[level][0],
+                    "max_days": limits[level][1],
                     "demotion_protection_weeks": 26,
                 },
             )
@@ -165,7 +166,13 @@ class TrustServiceTest(TestCase):
         self.assertEqual(limits["max_days"], 30)
 
     def test_get_borrowing_limits_level_3(self):
-        """測試 Level 3 借閱限制"""
+        """測試 Level 3 借閱限制（999 = 無限制哨兵）"""
         limits = get_borrowing_limits(3)
-        self.assertEqual(limits["max_books"], float("inf"))
-        self.assertEqual(limits["max_days"], float("inf"))
+        self.assertEqual(limits["max_books"], 999)
+        self.assertEqual(limits["max_days"], 999)
+
+    def test_borrowing_limits_single_source_is_db_config(self):
+        """借閱限制只讀 TrustLevelConfig，改 DB 即生效。"""
+        TrustLevelConfig.objects.filter(level=0).update(max_books=7)
+        limits = get_borrowing_limits(0)
+        self.assertEqual(limits["max_books"], 7)

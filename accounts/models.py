@@ -453,29 +453,17 @@ class UserProfile(UpdatableModel):
 
     @property
     def trust_stars(self):
-        """
-        計算信用星等（1-5星）。
-        公式：floor(sqrt(score))
-        """
-        import math
+        """計算信用星等（1-5星），公式見 trust_service.compute_trust_stars。"""
+        from accounts.services.trust_service import compute_trust_stars
 
-        if self.trust_score <= 0:
-            return 1  # 最低1星
-        stars = int(math.floor(math.sqrt(self.trust_score)))
-        return min(max(stars, 1), 5)  # 限制在1-5星
+        return compute_trust_stars(self.trust_score)
 
     @property
     def trust_level(self) -> int:
-        """根據 trust_score 計算信用等級（0-3）"""
-        stars = self.trust_stars
-        if stars <= 1:
-            return 0
-        elif stars == 2:
-            return 1
-        elif stars == 3:
-            return 2
-        else:  # 4-5星
-            return 3
+        """根據 trust_score 計算信用等級（0-3），映射見 trust_service.stars_to_level。"""
+        from accounts.services.trust_service import stars_to_level
+
+        return stars_to_level(self.trust_stars)
 
 
 class TrustLevelConfig(models.Model):
