@@ -35,8 +35,9 @@
 .mipet-sse-offline .mipet-float .mipet-col::after {
   content: '';
   position: absolute;
-  top: 0;
-  right: 0;
+  top: -3px;
+  left: 50%;
+  transform: translateX(-50%);
   width: 10px;
   height: 10px;
   border-radius: 50%;

@@ -145,9 +145,10 @@ function chatWidget() {
             this.updateSseDot();
         },
 
-        // 還原原紫色按鈕的斷線指示：視窗關閉且 SSE 未連線時，在小貓頭頂顯示紅點
+        // 還原原紫色按鈕的斷線指示：視窗關閉且 SSE 未連線時顯示紅點
+        // （.mipet-sse-offline class 由 pixel-pet 模組擁有）
         updateSseDot() {
-            document.documentElement.classList.toggle('mipet-sse-offline', !this.isOpen && !this.isConnected);
+            window.MiPet?.setSseOffline(!this.isOpen && !this.isConnected);
         },
 
         connectSSE() {
