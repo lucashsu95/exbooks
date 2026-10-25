@@ -2,24 +2,7 @@
      x-init="init()" 
      class="fixed bottom-6 right-6 z-50 font-sans">
     
-    <!-- Chat Toggle Button -->
-    <button @click="toggleChat()" 
-            :class="isOpen ? 'bg-gray-200 text-gray-700' : 'bg-indigo-600 text-white'"
-            class="p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 flex items-center justify-center group">
-        <template x-if="!isOpen">
-            <div class="relative">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                </svg>
-                <div x-show="!isConnected" class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></div>
-            </div>
-        </template>
-        <template x-if="isOpen">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-        </template>
-    </button>
+    <!-- 開關由右下角的米豆小版承擔（pixel-pet.js bindOpenChat），此 div 只當聊天視窗的錨點 -->
 
     <!-- Chat Window -->
     <div x-show="isOpen" 
@@ -138,6 +121,8 @@ function chatWidget() {
 
         init() {
             this.loadHistory();
+            // 米豆小版取代原紫色按鈕：點貓開關聊天視窗
+            window.MiPet?.bindOpenChat(() => this.toggleChat());
             // SSE 延遲到用戶主動打開聊天視窗時才連線，
             // 避免每個頁面都佔用一個 Gunicorn sync worker
         },

@@ -17,21 +17,18 @@
   --mipet-fg: #e2e8f0;
 }
 
-/* 全站右下角浮動小版：只佔小小的 hit area，不擋捲動與 nav */
+/* 全站右下角浮動小版：占原聊天按鈕的位置（bottom-6 right-6），
+   登入時與 bottom nav 右角重疊，跟原紫色按鈕一樣 */
 .mipet-float {
   position: fixed;
-  right: max(1rem, env(safe-area-inset-right, 0px));
-  bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  right: max(1.5rem, env(safe-area-inset-right, 0px));
+  bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
   z-index: 40;
   pointer-events: none;
 }
 /* 聊天視窗開啟時由大版接手，避免面板下緣露出一條貓 */
 .mipet-chat-open .mipet-float {
   display: none;
-}
-/* 登入頁有 64px bottom nav 與 chat 按鈕，往上讓位 */
-.mipet-float--auth {
-  bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
 }
 
 .mipet {

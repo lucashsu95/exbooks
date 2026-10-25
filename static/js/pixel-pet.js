@@ -97,6 +97,7 @@
   let errorTimer = null;
   let lastActivity = Date.now();
   let timer = null;
+  let chatToggle = null; // 有 AI 聊天時，小版點擊改走這裡（取代隨機反應）
   const roots = [];
 
   function renderAll() {
@@ -274,11 +275,12 @@
       box.setAttribute('role', 'button');
       box.setAttribute('tabindex', '0');
       box.setAttribute('aria-label', NAME + '，點擊逗逗我');
-      box.addEventListener('click', pet);
+      const activate = () => (chatToggle ? chatToggle() : pet());
+      box.addEventListener('click', activate);
       box.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          pet();
+          activate();
         }
       });
     }
@@ -288,6 +290,7 @@
       sprite: box.querySelector('.mipet-sprite'),
       shadow: box.querySelector('.mipet-shadow'),
       status: large ? box.querySelector('.mipet-status') : null,
+      small: !large,
     });
   }
 
@@ -307,5 +310,11 @@
   window.MiPet = {
     setState(s) { setState(s); },
     cheer() { cheer(); },
+    bindOpenChat(fn) {
+      chatToggle = fn;
+      for (const r of roots) {
+        if (r.small) r.box.setAttribute('aria-label', NAME + '，點擊開啟 AI 聊天');
+      }
+    },
   };
 })();
