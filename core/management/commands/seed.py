@@ -9,6 +9,27 @@ from books.models import BookSet, OfficialBook, SharedBook
 from deals.models import Deal, DealMessage, LoanExtension, Notification, Rating
 
 
+# 固定帳密的示範帳號，讓任何人 clone 後執行 seed 都能直接登入（僅供本地開發）
+DEMO_ACCOUNTS = [
+    {
+        "username": "admin",
+        "email": "admin@example.com",
+        "password": "admin12345",
+        "is_staff": True,
+        "is_superuser": True,
+        "role": "管理員（可進 /admin/）",
+    },
+    {
+        "username": "reader",
+        "email": "reader@example.com",
+        "password": "reader12345",
+        "is_staff": False,
+        "is_superuser": False,
+        "role": "一般會員",
+    },
+]
+
+
 class Command(BaseCommand):
     help = "Generate fake data for Exbooks"
 
@@ -61,6 +82,41 @@ class Command(BaseCommand):
             self.style.SUCCESS("Existing data cleared (Superusers preserved).")
         )
 
+    def _ensure_demo_accounts(self):
+        """建立/更新固定帳密的示範帳號，並把 email 標記為已驗證。"""
+        from allauth.account.models import EmailAddress
+
+        self.stdout.write("Ensuring demo accounts...")
+        for acct in DEMO_ACCOUNTS:
+            user, created = User.objects.get_or_create(
+                username=acct["username"],
+                defaults={
+                    "is_staff": acct["is_staff"],
+                    "is_superuser": acct["is_superuser"],
+                },
+            )
+            user.email = acct["email"]
+            user.is_staff = acct["is_staff"]
+            user.is_superuser = acct["is_superuser"]
+            user.set_password(acct["password"])
+            user.save()
+
+            email = EmailAddress.objects.filter(user=user).first()
+            if email is None:
+                email = EmailAddress(user=user)
+            email.email = acct["email"]
+            email.verified = True
+            email.primary = True
+            email.save()
+
+            action = "created" if created else "updated"
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"  {acct['email']} / {acct['password']} "
+                    f"({acct['role']}, {action})"
+                )
+            )
+
     def _generate_data(self, amount):
         self.stdout.write(f"Generating {amount} data...")
 
@@ -79,6 +135,9 @@ class Command(BaseCommand):
         counts = config.get(amount, config["small"])
 
         with transaction.atomic():
+            # 0. Fixed demo accounts (see DEMO_ACCOUNTS)
+            self._ensure_demo_accounts()
+
             # 1. Users
             profiles = factories.UserProfileFactory.create_batch(counts["users"])
             users = [p.user for p in profiles]

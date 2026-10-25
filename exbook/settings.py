@@ -115,17 +115,25 @@ WSGI_APPLICATION = "exbook.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": "exbook",
-        "USER": "root",
-        "PASSWORD": os.environ.get("DB_PASSWORD", ""),
-        "HOST": "127.0.0.1",
-        "PORT": "3306",
-        "OPTIONS": {
-            "charset": "utf8mb4",
-        },
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+# MySQL 設定（之後切回 MySQL 時取消註解，並記得安裝 mysqlclient）
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.mysql",
+#         "NAME": "exbook",
+#         "USER": "root",
+#         "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+#         "HOST": "127.0.0.1",
+#         "PORT": "3306",
+#         "OPTIONS": {
+#             "charset": "utf8mb4",
+#         },
+#     }
+# }
 
 
 # Password validation
