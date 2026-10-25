@@ -1,7 +1,7 @@
 /**
- * 米豆 Mēdòu — 全站像素小寵物
+ * 米豆 MeDou — 全站像素小寵物
  * 單一狀態機引擎，驅動頁面上所有 [data-mipet-root] 節點。
- * 顏色來自 pixel-pet.css 的 CSS 變數，自動跟淺／深色主題。
+ * 顏色來自 pixel-pet.css 的 CSS 變數，跟隨全站的 .dark（darkMode: class）。
  */
 
 (function() {
@@ -9,7 +9,6 @@
 
   const config = {
     sleepAfterMs: 60000,
-    hiddenSleepMs: 10000,
   };
 
   // 11 格寬的像素小貓：o 身體、e 眼睛、p 腮紅、w 鼻頭、k 嘴／細節
@@ -54,7 +53,7 @@
     const rows = BASE.map(r => r.split(''));
     rows[3][1] = 'p';
     rows[3][9] = 'p';
-    const eyes = (o.eyes == null) ? o.eyes : [2, 8];
+    const eyes = (o.eyes === undefined) ? [2, 8] : o.eyes;
     if (o.x) {
       rows[2][2] = 'e'; rows[3][1] = 'e'; rows[3][3] = 'e'; rows[4][2] = 'e';
       rows[2][8] = 'e'; rows[3][7] = 'e'; rows[3][9] = 'e'; rows[4][8] = 'e';
@@ -97,7 +96,6 @@
   let fx = null; // 瞬態特效 { kind: 'cheer'|'hop'|'hearts'|'stars', left, total, back }
   let errorTimer = null;
   let lastActivity = Date.now();
-  let hiddenAt = null;
   let timer = null;
   const roots = [];
 
@@ -193,11 +191,10 @@
   }
 
   function cheer() {
-    // thinking/talking 是流式狀態，不能當回落點，否則嘴巴會一直開合
-    const back = (state === 'sleep' || state === 'thinking' || state === 'talking') ? 'idle' : state;
-    if (back !== state) { state = 'idle'; }
+    // 一律回 idle：error 也不例外，否則 errorTimer 被清掉後會卡在 error
+    state = 'idle';
     t = 0;
-    fx = { kind: 'cheer', left: 10, total: 10, back };
+    fx = { kind: 'cheer', left: 10, total: 10, back: null };
     if (errorTimer) { clearTimeout(errorTimer); errorTimer = null; }
     renderAll();
   }
@@ -251,15 +248,9 @@
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-      hiddenAt = Date.now();
       stopTick();
     } else {
       startTick();
-      if (hiddenAt !== null && Date.now() - hiddenAt >= config.hiddenSleepMs && state !== 'sleep') {
-        state = 'sleep';
-        t = 0;
-      }
-      hiddenAt = null;
       lastActivity = Date.now();
       renderAll();
     }
@@ -316,11 +307,5 @@
   window.MiPet = {
     setState(s) { setState(s); },
     cheer() { cheer(); },
-    pet() { pet(); },
-    config(o) {
-      for (const k in o) {
-        if (Object.prototype.hasOwnProperty.call(config, k)) config[k] = o[k];
-      }
-    },
   };
 })();

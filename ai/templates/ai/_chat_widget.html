@@ -144,6 +144,8 @@ function chatWidget() {
 
         toggleChat() {
             this.isOpen = !this.isOpen;
+            // 聊天視窗打開時，小版讓位給視窗內的大版
+            document.documentElement.classList.toggle('mipet-chat-open', this.isOpen);
             if (this.isOpen && !this.eventSource) {
                 this.connectSSE();
             }
@@ -206,7 +208,7 @@ function chatWidget() {
                 this.isConnected = false;
                 this.connectionStatus = 'Connection Error';
                 console.error('SSE Error:', e);
-                if (window.MiPet) window.MiPet.setState('error');
+                window.MiPet?.setState('error');
             });
 
             this.eventSource.addEventListener('done', () => {
@@ -216,7 +218,7 @@ function chatWidget() {
 
         async sendMessage() {
             if (!this.userInput.trim()) return;
-            if (window.MiPet) window.MiPet.setState('thinking');
+            window.MiPet?.setState('thinking');
 
             const text = this.userInput;
             this.addMessage('user', text);
@@ -235,15 +237,16 @@ function chatWidget() {
 
                 if (!response.ok) throw new Error('Failed to send message');
 
-                // POST returns SSE stream; parse events and update UI
-                const responseText = await response.text();
-                const events = this.parseSSE(responseText);
+                // POST 回傳 SSE 串流：邊讀邊處理，talking 才有機會被畫出來
+                // （先 await response.text() 會把整段讀完，thinking→talking 併成同一個 frame）
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buf = '';
                 let talked = false;
-
-                for (const { event, data } of events) {
+                const handle = ({ event, data }) => {
                     if (event === 'content' && data.delta) {
-                        if (!talked && window.MiPet) {
-                            window.MiPet.setState('talking');
+                        if (!talked) {
+                            window.MiPet?.setState('talking');
                             talked = true;
                         }
                         this.addMessage('assistant', data.delta, 'text');
@@ -255,10 +258,20 @@ function chatWidget() {
                     } else if (event === 'done') {
                         this.isTyping = false;
                     }
+                };
+
+                for (;;) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    buf += decoder.decode(value, { stream: true });
+                    const parts = buf.split('\n\n');
+                    buf = parts.pop();
+                    for (const part of parts) this.parseSSE(part).forEach(handle);
                 }
-                if (window.MiPet) window.MiPet.cheer();
+                if (buf.trim()) this.parseSSE(buf).forEach(handle);
+                window.MiPet?.cheer();
             } catch (error) {
-                if (window.MiPet) window.MiPet.setState('error');
+                window.MiPet?.setState('error');
                 this.addMessage('assistant', 'Sorry, I encountered an error sending your message.');
                 this.isTyping = false;
             }

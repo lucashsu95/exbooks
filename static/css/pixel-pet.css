@@ -1,4 +1,4 @@
-/* 米豆 Mēdòu 像素小寵物 — 顏色（品牌色）與外殼樣式，由 pixel-pet.js 使用 */
+/* 米豆 MeDou 像素小寵物 — 顏色（品牌色）與外殼樣式，由 pixel-pet.js 使用 */
 
 :root {
   --mipet-body: #14b8a6;
@@ -7,16 +7,6 @@
   --mipet-eye: #134e4a;
   --mipet-muted: #64748b;
   --mipet-fg: #0f172a;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    --mipet-body: #14b8a6;
-    --mipet-cheek: #22d3ee;
-    --mipet-muzzle: #134e4a;
-    --mipet-eye: #0f172a;
-    --mipet-muted: #94a3b8;
-    --mipet-fg: #e2e8f0;
-  }
 }
 .dark {
   --mipet-body: #14b8a6;
@@ -32,8 +22,12 @@
   position: fixed;
   right: max(1rem, env(safe-area-inset-right, 0px));
   bottom: max(1rem, env(safe-area-inset-bottom, 0px));
-  z-index: 30;
+  z-index: 40;
   pointer-events: none;
+}
+/* 聊天視窗開啟時由大版接手，避免面板下緣露出一條貓 */
+.mipet-chat-open .mipet-float {
+  display: none;
 }
 /* 登入頁有 64px bottom nav 與 chat 按鈕，往上讓位 */
 .mipet-float--auth {
@@ -185,4 +179,14 @@
 .mipet-zzz span:nth-child(3) {
   font-size: 10px;
   animation-delay: 1.4s;
+}
+
+/* 減少動態：shared.css 把動畫壓成 0.01ms 會讓氣泡停在 opacity:0，
+   小版又沒有狀態文字，所以改成靜態顯示，保住「思考／睡覺」的提示 */
+@media (prefers-reduced-motion: reduce) {
+  .mipet-thought i,
+  .mipet-zzz span {
+    animation: none !important;
+    opacity: 0.9;
+  }
 }
