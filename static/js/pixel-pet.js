@@ -274,7 +274,9 @@
     if (!large) {
       box.setAttribute('role', 'button');
       box.setAttribute('tabindex', '0');
-      box.setAttribute('aria-label', NAME + '，點擊逗逗我');
+      // bindOpenChat 可能在建 root 前就被呼叫（Alpine x-init 先於 DOMContentLoaded），
+      // 所以建 root 時也要看 override 是否已綁定，兩種時序都要拿到正確 label
+      box.setAttribute('aria-label', NAME + (onPetClickOverride ? '，點擊開啟 AI 聊天' : '，點擊逗逗我'));
       const activate = () => (onPetClickOverride ? onPetClickOverride() : pet());
       box.addEventListener('click', activate);
       box.addEventListener('keydown', (e) => {
