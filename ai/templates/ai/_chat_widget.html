@@ -123,6 +123,7 @@ function chatWidget() {
             this.loadHistory();
             // 米豆小版取代原紫色按鈕：點貓開關聊天視窗
             window.MiPet?.bindOpenChat(() => this.toggleChat());
+            this.updateSseDot();
             // SSE 延遲到用戶主動打開聊天視窗時才連線，
             // 避免每個頁面都佔用一個 Gunicorn sync worker
         },
@@ -141,6 +142,12 @@ function chatWidget() {
                 this.isConnected = false;
                 this.connectionStatus = 'Disconnected';
             }
+            this.updateSseDot();
+        },
+
+        // 還原原紫色按鈕的斷線指示：視窗關閉且 SSE 未連線時，在小貓頭頂顯示紅點
+        updateSseDot() {
+            document.documentElement.classList.toggle('mipet-sse-offline', !this.isOpen && !this.isConnected);
         },
 
         connectSSE() {
@@ -161,6 +168,7 @@ function chatWidget() {
                     this.isConnected = true;
                     this.connectionStatus = 'Online';
                     this.addMessage('assistant', 'Hello! How can I help you today?');
+                    this.updateSseDot();
                 }
             });
 
@@ -194,6 +202,7 @@ function chatWidget() {
                 this.connectionStatus = 'Connection Error';
                 console.error('SSE Error:', e);
                 window.MiPet?.setState('error');
+                this.updateSseDot();
             });
 
             this.eventSource.addEventListener('done', () => {

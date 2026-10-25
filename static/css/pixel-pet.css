@@ -30,6 +30,19 @@
 .mipet-chat-open .mipet-float {
   display: none;
 }
+/* SSE 斷線紅點：還原原紫色按鈕的 !isConnected 指示，
+   chat widget 在「視窗關閉且未連線」時於 <html> 切換 .mipet-sse-offline */
+.mipet-sse-offline .mipet-float .mipet-col::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 2px solid #fff;
+}
 
 .mipet {
   position: relative;

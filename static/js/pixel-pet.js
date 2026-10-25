@@ -97,7 +97,7 @@
   let errorTimer = null;
   let lastActivity = Date.now();
   let timer = null;
-  let chatToggle = null; // 有 AI 聊天時，小版點擊改走這裡（取代隨機反應）
+  let onPetClickOverride = null; // 有 AI 聊天時，小版點擊改走這裡（取代隨機反應）
   const roots = [];
 
   function renderAll() {
@@ -275,7 +275,7 @@
       box.setAttribute('role', 'button');
       box.setAttribute('tabindex', '0');
       box.setAttribute('aria-label', NAME + '，點擊逗逗我');
-      const activate = () => (chatToggle ? chatToggle() : pet());
+      const activate = () => (onPetClickOverride ? onPetClickOverride() : pet());
       box.addEventListener('click', activate);
       box.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -311,7 +311,7 @@
     setState(s) { setState(s); },
     cheer() { cheer(); },
     bindOpenChat(fn) {
-      chatToggle = fn;
+      onPetClickOverride = fn;
       for (const r of roots) {
         if (r.small) r.box.setAttribute('aria-label', NAME + '，點擊開啟 AI 聊天');
       }
