@@ -6,10 +6,9 @@
 
 import json
 import logging
-from collections import OrderedDict
 
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
+from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import HttpResponse
@@ -37,6 +36,7 @@ from .models import (
     Notification,
 )
 from .services import (
+    deal_feed_service,
     deal_service,
     rating_service,
     extension_service,
@@ -160,110 +160,9 @@ def deal_list(request):
     """交易管理頁面。"""
     logger.info("deal_list", extra={"user_id": request.user.pk, "tab": request.GET.get("tab", "pending")})
 
-    class DealFeed:
-        """提供 template 相容介面（iter/bool/count）的交易清單。"""
-
-        def __init__(self, items=None, total=0):
-            self._items = items or []
-            self._total = total
-
-        def __iter__(self):
-            return iter(self._items)
-
-        def __bool__(self):
-            return bool(self._items)
-
-        def count(self):
-            return self._total
-
-    user = request.user
-    tab = request.GET.get("tab", "pending")
-    valid_tabs = {"pending", "pending_applicant", "meeting", "rating", "history"}
-    if tab not in valid_tabs:
-        tab = "pending"
-
-    deals_base = (
-        Deal.objects.filter(Q(applicant=user) | Q(responder=user))
-        .select_related(
-            "shared_book__official_book",
-            "applicant__profile",
-            "responder__profile",
-        )
-        .prefetch_related("shared_book__photos")
+    context = deal_feed_service.get_feed(
+        request.user, request.GET.get("tab", "pending")
     )
-
-    pending_filter = Q(responder=user, status=Deal.Status.REQUESTED)
-    pending_applicant_filter = Q(applicant=user, status=Deal.Status.REQUESTED)
-    meeting_filter = Q(status=Deal.Status.RESPONDED)
-    rating_filter = Q(status=Deal.Status.MEETED) & (
-        Q(applicant=user, applicant_rated=False)
-        | Q(responder=user, responder_rated=False)
-    )
-    meted_rated_filter = Q(status=Deal.Status.MEETED) & (
-        Q(applicant=user, applicant_rated=True)
-        | Q(responder=user, responder_rated=True)
-    )
-    history_filter = (
-        Q(status__in=[Deal.Status.DONE, Deal.Status.CANCELLED]) | meted_rated_filter
-    )
-
-    tab_filters = {
-        "pending": pending_filter,
-        "pending_applicant": pending_applicant_filter,
-        "meeting": meeting_filter,
-        "rating": rating_filter,
-        "history": history_filter,
-    }
-
-    counts = deals_base.aggregate(
-        pending_responder_count=Count("pk", filter=pending_filter),
-        pending_applicant_count=Count("pk", filter=pending_applicant_filter),
-        pending_meeting_count=Count("pk", filter=meeting_filter),
-        pending_rating_count=Count("pk", filter=rating_filter),
-        history_count=Count("pk", filter=history_filter),
-    )
-
-    deals = list(deals_base.filter(tab_filters[tab]).distinct())
-
-    pending_responder = DealFeed(
-        items=deals if tab == "pending" else [],
-        total=counts["pending_responder_count"],
-    )
-    pending_applicant = DealFeed(
-        items=deals if tab == "pending_applicant" else [],
-        total=counts["pending_applicant_count"],
-    )
-    pending_meeting = DealFeed(
-        items=deals if tab == "meeting" else [],
-        total=counts["pending_meeting_count"],
-    )
-    pending_rating = DealFeed(
-        items=deals if tab == "rating" else [],
-        total=counts["pending_rating_count"],
-    )
-    history = DealFeed(
-        items=deals if tab == "history" else [],
-        total=counts["history_count"],
-    )
-
-    # BR-3.6：將待回應申請依書籍分組（保留既有資料結構）
-    grouped_pending = OrderedDict()
-    for deal in pending_responder:
-        book = deal.shared_book
-        if book not in grouped_pending:
-            grouped_pending[book] = []
-        grouped_pending[book].append(deal)
-
-    context = {
-        "current_tab": tab,
-        "deals": deals,  # Add deals for template integration
-        "pending_responder": pending_responder,
-        "grouped_pending": grouped_pending,
-        "pending_applicant": pending_applicant,
-        "pending_meeting": pending_meeting,
-        "pending_rating": pending_rating,
-        "history": history,
-    }
 
     if request.headers.get("HX-Request"):
         return render(request, "deals/partials/_deal_list_page_wrapper.html", context)
