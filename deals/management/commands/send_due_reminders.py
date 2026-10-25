@@ -7,10 +7,11 @@
 from datetime import timedelta
 
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 from django.utils import timezone
 
-from deals.models import Deal
 from deals.services.notification_service import batch_send_due_reminders
+from deals.services.overdue_service import meeted_deals
 
 
 class Command(BaseCommand):
@@ -36,11 +37,9 @@ class Command(BaseCommand):
         # 計算目標到期日
         target_date = timezone.now().date() + timedelta(days=days)
 
-        # 查詢即將到期的交易
-        upcoming_deals = Deal.objects.filter(
-            status=Deal.Status.MEETED,
-            due_date=target_date,
-            shared_book__status="O",  # OCCUPIED
+        # 查詢即將到期的交易（BR-12 骨架，見 meeted_deals）
+        upcoming_deals = meeted_deals(
+            Q(due_date=target_date), book_must_be_occupied=True
         ).select_related("shared_book__official_book", "applicant", "responder")
 
         count = upcoming_deals.count()

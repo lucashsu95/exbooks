@@ -122,12 +122,12 @@ def get_borrowing_status(user) -> str:
 )
 def request_renewal(user, deal_id: int, days: int = 7) -> str:
     """Placeholder for requesting a book renewal."""
-    from django.core.exceptions import PermissionDenied
+    from django.core.exceptions import PermissionDenied, ValidationError
     from deals.models import Deal
 
     deal = Deal.objects.filter(pk=deal_id).first()
     if deal is None:
-        return f"Error: deal {deal_id} 不存在。"
+        raise ValidationError(f"交易 {deal_id} 不存在。")
     if user not in (deal.applicant, deal.responder):
         raise PermissionDenied("您不是此交易的當事人，無法申請延期。")
     return f"Tool 'request_renewal' executed for deal {deal_id} (Placeholder)"

@@ -13,7 +13,7 @@ Service 層負責：
 import logging
 from datetime import timedelta
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 from django_fsm import can_proceed
@@ -133,7 +133,7 @@ def create_deal(
     - BR-5: 只有狀態為 T 的書籍可發起 LN/TF 交易
     - BR-6: 只有狀態為 R 的書籍可發起 RS 交易
     - BR-7: 套書必須整套借出
-    - BR-10: 用戶不能借閱自己貢獻或持有的書籍
+    - BR-10: 用戶不能借閱自己貢獻或持有的書籍（RG/EX 豁免，見內註）
 
     Returns:
         Deal: 建立的交易
@@ -194,10 +194,14 @@ def create_deal(
             )
 
     # BR-10: 不能借閱自己的書
-    if deal_type != Deal.DealType.REGRESS:
-        # RG 交易的申請者是 Owner，回應者是 Keeper，不受此限制
+    # RG 交易的申請者是 Owner，EX 交易的申請者是 Keeper（對持有的書報例外），皆不受此限制
+    if deal_type not in (Deal.DealType.REGRESS, Deal.DealType.EXCEPT):
         if applicant == shared_book.owner or applicant == shared_book.keeper:
             raise ValidationError("不能對自己貢獻或持有的書籍發起此交易")
+
+    # EX: 申請者必須是持有者（keeper）（BR-10 豁免，故在此獨立驗證身份）
+    if deal_type == Deal.DealType.EXCEPT and applicant != shared_book.keeper:
+        raise PermissionDenied("只有持有者可以申請例外處理")
 
     # BR-3/BR-4: 驗證交易類別與流通性
     if deal_type in DEAL_TYPE_TRANSFERABILITY:
@@ -298,13 +302,14 @@ def create_exception(book, applicant, description=""):
 
     Args:
         book: SharedBook（T/O/R 狀態才可申請，由 create_deal 驗證）
-        applicant: 申請者（持有者，由 View 層 can_create_exception 授權）
+        applicant: 申請者（必須是持有者，由 create_deal 驗證）
         description: 例外描述（存入第一筆交易留言）
 
     Returns:
         Deal: EX 交易
 
     Raises:
+        PermissionDenied: 申請者非持有者
         ValidationError: 書籍狀態不符等
     """
     deal = create_deal(

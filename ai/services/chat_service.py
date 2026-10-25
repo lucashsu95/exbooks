@@ -178,17 +178,3 @@ class ChatService:
             tool_calls=tool_calls,
             raw_response=response,
         )
-
-    def _handle_function_call(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
-        """Execute a function call requested by the AI."""
-        tool_def = ToolRegistry.get_tool(tool_name)
-        if tool_def is None:
-            return f"Error: Tool '{tool_name}' not found."
-
-        logger.debug(
-            "handling function call",
-            extra={
-                "tool_name": tool_name,
-            },
-        )
-        return tool_def.func(**arguments)

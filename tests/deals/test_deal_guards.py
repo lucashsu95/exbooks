@@ -11,8 +11,9 @@ C3 搬移後的 service 層守衛測試（不經 HTTP）。
 import io
 
 import pytest
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.urls import reverse
 from PIL import Image
 
 from books.models import SharedBook
@@ -27,6 +28,36 @@ def _jpeg(name="photo.jpg", color=(30, 120, 200)):
     buf = io.BytesIO()
     Image.new("RGB", (40, 40), color).save(buf, format="JPEG")
     return SimpleUploadedFile(name, buf.getvalue(), content_type="image/jpeg")
+
+
+class TestCreateException:
+    """create_exception：只有持有者（keeper）可申請，書籍狀態轉 E。"""
+
+    def test_keeper_can_apply(self):
+        owner = UserFactory()
+        keeper = UserFactory()
+        book = SharedBookFactory(
+            owner=owner, keeper=keeper, status=SharedBook.Status.OCCUPIED
+        )
+        deal = deal_service.create_exception(book, keeper, description="水漬損傷")
+        assert deal.deal_type == Deal.DealType.EXCEPT
+        assert deal.applicant == keeper
+        assert deal.responder == owner  # EX → Owner 審核
+        book.refresh_from_db()
+        assert book.status == SharedBook.Status.EXCEPTION
+        assert DealMessage.objects.filter(deal=deal, content="水漬損傷").exists()
+
+    def test_non_keeper_rejected(self):
+        owner = UserFactory()
+        keeper = UserFactory()
+        book = SharedBookFactory(
+            owner=owner, keeper=keeper, status=SharedBook.Status.OCCUPIED
+        )
+        with pytest.raises(PermissionDenied, match="只有持有者"):
+            deal_service.create_exception(book, owner, description="...")
+        assert Deal.objects.filter(deal_type=Deal.DealType.EXCEPT).count() == 0
+        book.refresh_from_db()
+        assert book.status == SharedBook.Status.OCCUPIED
 
 
 class TestResolveExceptionDeal:
@@ -128,3 +159,33 @@ class TestAcceptCancelsSiblingsViaTransition:
         # 書被預約（V），不被 sibling 取消時的還書副作用蓋掉
         book.refresh_from_db()
         assert book.status == SharedBook.Status.RESERVED
+
+
+class TestExceptionResolveView:
+    """exception_resolve view 成功路徑回歸測試。
+
+    背景：重構時刪了 `resolution = form.cleaned_data[...]`，成功訊息卻仍引用
+    未定義的 `resolution`——成功處置必拋 NameError、被 except Exception 吃掉，
+    使用者看到英文機器訊息而非成功重導向。
+    """
+
+    def test_post_success_as_owner(self, client):
+        owner = UserFactory()
+        keeper = UserFactory()
+        book = SharedBookFactory(
+            owner=owner, keeper=keeper, status=SharedBook.Status.EXCEPTION
+        )
+        deal = DealFactory(
+            shared_book=book, deal_type=Deal.DealType.EXCEPT, status=Deal.Status.MEETED
+        )
+
+        client.force_login(owner)
+        url = reverse("deals:exception_resolve", kwargs={"pk": deal.pk})
+        response = client.post(url, {"resolution": "found"})
+
+        assert response.status_code == 302
+        assert response.url == reverse("books:detail", kwargs={"pk": book.pk})
+        deal.refresh_from_db()
+        book.refresh_from_db()
+        assert deal.status == Deal.Status.DONE
+        assert book.status != SharedBook.Status.EXCEPTION

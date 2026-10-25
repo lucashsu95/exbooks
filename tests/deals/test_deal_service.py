@@ -3,7 +3,7 @@
 from datetime import timedelta
 
 import pytest
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.utils import timezone
 
 from books.models import SharedBook
@@ -113,10 +113,9 @@ class TestCreateDeal:
 
     @pytest.mark.parametrize("status", ["T", "O", "R"])
     def test_except_valid_statuses(self, status):
-        """EX: T/O/R 皆可"""
-        applicant = UserFactory()
+        """EX: T/O/R 皆可（申請者為持有者）"""
         book = SharedBookFactory(status=status)
-        deal = create_deal(applicant, book, Deal.DealType.EXCEPT)
+        deal = create_deal(book.keeper, book, Deal.DealType.EXCEPT)
         assert deal.deal_type == Deal.DealType.EXCEPT
 
     # --- BR-3: LN/RS 僅適用 RETURN ---
@@ -363,10 +362,19 @@ class TestCreateDeal:
 
     @pytest.mark.parametrize("status", ["S", "V", "E", "L", "D"])
     def test_except_invalid_statuses_raise(self, status):
-        applicant = UserFactory()
         book = SharedBookFactory(status=status)
         with pytest.raises(ValidationError):
-            create_deal(applicant, book, Deal.DealType.EXCEPT)
+            create_deal(book.keeper, book, Deal.DealType.EXCEPT)
+
+    def test_except_requires_keeper_applicant(self):
+        """EX: 只有持有者可申請；Owner（非持有者）與第三方皆拒絕。"""
+        owner = UserFactory()
+        keeper = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=keeper, status="O")
+        with pytest.raises(PermissionDenied, match="只有持有者"):
+            create_deal(owner, book, Deal.DealType.EXCEPT)
+        with pytest.raises(PermissionDenied, match="只有持有者"):
+            create_deal(UserFactory(), book, Deal.DealType.EXCEPT)
 
     # --- 通知 ---
 

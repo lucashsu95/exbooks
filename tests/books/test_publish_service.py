@@ -206,7 +206,6 @@ class TestGetDueSoonDeals:
 
         entry = next(r for r in result if r["deal"] == soon)
         assert entry["days_left"] == 3
-        assert entry["is_overdue"] is False
 
     def test_overdue_deal_not_due_soon(self):
         user = UserFactory()

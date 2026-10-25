@@ -964,11 +964,10 @@ def exception_resolve(request, pk):
         form = ExceptionResolveForm(request.POST)
         if form.is_valid():
             try:
+                resolution = form.cleaned_data["resolution"]
                 # guards（EX 類型、書在 E 狀態）與兩個 transition 都在 service 內
-                deal_service.resolve_exception_deal(
-                    deal, form.cleaned_data["resolution"]
-                )
-                logger.info("exception_resolve success", extra={"user_id": request.user.pk, "deal_id": str(pk), "resolution": form.cleaned_data["resolution"]})
+                deal_service.resolve_exception_deal(deal, resolution)
+                logger.info("exception_resolve success", extra={"user_id": request.user.pk, "deal_id": str(pk), "resolution": resolution})
                 messages.success(
                     request,
                     f"已處置為「{dict(ExceptionResolveForm.RESOLUTION_CHOICES).get(resolution)}」",

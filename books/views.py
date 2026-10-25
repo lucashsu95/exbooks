@@ -18,7 +18,13 @@ from django.core.files.storage import default_storage
 from .models import SharedBook, OfficialBook, BookPhoto
 from .services.book_query_service import get_hot_books
 from .services.isbn_service import lookup_by_isbn
-from .services.book_service import publish_book, update_book, toggle_listing
+from .services.book_service import (
+    assert_book_edit_permission,
+    assert_book_toggle_permission,
+    publish_book,
+    toggle_listing,
+    update_book,
+)
 from .forms import BookSearchForm
 
 
@@ -332,10 +338,10 @@ def book_edit(request, pk):
 
     logger.info("book_edit", extra={"user_id": request.user.pk, "book_pk": str(pk)})
 
-    if request.user.profile.trust_level == 0:
-        messages.error(
-            request, "新手等級 (Level 0) 尚無權限編輯書籍資訊，請多參與交易提升等級。"
-        )
+    try:
+        assert_book_edit_permission(request.user)
+    except PermissionDenied as e:
+        messages.error(request, str(e))
         return redirect("books:detail", pk=pk)
 
     book = get_object_or_404(SharedBook, pk=pk, owner=request.user)
@@ -452,9 +458,11 @@ def serve_protected_photo(request, pk):
 @require_POST
 def toggle_status(request, pk):
     """切換書籍狀態 S ↔ T"""
-    if request.user.profile.trust_level == 0:
+    try:
+        assert_book_toggle_permission(request.user)
+    except PermissionDenied as e:
         logger.warning("toggle_status forbidden (trust_level 0)", extra={"user_id": request.user.pk, "book_pk": str(pk)})
-        messages.error(request, "新手等級 (Level 0) 尚無權限切換書籍狀態。")
+        messages.error(request, str(e))
         return HttpResponse("新手等級尚無權限", status=403)
 
     book = get_object_or_404(SharedBook, pk=pk, owner=request.user)

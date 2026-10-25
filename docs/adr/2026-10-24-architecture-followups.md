@@ -84,6 +84,16 @@ SDK 不需要自己再做一次）。
 
 **建議修法**：把斷言改成抓頁面標題「找不到頁面｜Exbooks」。
 
+### F-7 · DRF `DealViewSet.create` 缺每類型 applicant 身份驗證（建議 P2）
+
+**現象**：`deals/api_views.py::create` 的 `deal_type` 直接透傳 `create_deal`，
+未做每類型的申請者身份驗證（與 master 相同）。本輪審查已在 `create_deal`
+補上「EX 必須由持有者發起」（蓋住所有入口），但 RG（應由 Owner 發起）等
+其他類型在 API 路徑上仍無身份驗證，任何登入者可經 API 發起。
+
+**建議修法**：`DealViewSet.create` 對 API 支援的 `deal_type` 設白名單，
+或為每類型在 `rules.py` 補 applicant predicate 並在 viewset 檢查。
+
 ## Consequences
 
 - 這些項目的調查成本（定位、確認影響面）已完成，未來啟動時可直接看本檔。

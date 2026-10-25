@@ -11,11 +11,11 @@ logger = logging.getLogger(__name__)
 
 
 # ============================================================================
-# BR-12 到期查詢骨架（四份到期查詢共用的單一來源）
+# BR-12 到期查詢骨架（全部到期查詢共用的單一來源）
 # ============================================================================
 
 
-def _meeted_deals(
+def meeted_deals(
     due_date_q: Q,
     *,
     book_must_be_occupied: bool = False,
@@ -55,7 +55,7 @@ def get_overdue_books(days=7):
     threshold = today - timedelta(days=days)
 
     # 找出借閱中（MEETED 狀態）且到期的交易
-    overdue_deals = _meeted_deals(
+    overdue_deals = meeted_deals(
         Q(due_date__lt=threshold)
     ).select_related("shared_book", "applicant")
 
@@ -132,7 +132,7 @@ def batch_process_due_books() -> dict:
     from deals.services import deal_service
 
     today = timezone.now().date()
-    overdue_deals = _meeted_deals(
+    overdue_deals = meeted_deals(
         Q(due_date__lte=today), book_must_be_occupied=True
     ).select_related("shared_book__official_book", "applicant", "responder")
 
@@ -165,13 +165,13 @@ def get_due_soon_deals(user, days=7):
         days: 提醒窗口（天）
 
     Returns:
-        list[dict]: [{'deal', 'days_left', 'is_overdue'}]，依 due_date 排序
+        list[dict]: [{'deal', 'days_left'}]，依 due_date 排序
     """
     now = timezone.now()
     deadline = now + timedelta(days=days)
 
     due_soon_deals = (
-        _meeted_deals(
+        meeted_deals(
             Q(due_date__gt=now) & Q(due_date__lte=deadline), applicant=user
         )
         .select_related("shared_book__official_book", "responder__profile")
@@ -181,13 +181,7 @@ def get_due_soon_deals(user, days=7):
     result = []
     for deal in due_soon_deals:
         days_left = (deal.due_date - now.date()).days
-        result.append(
-            {
-                "deal": deal,
-                "days_left": days_left,
-                "is_overdue": days_left <= 0,
-            }
-        )
+        result.append({"deal": deal, "days_left": days_left})
 
     logger.debug(
         "due soon deals queried",
