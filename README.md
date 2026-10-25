@@ -104,6 +104,7 @@ python manage.py seed
 
 > ⚠️ 示範帳號僅供本地開發使用，部署前請刪除或改用 `createsuperuser` 建立正式帳號。
 > 重新執行 `seed` 會清除既有假資料（保留 superuser）後重新產生，帳號密碼不變。
+> 若 DB 已存在 username 為 `admin` 或 `reader` 的帳號，`seed` 會將其覆寫為上述示範帳密（stdout 有警告）。
 
 ### 6. 啟動開發伺服器
 
@@ -187,9 +188,11 @@ docker compose down -v
 
 ### 架構圖
 
-使用者請求經 Nginx 反向代理（`:80`）轉發給 Django 應用容器（Gunicorn，內部 `:8000`），再連線至 MariaDB 資料庫容器（內部 `:3306`）；Django 同時讀寫 `static` 與 `media` 兩個 volume。
+使用者請求經 Nginx 反向代理（`:80`）轉發給 Django 應用容器（Gunicorn，內部 `:8000`），再連線至 MariaDB 資料庫容器（內部 `:3306`）；Django 把背景任務寫入 Redis broker，由 Celery worker（`-c 2`）與 beat 消費；Django 同時讀寫 `static` 與 `media` 兩個 volume。
 
 ![Docker 部署架構圖](docs/diagrams/docker-deployment.png)
+
+PNG 為 [`docker-deployment.html`](docs/diagrams/docker-deployment.html) 的截圖，修改圖面請改 HTML 後重新截圖。
 
 ## CI/CD（Self-hosted Runner）
 
@@ -200,6 +203,8 @@ docker compose down -v
 `git push` 觸發 GitHub webhook，由 VM 上的 Self-hosted Runner 依序執行 `lint`（ruff）與 `test`（pytest）；只有 push 到 `main` 才會繼續 `deploy`（docker compose build + up）並上線（Nginx `:80`），PR 則在 test 後結束、不觸發部署。
 
 ![CI/CD Pipeline 流程圖](docs/diagrams/ci-cd-flow.png)
+
+PNG 為 [`ci-cd-flow.html`](docs/diagrams/ci-cd-flow.html) 的截圖，修改圖面請改 HTML 後重新截圖。
 
 ### VM 環境準備
 

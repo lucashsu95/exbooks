@@ -5,62 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Docker 部署架構 — Exbooks</title>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Work+Sans:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Noto+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@400&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --color-paper:   #f2f2f7;   /* iOS-grey */
-      --color-ink:     #0f172a;   /* slate-900 */
-      --color-muted:   #475569;   /* slate-600 */
-      --color-soft:    #526175;
-      --color-accent:  #0f766e;   /* teal-700 */
-      --color-link:    #1d4ed8;   /* blue-700 */
-      --font-sans:     'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', system-ui, sans-serif;
-      --font-serif:    'Instrument Serif', 'Noto Serif TC', serif;
-      --font-mono:     'Geist Mono', ui-monospace, monospace;
-    }
-
-    body {
-      font-family: var(--font-sans);
-      background: var(--color-paper);
-      color: var(--color-ink);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 3rem 2rem;
-    }
-
-    .frame { max-width: 1200px; width: 100%; }
-    /* The SVG holds its readable width (min-width == the viewBox width). This
-       wrapper lets a narrow screen scroll the diagram instead of the page. */
-    .diagram-container { width: 100%; overflow-x: auto; }
-
-    .eyebrow {
-      font-family: var(--font-mono);
-      font-size: 0.66rem;
-      font-weight: 500;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--color-muted);
-      margin-bottom: 0.5rem;
-    }
-
-    h1 {
-      font-family: var(--font-serif);
-      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
-      font-weight: 400;
-      letter-spacing: -0.02em;
-      line-height: 1.15;
-      color: var(--color-ink);
-      margin-bottom: 1.5rem;
-    }
-
-    svg { width: 100%; min-width: 960px; display: block; }
-    @media print {
-      .diagram-container { overflow-x: visible; }
-      svg { min-width: 0; }
-    }
-  </style>
+  <link rel="stylesheet" href="diagram.css">
 </head>
 <body>
   <div class="frame">
@@ -68,9 +13,9 @@
     <h1>Docker 部署架構</h1>
 
     <div class="diagram-container">
-      <svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="docker-deployment-title docker-deployment-desc">
+      <svg viewBox="0 0 960 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="docker-deployment-title docker-deployment-desc">
         <title id="docker-deployment-title">Docker 部署架構</title>
-        <desc id="docker-deployment-desc">使用者請求經 Nginx 反向代理（:80）轉發給 Django 應用容器（Gunicorn :8000），再連線至 MariaDB 資料庫容器（:3306）；Django 同時讀寫 static 與 media 兩個 volume。</desc>
+        <desc id="docker-deployment-desc">使用者請求經 Nginx 反向代理（:80）轉發給 Django 應用容器（Gunicorn :8000），再連線至 MariaDB 資料庫容器（:3306）；Django 把背景任務寫入 Redis broker，由 Celery worker（×2）與 beat 消費；Django 同時讀寫 static 與 media 兩個 volume。</desc>
         <defs>
           <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#475569"/></marker>
           <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0f766e"/></marker>
@@ -107,6 +52,21 @@
         <rect x="596" y="388" width="64" height="16" fill="#f2f2f7"/>
         <text x="628" y="400" text-anchor="middle" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="12" font-weight="500" fill="#526175">media 上傳</text>
 
+        <!-- Django → Redis (dashed, two-bend elbow, r=8) -->
+        <path d="M 572,356 H 582 Q 590,356 590,364 V 456 Q 590,464 598,464 H 678"
+              fill="none" stroke="#526175" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+        <!-- Redis → Celery -->
+        <line x1="760" y1="488" x2="760" y2="518" stroke="#475569" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="772" y="494" width="60" height="16" fill="#f2f2f7"/>
+        <text x="802" y="506" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="12" font-weight="500" fill="#526175">consume</text>
+
+        <!-- Celery → MariaDB (solid, bottom route) -->
+        <path d="M 684,556 H 488 Q 480,556 480,548 V 482"
+              fill="none" stroke="#475569" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <rect x="556" y="542" width="80" height="16" fill="#f2f2f7"/>
+        <text x="596" y="554" text-anchor="middle" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="12" font-weight="500" fill="#526175">SQL :3306</text>
+
         <!-- ============ NODES ============ -->
 
         <!-- User (input) -->
@@ -140,20 +100,32 @@
         <text x="760" y="378" text-anchor="middle" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="12" font-weight="600" fill="#0f172a">media volume</text>
         <text x="760" y="394" text-anchor="middle" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" fill="#475569">/media</text>
 
+        <!-- Redis (store) -->
+        <rect x="684" y="440" width="152" height="48" rx="6" fill="rgba(15,23,42,0.05)" stroke="#475569" stroke-width="1"/>
+        <text x="760" y="462" text-anchor="middle" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="12" font-weight="600" fill="#0f172a">Redis</text>
+        <text x="760" y="478" text-anchor="middle" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" fill="#475569">7-alpine · :6379 broker</text>
+
+        <!-- Celery (worker) -->
+        <rect x="684" y="524" width="152" height="48" rx="6" fill="rgba(29,78,216,0.05)" stroke="#1d4ed8" stroke-width="1"/>
+        <text x="760" y="546" text-anchor="middle" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="12" font-weight="600" fill="#0f172a">Celery</text>
+        <text x="760" y="562" text-anchor="middle" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" fill="#475569">worker -c 2 + beat</text>
+
         <!-- ============ LEGEND (bottom strip) ============ -->
-        <line x1="40" y1="536" x2="920" y2="536" stroke="rgba(15,23,42,0.12)" stroke-width="1"/>
-        <rect x="56" y="552" width="14" height="14" rx="3" fill="rgba(13,148,136,0.08)" stroke="#0f766e" stroke-width="1"/>
-        <text x="80" y="563" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="11" fill="#475569">焦點節點</text>
-        <rect x="180" y="552" width="14" height="14" rx="3" fill="rgba(15,23,42,0.03)" stroke="rgba(15,23,42,0.30)" stroke-width="1"/>
-        <text x="204" y="563" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="11" fill="#475569">反向代理</text>
-        <rect x="308" y="552" width="14" height="14" rx="3" fill="rgba(15,23,42,0.05)" stroke="#475569" stroke-width="1"/>
-        <text x="332" y="563" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="11" fill="#475569">資料庫</text>
-        <rect x="424" y="552" width="14" height="14" rx="3" fill="rgba(15,23,42,0.02)" stroke="rgba(15,23,42,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
-        <text x="448" y="563" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="11" fill="#475569">儲存卷</text>
-        <line x1="552" y1="559" x2="576" y2="559" stroke="#1d4ed8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
-        <text x="584" y="563" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="11" fill="#475569">外部流量</text>
-        <line x1="684" y1="559" x2="708" y2="559" stroke="#526175" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
-        <text x="716" y="563" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="11" fill="#475569">檔案讀寫</text>
+        <line x1="40" y1="656" x2="920" y2="656" stroke="rgba(15,23,42,0.12)" stroke-width="1"/>
+        <rect x="56" y="672" width="14" height="14" rx="3" fill="rgba(13,148,136,0.08)" stroke="#0f766e" stroke-width="1"/>
+        <text x="80" y="683" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="11" fill="#475569">焦點節點</text>
+        <rect x="180" y="672" width="14" height="14" rx="3" fill="rgba(15,23,42,0.03)" stroke="rgba(15,23,42,0.30)" stroke-width="1"/>
+        <text x="204" y="683" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="11" fill="#475569">反向代理</text>
+        <rect x="308" y="672" width="14" height="14" rx="3" fill="rgba(15,23,42,0.05)" stroke="#475569" stroke-width="1"/>
+        <text x="332" y="683" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="11" fill="#475569">資料庫</text>
+        <rect x="424" y="672" width="14" height="14" rx="3" fill="rgba(15,23,42,0.02)" stroke="rgba(15,23,42,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="448" y="683" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="11" fill="#475569">儲存卷</text>
+        <rect x="540" y="672" width="14" height="14" rx="3" fill="rgba(29,78,216,0.05)" stroke="#1d4ed8" stroke-width="1"/>
+        <text x="564" y="683" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="11" fill="#475569">背景工作</text>
+        <line x1="652" y1="679" x2="676" y2="679" stroke="#1d4ed8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+        <text x="684" y="683" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="11" fill="#475569">外部流量</text>
+        <line x1="776" y1="679" x2="800" y2="679" stroke="#526175" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+        <text x="808" y="683" font-family="'Work Sans', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif" font-size="11" fill="#475569">檔案讀寫</text>
       </svg>
     </div>
   </div>

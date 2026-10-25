@@ -88,26 +88,37 @@ class Command(BaseCommand):
 
         self.stdout.write("Ensuring demo accounts...")
         for acct in DEMO_ACCOUNTS:
-            user, created = User.objects.get_or_create(
-                username=acct["username"],
-                defaults={
-                    "is_staff": acct["is_staff"],
-                    "is_superuser": acct["is_superuser"],
-                },
-            )
+            user, created = User.objects.get_or_create(username=acct["username"])
+            if not created and (
+                user.email != acct["email"]
+                or user.is_staff != acct["is_staff"]
+                or user.is_superuser != acct["is_superuser"]
+                or not user.check_password(acct["password"])
+            ):
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"  {acct['username']} 已存在且與示範帳號定義不符，"
+                        f"將覆寫其 email/權限/密碼。"
+                    )
+                )
             user.email = acct["email"]
             user.is_staff = acct["is_staff"]
             user.is_superuser = acct["is_superuser"]
             user.set_password(acct["password"])
             user.save()
 
-            email = EmailAddress.objects.filter(user=user).first()
-            if email is None:
-                email = EmailAddress(user=user)
-            email.email = acct["email"]
+            email, _ = EmailAddress.objects.get_or_create(
+                user=user,
+                email=acct["email"],
+                defaults={"verified": True, "primary": True},
+            )
             email.verified = True
             email.primary = True
             email.save()
+            # 同一用戶可能有舊的 EmailAddress 殘留，primary 必須唯一
+            EmailAddress.objects.filter(user=user).exclude(pk=email.pk).update(
+                primary=False
+            )
 
             action = "created" if created else "updated"
             self.stdout.write(
