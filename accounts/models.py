@@ -430,6 +430,28 @@ class UserProfile(UpdatableModel):
         return timezone.now() < self.suspension_end_date
 
     @property
+    def schedule_text(self):
+        """可面交/取書排班的顯示文字，如「週一 09:00-12:00、週三 14:00-18:00」。"""
+        days_map = {
+            "1": "週一",
+            "2": "週二",
+            "3": "週三",
+            "4": "週四",
+            "5": "週五",
+            "6": "週六",
+            "7": "週日",
+        }
+        try:
+            texts = []
+            for entry in self.available_schedule or []:
+                day = str(entry.get("weekday", ""))
+                day_name = days_map.get(day, f"星期{day}")
+                texts.append(f"{day_name} {entry.get('start', '')}-{entry.get('end', '')}")
+        except Exception:
+            return ""
+        return "、".join(texts)
+
+    @property
     def trust_stars(self):
         """
         計算信用星等（1-5星）。

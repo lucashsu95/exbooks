@@ -133,13 +133,9 @@ def book_detail(request, pk):
         request.user, book.official_book.id
     )
 
-    from deals.models import Notification
+    from deals.services.notification_service import mark_book_as_read
 
-    Notification.objects.filter(
-        recipient=request.user,
-        shared_book=book,
-        is_read=False,
-    ).update(is_read=True)
+    mark_book_as_read(request.user, book)
 
     return render(
         request,
@@ -305,28 +301,8 @@ def book_add(request):
         if profile.default_location:
             initial_desc += f"取書地點：{profile.default_location}\n"
 
-        if profile.available_schedule:
-            try:
-                days_map = {
-                    "1": "週一",
-                    "2": "週二",
-                    "3": "週三",
-                    "4": "週四",
-                    "5": "週五",
-                    "6": "週六",
-                    "7": "週日",
-                }
-                sched_texts = []
-                for entry in profile.available_schedule:
-                    day = str(entry.get("weekday", ""))
-                    day_name = days_map.get(day, f"星期{day}")
-                    start = entry.get("start", "")
-                    end = entry.get("end", "")
-                    sched_texts.append(f"{day_name} {start}-{end}")
-                if sched_texts:
-                    initial_desc += f"可取書時間：{'、'.join(sched_texts)}"
-            except Exception:
-                pass
+        if profile.schedule_text:
+            initial_desc += f"可取書時間：{profile.schedule_text}"
 
         form = BookAddForm(initial={"condition_description": initial_desc.strip()})
 

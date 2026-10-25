@@ -15,7 +15,6 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator
-from django.utils import timezone
 
 from books.models import SharedBook
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -78,28 +77,8 @@ def deal_create(request, book_id, deal_type):
         if profile.default_location:
             initial_note += f"建議面交地點：{profile.default_location}\n"
 
-        if profile.available_schedule:
-            try:
-                days_map = {
-                    "1": "週一",
-                    "2": "週二",
-                    "3": "週三",
-                    "4": "週四",
-                    "5": "週五",
-                    "6": "週六",
-                    "7": "週日",
-                }
-                sched_texts = []
-                for entry in profile.available_schedule:
-                    day = str(entry.get("weekday", ""))
-                    day_name = days_map.get(day, f"星期{day}")
-                    start = entry.get("start", "")
-                    end = entry.get("end", "")
-                    sched_texts.append(f"{day_name} {start}-{end}")
-                if sched_texts:
-                    initial_note += f"可面交時間：{'、'.join(sched_texts)}"
-            except Exception:
-                pass
+        if profile.schedule_text:
+            initial_note += f"可面交時間：{profile.schedule_text}"
 
         form = DealApplicationForm(
             initial={
@@ -140,37 +119,21 @@ def deal_detail(request, pk):
         "approved_by__profile",
     )[:20]
 
-    Notification.objects.filter(
-        recipient=request.user,
-        deal=deal,
-        is_read=False,
-    ).update(is_read=True)
+    from accounts.services.user_stats_service import get_user_rating_summary
+    from deals.services.overdue_service import is_overdue as deal_is_overdue
 
-    from django.db.models import Avg
-
-    # Correct aggregation for complex calculation
-    from deals.models import Rating
+    notification_service.mark_deal_as_read(request.user, deal)
 
     def get_user_rating_info(user):
-        ratings = Rating.objects.filter(ratee=user)
-        total = ratings.count()
-        if total == 0:
+        summary = get_user_rating_summary(user)
+        if summary["total_ratings"] == 0:
             return None
-        avg_scores = ratings.aggregate(
-            a=Avg("friendliness_score"),
-            b=Avg("punctuality_score"),
-            c=Avg("accuracy_score"),
-        )
-        avg = (avg_scores["a"] + avg_scores["b"] + avg_scores["c"]) / 3
-        return {"avg_rating": avg, "total_ratings": total}
+        return {
+            "avg_rating": summary["overall_average"],
+            "total_ratings": summary["total_ratings"],
+        }
 
-    is_overdue = False
-    if deal.due_date and deal.deal_type in (
-        Deal.DealType.LOAN,
-        Deal.DealType.RESTORE,
-        Deal.DealType.REGRESS,
-    ):
-        is_overdue = timezone.now().date() > deal.due_date
+    is_overdue = deal_is_overdue(deal)
 
     return render(
         request,
@@ -436,15 +399,7 @@ def rating_create(request, pk):
         messages.error(request, "您無權評價此交易。")
         return redirect("deals:detail", pk)
 
-    # 檢查是否已評價
-    if request.user == deal.applicant and deal.applicant_rated:
-        messages.info(request, "您已經評價過此交易。")
-        return redirect("deals:detail", pk)
-    if request.user == deal.responder and deal.responder_rated:
-        messages.info(request, "您已經評價過此交易。")
-        return redirect("deals:detail", pk)
-
-    # 判斷被評價者
+    # 判斷被評價者（已評價的 guard 在 rating_service.create_rating）
     ratee = deal.responder if request.user == deal.applicant else deal.applicant
 
     if request.method == "POST":
@@ -463,10 +418,7 @@ def rating_create(request, pk):
                 return redirect("deals:detail", pk)
             except Exception as e:
                 logger.exception("rating_create failed", extra={"user_id": request.user.pk, "deal_id": str(pk)})
-                if "unique_deal_rater" in str(e):
-                    messages.warning(request, "您已經評價過此交易，無法重複評價。")
-                else:
-                    messages.error(request, f"評價送出失敗: {service_error_message(e)}")
+                messages.error(request, service_error_message(e))
                 return redirect("deals:detail", pk)
         else:
             if form.errors:

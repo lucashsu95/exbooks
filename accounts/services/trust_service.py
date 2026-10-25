@@ -12,10 +12,10 @@ from dataclasses import dataclass
 
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.db.models import Avg, Q
+from django.db.models import Q
 from django.utils import timezone
 
-from deals.models import Deal, Rating
+from deals.models import Deal
 
 from accounts.models import TrustLevelConfig, TrustScoreLedger
 
@@ -193,22 +193,9 @@ def _calculate_avg_rating(user) -> float:
     Returns:
         float: 三項評分的平均值（0-5），無評價時返回 0
     """
-    ratings = Rating.objects.filter(ratee=user)
-    if not ratings.exists():
-        return 0.0
+    from accounts.services.user_stats_service import get_user_rating_summary
 
-    avg_scores = ratings.aggregate(
-        avg_integrity=Avg("friendliness_score"),
-        avg_punctuality=Avg("punctuality_score"),
-        avg_accuracy=Avg("accuracy_score"),
-    )
-
-    total = (
-        (avg_scores["avg_integrity"] or 0)
-        + (avg_scores["avg_punctuality"] or 0)
-        + (avg_scores["avg_accuracy"] or 0)
-    )
-    return total / 3
+    return float(get_user_rating_summary(user)["overall_average"] or 0.0)
 
 
 # ============================================================================

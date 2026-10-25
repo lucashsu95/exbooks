@@ -312,47 +312,27 @@ def mark_all_as_read(user):
     )
 
 
-def notify_rating_created(rating):
-    """收到評價 → 通知被評價者。"""
-    notify(
-        recipient=rating.ratee,
-        notification_type=Notification.NotificationType.RATING_CREATED,
-        title="您收到新的交易評價",
-        message=(
-            f"{rating.rater} 已針對書籍「{rating.deal.shared_book}」給予您評價，"
-            f"平均分數 {rating.average_score:.1f} 分"
-        ),
-        deal=rating.deal,
-        shared_book=rating.deal.shared_book,
+def mark_deal_as_read(user, deal):
+    """看交易詳情即標記該交易的未讀通知為已讀。"""
+    updated = Notification._default_manager.filter(
+        recipient=user,
+        deal=deal,
+        is_read=False,
+    ).update(is_read=True)
+    logger.debug(
+        "deal notifications marked as read",
+        extra={"user_id": user.id, "deal_id": str(deal.id), "count": updated},
     )
 
 
-def notify_violation_created(violation):
-    """收到違規處分 → 通知被處分用戶。"""
-    message = (
-        f"您收到一筆{violation.get_action_type_display()}處分"
-        f"（違規行為：{violation.get_violation_type_display()}）。"
-    )
-
-    if violation.suspension_days:
-        message += f" 停權天數：{violation.suspension_days} 天。"
-
-    if violation.description:
-        message += f" 說明：{violation.description}"
-
-    notify(
-        recipient=violation.user,
-        notification_type=Notification.NotificationType.VIOLATION_CREATED,
-        title="您收到新的違規處分通知",
-        message=message,
-    )
-
-
-def notify_appeal_status_updated(appeal):
-    """申訴狀態更新 → 通知申訴人。"""
-    notify(
-        recipient=appeal.user,
-        notification_type=Notification.NotificationType.APPEAL_STATUS_UPDATED,
-        title=f"申訴狀態已更新：{appeal.get_status_display()}",
-        message=f"您的申訴「{appeal.title}」目前狀態為：{appeal.get_status_display()}。",
+def mark_book_as_read(user, shared_book):
+    """看書籍詳情即標記該書籍的未讀通知為已讀。"""
+    updated = Notification._default_manager.filter(
+        recipient=user,
+        shared_book=shared_book,
+        is_read=False,
+    ).update(is_read=True)
+    logger.debug(
+        "book notifications marked as read",
+        extra={"user_id": user.id, "book_id": str(shared_book.id), "count": updated},
     )
