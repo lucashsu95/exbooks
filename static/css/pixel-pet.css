@@ -1,0 +1,188 @@
+/* 米豆 Mēdòu 像素小寵物 — 顏色（品牌色）與外殼樣式，由 pixel-pet.js 使用 */
+
+:root {
+  --mipet-body: #14b8a6;
+  --mipet-cheek: #06b6d4;
+  --mipet-muzzle: #f0fdfa;
+  --mipet-eye: #134e4a;
+  --mipet-muted: #64748b;
+  --mipet-fg: #0f172a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --mipet-body: #14b8a6;
+    --mipet-cheek: #22d3ee;
+    --mipet-muzzle: #134e4a;
+    --mipet-eye: #0f172a;
+    --mipet-muted: #94a3b8;
+    --mipet-fg: #e2e8f0;
+  }
+}
+.dark {
+  --mipet-body: #14b8a6;
+  --mipet-cheek: #22d3ee;
+  --mipet-muzzle: #134e4a;
+  --mipet-eye: #0f172a;
+  --mipet-muted: #94a3b8;
+  --mipet-fg: #e2e8f0;
+}
+
+/* 全站右下角浮動小版：只佔小小的 hit area，不擋捲動與 nav */
+.mipet-float {
+  position: fixed;
+  right: max(1rem, env(safe-area-inset-right, 0px));
+  bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  z-index: 30;
+  pointer-events: none;
+}
+/* 登入頁有 64px bottom nav 與 chat 按鈕，往上讓位 */
+.mipet-float--auth {
+  bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+.mipet {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.mipet--small {
+  flex-direction: column;
+  width: 44px;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.mipet--small:focus-visible {
+  outline: 2px solid var(--mipet-body);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.mipet--large {
+  flex-direction: row;
+}
+
+.mipet-col {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+.mipet--large .mipet-col {
+  width: 48px;
+  flex: none;
+}
+
+.mipet-sprite {
+  line-height: 0;
+}
+.mipet-sprite svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  shape-rendering: crispEdges;
+}
+.mipet[data-state="error"] .mipet-sprite svg {
+  filter: saturate(0.45) brightness(0.9);
+}
+
+.mipet-shadow {
+  width: 20px;
+  height: 4px;
+  margin-top: 1px;
+  background: var(--mipet-muted);
+  opacity: 0.14;
+  border-radius: 50%;
+  transition: transform 0.12s, opacity 0.12s;
+}
+
+/* 聊天視窗大版：widget 版面永遠是淺色底，文字顏色固定走淺色值 */
+.mipet-large-bar {
+  --mipet-fg: #0f172a;
+  --mipet-muted: #64748b;
+}
+
+.mipet-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+.mipet-name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--mipet-fg);
+}
+.mipet-status {
+  font-size: 12px;
+  color: var(--mipet-muted);
+}
+
+/* 思考泡泡：三顆小像素沿著往上飄 */
+.mipet-thought {
+  position: absolute;
+  top: 2px;
+  right: calc(100% + 4px);
+  width: 13px;
+  height: 30px;
+  visibility: hidden;
+  pointer-events: none;
+}
+.mipet[data-state="thinking"] .mipet-thought {
+  visibility: visible;
+}
+.mipet-thought i {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: var(--mipet-muted);
+  left: 0;
+  bottom: 0;
+  animation: mipet-rise 1.5s steps(4) infinite;
+}
+.mipet-thought i:nth-child(2) {
+  left: 4px;
+  bottom: 5px;
+  animation-delay: 0.45s;
+}
+.mipet-thought i:nth-child(3) {
+  left: 8px;
+  bottom: 10px;
+  animation-delay: 0.9s;
+}
+@keyframes mipet-rise {
+  0% { opacity: 0; }
+  30% { opacity: 0.4; }
+  60% { opacity: 0.9; }
+  100% { opacity: 0; bottom: 24px; }
+}
+
+/* 睡覺時頭上飄像素 z z z */
+.mipet-zzz {
+  position: absolute;
+  top: 0;
+  right: calc(100% + 2px);
+  width: 14px;
+  height: 30px;
+  display: none;
+  pointer-events: none;
+}
+.mipet[data-state="sleep"] .mipet-zzz {
+  display: block;
+}
+.mipet-zzz span {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  font: 700 8px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--mipet-muted);
+  animation: mipet-rise 2.2s steps(4) infinite;
+}
+.mipet-zzz span:nth-child(2) {
+  animation-delay: 0.7s;
+}
+.mipet-zzz span:nth-child(3) {
+  font-size: 10px;
+  animation-delay: 1.4s;
+}
