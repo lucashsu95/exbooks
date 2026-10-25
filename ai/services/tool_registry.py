@@ -130,4 +130,9 @@ def request_renewal(user, deal_id: int, days: int = 7) -> str:
         raise ValidationError(f"交易 {deal_id} 不存在。")
     if user not in (deal.applicant, deal.responder):
         raise PermissionDenied("您不是此交易的當事人，無法申請延期。")
-    return f"Tool 'request_renewal' executed for deal {deal_id} (Placeholder)"
+    # 佔位實作：只做身份驗證、沒有真正建立延期——回傳文案不可稱「已執行」，
+    # 否則 AI 會把 no-op 當成成功告知使用者
+    return (
+        f"Tool 'request_renewal' verified ownership for deal {deal_id} "
+        f"(no-op placeholder: renewal was NOT actually requested)"
+    )

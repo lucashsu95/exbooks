@@ -1,11 +1,16 @@
 """
-C3 搬移後的 service 層守衛測試（不經 HTTP）。
+C3 搬移後的 service 層守衛測試（不經 HTTP），
+外加兩個 view 層錯誤轉譯回歸測試。
 
 涵蓋：
+- create_exception（EX 持有者身份守衛）
 - resolve_exception_deal（例外處置入口）
 - send_deal_message / upload_deal_photos（原 view 內守衛）
 - confirm_return 互評規則（原 view 內雙重檢查）
-- accept() 的 sibling 取消改走 cancel() 轉換
+- accept() 的 sibling 取消改走 auto_cancel() 轉換
+  （與休眠炸彈 cancel() 無關，見 ADR F-1）
+- exception_resolve / message_send view 的錯誤訊息轉譯
+  （ValidationError 不可用 str()，會秀出方括號）
 """
 
 import io
@@ -142,7 +147,7 @@ class TestConfirmReturnRatingRule:
 
 class TestAcceptCancelsSiblingsViaTransition:
     def test_sibling_request_auto_cancelled(self):
-        """BR-15：接受後同一本書的其他 REQUESTED 申請取消（經 cancel() 轉換）。"""
+        """BR-15：接受後同一本書的其他 REQUESTED 申請取消（經 auto_cancel() 轉換）。"""
         user_a = UserFactory()
         user_b = UserFactory()
         book = SharedBookFactory(owner=user_b, status=SharedBook.Status.TRANSFERABLE)
@@ -189,3 +194,39 @@ class TestExceptionResolveView:
         book.refresh_from_db()
         assert deal.status == Deal.Status.DONE
         assert book.status != SharedBook.Status.EXCEPTION
+
+    def test_post_error_message_translated(self, client):
+        """ValidationError 轉譯為純中文；str(e) 的方括號/引號不得秀給使用者。"""
+        owner = UserFactory()
+        keeper = UserFactory()
+        book = SharedBookFactory(
+            owner=owner, keeper=keeper, status=SharedBook.Status.TRANSFERABLE
+        )
+        deal = DealFactory(
+            shared_book=book, deal_type=Deal.DealType.EXCEPT, status=Deal.Status.MEETED
+        )
+
+        client.force_login(owner)
+        url = reverse("deals:exception_resolve", kwargs={"pk": deal.pk})
+        response = client.post(url, {"resolution": "found"})
+
+        assert response.status_code == 200  # 失敗回渲染表單
+        messages_shown = [str(m) for m in response.context["messages"]]
+        assert "書籍不在例外狀態" in messages_shown
+        assert not any("[" in m for m in messages_shown)
+
+
+class TestDealMessageSendView:
+    """message_send（HTMX endpoint）400 body 必須是純中文，不是 str(ValidationError)。"""
+
+    def test_send_to_finished_deal_returns_plain_400(self, client):
+        deal = DealFactory(status=Deal.Status.DONE)
+        client.force_login(deal.applicant)
+        response = client.post(
+            reverse("deals:message_send", kwargs={"pk": deal.pk}),
+            {"content": "hi"},
+        )
+        assert response.status_code == 400
+        body = response.content.decode("utf-8")
+        assert "此交易已結束，無法再發送留言。" in body
+        assert "[" not in body
