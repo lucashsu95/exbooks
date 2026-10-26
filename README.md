@@ -1,5 +1,7 @@
 # Exbooks 共享書籍
 
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+
 > 一套公益性質的共享書籍平臺，鼓勵社群成員分享自有藏書，讓書籍自由流通，促進知識共享。
 
 ## 計劃主旨

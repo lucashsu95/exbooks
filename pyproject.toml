@@ -2,6 +2,7 @@
 name = "exbook"
 version = "0.1.0"
 description = "共享書籍平臺 — 公益性質的去中心化書籍共享社群"
+license = "MIT"
 requires-python = ">=3.12"
 dependencies = [
     "celery[redis]>=5.3",
