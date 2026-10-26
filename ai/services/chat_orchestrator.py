@@ -55,8 +55,16 @@ class ChatOrchestrator:
                 # args 先依 signature 過濾再存 server-side（one-shot token），
                 # 存檔＝顯示＝執行，client 回傳的 args 不可信
                 arguments = filter_args_by_signature(tool_def.func, arguments)
-                token = ConsentStore.create(user.id, tool_name, arguments)
-                yield _sse("consent_required", {"tool": tool_name, "args": arguments, "token": token})
+                missing = [k for k in tool_def.parameters.get("required", []) if k not in arguments]
+                if missing:
+                    # 缺 required 參數不發 consent（該 token 會不可執行）；
+                    # 以 tool_result 告知 AI 補齊重試
+                    error = f"缺少必填參數：{', '.join(missing)}"
+                    tool_results.append({"tool": tool_name, "error": error})
+                    yield _sse("tool_result", {"tool": tool_name, "error": error})
+                else:
+                    token = ConsentStore.create(user.id, tool_name, arguments)
+                    yield _sse("consent_required", {"tool": tool_name, "args": arguments, "token": token})
             elif tool_def:
                 try:
                     result = tool_def.func(user=user, **arguments)

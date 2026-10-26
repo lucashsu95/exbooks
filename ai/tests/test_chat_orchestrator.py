@@ -127,6 +127,34 @@ def test_consent_required_filters_args_before_storing():
     assert stored["args"] == {"deal_id": "1", "days": 7}
 
 
+def test_consent_required_missing_required_arg_no_consent():
+    """缺 required 參數不發 consent（token 會不可執行）；tool_result 告知 AI 補齊重試。"""
+    user = UserFactory()
+    sse, transport = _run(
+        user,
+        [
+            ChatResponse(
+                content="",
+                tool_calls=[
+                    {
+                        "id": "c1",
+                        "type": "function",
+                        "function": {
+                            "name": "request_renewal",
+                            "arguments": '{"days": 7}',  # 缺 deal_id
+                        },
+                    }
+                ],
+            ),
+            ChatResponse(content="請告訴我交易編號。"),
+        ],
+    )
+    assert "event: consent_required" not in sse
+    assert "event: tool_result" in sse
+    assert "deal_id" in sse
+    assert len(transport.requests) == 2  # 有 follow-up
+
+
 def test_tool_error_yields_error_event():
     """tool 執行拋錯 → tool_result 帶 error，不中斷串流。"""
     user = UserFactory()
