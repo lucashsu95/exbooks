@@ -57,6 +57,12 @@ class TestPartialRendering:
     def test_counterpart_info_shows_correct_user(self):
         """_counterpart_info.html should show opposite party based on current_user."""
         deal = DealFactory()
+        # 明確指派唯一暱稱：Faker zh_TW 的 first_name（signal 預設 nickname）
+        # 可能是單字且互相為子字串，會讓 not-in 斷言隨機失敗
+        deal.applicant.profile.nickname = "借書人甲"
+        deal.responder.profile.nickname = "藏書人乙"
+        deal.applicant.profile.save()
+        deal.responder.profile.save()
 
         # As applicant, should see responder
         context = {"deal": deal, "current_user": deal.applicant}

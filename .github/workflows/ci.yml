@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v10
         with:
           python-version: "3.12"
 
@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v10
         with:
           python-version: "3.12"
 
@@ -41,7 +41,8 @@ jobs:
   deploy:
     runs-on: self-hosted
     needs: test
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    # 只有本 repo 有 self-hosted runner；fork 跳過 deploy，避免 workflow 永久 pending
+    if: github.repository == 'lucashsu95/exbooks' && github.ref == 'refs/heads/master' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
 
