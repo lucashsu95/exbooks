@@ -193,9 +193,8 @@ function chatWidget() {
 
             this.eventSource.addEventListener('consent_required', (e) => {
                 const data = JSON.parse(e.data);
-                this.addMessage('assistant', 'This action requires your confirmation.', 'consent');
-                // Store tool/args for action
-                this.pendingAction = { tool: data.tool, args: data.args };
+                this.addMessage('assistant', this.formatConsent(data), 'consent');
+                this.pendingAction = { tool: data.tool, args: data.args, token: data.token };
             });
 
             this.eventSource.addEventListener('error', (e) => {
@@ -246,8 +245,8 @@ function chatWidget() {
                         }
                         this.addMessage('assistant', data.delta, 'text');
                     } else if (event === 'consent_required') {
-                        this.addMessage('assistant', 'This action requires your confirmation.', 'consent');
-                        this.pendingAction = { tool: data.tool, args: data.args };
+                        this.addMessage('assistant', this.formatConsent(data), 'consent');
+                        this.pendingAction = { tool: data.tool, args: data.args, token: data.token };
                     } else if (event === 'tool_result') {
                         this.addMessage('assistant', `Tool result: ${data.error ?? data.result}`, 'text');
                     } else if (event === 'done') {
@@ -270,6 +269,11 @@ function chatWidget() {
                 this.addMessage('assistant', 'Sorry, I encountered an error sending your message.');
                 this.isTyping = false;
             }
+        },
+
+        formatConsent(data) {
+            const args = data.args ? Object.entries(data.args).map(([k, v]) => `${k}=${v}`).join(', ') : '';
+            return `Confirm ${data.tool}(${args})?`;
         },
 
         parseSSE(text) {
@@ -304,9 +308,9 @@ function chatWidget() {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': this.getCookie('csrftoken')
                     },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         confirmed: action === 'confirm',
-                        args: this.pendingAction.args
+                        token: this.pendingAction.token
                     })
                 });
                 if (!response.ok) throw new Error('Action failed');
