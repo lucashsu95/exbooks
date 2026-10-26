@@ -127,6 +127,35 @@ class Command(BaseCommand):
                 )
             )
 
+    def _assign_demo_books(self):
+        """把現有的可移轉書各綁一本給 admin / reader，方便立即測試借用功能。"""
+        demo_users = User.objects.filter(
+            username__in=[acct["username"] for acct in DEMO_ACCOUNTS]
+        )
+        candidates = (
+            SharedBook.objects.filter(status=SharedBook.Status.TRANSFERABLE)
+            .exclude(owner__in=demo_users)
+            .select_related("official_book", "owner")
+        )
+        assigned = 0
+        for user in demo_users:
+            book = candidates.exclude(owner_id=user.id).first()
+            if book is None:
+                break
+            book.owner = user
+            book.keeper = user
+            book.save(update_fields=["owner", "keeper", "updated_at"])
+            assigned += 1
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"  {user.username} 綁定：{book.official_book.title} ({book.pk})"
+                )
+            )
+        if assigned < demo_users.count():
+            self.stdout.write(
+                self.style.WARNING("  可移轉書不足，示範帳號綁定未完成。")
+            )
+
     def _generate_data(self, amount):
         self.stdout.write(f"Generating {amount} data...")
 
@@ -177,7 +206,10 @@ class Command(BaseCommand):
 
             self.stdout.write(f"Created {shared_books_count} shared books.")
 
-            # 4. Deals for occupied books
+            # 4. 示範帳號各綁一本現有的可移轉書，方便立即測試借用功能
+            self._assign_demo_books()
+
+            # 5. Deals for occupied books
             occupied_books = SharedBook.objects.filter(
                 status=SharedBook.Status.OCCUPIED
             )
