@@ -52,7 +52,9 @@ class LoanExtension(FSMModelMixin, UpdatableModel):
             MaxValueValidator(MAX_EXTRA_DAYS),
         ],
         verbose_name=_("延長天數"),
-        help_text=_("最少 7 天，最多 30 天"),
+        help_text=_(
+            "最少 %(min_days)s 天，最多 %(max_days)s 天"
+        ) % {"min_days": MIN_EXTRA_DAYS, "max_days": MAX_EXTRA_DAYS},
     )
     status = FSMField(
         max_length=10,
