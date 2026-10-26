@@ -9,6 +9,27 @@ from books.models import BookSet, OfficialBook, SharedBook
 from deals.models import Deal, DealMessage, LoanExtension, Notification, Rating
 
 
+# 固定帳密的示範帳號，讓任何人 clone 後執行 seed 都能直接登入（僅供本地開發）
+DEMO_ACCOUNTS = [
+    {
+        "username": "admin",
+        "email": "admin@example.com",
+        "password": "admin12345",
+        "is_staff": True,
+        "is_superuser": True,
+        "role": "管理員（可進 /admin/）",
+    },
+    {
+        "username": "reader",
+        "email": "reader@example.com",
+        "password": "reader12345",
+        "is_staff": False,
+        "is_superuser": False,
+        "role": "一般會員",
+    },
+]
+
+
 class Command(BaseCommand):
     help = "Generate fake data for Exbooks"
 
@@ -61,6 +82,51 @@ class Command(BaseCommand):
             self.style.SUCCESS("Existing data cleared (Superusers preserved).")
         )
 
+    def _ensure_demo_accounts(self):
+        """建立/更新固定帳密的示範帳號，並把 email 標記為已驗證。"""
+        from allauth.account.models import EmailAddress
+
+        self.stdout.write("Ensuring demo accounts...")
+        for acct in DEMO_ACCOUNTS:
+            user, created = User.objects.get_or_create(username=acct["username"])
+            if not created and (
+                user.email != acct["email"]
+                or user.is_staff != acct["is_staff"]
+                or user.is_superuser != acct["is_superuser"]
+                or not user.check_password(acct["password"])
+            ):
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"  {acct['username']} 已存在且與示範帳號定義不符，"
+                        f"將覆寫其 email/權限/密碼。"
+                    )
+                )
+            user.email = acct["email"]
+            user.is_staff = acct["is_staff"]
+            user.is_superuser = acct["is_superuser"]
+            user.set_password(acct["password"])
+            user.save()
+
+            email, _ = EmailAddress.objects.get_or_create(
+                user=user,
+                email=acct["email"],
+                defaults={"verified": True, "primary": True},
+            )
+            email.verified = True
+            email.primary = True
+            email.save()
+            # 同一用戶可能有舊的 EmailAddress 殘留，primary 必須唯一
+            EmailAddress.objects.filter(user=user).exclude(pk=email.pk).update(
+                primary=False
+            )
+
+            action = "created" if created else "updated"
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"  {acct['email']} / {acct['password']} ({acct['role']}, {action})"
+                )
+            )
+
     def _generate_data(self, amount):
         self.stdout.write(f"Generating {amount} data...")
 
@@ -79,6 +145,9 @@ class Command(BaseCommand):
         counts = config.get(amount, config["small"])
 
         with transaction.atomic():
+            # 0. Fixed demo accounts (see DEMO_ACCOUNTS)
+            self._ensure_demo_accounts()
+
             # 1. Users
             profiles = factories.UserProfileFactory.create_batch(counts["users"])
             users = [p.user for p in profiles]

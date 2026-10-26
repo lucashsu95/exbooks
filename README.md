@@ -97,8 +97,18 @@ cp .env.example .env
 
 ```bash
 python manage.py migrate
-python manage.py createsuperuser
+python manage.py seed
 ```
+
+`seed` 會載入一批假資料（用戶、書籍、交易）並建立兩組**固定帳密的示範帳號**（email 已標記為驗證狀態，可直接登入）：
+
+| 電子信箱 | 密碼 | 角色 |
+|----------|------|------|
+| `admin@example.com` | `admin12345` | 管理員（superuser，可進 `/admin/`） |
+| `reader@example.com` | `reader12345` | 一般會員 |
+
+> ⚠️ 示範帳號僅供本地開發使用，部署前請刪除或改用 `createsuperuser` 建立正式帳號。
+> 重新執行 `seed` 會清除既有假資料（保留 superuser）後重新產生，帳號密碼不變。
 
 ### 5. 啟動開發伺服器
 
