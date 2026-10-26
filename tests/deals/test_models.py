@@ -178,6 +178,12 @@ class TestLoanExtension:
         result = str(ext)
         assert "延長 14 天" in result
 
+    def test_extra_days_help_text_derived_from_constants(self):
+        field = LoanExtension._meta.get_field("extra_days")
+        text = str(field.help_text)
+        assert str(LoanExtension.MIN_EXTRA_DAYS) in text
+        assert str(LoanExtension.MAX_EXTRA_DAYS) in text
+
     def test_db_table(self):
         assert LoanExtension._meta.db_table == "exbook_loan_extension"
 

@@ -5,6 +5,7 @@
 import pytest
 from django.urls import reverse
 
+from deals.forms import ExtensionRequestForm
 from deals.models import LoanExtension
 from tests.factories import (
     DealFactory,
@@ -116,6 +117,16 @@ class TestExtensionRequestView:
         # 表單驗證失敗，重新渲染頁面並顯示錯誤訊息
         assert response.status_code == 200
         assert not LoanExtension.objects.filter(deal=deal).exists()
+
+
+class TestExtensionRequestForm:
+    @pytest.mark.parametrize(
+        ("days", "valid"),
+        [(6, False), (7, True), (14, True), (30, True), (31, False), ("abc", False)],
+    )
+    def test_extra_days_bounds(self, days, valid):
+        form = ExtensionRequestForm(data={"extra_days": days})
+        assert form.is_valid() is valid
 
 
 class TestExtensionApproveView:

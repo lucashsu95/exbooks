@@ -6,7 +6,7 @@ from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field
 
-from .models import Deal
+from .models import Deal, LoanExtension
 
 
 class DealApplicationForm(forms.ModelForm):
@@ -169,21 +169,21 @@ class ExtensionRequestForm(forms.Form):
     """延長借閱申請表單。"""
 
     extra_days = forms.IntegerField(
-        min_value=7,
-        max_value=30,
+        min_value=LoanExtension.MIN_EXTRA_DAYS,
+        max_value=LoanExtension.MAX_EXTRA_DAYS,
         widget=forms.NumberInput(
             attrs={
                 "class": "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
-                "placeholder": "7-30 天",
-                "min": 7,
-                "max": 30,
-                "aria-valuemin": 7,
-                "aria-valuemax": 30,
-                "aria-label": "延長天數，最少7天最多30天",
+                "placeholder": f"{LoanExtension.MIN_EXTRA_DAYS}-{LoanExtension.MAX_EXTRA_DAYS} 天",
+                "min": LoanExtension.MIN_EXTRA_DAYS,
+                "max": LoanExtension.MAX_EXTRA_DAYS,
+                "aria-valuemin": LoanExtension.MIN_EXTRA_DAYS,
+                "aria-valuemax": LoanExtension.MAX_EXTRA_DAYS,
+                "aria-label": f"延長天數，最少{LoanExtension.MIN_EXTRA_DAYS}天最多{LoanExtension.MAX_EXTRA_DAYS}天",
             }
         ),
         label="延長天數",
-        help_text="請輸入 7 至 30 天的延長天數",
+        help_text=f"請輸入 {LoanExtension.MIN_EXTRA_DAYS} 至 {LoanExtension.MAX_EXTRA_DAYS} 天的延長天數",
     )
 
     def __init__(self, *args, **kwargs):

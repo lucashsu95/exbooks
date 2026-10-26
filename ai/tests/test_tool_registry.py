@@ -7,12 +7,12 @@ from ai.services.tool_registry import (
     ConsentRequirement,
     ToolDefinition,
     ToolRegistry,
-    _extension_day_bounds,
     get_borrowing_status,
     get_user_books,
     request_renewal,
 )
 from deals.models import Deal, LoanExtension
+from deals.services.extension_service import reject_extension
 from tests.factories import (
     DealFactory,
     LoanExtensionFactory,
@@ -318,11 +318,25 @@ class RequestRenewalTests(TestCase):
         self.assertIn("借閱中", str(ctx.exception))
         self.assertNotIn("[", str(ctx.exception))
 
-    def test_second_request_allowed(self):
-        """領域規則：同一筆交易可多次申請，每筆獨立審核。"""
+    def test_second_request_blocked_while_pending(self):
+        """領域規則：有申請待審核時，同一筆交易不能再申請。"""
         request_renewal(self.borrower, self.deal.pk)
+        with self.assertRaises(ValueError) as ctx:
+            request_renewal(self.borrower, self.deal.pk, days=30)
+        self.assertIn("待審核", str(ctx.exception))
+        self.assertNotIn("[", str(ctx.exception))
+        self.assertEqual(self._pending_count(), 1)
+
+    def test_request_allowed_after_rejection(self):
+        request_renewal(self.borrower, self.deal.pk)
+        pending = self.deal.extensions.filter(
+            status=LoanExtension.Status.PENDING
+        ).first()
+        reject_extension(pending, self.owner)
         request_renewal(self.borrower, self.deal.pk, days=30)
-        self.assertEqual(self._pending_count(), 2)
+        self.assertEqual(self._pending_count(), 1)
 
     def test_extension_day_bounds_pinned_to_model(self):
-        self.assertEqual(_extension_day_bounds(), (7, 30))
+        self.assertEqual(
+            (LoanExtension.MIN_EXTRA_DAYS, LoanExtension.MAX_EXTRA_DAYS), (7, 30)
+        )

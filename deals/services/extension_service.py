@@ -12,7 +12,7 @@ from django.db import transaction
 from django_fsm import can_proceed
 
 from books.models import SharedBook
-from deals.models import LoanExtension, ExchangeEvent
+from deals.models import Deal, LoanExtension, ExchangeEvent
 from deals.services.exchange_event_service import record_exchange_event
 from deals.services.notification_service import (
     notify_extend_requested,
@@ -22,15 +22,20 @@ from deals.services.notification_service import (
 logger = logging.getLogger(__name__)
 
 
+@transaction.atomic
 def request_extension(deal, applicant, extra_days):
     """
     申請延長借閱。
 
     Rules:
     - 僅限借閱狀態為 O（借閱中）的書籍
-    - BR-2: 延長天數 7~30 天（Model validator 保障）
-    - 同一筆交易可多次申請
+    - BR-2: 延長天數 7~30 天（service 層執行 extra_days 欄位 validator）
+    - 同一筆交易同時只允許一筆待審核的延長申請，核准或拒絕後才能再申請
     - 申請者必須是 Deal 的 applicant（借入者）
+
+    原子性：create 與 record_event 在同一 transaction，
+    中途中斷整體回滾，不會留孤兒 PENDING。
+    通知經 transaction.on_commit 延遲到 commit 後派發，回滾不會外發。
 
     Returns:
         LoanExtension: 建立的延長申請
@@ -41,6 +46,19 @@ def request_extension(deal, applicant, extra_days):
     if applicant != deal.applicant:
         raise ValidationError("只有借閱者可以申請延長")
 
+    # 鎖定 deal 列串行化並發申請；PENDING 檢查也走鎖定讀取，
+    # MySQL RR 下一致讀取會讀舊快照，看不到對方剛 commit 的列
+    deal = Deal.objects.select_for_update().get(pk=deal.pk)
+    if (
+        deal.extensions.filter(status=LoanExtension.Status.PENDING)
+        .select_for_update()
+        .first()
+        is not None
+    ):
+        raise ValidationError("該交易已有待審核的延長申請，請等待審核完成")
+
+    LoanExtension._meta.get_field("extra_days").clean(extra_days, None)
+
     extension = LoanExtension.objects.create(
         deal=deal,
         requested_by=applicant,
@@ -48,7 +66,7 @@ def request_extension(deal, applicant, extra_days):
         status=LoanExtension.Status.PENDING,
     )
 
-    notify_extend_requested(extension)
+    transaction.on_commit(lambda: notify_extend_requested(extension))
 
     record_exchange_event(
         shared_book=deal.shared_book,

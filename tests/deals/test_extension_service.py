@@ -1,7 +1,9 @@
 from datetime import date, timedelta
+from unittest.mock import patch
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.test import TestCase
 
 from deals.models import LoanExtension, Notification
 from deals.services.extension_service import (
@@ -54,6 +56,122 @@ class TestRequestExtension:
         with pytest.raises(ValidationError, match="借閱者"):
             request_extension(deal, stranger, extra_days=14)
 
+    def test_extra_days_below_min_raises(self):
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=applicant, status="O")
+        deal = DealFactory(
+            shared_book=book,
+            status="M",
+            applicant=applicant,
+            responder=owner,
+        )
+        with pytest.raises(ValidationError):
+            request_extension(deal, applicant, extra_days=6)
+        assert not LoanExtension.objects.exists()
+        assert not Notification.objects.exists()
+
+    def test_extra_days_above_max_raises(self):
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=applicant, status="O")
+        deal = DealFactory(
+            shared_book=book,
+            status="M",
+            applicant=applicant,
+            responder=owner,
+        )
+        with pytest.raises(ValidationError):
+            request_extension(deal, applicant, extra_days=31)
+        assert not LoanExtension.objects.exists()
+        assert not Notification.objects.exists()
+
+    def test_non_integer_extra_days_raises_validation_error(self):
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=applicant, status="O")
+        deal = DealFactory(
+            shared_book=book,
+            status="M",
+            applicant=applicant,
+            responder=owner,
+        )
+        with pytest.raises(ValidationError):
+            request_extension(deal, applicant, extra_days="abc")
+        assert not LoanExtension.objects.exists()
+        assert not Notification.objects.exists()
+
+    def test_none_extra_days_raises_validation_error(self):
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=applicant, status="O")
+        deal = DealFactory(
+            shared_book=book,
+            status="M",
+            applicant=applicant,
+            responder=owner,
+        )
+        with pytest.raises(ValidationError):
+            request_extension(deal, applicant, extra_days=None)
+
+    @patch(
+        "deals.services.extension_service.record_exchange_event",
+        side_effect=RuntimeError("event boom"),
+    )
+    def test_rollback_leaves_no_external_side_effects(self, _mock_event):
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=applicant, status="O")
+        deal = DealFactory(
+            shared_book=book,
+            status="M",
+            applicant=applicant,
+            responder=owner,
+        )
+        with (
+            patch("deals.tasks.send_push_notification_task") as mock_push,
+            patch("deals.tasks.send_email_notification_task") as mock_email,
+        ):
+            with pytest.raises(RuntimeError):
+                request_extension(deal, applicant, extra_days=14)
+        assert not LoanExtension.objects.exists()
+        assert not Notification.objects.exists()
+        mock_push.delay.assert_not_called()
+        mock_email.delay.assert_not_called()
+
+    def test_existing_pending_extension_raises(self):
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=applicant, status="O")
+        deal = DealFactory(
+            shared_book=book,
+            status="M",
+            applicant=applicant,
+            responder=owner,
+        )
+        LoanExtensionFactory(deal=deal, requested_by=applicant)
+        with pytest.raises(ValidationError, match="待審核"):
+            request_extension(deal, applicant, extra_days=14)
+        assert deal.extensions.count() == 1
+
+    def test_request_allowed_after_rejection(self):
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=applicant, status="O")
+        deal = DealFactory(
+            shared_book=book,
+            status="M",
+            applicant=applicant,
+            responder=owner,
+        )
+        LoanExtensionFactory(
+            deal=deal,
+            requested_by=applicant,
+            status=LoanExtension.Status.REJECTED,
+        )
+        ext = request_extension(deal, applicant, extra_days=14)
+        assert ext.status == LoanExtension.Status.PENDING
+
     def test_notification_sent_to_responder(self):
         owner = UserFactory()
         applicant = UserFactory()
@@ -64,7 +182,8 @@ class TestRequestExtension:
             applicant=applicant,
             responder=owner,
         )
-        request_extension(deal, applicant, extra_days=14)
+        with TestCase.captureOnCommitCallbacks(execute=True):
+            request_extension(deal, applicant, extra_days=14)
         assert Notification.objects.filter(
             recipient=owner,
             notification_type="EXTEND_REQUESTED",
