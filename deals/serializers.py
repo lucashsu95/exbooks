@@ -25,7 +25,7 @@ class LoanExtensionSerializer(serializers.ModelSerializer):
             "extra_days",
             "status",
         ]
-        read_only_fields = ["status", "approved_by"]
+        read_only_fields = ["status", "approved_by", "requested_by"]
 
 
 class DealSerializer(serializers.ModelSerializer):

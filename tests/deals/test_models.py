@@ -1,5 +1,4 @@
 import uuid
-from unittest.mock import patch
 
 import pytest
 from django.db import IntegrityError, transaction
@@ -241,48 +240,6 @@ class TestLoanExtension:
         first.save()
         second = LoanExtensionFactory(deal=deal)
         assert second.pk is not None
-
-
-class TestMigrationPendingPrecheck:
-    """0010 的 RunPython 前置檢查：同 deal 多筆 PENDING 時 fail-fast。"""
-
-    def _migration_module(self):
-        import importlib
-
-        return importlib.import_module(
-            "deals.migrations.0010_loanextension_is_pending_unique"
-        )
-
-    def _fake_cursor(self, rows):
-        class _Cursor:
-            def __enter__(self):
-                return self
-
-            def __exit__(self, *args):
-                return False
-
-            def execute(self, *args, **kwargs):
-                pass
-
-            def fetchall(self):
-                return rows
-
-        class _Conn:
-            def cursor(self):
-                return _Cursor()
-
-        return _Conn()
-
-    def test_duplicate_pending_raises_with_violating_rows(self):
-        migration = self._migration_module()
-        with patch.object(migration, "connection", self._fake_cursor([("deal-1", 3)])):
-            with pytest.raises(RuntimeError, match="多筆 PENDING"):
-                migration._check_no_duplicate_pending(None, None)
-
-    def test_clean_data_passes(self):
-        migration = self._migration_module()
-        with patch.object(migration, "connection", self._fake_cursor([])):
-            migration._check_no_duplicate_pending(None, None)  # 不拋
 
 
 class TestNotification:

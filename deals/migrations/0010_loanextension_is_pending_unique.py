@@ -7,12 +7,10 @@ def _check_no_duplicate_pending(apps, schema_editor):
     """建 unique constraint 前，確認沒有同 deal 多筆 PENDING 的歷史資料。
 
     app-level guard（PR #17）上線前的並發 request 可能已寫入重複 PENDING；
-    若帶病建 constraint，MySQL/MariaDB 的 ADD CONSTRAINT 會失敗，而前一個
-    operation（AddField）的 DDL 已隱性 commit，留下半套用狀態（重跑會撞
-    duplicate column）。與其讓 constraint 匿名失敗，不如 fail-fast 給明確訊息。
-
-    Recovery：清理違規行（保留最新一筆、其餘改為 REJECTED 或刪除）後重跑
-    `manage.py migrate deals`。
+    若帶病建 constraint，MySQL/MariaDB 的 ADD CONSTRAINT 會匿名失敗。
+    本前檢排在所有 DDL 之前：fail 時資料庫零變更，recovery 就是
+    「清理違規行（保留最新一筆、其餘改為 REJECTED 或刪除）→ 重跑
+    `manage.py migrate deals`」，不會留下半套用狀態。
     """
     with connection.cursor() as cur:
         cur.execute(
@@ -36,12 +34,12 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(_check_no_duplicate_pending, migrations.RunPython.noop),
         migrations.AddField(
             model_name='loanextension',
             name='is_pending',
             field=models.GeneratedField(db_persist=True, expression=models.Case(models.When(status='PENDING', then=models.Value(1)), default=models.Value(None), output_field=models.SmallIntegerField()), output_field=models.SmallIntegerField(null=True)),
         ),
-        migrations.RunPython(_check_no_duplicate_pending, migrations.RunPython.noop),
         migrations.AddConstraint(
             model_name='loanextension',
             constraint=models.UniqueConstraint(fields=('deal', 'is_pending'), name='uniq_loan_extension_one_pending_per_deal'),
