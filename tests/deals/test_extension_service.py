@@ -85,6 +85,59 @@ class TestRequestExtension:
         assert not LoanExtension.objects.exists()
         assert not Notification.objects.exists()
 
+    def test_non_integer_extra_days_raises_validation_error(self):
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=applicant, status="O")
+        deal = DealFactory(
+            shared_book=book,
+            status="M",
+            applicant=applicant,
+            responder=owner,
+        )
+        with pytest.raises(ValidationError):
+            request_extension(deal, applicant, extra_days="abc")
+        assert not LoanExtension.objects.exists()
+        assert not Notification.objects.exists()
+
+    def test_none_extra_days_raises_validation_error(self):
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=applicant, status="O")
+        deal = DealFactory(
+            shared_book=book,
+            status="M",
+            applicant=applicant,
+            responder=owner,
+        )
+        with pytest.raises(ValidationError):
+            request_extension(deal, applicant, extra_days=None)
+
+    @patch(
+        "deals.services.extension_service.record_exchange_event",
+        side_effect=RuntimeError("event boom"),
+    )
+    def test_rollback_leaves_no_external_side_effects(self, _mock_event):
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=applicant, status="O")
+        deal = DealFactory(
+            shared_book=book,
+            status="M",
+            applicant=applicant,
+            responder=owner,
+        )
+        with (
+            patch("deals.tasks.send_push_notification_task") as mock_push,
+            patch("deals.tasks.send_email_notification_task") as mock_email,
+        ):
+            with pytest.raises(RuntimeError):
+                request_extension(deal, applicant, extra_days=14)
+        assert not LoanExtension.objects.exists()
+        assert not Notification.objects.exists()
+        mock_push.delay.assert_not_called()
+        mock_email.delay.assert_not_called()
+
     @patch(
         "deals.services.extension_service.notify_extend_requested",
         side_effect=RuntimeError("notify boom"),
