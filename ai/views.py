@@ -1,4 +1,3 @@
-import inspect
 import json
 import logging
 import time
@@ -90,9 +89,8 @@ class ConsentView(LoginRequiredMixin, View):
             logger.warning("consent_view action not found", extra={"user_id": request.user.pk, "action": action})
             return JsonResponse({"error": "Consent request not found or expired"}, status=404)
 
-        # 只執行 signature 內的參數（user 由 view 注入），未知 kwarg 靜默丟掉
-        accepted = set(inspect.signature(tool_def.func).parameters) - {"user"}
-        arguments = {k: v for k, v in payload["args"].items() if k in accepted}
+        # 存檔 args 在建立時（orchestrator）已依 signature 過濾，直接執行
+        arguments = payload["args"]
 
         try:
             # 帶著使用者身份執行（ownership 檢查在 tool 內）

@@ -242,25 +242,6 @@ class TestAIViews:
 
         assert response.status_code == 404
 
-    def test_consent_view_unknown_kwarg_ignored(self):
-        """Stored args with an unknown kwarg should not 500 the view."""
-        from ai.services.consent_store import ConsentStore
-
-        self.client.login(username="testuser", password="password")
-        deal = self._make_active_deal()
-        token = ConsentStore.create(
-            self.user.id,
-            "request_renewal",
-            {"deal_id": str(deal.pk), "days": 7, "bogus": 1},
-        )
-        data = {"token": token, "confirmed": True}
-        response = self.client.post(
-            self.url_consent, data=json.dumps(data), content_type="application/json"
-        )
-
-        assert response.status_code == 200
-        assert response.json()["status"] == "success"
-
     def test_chat_view_invalid_json(self):
         """Should return 400 for invalid JSON."""
         self.client.login(username="testuser", password="password")
