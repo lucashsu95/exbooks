@@ -40,15 +40,34 @@
 
 ### 環境需求
 
-- Python 3.12+
+- uv（Python 專案管理工具；Python 3.12+ 會由 uv 自動下載，無需手動安裝）
 - MariaDB 10.6+（或 MySQL 8.0+）
-- pip（隨 Python 內建）
 
-### 1. 建立虛擬環境
+### 1. 安裝 uv
 
 ```bash
-python -m venv .venv
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+> macOS 也可用 Homebrew：`brew install uv`。
+
+### 2. 安裝依賴
+
+```bash
+# 正式依賴 + 開發工具（dev 群組預設安裝）
+uv sync
+
+# 再加上測試依賴（test 群組）
+uv sync --group test
+```
+
+執行後會在專案根目錄建立 `.venv` 虛擬環境。你可以啟用這個環境：
+
+```bash
 # Windows
 .venv\Scripts\activate
 
@@ -56,15 +75,7 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-### 2. 安裝依賴
-
-```bash
-# 正式依賴
-pip install -e .
-
-# 開發 + 測試依賴
-pip install -e ".[dev,test]"
-```
+也可以不啟用，之後的指令直接用 `uv run <指令>` 執行。
 
 ### 3. 環境變數
 
