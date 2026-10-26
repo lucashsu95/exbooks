@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "找不到頁面" %} - Exbooks{% endblock %}
+{% block content %}
+    <div class="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[60vh]">
+        <div class="size-20 rounded-full bg-slate-100 flex items-center justify-center mb-6">
+            <span class="material-symbols-outlined text-4xl text-slate-400">search_off</span>
+        </div>
+        <h1 class="text-2xl font-bold text-slate-800 mb-2">
+            {% if book_gone %}{% trans "這本書不存在或已下架" %}{% else %}{% trans "找不到您要找的頁面" %}{% endif %}
+        </h1>
+        <p class="text-slate-500 mb-8 max-w-sm">
+            {% if book_gone %}
+                {% trans "連結可能已過期，或這本書已被貢獻者下架／移除。請回到書籍列表查看其他可借閱的書。" %}
+            {% else %}
+                {% trans "您訪問的連結可能已失效，或頁面已被移動。請檢查網址是否正確，或返回首頁重新開始。" %}
+            {% endif %}
+        </p>
+        <div class="flex flex-col sm:flex-row items-center gap-3">
+            {% if book_gone %}
+                <a href="{% url 'books:list' %}"
+                   class="px-6 py-3 bg-primary text-white font-bold rounded-xl shadow-sm hover:bg-primary/90 transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">auto_stories</span>
+                    {% trans "前往書籍列表" %}
+                </a>
+            {% else %}
+                <a href="/"
+                   class="px-6 py-3 bg-primary text-white font-bold rounded-xl shadow-sm hover:bg-primary/90 transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">home</span>
+                    {% trans "返回首頁" %}
+                </a>
+            {% endif %}
+            <button type="button"
+                    onclick="history.back()"
+                    class="px-6 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">arrow_back</span>
+                {% trans "返回上一頁" %}
+            </button>
+        </div>
+    </div>
+{% endblock %}

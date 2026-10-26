@@ -119,12 +119,14 @@ def book_detail(request, pk):
     from books.services.book_timeline_service import BookTimelineService
 
     logger.info("book_detail", extra={"user_id": request.user.pk, "book_pk": str(pk)})
-    book = get_object_or_404(
+    book = (
         SharedBook.objects.select_related(
             "official_book", "keeper__profile", "owner__profile"
-        ).prefetch_related("photos"),
-        pk=pk,
+        ).prefetch_related("photos").filter(pk=pk).first()
     )
+    if book is None:
+        logger.warning("book_detail 404", extra={"book_pk": str(pk)})
+        return render(request, "404.html", {"book_gone": True}, status=404)
 
     # 使用服務層處理時間線邏輯
     timeline_events = BookTimelineService.get_timeline_events(book)
