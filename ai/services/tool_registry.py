@@ -1,3 +1,4 @@
+import inspect
 import logging
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -108,6 +109,15 @@ def _lines_or_total(lines: list[str], total: int, omitted_note: str) -> str:
         lines = lines[:MAX_TOOL_LINES]
         lines.append(omitted_note.format(omitted=total - MAX_TOOL_LINES))
     return "\n".join(lines)
+
+
+def filter_args_by_signature(func: Callable, args: Dict[str, Any]) -> Dict[str, Any]:
+    """只留 tool signature 內的參數（user 由呼叫方注入），未知 kwarg 靜默丟掉。
+
+    在同意建立的來源端（orchestrator）過濾一次，存檔＝顯示＝執行。
+    """
+    accepted = set(inspect.signature(func).parameters) - {"user"}
+    return {k: v for k, v in args.items() if k in accepted}
 
 
 @ToolRegistry.register(

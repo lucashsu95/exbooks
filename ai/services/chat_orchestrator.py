@@ -14,8 +14,9 @@ import logging
 from typing import Any, Dict, Generator
 
 from .chat_service import ChatService
+from .consent_store import ConsentStore
 from .conversation_cache import ConversationCache
-from .tool_registry import ConsentRequirement, ToolRegistry
+from .tool_registry import ConsentRequirement, ToolRegistry, filter_args_by_signature
 
 logger = logging.getLogger(__name__)
 
@@ -50,8 +51,20 @@ class ChatOrchestrator:
             tool_def = ToolRegistry.get_tool(tool_name)
 
             if tool_def and tool_def.consent == ConsentRequirement.USER_CONFIRM:
-                # 需要使用者確認：此輪不執行，ConsentView 稍後帶著 user 執行
-                yield _sse("consent_required", {"tool": tool_name, "args": arguments})
+                # 需要使用者確認：此輪不執行，ConsentView 稍後帶著 user 執行；
+                # args 先依 signature 過濾再存 server-side（one-shot token），
+                # 存檔＝顯示＝執行，client 回傳的 args 不可信
+                arguments = filter_args_by_signature(tool_def.func, arguments)
+                missing = [k for k in tool_def.parameters.get("required", []) if k not in arguments]
+                if missing:
+                    # 缺 required 參數不發 consent（該 token 會不可執行）；
+                    # 以 tool_result 告知 AI 補齊重試
+                    error = f"缺少必填參數：{', '.join(missing)}"
+                    tool_results.append({"tool": tool_name, "error": error})
+                    yield _sse("tool_result", {"tool": tool_name, "error": error})
+                else:
+                    token = ConsentStore.create(user.id, tool_name, arguments)
+                    yield _sse("consent_required", {"tool": tool_name, "args": arguments, "token": token})
             elif tool_def:
                 try:
                     result = tool_def.func(user=user, **arguments)
