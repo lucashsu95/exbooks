@@ -65,10 +65,27 @@ class ToolRegistry:
         return list(cls._tools.values())
 
 
-# --- Pre-defined Tools (Placeholders for T2-2) ---
+# --- Pre-defined Tools ---
 #
 # 約定：所有 tool 函式的第一個參數是 `user`（由呼叫方注入的當前使用者），
-# 其餘參數才來自 AI 的 function calling arguments。
+# 其餘參數才來自 AI 的 function calling arguments（已 json.loads，值可能是字串）。
+# 回傳一律 str；錯誤一律 raise，str(e) 會直接餵給 AI。
+
+
+def _extension_day_bounds() -> tuple[int, int]:
+    """延長天數範圍，以 LoanExtension.model validator 為唯一來源。"""
+    from django.core.validators import MaxValueValidator, MinValueValidator
+    from deals.models import LoanExtension
+
+    min_days = max_days = None
+    for validator in LoanExtension._meta.get_field("extra_days").validators:
+        if isinstance(validator, MinValueValidator):
+            min_days = validator.limit_value
+        elif isinstance(validator, MaxValueValidator):
+            max_days = validator.limit_value
+    if min_days is None or max_days is None:
+        raise RuntimeError("LoanExtension.extra_days 缺少 Min/MaxValueValidator")
+    return min_days, max_days
 
 
 @ToolRegistry.register(
@@ -101,6 +118,9 @@ def get_borrowing_status(user) -> str:
     return "Tool 'get_borrowing_status' executed (Placeholder)"
 
 
+_MIN_EXTRA_DAYS, _MAX_EXTRA_DAYS = _extension_day_bounds()
+
+
 @ToolRegistry.register(
     name="request_renewal",
     description="Request a renewal for a book currently being borrowed.",
@@ -108,31 +128,59 @@ def get_borrowing_status(user) -> str:
         "type": "object",
         "properties": {
             "deal_id": {
-                "type": "integer",
-                "description": "The ID of the transaction/deal to renew.",
+                "type": "string",
+                "description": "UUID of the transaction/deal to renew.",
             },
             "days": {
                 "type": "integer",
                 "description": "Number of days to extend the borrowing period.",
+                "minimum": _MIN_EXTRA_DAYS,
+                "maximum": _MAX_EXTRA_DAYS,
             },
         },
         "required": ["deal_id"],
     },
     consent=ConsentRequirement.USER_CONFIRM,
 )
-def request_renewal(user, deal_id: int, days: int = 7) -> str:
-    """Placeholder for requesting a book renewal."""
-    from django.core.exceptions import PermissionDenied, ValidationError
+def request_renewal(user, deal_id, days=7) -> str:
+    import uuid
+
+    from django.core.exceptions import ValidationError
+
+    from core.error_messages import service_error_message
     from deals.models import Deal
+    from deals.services.extension_service import request_extension
+
+    not_found = f"交易 {deal_id} 不存在，請先用 get_borrowing_status 確認。"
+    # malformed 值傳進 UUIDField 的 filter 會先炸 raw ValidationError，
+    # 查不到（含格式不對）都回同一條友善訊息
+    try:
+        uuid.UUID(str(deal_id))
+    except (TypeError, ValueError):
+        raise ValueError(not_found)
 
     deal = Deal.objects.filter(pk=deal_id).first()
     if deal is None:
-        raise ValidationError(f"交易 {deal_id} 不存在。")
-    if user not in (deal.applicant, deal.responder):
-        raise PermissionDenied("您不是此交易的當事人，無法申請延期。")
-    # 佔位實作：只做身份驗證、沒有真正建立延期——回傳文案不可稱「已執行」，
-    # 否則 AI 會把 no-op 當成成功告知使用者
+        raise ValueError(not_found)
+
+    try:
+        extra_days = int(days)
+    except (TypeError, ValueError):
+        raise ValueError(f"days 需要是整數天數，{_MIN_EXTRA_DAYS}~{_MAX_EXTRA_DAYS} 之間。")
+    if not (_MIN_EXTRA_DAYS <= extra_days <= _MAX_EXTRA_DAYS):
+        raise ValueError(
+            f"延長天數需為 {_MIN_EXTRA_DAYS}~{_MAX_EXTRA_DAYS} 天之間（收到 {extra_days} 天）。"
+            "請改用範圍內的數值重試。"
+        )
+
+    # 權限與書狀態由 service 判定（responder 與路人同吃 service 的權限錯誤）
+    # service 的 ValidationError 經 str() 會帶出 "['…']" 括號，轉成一般 ValueError
+    try:
+        request_extension(deal, user, extra_days)
+    except ValidationError as e:
+        raise ValueError(service_error_message(e)) from None
     return (
-        f"Tool 'request_renewal' verified ownership for deal {deal_id} "
-        f"(no-op placeholder: renewal was NOT actually requested)"
+        f"已為交易 #{deal.pk}《{deal.shared_book.official_book.title}》"
+        f"提交延長 {extra_days} 天的申請，目前為「待審核」，"
+        "需 book 所有者或持有者核准後才會實際延長到期日。"
     )
