@@ -18,6 +18,9 @@ class LoanExtension(FSMModelMixin, UpdatableModel):
     - extra_days: 延長天數
     """
 
+    MIN_EXTRA_DAYS = 7
+    MAX_EXTRA_DAYS = 30
+
     class Status(models.TextChoices):
         PENDING = "PENDING", _("待審核")
         APPROVED = "APPROVED", _("已核准")
@@ -44,7 +47,10 @@ class LoanExtension(FSMModelMixin, UpdatableModel):
         verbose_name=_("審核者"),
     )
     extra_days = models.PositiveIntegerField(
-        validators=[MinValueValidator(7), MaxValueValidator(30)],
+        validators=[
+            MinValueValidator(MIN_EXTRA_DAYS),
+            MaxValueValidator(MAX_EXTRA_DAYS),
+        ],
         verbose_name=_("延長天數"),
         help_text=_("最少 7 天，最多 30 天"),
     )

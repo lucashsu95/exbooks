@@ -3,7 +3,6 @@
 """
 
 import pytest
-from django.core.validators import MaxValueValidator, MinValueValidator
 from django.urls import reverse
 
 from deals.forms import ExtensionRequestForm
@@ -121,20 +120,13 @@ class TestExtensionRequestView:
 
 
 class TestExtensionRequestForm:
-    """表單的天數界限與 model 欄位 validator 同源。"""
-
-    @staticmethod
-    def _bounds(validators):
-        mins = [v.limit_value for v in validators if isinstance(v, MinValueValidator)]
-        maxs = [v.limit_value for v in validators if isinstance(v, MaxValueValidator)]
-        return mins, maxs
-
-    def test_form_bounds_match_model_validators(self):
-        model_bounds = self._bounds(
-            LoanExtension._meta.get_field("extra_days").validators
-        )
-        form_bounds = self._bounds(ExtensionRequestForm().fields["extra_days"].validators)
-        assert form_bounds == model_bounds
+    @pytest.mark.parametrize(
+        ("days", "valid"),
+        [(6, False), (7, True), (14, True), (30, True), (31, False), ("abc", False)],
+    )
+    def test_extra_days_bounds(self, days, valid):
+        form = ExtensionRequestForm(data={"extra_days": days})
+        assert form.is_valid() is valid
 
 
 class TestExtensionApproveView:

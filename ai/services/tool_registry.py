@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Any, Callable, Dict, List, Optional
 
+from deals.models import LoanExtension
+
 logger = logging.getLogger(__name__)
 
 
@@ -108,22 +110,6 @@ def _lines_or_total(lines: list[str], total: int, omitted_note: str) -> str:
     return "\n".join(lines)
 
 
-def _extension_day_bounds() -> tuple[int, int]:
-    """延長天數範圍，以 LoanExtension.model validator 為唯一來源。"""
-    from django.core.validators import MaxValueValidator, MinValueValidator
-    from deals.models import LoanExtension
-
-    min_days = max_days = None
-    for validator in LoanExtension._meta.get_field("extra_days").validators:
-        if isinstance(validator, MinValueValidator):
-            min_days = validator.limit_value
-        elif isinstance(validator, MaxValueValidator):
-            max_days = validator.limit_value
-    if min_days is None or max_days is None:
-        raise RuntimeError("LoanExtension.extra_days 缺少 Min/MaxValueValidator")
-    return min_days, max_days
-
-
 @ToolRegistry.register(
     name="get_user_books",
     description="查詢目前使用者的書籍。OWNED＝使用者擁有（貢獻）的書；HELD＝使用者手上正持有的書；ALL＝兩者並集（預設）。",
@@ -196,9 +182,6 @@ def get_borrowing_status(user) -> str:
     return _lines_or_total(lines, len(lines), "（另有 {omitted} 項未列出）")
 
 
-_MIN_EXTRA_DAYS, _MAX_EXTRA_DAYS = _extension_day_bounds()
-
-
 @ToolRegistry.register(
     name="request_renewal",
     description="Request a renewal for a book currently being borrowed.",
@@ -212,8 +195,8 @@ _MIN_EXTRA_DAYS, _MAX_EXTRA_DAYS = _extension_day_bounds()
             "days": {
                 "type": "integer",
                 "description": "Number of days to extend the borrowing period.",
-                "minimum": _MIN_EXTRA_DAYS,
-                "maximum": _MAX_EXTRA_DAYS,
+                "minimum": LoanExtension.MIN_EXTRA_DAYS,
+                "maximum": LoanExtension.MAX_EXTRA_DAYS,
             },
         },
         "required": ["deal_id"],
@@ -244,11 +227,15 @@ def request_renewal(user, deal_id, days=7) -> str:
     try:
         extra_days = int(days)
     except (TypeError, ValueError):
-        raise ValueError(f"days 需要是整數天數，{_MIN_EXTRA_DAYS}~{_MAX_EXTRA_DAYS} 之間。")
-    if not (_MIN_EXTRA_DAYS <= extra_days <= _MAX_EXTRA_DAYS):
         raise ValueError(
-            f"延長天數需為 {_MIN_EXTRA_DAYS}~{_MAX_EXTRA_DAYS} 天之間（收到 {extra_days} 天）。"
-            "請改用範圍內的數值重試。"
+            f"days 需要是整數天數，{LoanExtension.MIN_EXTRA_DAYS}~{LoanExtension.MAX_EXTRA_DAYS} 之間。"
+        )
+    if not (
+        LoanExtension.MIN_EXTRA_DAYS <= extra_days <= LoanExtension.MAX_EXTRA_DAYS
+    ):
+        raise ValueError(
+            f"延長天數需為 {LoanExtension.MIN_EXTRA_DAYS}~{LoanExtension.MAX_EXTRA_DAYS} 天之間"
+            f"（收到 {extra_days} 天）。請改用範圍內的數值重試。"
         )
 
     # 權限與書狀態由 service 判定（responder 與路人同吃 service 的權限錯誤）

@@ -7,7 +7,6 @@ from ai.services.tool_registry import (
     ConsentRequirement,
     ToolDefinition,
     ToolRegistry,
-    _extension_day_bounds,
     get_borrowing_status,
     get_user_books,
     request_renewal,
@@ -325,4 +324,6 @@ class RequestRenewalTests(TestCase):
         self.assertEqual(self._pending_count(), 2)
 
     def test_extension_day_bounds_pinned_to_model(self):
-        self.assertEqual(_extension_day_bounds(), (7, 30))
+        self.assertEqual(
+            (LoanExtension.MIN_EXTRA_DAYS, LoanExtension.MAX_EXTRA_DAYS), (7, 30)
+        )
