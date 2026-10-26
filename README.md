@@ -93,15 +93,7 @@ cp .env.example .env
 
 ### 4. 執行遷移 & 建立管理員
 
-本地開發用 SQLite settings（同一個 terminal 內先設定，之後指令沿用）：
-
-```bash
-# macOS / Linux
-export DJANGO_SETTINGS_MODULE=exbook.dev_settings
-
-# Windows (PowerShell)
-$env:DJANGO_SETTINGS_MODULE="exbook.dev_settings"
-```
+`manage.py` 本地預設即 `exbook.dev_settings`（SQLite），直接執行即可：
 
 ```bash
 python manage.py migrate

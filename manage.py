@@ -7,7 +7,9 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "exbook.settings")
+    # 本地預設走 dev_settings（SQLite）；Docker 部署與測試分別由
+    # compose 環境變數與 pytest 設定明示 prod_settings / test_settings
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "exbook.dev_settings")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
