@@ -1,7 +1,7 @@
 import uuid
 
 import pytest
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 
 from deals.models import Deal, DealMessage, LoanExtension, Notification, Rating
 from tests.factories import (
@@ -192,6 +192,54 @@ class TestLoanExtension:
         deal = ext.deal
         deal.delete()
         assert not LoanExtension.objects.filter(pk=ext.pk).exists()
+
+    # ------------------------------------------------------------------
+    # #21: DB 層防線——(deal, is_pending) unique constraint
+    # ------------------------------------------------------------------
+
+    def test_is_pending_generated_value(self):
+        """generated column：PENDING 時為 1，離開 PENDING 後為 NULL。"""
+        ext = LoanExtensionFactory()
+        # generated value 由 DB 端計算，factory 建立後 in-memory 為 None，需刷入
+        ext.refresh_from_db()
+        assert ext.is_pending == 1
+        ext.reject()
+        ext.save()
+        ext.refresh_from_db()
+        assert ext.is_pending is None
+
+    def test_db_rejects_second_pending_for_same_deal(self):
+        """第二個寫入者（绕过 service）直接 INSERT 同 deal 的 PENDING 行，
+        DB 層拒絕，不再依賴 app-level guard 的隱性 invariant。"""
+        deal = DealFactory()
+        LoanExtensionFactory(deal=deal)
+        with pytest.raises(IntegrityError):
+            with transaction.atomic():
+                LoanExtensionFactory(deal=deal)
+
+    def test_db_rejects_queryset_update_flip_to_pending(self):
+        """queryset.update 把非 PENDING 行翻回 PENDING（第二寫入者的另一形態），
+        同樣撞 constraint。"""
+        deal = DealFactory()
+        first = LoanExtensionFactory(deal=deal)
+        first.reject()
+        first.save()
+        LoanExtensionFactory(deal=deal)  # slot 重新佔用
+        with pytest.raises(IntegrityError):
+            with transaction.atomic():
+                LoanExtension.objects.filter(pk=first.pk).update(
+                    status=LoanExtension.Status.PENDING
+                )
+
+    def test_db_allows_re_request_after_review(self):
+        """非 PENDING 行 is_pending=NULL，unique 允許多個 NULL——
+        審核完成後同一 deal 可以再申請。"""
+        deal = DealFactory()
+        first = LoanExtensionFactory(deal=deal)
+        first.reject()
+        first.save()
+        second = LoanExtensionFactory(deal=deal)
+        assert second.pk is not None
 
 
 class TestNotification:

@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from django.test import TestCase
 
 from deals.models import Deal, LoanExtension, Notification
@@ -153,6 +154,28 @@ class TestRequestExtension:
         with pytest.raises(ValidationError, match="待審核"):
             request_extension(deal, applicant, extra_days=14)
         assert deal.extensions.count() == 1
+
+    @patch.object(
+        LoanExtension.objects,
+        "create",
+        side_effect=IntegrityError(
+            "Duplicate entry for key 'uniq_loan_extension_one_pending_per_deal'"
+        ),
+    )
+    def test_integrity_error_on_race_raises_friendly_validation(self, _mock_create):
+        """#21: 非 service 寫入者在 guard 與 INSERT 之間 commit 同 deal PENDING 時，
+        DB constraint 的 IntegrityError 轉成友善 ValidationError（不裸 500）。"""
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=applicant, status="O")
+        deal = DealFactory(
+            shared_book=book,
+            status="M",
+            applicant=applicant,
+            responder=owner,
+        )
+        with pytest.raises(ValidationError, match="待審核"):
+            request_extension(deal, applicant, extra_days=14)
 
     def test_request_allowed_after_rejection(self):
         owner = UserFactory()
