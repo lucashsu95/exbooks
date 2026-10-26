@@ -317,14 +317,6 @@ TRUST_SCORE_FORMULA_VERSION = os.environ.get(
     "TRUST_SCORE_FORMULA_VERSION", "2026-05-v1"
 )
 
-# 借閱限制（根據信用等級）
-BORROWING_LIMITS = {
-    0: {"max_books": 1, "max_days": 30},
-    1: {"max_books": 3, "max_days": 60},
-    2: {"max_books": 5, "max_days": 90},
-    3: {"max_books": float("inf"), "max_days": float("inf")},
-}
-
 # === Redis Cache Configuration ===
 # Use Redis for cache in production, fallback to LocMemCache for local dev
 try:

@@ -197,15 +197,9 @@ docker compose down -v
 
 ### 架構圖
 
-```
-┌──────────┐      ┌──────────────┐      ┌──────────┐
-│  Nginx   │─:80──▶│    Django     │─:3306▶│ MariaDB  │
-│ (alpine) │      │ (Gunicorn)   │      │ (10.11)  │
-└────┬─────┘      └──────────────┘      └──────────┘
-     │                    │
-  static/              media/
-  (volume)            (volume)
-```
+使用者請求經 Nginx 反向代理（`:80`）轉發給 Django 應用容器（Gunicorn，內部 `:8000`），再連線至 MariaDB 資料庫容器（內部 `:3306`）；Django 同時讀寫 `static` 與 `media` 兩個 volume。
+
+![Docker 部署架構圖](docs/diagrams/docker-deployment.png)
 
 ## CI/CD
 
@@ -222,11 +216,14 @@ GitHub 觸發 webhook
     ├─ [1] lint    — uv run ruff check .   （GitHub-hosted runner）
     ├─ [2] test    — uv run pytest         （GitHub-hosted runner）
     └─ [3] deploy  — docker compose build + up
-                          （Self-hosted Runner，僅 push 到 master）
+                          （Self-hosted Runner，僅上游 repo push 到 master）
     │
     ▼
 服務上線（Nginx :80）
 ```
+
+> `docs/diagrams/ci-cd-flow.png` 繪製的是舊 pipeline（lint/test 皆 self-hosted），
+> 重新產圖前以本圖為準。
 
 ### VM 環境準備（上游維護者操作，fork 不需要）
 

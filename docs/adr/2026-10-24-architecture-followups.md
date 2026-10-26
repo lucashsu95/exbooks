@@ -111,6 +111,38 @@ service 層，非本 PR regression。
 以 httpx 自訂 transport / `event_hooks` 封鎖內部位址範圍與 localhost；
 redirect 需驗證最終 URL。
 
+### F-9 · 信用等級有兩套 score→level 判定（2026-10-26 PR #7 審查記錄）
+
+**現象**：「等級」的判定有兩個真源，會漂移：
+
+- `UserProfile.trust_level`（`accounts/models.py`）由 stars 推導
+  （`stars_to_level`，score 門檻 4/9/16），profile 頁與
+  `get_upgrade_progress` 用它。
+- `sync_trust_group`（`trust_service.py`）依 `TrustLevelConfig.min_score`
+  （0/100/400/900）指派 `trust_lvX` Group，而
+  `deal_service.create_deal` 與 `book_service` 的權限判定讀 Group。
+
+實際影響（PR #7 審查實測）：trust_score 16–99 的使用者，
+profile 顯示「無借閱限制」（level 3），但下單與書籍操作仍按 L0
+限制。更糟的是 `book_service` 用 `profile.trust_level` 判定
+編輯/切換書籍權限，Group 却還停在 L0 —— 同一個「等級」概念
+同時是顯示值、借閱執法值和編輯權限值，三個來源。
+
+**現況**：PR #7（C2）只統一了 stars→level 映射與 borrow limits
+的單一真源，未動這套雙軌。把 level 改成單一來源需要決定
+「stars（docs/acquire.md 文義）vs min_score（DB 可改）」哪個是
+政策，且涉及降級保護期（`demotion_protection_weeks`）的語意，
+屬產品決策，不是純重構。
+
+**建議修法**：把 level 收進 `TrustLevelConfig`（或把它存成
+`UserProfile` 欄位由 `sync_trust_group` 唯一寫入），
+`profile.trust_level` 與其 property 廢除；`book_service`、
+`deal_service` 的判定與 profile 顯示全部改讀同一來源。
+需一併決定降級保護期的作用層。
+
+**啟動觸發**：任何要動 TrustLevel 顯示、借閱執法或書籍
+操作權限的功能之前。
+
 ## Consequences
 
 - 這些項目的調查成本（定位、確認影響面）已完成，未來啟動時可直接看本檔。

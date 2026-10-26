@@ -8,7 +8,6 @@ from unittest.mock import patch
 
 import pytest
 from ai_client import ChatResponse
-from django.core.exceptions import PermissionDenied
 
 from ai.services.chat_orchestrator import ChatOrchestrator
 from ai.services.chat_service import ChatService
@@ -142,26 +141,36 @@ def test_empty_content_fallback():
 
 class TestRequestRenewalOwnership:
     def test_non_party_rejected(self):
-        user = UserFactory()
-        deal = DealFactory()  # applicant/responder 都不是 user
-
+        """responder 與路人同吃 service 的權限錯誤（轉成 ValueError）。"""
         from ai.services.tool_registry import request_renewal
+        from tests.factories import SharedBookFactory
 
-        with pytest.raises(PermissionDenied):
-            request_renewal(user, deal.pk)
+        stranger = UserFactory()
+        book = SharedBookFactory(status="O")
+        deal = DealFactory(shared_book=book, status="M")
+
+        with pytest.raises(ValueError, match="只有借閱者"):
+            request_renewal(stranger, deal.pk)
+        with pytest.raises(ValueError, match="只有借閱者"):
+            request_renewal(deal.responder, deal.pk)
 
     def test_party_allowed(self):
-        deal = DealFactory()
         from ai.services.tool_registry import request_renewal
+        from tests.factories import SharedBookFactory
+
+        book = SharedBookFactory(status="O")
+        deal = DealFactory(shared_book=book, status="M")
 
         result = request_renewal(deal.applicant, deal.pk)
         assert str(deal.pk) in result
+        assert "待審核" in result
+        assert "已延長" not in result
 
     def test_missing_deal(self):
-        user = UserFactory()
-        from django.core.exceptions import ValidationError
+        import uuid
 
+        user = UserFactory()
         from ai.services.tool_registry import request_renewal
 
-        with pytest.raises(ValidationError, match="不存在"):
-            request_renewal(user, 999999)
+        with pytest.raises(ValueError, match="不存在"):
+            request_renewal(user, uuid.uuid4())

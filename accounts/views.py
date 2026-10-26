@@ -40,7 +40,7 @@ def profile(request):
     )
 
     borrowing_limits = get_borrowing_limits(
-        profile_obj.trust_level if profile_obj else 1
+        profile_obj.trust_level if profile_obj else 0
     )
 
     # 升級進度

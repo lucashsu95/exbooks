@@ -120,6 +120,8 @@ class UserFactory(factory.django.DjangoModelFactory):
 
 
 class TrustLevelConfigFactory(factory.django.DjangoModelFactory):
+    """預設值與 docs/acquire.md 借閱限制一致；999 = 無限制。"""
+
     class Meta:
         model = TrustLevelConfig
 
@@ -127,8 +129,12 @@ class TrustLevelConfigFactory(factory.django.DjangoModelFactory):
     group_name = factory.LazyAttribute(lambda obj: f"trust_lv{obj.level}")
     display_name = factory.LazyAttribute(lambda obj: f"Level {obj.level}")
     min_score = factory.LazyAttribute(lambda obj: obj.level * 100)
-    max_books = 5
-    max_days = 30
+    max_books = factory.LazyAttribute(
+        lambda obj: {0: 1, 1: 3, 2: 5}.get(obj.level, 999)
+    )
+    max_days = factory.LazyAttribute(
+        lambda obj: {0: 30, 1: 60, 2: 90}.get(obj.level, 999)
+    )
 
 
 class UserProfileFactory(factory.django.DjangoModelFactory):

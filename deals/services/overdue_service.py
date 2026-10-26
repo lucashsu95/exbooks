@@ -104,6 +104,19 @@ def get_public_overdue_info(deal):
     }
 
 
+def is_overdue(deal) -> bool:
+    """交易是否已過到期日（含到期日的交易類型才適用）。"""
+    if not deal.due_date:
+        return False
+    if deal.deal_type not in (
+        Deal.DealType.LOAN,
+        Deal.DealType.RESTORE,
+        Deal.DealType.REGRESS,
+    ):
+        return False
+    return timezone.now().date() > deal.due_date
+
+
 def get_overdue_status(deal):
     """
     取得逾期狀態。

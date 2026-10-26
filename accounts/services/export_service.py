@@ -180,84 +180,12 @@ def collect_user_profile(user, profile):
     return {
         "email": user.email,
         "nickname": profile.nickname if profile else None,
-        "trust_level": profile.trust_level if profile else 1,
+        "trust_level": profile.trust_level if profile else 0,
         "successful_returns": profile.successful_returns if profile else 0,
         "overdue_count": profile.overdue_count if profile else 0,
         "date_joined": user.date_joined.isoformat() if user.date_joined else None,
         "last_login": user.last_login.isoformat() if user.last_login else None,
     }
-
-
-def collect_books_contributed(user):
-    """收集用戶貢獻的書籍
-
-    Args:
-        user: 用戶實例
-
-    Returns:
-        list: 書籍列表
-    """
-    books = SharedBook.objects.filter(owner=user).select_related(
-        "official_book", "keeper"
-    )
-
-    return [
-        {
-            "id": str(book.id),
-            "title": book.official_book.title if book.official_book else None,
-            "isbn": book.official_book.isbn if book.official_book else None,
-            "author": book.official_book.author if book.official_book else None,
-            "publisher": book.official_book.publisher if book.official_book else None,
-            "status": book.get_status_display(),
-            "transferability": book.get_transferability_display(),
-            "condition_description": book.condition_description,
-            "loan_duration_days": book.loan_duration_days,
-            "extend_duration_days": book.extend_duration_days,
-            "keeper_email": book.keeper.email if book.keeper else None,
-            "listed_at": book.listed_at.isoformat() if book.listed_at else None,
-            "created_at": book.created_at.isoformat() if book.created_at else None,
-        }
-        for book in books
-    ]
-
-
-def collect_deals_history(user):
-    """收集用戶交易歷史
-
-    Args:
-        user: 用戶實例
-
-    Returns:
-        list: 交易歷史列表
-    """
-    from django.db.models import Q
-
-    deals = Deal.objects.filter(Q(applicant=user) | Q(responder=user)).select_related(
-        "shared_book__official_book", "applicant", "responder"
-    )
-
-    return [
-        {
-            "id": str(deal.id),
-            "deal_type": deal.get_deal_type_display(),
-            "status": deal.get_status_display(),
-            "book_title": (
-                deal.shared_book.official_book.title
-                if deal.shared_book and deal.shared_book.official_book
-                else None
-            ),
-            "applicant_email": deal.applicant.email if deal.applicant else None,
-            "responder_email": deal.responder.email if deal.responder else None,
-            "meeting_location": deal.meeting_location,
-            "meeting_time": deal.meeting_time.isoformat()
-            if deal.meeting_time
-            else None,
-            "due_date": deal.due_date.isoformat() if deal.due_date else None,
-            "created_at": deal.created_at.isoformat() if deal.created_at else None,
-            "updated_at": deal.updated_at.isoformat() if deal.updated_at else None,
-        }
-        for deal in deals
-    ]
 
 
 def collect_ratings_received(user):
@@ -338,7 +266,7 @@ def convert_to_csv(data, user):
     writer.writerow(["項目", "內容"])
     writer.writerow(["電子信箱", profile_data.get("email", "")])
     writer.writerow(["暱稱", profile_data.get("nickname", "")])
-    writer.writerow(["信用等級", f"等級 {profile_data.get('trust_level', 1)}"])
+    writer.writerow(["信用等級", f"等級 {profile_data.get('trust_level', 0)}"])
     writer.writerow(["成功還書次數", profile_data.get("successful_returns", 0)])
     writer.writerow(["逾期次數", profile_data.get("overdue_count", 0)])
     writer.writerow(["加入時間", profile_data.get("date_joined", "")[:10]])
@@ -390,7 +318,7 @@ def convert_to_csv(data, user):
                     rating.get("created_at", "")[:10],
                     rating.get("rater_email", ""),
                     rating.get("book_title", ""),
-                    rating.get("integrity_score", ""),
+                    rating.get("friendliness_score", ""),
                     rating.get("punctuality_score", ""),
                     rating.get("accuracy_score", ""),
                     rating.get("average_score", ""),

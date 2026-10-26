@@ -6,16 +6,13 @@
 
 import json
 import logging
-from collections import OrderedDict
 
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import HttpResponse
 from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator
-from django.utils import timezone
 
 from books.models import SharedBook
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -38,6 +35,7 @@ from .models import (
     Notification,
 )
 from .services import (
+    deal_feed_service,
     deal_service,
     rating_service,
     extension_service,
@@ -78,28 +76,8 @@ def deal_create(request, book_id, deal_type):
         if profile.default_location:
             initial_note += f"建議面交地點：{profile.default_location}\n"
 
-        if profile.available_schedule:
-            try:
-                days_map = {
-                    "1": "週一",
-                    "2": "週二",
-                    "3": "週三",
-                    "4": "週四",
-                    "5": "週五",
-                    "6": "週六",
-                    "7": "週日",
-                }
-                sched_texts = []
-                for entry in profile.available_schedule:
-                    day = str(entry.get("weekday", ""))
-                    day_name = days_map.get(day, f"星期{day}")
-                    start = entry.get("start", "")
-                    end = entry.get("end", "")
-                    sched_texts.append(f"{day_name} {start}-{end}")
-                if sched_texts:
-                    initial_note += f"可面交時間：{'、'.join(sched_texts)}"
-            except Exception:
-                pass
+        if profile.schedule_text:
+            initial_note += f"可面交時間：{profile.schedule_text}"
 
         form = DealApplicationForm(
             initial={
@@ -140,37 +118,21 @@ def deal_detail(request, pk):
         "approved_by__profile",
     )[:20]
 
-    Notification.objects.filter(
-        recipient=request.user,
-        deal=deal,
-        is_read=False,
-    ).update(is_read=True)
+    from accounts.services.user_stats_service import get_user_rating_summary
+    from deals.services.overdue_service import is_overdue as deal_is_overdue
 
-    from django.db.models import Avg
-
-    # Correct aggregation for complex calculation
-    from deals.models import Rating
+    notification_service.mark_deal_as_read(request.user, deal)
 
     def get_user_rating_info(user):
-        ratings = Rating.objects.filter(ratee=user)
-        total = ratings.count()
-        if total == 0:
+        summary = get_user_rating_summary(user)
+        if summary["total_ratings"] == 0:
             return None
-        avg_scores = ratings.aggregate(
-            a=Avg("friendliness_score"),
-            b=Avg("punctuality_score"),
-            c=Avg("accuracy_score"),
-        )
-        avg = (avg_scores["a"] + avg_scores["b"] + avg_scores["c"]) / 3
-        return {"avg_rating": avg, "total_ratings": total}
+        return {
+            "avg_rating": summary["overall_average"],
+            "total_ratings": summary["total_ratings"],
+        }
 
-    is_overdue = False
-    if deal.due_date and deal.deal_type in (
-        Deal.DealType.LOAN,
-        Deal.DealType.RESTORE,
-        Deal.DealType.REGRESS,
-    ):
-        is_overdue = timezone.now().date() > deal.due_date
+    is_overdue = deal_is_overdue(deal)
 
     return render(
         request,
@@ -197,110 +159,9 @@ def deal_list(request):
     """交易管理頁面。"""
     logger.info("deal_list", extra={"user_id": request.user.pk, "tab": request.GET.get("tab", "pending")})
 
-    class DealFeed:
-        """提供 template 相容介面（iter/bool/count）的交易清單。"""
-
-        def __init__(self, items=None, total=0):
-            self._items = items or []
-            self._total = total
-
-        def __iter__(self):
-            return iter(self._items)
-
-        def __bool__(self):
-            return bool(self._items)
-
-        def count(self):
-            return self._total
-
-    user = request.user
-    tab = request.GET.get("tab", "pending")
-    valid_tabs = {"pending", "pending_applicant", "meeting", "rating", "history"}
-    if tab not in valid_tabs:
-        tab = "pending"
-
-    deals_base = (
-        Deal.objects.filter(Q(applicant=user) | Q(responder=user))
-        .select_related(
-            "shared_book__official_book",
-            "applicant__profile",
-            "responder__profile",
-        )
-        .prefetch_related("shared_book__photos")
+    context = deal_feed_service.get_feed(
+        request.user, request.GET.get("tab", "pending")
     )
-
-    pending_filter = Q(responder=user, status=Deal.Status.REQUESTED)
-    pending_applicant_filter = Q(applicant=user, status=Deal.Status.REQUESTED)
-    meeting_filter = Q(status=Deal.Status.RESPONDED)
-    rating_filter = Q(status=Deal.Status.MEETED) & (
-        Q(applicant=user, applicant_rated=False)
-        | Q(responder=user, responder_rated=False)
-    )
-    meted_rated_filter = Q(status=Deal.Status.MEETED) & (
-        Q(applicant=user, applicant_rated=True)
-        | Q(responder=user, responder_rated=True)
-    )
-    history_filter = (
-        Q(status__in=[Deal.Status.DONE, Deal.Status.CANCELLED]) | meted_rated_filter
-    )
-
-    tab_filters = {
-        "pending": pending_filter,
-        "pending_applicant": pending_applicant_filter,
-        "meeting": meeting_filter,
-        "rating": rating_filter,
-        "history": history_filter,
-    }
-
-    counts = deals_base.aggregate(
-        pending_responder_count=Count("pk", filter=pending_filter),
-        pending_applicant_count=Count("pk", filter=pending_applicant_filter),
-        pending_meeting_count=Count("pk", filter=meeting_filter),
-        pending_rating_count=Count("pk", filter=rating_filter),
-        history_count=Count("pk", filter=history_filter),
-    )
-
-    deals = list(deals_base.filter(tab_filters[tab]).distinct())
-
-    pending_responder = DealFeed(
-        items=deals if tab == "pending" else [],
-        total=counts["pending_responder_count"],
-    )
-    pending_applicant = DealFeed(
-        items=deals if tab == "pending_applicant" else [],
-        total=counts["pending_applicant_count"],
-    )
-    pending_meeting = DealFeed(
-        items=deals if tab == "meeting" else [],
-        total=counts["pending_meeting_count"],
-    )
-    pending_rating = DealFeed(
-        items=deals if tab == "rating" else [],
-        total=counts["pending_rating_count"],
-    )
-    history = DealFeed(
-        items=deals if tab == "history" else [],
-        total=counts["history_count"],
-    )
-
-    # BR-3.6：將待回應申請依書籍分組（保留既有資料結構）
-    grouped_pending = OrderedDict()
-    for deal in pending_responder:
-        book = deal.shared_book
-        if book not in grouped_pending:
-            grouped_pending[book] = []
-        grouped_pending[book].append(deal)
-
-    context = {
-        "current_tab": tab,
-        "deals": deals,  # Add deals for template integration
-        "pending_responder": pending_responder,
-        "grouped_pending": grouped_pending,
-        "pending_applicant": pending_applicant,
-        "pending_meeting": pending_meeting,
-        "pending_rating": pending_rating,
-        "history": history,
-    }
 
     if request.headers.get("HX-Request"):
         return render(request, "deals/partials/_deal_list_page_wrapper.html", context)
@@ -436,15 +297,7 @@ def rating_create(request, pk):
         messages.error(request, "您無權評價此交易。")
         return redirect("deals:detail", pk)
 
-    # 檢查是否已評價
-    if request.user == deal.applicant and deal.applicant_rated:
-        messages.info(request, "您已經評價過此交易。")
-        return redirect("deals:detail", pk)
-    if request.user == deal.responder and deal.responder_rated:
-        messages.info(request, "您已經評價過此交易。")
-        return redirect("deals:detail", pk)
-
-    # 判斷被評價者
+    # 判斷被評價者（已評價的 guard 在 rating_service.create_rating）
     ratee = deal.responder if request.user == deal.applicant else deal.applicant
 
     if request.method == "POST":
@@ -461,12 +314,8 @@ def rating_create(request, pk):
                 )
                 messages.success(request, "評價已送出！")
                 return redirect("deals:detail", pk)
-            except Exception as e:
-                logger.exception("rating_create failed", extra={"user_id": request.user.pk, "deal_id": str(pk)})
-                if "unique_deal_rater" in str(e):
-                    messages.warning(request, "您已經評價過此交易，無法重複評價。")
-                else:
-                    messages.error(request, f"評價送出失敗: {service_error_message(e)}")
+            except ValidationError as e:
+                messages.error(request, service_error_message(e))
                 return redirect("deals:detail", pk)
         else:
             if form.errors:

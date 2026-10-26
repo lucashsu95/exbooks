@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from django.core.exceptions import ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from django.db import models
@@ -10,16 +11,14 @@ from deals.models.deal import Deal
 from deals.models.loan_extension import LoanExtension
 from deals.models.deal_message import DealMessage
 from deals.models.notification import Notification
-from deals.models.rating import Rating
 from deals.serializers import (
     DealSerializer,
     LoanExtensionSerializer,
     DealMessageSerializer,
     NotificationSerializer,
-    RatingSerializer,
 )
 from core.error_messages import service_error_message
-from deals.services import deal_service, extension_service
+from deals.services import deal_service, extension_service, notification_service
 
 
 class DealViewSet(viewsets.ModelViewSet):
@@ -52,10 +51,8 @@ class DealViewSet(viewsets.ModelViewSet):
                 shared_book=serializer.validated_data["shared_book"],
                 deal_type=serializer.validated_data["deal_type"],
                 book_set=serializer.validated_data.get("book_set"),
-                loan_duration_days=serializer.validated_data.get("loan_duration_days"),
                 meeting_location=serializer.validated_data.get("meeting_location", ""),
                 meeting_time=serializer.validated_data.get("meeting_time"),
-                note=serializer.validated_data.get("note"),
             )
             return Response(
                 self.get_serializer(deal).data, status=status.HTTP_201_CREATED
@@ -216,8 +213,38 @@ class DealMessageViewSet(viewsets.ModelViewSet):
             | models.Q(deal__responder=self.request.user)
         )
 
-    def perform_create(self, serializer):
-        serializer.save(sender=self.request.user)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        deal = serializer.validated_data["deal"]
+        if not request.user.has_perm("deals.can_send_message", deal):
+            return Response(
+                {"error": "Only a party to the deal can send messages."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        content = serializer.validated_data["content"].strip()
+        if not content:
+            return Response(
+                {"error": "留言內容不能為空白。"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            message = deal_service.send_deal_message(
+                deal=deal,
+                sender=request.user,
+                content=content,
+            )
+            return Response(
+                self.get_serializer(message).data,
+                status=status.HTTP_201_CREATED,
+            )
+        except ValidationError as e:
+            return Response(
+                {"error": service_error_message(e)}, status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class NotificationViewSet(viewsets.ModelViewSet):
@@ -238,39 +265,10 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def mark_as_read(self, request, pk=None):
-        notification = self.get_object()
-        notification.is_read = True
-        notification.save(update_fields=["is_read"])
+        notification_service.mark_as_read(self.get_object())
         return Response(
             {"status": "Notification marked as read."}, status=status.HTTP_200_OK
         )
 
 
-class RatingViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint for managing Ratings.
-    """
 
-    queryset = (
-        Rating.objects.select_related("deal", "rater__profile", "ratee__profile")
-        .all()
-        .order_by("-created_at")
-    )
-    serializer_class = RatingSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return self.queryset.filter(
-            models.Q(rater=self.request.user) | models.Q(ratee=self.request.user)
-        )
-
-    def perform_create(self, serializer):
-        # Ensure rater is part of the deal
-        deal = serializer.validated_data["deal"]
-        if not self.request.user.has_perm("deals.can_rate_deal", deal):
-            from rest_framework.exceptions import PermissionDenied
-
-            raise PermissionDenied("Only a party to the deal can provide a rating.")
-
-        # Ensure rater can only rate once per deal
-        # The unique constraint on (deal, rater) handles this, but we'll provide a clean error.

@@ -97,6 +97,28 @@ class TestCreateRating:
                 accuracy_score=3,
             )
 
+    def test_race_duplicate_rating_converts_integrity_error(self):
+        """模擬 race：直接寫 Rating 讓旗標未更新，才能走到 IntegrityError 路徑。"""
+        from deals.models import Rating
+
+        deal = DealFactory(status="M")
+        Rating.objects.create(
+            deal=deal,
+            rater=deal.applicant,
+            ratee=deal.responder,
+            friendliness_score=5,
+            punctuality_score=5,
+            accuracy_score=5,
+        )
+        with pytest.raises(ValidationError, match="已經評價"):
+            create_rating(
+                deal,
+                deal.applicant,
+                friendliness_score=4,
+                punctuality_score=5,
+                accuracy_score=3,
+            )
+
     def test_non_participant_raises(self):
         deal = DealFactory(status="M")
         stranger = UserFactory()

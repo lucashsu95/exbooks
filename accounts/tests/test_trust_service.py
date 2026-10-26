@@ -4,6 +4,7 @@
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from accounts.models import TrustLevelConfig
@@ -11,6 +12,7 @@ from accounts.services.trust_service import (
     calculate_trust_level,
     update_trust_score,
     get_borrowing_limits,
+    get_upgrade_progress,
 )
 from deals.models import Deal
 from tests.factories import DealFactory, RatingFactory
@@ -28,6 +30,7 @@ class TrustServiceTest(TestCase):
         )
 
         # 建立信用等級配置與對應 Group
+        limits = {0: (1, 30), 1: (3, 60), 2: (5, 90), 3: (999, 999)}
         for level in range(4):
             Group.objects.get_or_create(name=f"trust_lv{level}")
             TrustLevelConfig.objects.get_or_create(
@@ -36,8 +39,8 @@ class TrustServiceTest(TestCase):
                     "group_name": f"trust_lv{level}",
                     "display_name": f"Level {level}",
                     "min_score": level * 10,
-                    "max_books": (level + 1) * 2,
-                    "max_days": 30,
+                    "max_books": limits[level][0],
+                    "max_days": limits[level][1],
                     "demotion_protection_weeks": 26,
                 },
             )
@@ -164,8 +167,35 @@ class TrustServiceTest(TestCase):
         self.assertEqual(limits["max_books"], 1)
         self.assertEqual(limits["max_days"], 30)
 
+    def test_upgrade_progress_requirements_text(self):
+        """升級進度文案是使用者可見文字，需有斷言防回歸（曾發生編碼損傷）。"""
+        progress = get_upgrade_progress(self.user)
+        # 0 分 → 下一星等 2 星，門檻 4 分
+        self.assertEqual(
+            progress["requirements"][0],
+            "再累積 4 分即可升級（門檻 4 分）",
+        )
+
     def test_get_borrowing_limits_level_3(self):
-        """測試 Level 3 借閱限制"""
+        """測試 Level 3 借閱限制（999 = 無限制哨兵）"""
         limits = get_borrowing_limits(3)
-        self.assertEqual(limits["max_books"], float("inf"))
-        self.assertEqual(limits["max_days"], float("inf"))
+        self.assertEqual(limits["max_books"], 999)
+        self.assertEqual(limits["max_days"], 999)
+
+    def test_borrowing_limits_single_source_is_db_config(self):
+        """借閱限制只讀 TrustLevelConfig，改 DB 即生效。"""
+        TrustLevelConfig.objects.filter(level=0).update(max_books=7)
+        limits = get_borrowing_limits(0)
+        self.assertEqual(limits["max_books"], 7)
+
+    def test_borrowing_limits_missing_level_falls_back_to_level_0(self):
+        TrustLevelConfig.objects.filter(level__gte=1).delete()
+        limits = get_borrowing_limits(3)
+        self.assertEqual(limits["max_books"], 1)
+        self.assertEqual(limits["max_days"], 30)
+
+    def test_borrowing_limits_no_config_raises(self):
+        """無任何等級列（含 0）→ 拋錯，不給錯誤額度。"""
+        TrustLevelConfig.objects.all().delete()
+        with self.assertRaises(ValidationError):
+            get_borrowing_limits(0)
