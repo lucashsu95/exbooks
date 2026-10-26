@@ -32,6 +32,10 @@ class ConsentStore:
         if not token:
             return None
         key = f"{cls.CACHE_PREFIX}{token}"
+        # 先宣告再取回：add() 具 SET NX 語義（Redis/LocMem 皆原子），
+        # 並發雙 POST 只有一筆能宣告成功（Django 5.2 尚無 get_delete）
+        if not cache.add(f"{key}:claimed", True, cls.TTL):
+            return None
         payload = cache.get(key)
         cache.delete(key)
         if payload is None or payload["user_id"] != user_id:
