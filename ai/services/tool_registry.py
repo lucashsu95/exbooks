@@ -71,6 +71,42 @@ class ToolRegistry:
 # 其餘參數才來自 AI 的 function calling arguments（已 json.loads，值可能是字串）。
 # 回傳一律 str；錯誤一律 raise，str(e) 會直接餵給 AI。
 
+MAX_TOOL_LINES = 20
+
+
+def _book_line(book) -> str:
+    return f"#{book.pk}《{book.official_book.title}》｜{book.get_status_display()}｜持有者：{book.keeper.username}"
+
+
+def _deal_line(deal, viewer, pending_extra_days) -> str:
+    from django.utils import timezone
+
+    # 出借者視角需要答得出「誰借了我的書」，故行內帶借閱者身分
+    line = (
+        f"#{deal.pk}《{deal.shared_book.official_book.title}》｜{deal.get_status_display()}"
+        f"｜借閱者：{deal.applicant.username}"
+    )
+    if deal.due_date is not None:
+        days_left = (deal.due_date - timezone.localdate()).days
+        if days_left < 0:
+            line += f"｜到期日：{deal.due_date:%Y-%m-%d}（已逾期 {-days_left} 天）"
+        else:
+            line += f"｜到期日：{deal.due_date:%Y-%m-%d}（剩 {days_left} 天）"
+    if pending_extra_days is not None:
+        # pending 的申請永遠是借閱者建的，出借者視角不能說「你已申請」
+        if viewer == deal.applicant:
+            line += f"｜你已申請延長 {pending_extra_days} 天（待審核）"
+        else:
+            line += f"｜借閱者已申請延長 {pending_extra_days} 天（待你審核）"
+    return line
+
+
+def _lines_or_total(lines: list[str], total: int, omitted_note: str) -> str:
+    if total > MAX_TOOL_LINES:
+        lines = lines[:MAX_TOOL_LINES]
+        lines.append(omitted_note.format(omitted=total - MAX_TOOL_LINES))
+    return "\n".join(lines)
+
 
 def _extension_day_bounds() -> tuple[int, int]:
     """延長天數範圍，以 LoanExtension.model validator 為唯一來源。"""
@@ -90,22 +126,46 @@ def _extension_day_bounds() -> tuple[int, int]:
 
 @ToolRegistry.register(
     name="get_user_books",
-    description="Retrieve a list of books owned or currently held by the authenticated user.",
+    description="查詢目前使用者的書籍。OWNED＝使用者擁有（貢獻）的書；HELD＝使用者手上正持有的書；ALL＝兩者並集（預設）。",
     parameters={
         "type": "object",
         "properties": {
             "status": {
                 "type": "string",
                 "enum": ["OWNED", "HELD", "ALL"],
-                "description": "Filter by ownership or current possession status.",
+                "description": "OWNED＝使用者擁有（貢獻）的書；HELD＝使用者手上正持有的書；ALL＝兩者並集（預設）。",
             }
         },
         "required": [],
     },
 )
 def get_user_books(user, status: str = "ALL") -> str:
-    """Placeholder for retrieving user books."""
-    return "Tool 'get_user_books' executed (Placeholder)"
+    from django.db.models import Q
+    from books.models import SharedBook
+
+    status = str(status).upper()
+    if status == "OWNED":
+        books = SharedBook.objects.filter(owner=user)
+    elif status == "HELD":
+        books = SharedBook.objects.filter(keeper=user)
+    elif status == "ALL":
+        books = SharedBook.objects.filter(Q(owner=user) | Q(keeper=user))
+    else:
+        raise ValueError("status 只能為 OWNED、HELD 或 ALL。")
+    books = books.select_related("official_book").order_by("-created_at")
+
+    empty_messages = {
+        "OWNED": "你沒有擁有的書籍。",
+        "HELD": "你沒有持有的書籍。",
+        "ALL": "你沒有符合的書籍。",
+    }
+    if not books.exists():
+        return empty_messages[status]
+
+    lines = [_book_line(book) for book in books]
+    return _lines_or_total(
+        lines, len(lines), "（另有 {omitted} 本未列出，可改用 OWNED 或 HELD 縮小範圍）"
+    )
 
 
 @ToolRegistry.register(
@@ -114,8 +174,26 @@ def get_user_books(user, status: str = "ALL") -> str:
     parameters={"type": "object", "properties": {}, "required": []},
 )
 def get_borrowing_status(user) -> str:
-    """Placeholder for retrieving borrowing status."""
-    return "Tool 'get_borrowing_status' executed (Placeholder)"
+    from django.db.models import Q
+    from deals.models import Deal, LoanExtension
+
+    deals = (
+        Deal.objects.filter(
+            deal_type=Deal.DealType.LOAN,
+            status__in=[Deal.Status.REQUESTED, Deal.Status.RESPONDED, Deal.Status.MEETED],
+        )
+        .filter(Q(applicant=user) | Q(responder=user))
+        .select_related("shared_book__official_book")
+        .order_by("-created_at")
+    )
+    if not deals.exists():
+        return "你目前沒有進行中的借閱交易。"
+
+    lines = []
+    for deal in deals:
+        pending = deal.extensions.filter(status=LoanExtension.Status.PENDING).first()
+        lines.append(_deal_line(deal, user, pending.extra_days if pending else None))
+    return _lines_or_total(lines, len(lines), "（另有 {omitted} 項未列出）")
 
 
 _MIN_EXTRA_DAYS, _MAX_EXTRA_DAYS = _extension_day_bounds()
