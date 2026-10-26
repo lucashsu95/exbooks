@@ -1,6 +1,7 @@
 /* 米豆 MeDou 像素小寵物 — 顏色（品牌色）與外殼樣式，由 pixel-pet.js 使用 */
 
 :root {
+  --mipet-outline: #0f766e;
   --mipet-body: #14b8a6;
   --mipet-cheek: #06b6d4;
   --mipet-muzzle: #f0fdfa;
@@ -9,6 +10,7 @@
   --mipet-fg: #0f172a;
 }
 .dark {
+  --mipet-outline: #0f766e;
   --mipet-body: #14b8a6;
   --mipet-cheek: #22d3ee;
   --mipet-muzzle: #134e4a;
