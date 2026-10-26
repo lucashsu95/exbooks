@@ -1,6 +1,8 @@
 from datetime import timedelta
 
+from django.db import connection
 from django.test import TestCase
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
 from ai.services.tool_registry import (
@@ -239,6 +241,113 @@ class GetBorrowingStatusTests(TestCase):
     def test_empty(self):
         result = get_borrowing_status(UserFactory())
         self.assertEqual(result, "你目前沒有進行中的借閱交易。")
+
+
+class ReadToolQueryBudgetTests(TestCase):
+    """#15：讀 tool 的 DB 工作量必須有上界——沒有 N+1、截斷發生在物化之前。"""
+
+    def setUp(self):
+        self.user = UserFactory()
+
+    def test_get_user_books_bounded_queries(self):
+        """3 本書的查詢量不得隨書數成長（keeper 要 select_related 掉）。"""
+        for _ in range(3):
+            SharedBookFactory(owner=self.user, keeper=UserFactory())
+
+        # count 一筆 + select_related("official_book", "keeper") 取回 20 行內一筆
+        with self.assertNumQueries(2):
+            result = get_user_books(self.user, status="OWNED")
+        self.assertEqual(len(result.split("\n")), 3)
+
+    def test_get_borrowing_status_bounded_queries(self):
+        """3 筆交易的查詢量不得隨筆數成長（applicant、pending extensions 都要一併取）。"""
+        owner = UserFactory()
+        borrower = UserFactory()
+        for _ in range(3):
+            _make_borrowing(owner, borrower)
+
+        # count 一筆 + 主列一筆（含 applicant join）+ extensions prefetch 一筆
+        with self.assertNumQueries(3):
+            result = get_borrowing_status(borrower)
+        self.assertEqual(len(result.split("\n")), 3)
+
+    def test_get_user_books_slices_before_materializing(self):
+        """25 本書只物化 20 行：取回 SQL 要帶 LIMIT，截斷的是工作量不是輸出。"""
+        for _ in range(25):
+            SharedBookFactory(owner=self.user)
+
+        with CaptureQueriesContext(connection) as ctx:
+            result = get_user_books(self.user, status="OWNED")
+        self.assertEqual(len(result.split("\n")), 21)  # 20 本 + 1 行尾注
+        self.assertTrue(
+            any("LIMIT 20" in q["sql"] for q in ctx.captured_queries),
+            "應先 slice 到 MAX_TOOL_LINES 再取回，而不是全量物化後砍輸出",
+        )
+
+    def test_get_borrowing_status_slices_before_materializing(self):
+        owner = UserFactory()
+        borrower = UserFactory()
+        for _ in range(25):
+            _make_borrowing(owner, borrower)
+
+        with CaptureQueriesContext(connection) as ctx:
+            result = get_borrowing_status(borrower)
+        self.assertEqual(len(result.split("\n")), 21)  # 20 筆 + 1 行尾注
+        self.assertTrue(
+            any("LIMIT 20" in q["sql"] for q in ctx.captured_queries),
+            "應先 slice 到 MAX_TOOL_LINES 再取回，而不是全量物化後砍輸出",
+        )
+
+
+class RequestRenewalToolSurfaceTests(TestCase):
+    """#16：LLM 依據的 tool 文案要寫得對——description 前置、行內可延期標記、核准者只有一個。"""
+
+    def test_request_renewal_description_zh_with_preconditions(self):
+        tool = ToolRegistry.get_tool("request_renewal")
+        # 不能仍是含糊英文，要寫明「僅借閱者可申請、天數 7~30」
+        self.assertNotIn("Request a renewal", tool.description)
+        self.assertIn("借閱者", tool.description)
+        self.assertIn("7~30", tool.description)
+
+    def _line_of(self, result, deal):
+        return next(line for line in result.split("\n") if f"#{deal.pk}" in line)
+
+    def test_deal_line_marks_renewable_for_occupied_applicant(self):
+        owner = UserFactory()
+        borrower = UserFactory()
+        _, deal = _make_borrowing(owner, borrower)
+
+        line = self._line_of(get_borrowing_status(borrower), deal)
+        self.assertIn("（可申請延長）", line)
+
+    def test_deal_line_no_marker_for_lender_view(self):
+        """出借者視角不標可延長——申請權在借閱者，標了會誘發無效提案。"""
+        owner = UserFactory()
+        borrower = UserFactory()
+        _, deal = _make_borrowing(owner, borrower)
+
+        line = self._line_of(get_borrowing_status(owner), deal)
+        self.assertNotIn("（可申請延長）", line)
+
+    def test_deal_line_no_marker_before_handoff(self):
+        """Q 階段 deal（書未 OCCUPIED）不標可延長——LLM 會提案然後吃 service 的拒絕。"""
+        owner = UserFactory()
+        borrower = UserFactory()
+        book = SharedBookFactory(owner=owner, status="T")
+        deal = DealFactory(shared_book=book, applicant=borrower, responder=owner)
+
+        line = self._line_of(get_borrowing_status(borrower), deal)
+        self.assertNotIn("（可申請延長）", line)
+
+    def test_success_message_asks_owner_only(self):
+        """面交後 keeper 就是借書人本人、service 又禁止自審自批，有效審核者只有 owner。"""
+        owner = UserFactory()
+        borrower = UserFactory()
+        _, deal = _make_borrowing(owner, borrower)
+
+        result = request_renewal(borrower, deal.pk)
+        self.assertIn("需書的擁有者核准", result)
+        self.assertNotIn("持有者", result)
 
 
 class RequestRenewalTests(TestCase):
