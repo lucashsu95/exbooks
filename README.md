@@ -43,8 +43,9 @@
 
 ### 環境需求
 
-- uv（Python 專案管理工具；Python 3.12+ 會由 uv 自動下載，無需手動安裝）
-- MariaDB 10.6+（或 MySQL 8.0+）
+- uv（Python 專案管理工具；Python 3.12 會由 uv 自動下載，無需手動安裝）
+
+本地開發使用 SQLite（`exbook/dev_settings.py`），不需要 MariaDB；資料庫由 `migrate` 自動建立。
 
 ### 1. 安裝 uv
 
@@ -82,36 +83,25 @@ source .venv/bin/activate
 
 ### 3. 環境變數
 
-複製範本並填入資料庫密碼：
+複製範本（本地開發用預設值，不用編輯）：
 
 ```bash
 cp .env.example .env
 ```
 
-編輯 `.env`：
+`.env.example` 是本地開發基準；AI、Email、Push、物件儲存等都是選填，未設定時自動停用或 fallback，詳見檔案內的必填/選填標註。
 
-```
-DB_PASSWORD=你的MariaDB密碼
-```
+### 4. 執行遷移 & 建立管理員
 
-其餘變數（AI、Email、Push、物件儲存等）都是選填，留空即停用或自動 fallback，詳見 `.env.example` 的必填/選填標註。
-
-### 4. 建立資料庫
-
-登入 MariaDB 建立資料庫：
-
-```sql
-CREATE DATABASE exbook CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-### 5. 執行遷移 & 建立管理員
+本地開發用 SQLite settings（同一個 terminal 內先 export，之後指令沿用）：
 
 ```bash
+export DJANGO_SETTINGS_MODULE=exbook.dev_settings
 python manage.py migrate
 python manage.py createsuperuser
 ```
 
-### 6. 啟動開發伺服器
+### 5. 啟動開發伺服器
 
 ```bash
 python manage.py runserver
@@ -121,13 +111,15 @@ python manage.py runserver
 - 首頁：http://127.0.0.1:8000/
 - 後台：http://127.0.0.1:8000/admin/
 
-### 7. 執行測試
+### 6. 執行測試
 
-測試使用 SQLite in-memory，不需要 MariaDB：
+測試使用 /tmp 下的暫存 SQLite（`exbook/test_settings.py`），不需要 MariaDB：
 
 ```bash
 pytest
 ```
+
+> Browser e2e 測試需要 Playwright 瀏覽器：`uv run playwright install chromium`；未安裝時該 5 個測試檔會自動略過。
 
 ## Docker 部署
 
@@ -142,14 +134,19 @@ pytest
 cp .env.example .env
 ```
 
-編輯 `.env`，至少填入以下必要項目：
+`.env.example` 是本地開發基準，Docker 部署時需改成生產設定：
 
 ```
 DB_PASSWORD=你的資料庫密碼
-SECRET_KEY=一段隨機長字串
+SECRET_KEY=一段隨機長字串（必填）
+DEBUG=False
+SECURE_SSL_REDIRECT=True
 ALLOWED_HOSTS=localhost,127.0.0.1
 CSRF_TRUSTED_ORIGINS=http://localhost,http://127.0.0.1
+CELERY_TASK_ALWAYS_EAGER=false
 ```
+
+需要真寄信時另取消 `.env` 中 `EMAIL_*` 區塊的註解並填入 SMTP 憑證。
 
 ### 2. 啟動所有服務
 
