@@ -103,11 +103,12 @@ def approve_extension(extension, reviewer):
 
     - 審核者需為 SharedBook 的 Owner 或 Keeper
     - 審核後，延長 Deal.due_date
-
-    副作用（由 signal 處理）：
-    - 發送通知
+    - 先鎖 deal 列、再鎖 extension 列（與 request 路徑同序）串行化並發核准；
+      PENDING 以鎖定讀取判定，in-memory 物件可能是核准前的舊快照
+    - 通知經 transaction.on_commit 延遲到 commit 後派發，回滾不會外發
     """
-    deal = extension.deal
+    deal = Deal.objects.select_for_update().get(pk=extension.deal_id)
+    extension = LoanExtension.objects.select_for_update().get(pk=extension.pk)
 
     if not _is_owner_or_keeper_reviewer(deal, reviewer):
         raise ValidationError("只有書籍 Owner 或 Keeper 可以審核延長申請")
@@ -130,7 +131,7 @@ def approve_extension(extension, reviewer):
         deal.due_date = deal.due_date + timedelta(days=extension.extra_days)
         deal.save(update_fields=["due_date", "updated_at"])
 
-    notify_extend_result(extension)
+    transaction.on_commit(lambda: notify_extend_result(extension))
 
     record_exchange_event(
         shared_book=deal.shared_book,
@@ -154,13 +155,18 @@ def approve_extension(extension, reviewer):
     )
 
 
+@transaction.atomic
 def reject_extension(extension, reviewer):
     """
     拒絕延長申請。
 
     使用 FSM 狀態轉換：PENDING → REJECTED
+
+    先鎖 deal 列、再鎖 extension 列（與 request 路徑同序）串行化並發審核；
+    通知經 transaction.on_commit 延遲到 commit 後派發，回滾不會外發。
     """
-    deal = extension.deal
+    deal = Deal.objects.select_for_update().get(pk=extension.deal_id)
+    extension = LoanExtension.objects.select_for_update().get(pk=extension.pk)
 
     if not _is_owner_or_keeper_reviewer(deal, reviewer):
         raise ValidationError("只有書籍 Owner 或 Keeper 可以審核延長申請")
@@ -178,7 +184,7 @@ def reject_extension(extension, reviewer):
     extension.reject()
     extension.save()
 
-    notify_extend_result(extension)
+    transaction.on_commit(lambda: notify_extend_result(extension))
 
     record_exchange_event(
         shared_book=deal.shared_book,
@@ -198,6 +204,7 @@ def reject_extension(extension, reviewer):
     )
 
 
+@transaction.atomic
 def cancel_extension(extension, applicant):
     """
     取消延長申請。
@@ -205,7 +212,12 @@ def cancel_extension(extension, applicant):
     BR-16: 延長申請狀態為 PENDING 時，申請者可取消。
 
     使用 FSM 狀態轉換：PENDING → REJECTED
+
+    以鎖定讀取重新取得 extension，in-memory 物件可能是已審核的舊快照
+    （舊快照取消會寫入多餘的 CANCELLED 稽核事件）。
     """
+    extension = LoanExtension.objects.select_for_update().get(pk=extension.pk)
+
     if applicant != extension.requested_by:
         raise ValidationError("只有申請者可以取消延長申請")
 
