@@ -46,9 +46,15 @@ def request_extension(deal, applicant, extra_days):
     if applicant != deal.applicant:
         raise ValidationError("只有借閱者可以申請延長")
 
-    # 先鎖定 deal 列再查 PENDING，並發申請會串行化，不會同時通過檢查
+    # 鎖定 deal 列串行化並發申請；PENDING 檢查也走鎖定讀取，
+    # MySQL RR 下一致讀取會讀舊快照，看不到對方剛 commit 的列
     deal = Deal.objects.select_for_update().get(pk=deal.pk)
-    if deal.extensions.filter(status=LoanExtension.Status.PENDING).exists():
+    if (
+        deal.extensions.filter(status=LoanExtension.Status.PENDING)
+        .select_for_update()
+        .first()
+        is not None
+    ):
         raise ValidationError("該交易已有待審核的延長申請，請等待審核完成")
 
     LoanExtension._meta.get_field("extra_days").clean(extra_days, None)
