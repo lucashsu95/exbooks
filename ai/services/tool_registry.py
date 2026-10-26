@@ -180,7 +180,7 @@ def get_user_books(user, status: str = "ALL") -> str:
 
 @ToolRegistry.register(
     name="get_borrowing_status",
-    description="Get the status of current borrowing requests or active deals for the user.",
+    description="列出你目前進行中的借閱交易（含狀態、到期日、待審核的延長申請），並標記哪些可申請延長。",
     parameters={"type": "object", "properties": {}, "required": []},
 )
 def get_borrowing_status(user) -> str:
