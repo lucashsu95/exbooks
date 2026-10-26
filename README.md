@@ -212,8 +212,8 @@ docker compose down -v
     ▼
 GitHub 觸發 webhook
     │
-    ├─ [1] lint    — ruff check .          （GitHub-hosted runner）
-    ├─ [2] test    — pytest                （GitHub-hosted runner）
+    ├─ [1] lint    — uv run ruff check .   （GitHub-hosted runner）
+    ├─ [2] test    — uv run pytest         （GitHub-hosted runner）
     └─ [3] deploy  — docker compose build + up
                           （Self-hosted Runner，僅 push 到 master）
     │
@@ -286,14 +286,14 @@ Pipeline 定義在 `.github/workflows/ci.yml`，分三個階段：
 | 階段 | 觸發條件 | 執行內容 |
 |------|----------|----------|
 | **lint** | push / PR 到 master | `uv run ruff check .` 程式碼風格檢查 |
-| **test** | lint 通過後 | `uv run pytest` 執行全部測試 |
+| **test** | lint 通過後 | `uv run pytest` 執行全部測試（未裝 Playwright 瀏覽器時 browser e2e 自動略過） |
 | **deploy** | test 通過 + push 到 master | `scripts/deploy.sh` 重建並啟動容器 |
 
 > PR 只會跑 lint + test，不會觸發 deploy。只有 merge 到 master 才會部署。
 
 ### GitHub Secrets 設定
 
-如果需要在 CI 中使用敏感資訊（目前的 pipeline 不需要，因為 runner 在本機），到 repo → Settings → Secrets and variables → Actions 新增。
+目前的 pipeline 不需要 GitHub Secrets：lint/test 跑在 hosted runner（只用公開依賴），deploy 跑在 self-hosted Runner（用 runner 所在 VM 的環境）。之後若需要在 CI 使用敏感資訊，到 repo → Settings → Secrets and variables → Actions 新增。
 
 ## 文件索引
 
