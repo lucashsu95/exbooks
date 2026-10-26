@@ -33,8 +33,9 @@ def request_extension(deal, applicant, extra_days):
     - 同一筆交易可多次申請
     - 申請者必須是 Deal 的 applicant（借入者）
 
-    原子性：create + notify + record_event 在同一 transaction，
+    原子性：create 與 record_event 在同一 transaction，
     中途中斷整體回滾，不會留孤兒 PENDING。
+    通知經 transaction.on_commit 延遲到 commit 後派發，回滾不會外發。
 
     Returns:
         LoanExtension: 建立的延長申請
@@ -54,7 +55,7 @@ def request_extension(deal, applicant, extra_days):
         status=LoanExtension.Status.PENDING,
     )
 
-    notify_extend_requested(extension)
+    transaction.on_commit(lambda: notify_extend_requested(extension))
 
     record_exchange_event(
         shared_book=deal.shared_book,

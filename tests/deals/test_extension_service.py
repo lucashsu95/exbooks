@@ -3,8 +3,9 @@ from unittest.mock import patch
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.test import TestCase
 
-from deals.models import ExchangeEvent, LoanExtension, Notification
+from deals.models import LoanExtension, Notification
 from deals.services.extension_service import (
     approve_extension,
     cancel_extension,
@@ -138,27 +139,6 @@ class TestRequestExtension:
         mock_push.delay.assert_not_called()
         mock_email.delay.assert_not_called()
 
-    @patch(
-        "deals.services.extension_service.notify_extend_requested",
-        side_effect=RuntimeError("notify boom"),
-    )
-    def test_rolls_back_when_notify_fails(self, _mock_notify):
-        owner = UserFactory()
-        applicant = UserFactory()
-        book = SharedBookFactory(owner=owner, keeper=applicant, status="O")
-        deal = DealFactory(
-            shared_book=book,
-            status="M",
-            applicant=applicant,
-            responder=owner,
-        )
-        with pytest.raises(RuntimeError):
-            request_extension(deal, applicant, extra_days=14)
-        assert not LoanExtension.objects.exists()
-        assert not ExchangeEvent.objects.filter(
-            event_type=ExchangeEvent.EventType.EXTENSION_REQUESTED
-        ).exists()
-
     def test_notification_sent_to_responder(self):
         owner = UserFactory()
         applicant = UserFactory()
@@ -169,7 +149,8 @@ class TestRequestExtension:
             applicant=applicant,
             responder=owner,
         )
-        request_extension(deal, applicant, extra_days=14)
+        with TestCase.captureOnCommitCallbacks(execute=True):
+            request_extension(deal, applicant, extra_days=14)
         assert Notification.objects.filter(
             recipient=owner,
             notification_type="EXTEND_REQUESTED",
