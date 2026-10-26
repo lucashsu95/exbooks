@@ -38,6 +38,11 @@ def _make_borrowing(owner, borrower, due_date=None):
     return book, deal
 
 
+def _line_of(result, deal):
+    """從 get_borrowing_status 輸出中撈出特定 deal 的那一行。"""
+    return next(line for line in result.split("\n") if f"#{deal.pk}" in line)
+
+
 class ToolRegistryTests(TestCase):
     def test_registry_contains_predefined_tools(self):
         """Ensure the registry contains the three required tools."""
@@ -185,9 +190,6 @@ class GetBorrowingStatusTests(TestCase):
         self.assertNotIn(f"#{cancelled.pk}", result)
         self.assertNotIn(f"#{other_transfer.pk}", result)
 
-    def _line_of(self, result, deal):
-        return next(line for line in result.split("\n") if f"#{deal.pk}" in line)
-
     def test_pending_extension_shown(self):
         owner = UserFactory()
         borrower = UserFactory()
@@ -203,7 +205,7 @@ class GetBorrowingStatusTests(TestCase):
         _, deal = _make_borrowing(owner, borrower)
         LoanExtensionFactory(deal=deal, extra_days=14, status=LoanExtension.Status.PENDING)
 
-        line = self._line_of(get_borrowing_status(borrower), deal)
+        line = _line_of(get_borrowing_status(borrower), deal)
         self.assertIn("你已申請延長 14 天（待審核）", line)
         self.assertIn(f"借閱者：{borrower.username}", line)
 
@@ -214,7 +216,7 @@ class GetBorrowingStatusTests(TestCase):
         _, deal = _make_borrowing(owner, borrower)
         LoanExtensionFactory(deal=deal, extra_days=14, status=LoanExtension.Status.PENDING)
 
-        line = self._line_of(get_borrowing_status(owner), deal)
+        line = _line_of(get_borrowing_status(owner), deal)
         self.assertIn("借閱者已申請延長 14 天（待你審核）", line)
         self.assertNotIn("你已申請", line)
         self.assertIn(f"借閱者：{borrower.username}", line)
@@ -309,15 +311,12 @@ class RequestRenewalToolSurfaceTests(TestCase):
         self.assertIn("借閱者", tool.description)
         self.assertIn("7~30", tool.description)
 
-    def _line_of(self, result, deal):
-        return next(line for line in result.split("\n") if f"#{deal.pk}" in line)
-
     def test_deal_line_marks_renewable_for_occupied_applicant(self):
         owner = UserFactory()
         borrower = UserFactory()
         _, deal = _make_borrowing(owner, borrower)
 
-        line = self._line_of(get_borrowing_status(borrower), deal)
+        line = _line_of(get_borrowing_status(borrower), deal)
         self.assertIn("（可申請延長）", line)
 
     def test_deal_line_no_marker_for_lender_view(self):
@@ -326,7 +325,7 @@ class RequestRenewalToolSurfaceTests(TestCase):
         borrower = UserFactory()
         _, deal = _make_borrowing(owner, borrower)
 
-        line = self._line_of(get_borrowing_status(owner), deal)
+        line = _line_of(get_borrowing_status(owner), deal)
         self.assertNotIn("（可申請延長）", line)
 
     def test_deal_line_no_marker_before_handoff(self):
@@ -336,7 +335,18 @@ class RequestRenewalToolSurfaceTests(TestCase):
         book = SharedBookFactory(owner=owner, status="T")
         deal = DealFactory(shared_book=book, applicant=borrower, responder=owner)
 
-        line = self._line_of(get_borrowing_status(borrower), deal)
+        line = _line_of(get_borrowing_status(borrower), deal)
+        self.assertNotIn("（可申請延長）", line)
+
+    def test_deal_line_no_marker_when_pending_exists(self):
+        """已有 PENDING 申請時不標可延長——service 拒絕第二筆，行內不能同時出現「待審核」與「可申請延長」。"""
+        owner = UserFactory()
+        borrower = UserFactory()
+        book, deal = _make_borrowing(owner, borrower)
+        LoanExtensionFactory(deal=deal)
+
+        line = _line_of(get_borrowing_status(borrower), deal)
+        self.assertIn("你已申請延長", line)
         self.assertNotIn("（可申請延長）", line)
 
     def test_success_message_asks_owner_only(self):
