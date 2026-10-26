@@ -84,6 +84,8 @@ def _book_line(book) -> str:
 def _deal_line(deal, viewer, pending_extra_days) -> str:
     from django.utils import timezone
 
+    from books.models import SharedBook
+
     # 出借者視角需要答得出「誰借了我的書」，故行內帶借閱者身分
     line = (
         f"#{deal.pk}《{deal.shared_book.official_book.title}》｜{deal.get_status_display()}"
@@ -101,10 +103,19 @@ def _deal_line(deal, viewer, pending_extra_days) -> str:
             line += f"｜你已申請延長 {pending_extra_days} 天（待審核）"
         else:
             line += f"｜借閱者已申請延長 {pending_extra_days} 天（待你審核）"
+    # 可延期的前置＝書已面交（OCCUPIED）且 viewer 是借閱者本人、且尚無待審核申請；
+    # Q/P 階段、出借者視角、已有 PENDING 都不標，否則 LLM 會提案然後吃 service 的拒絕
+    if (
+        deal.shared_book.status == SharedBook.Status.OCCUPIED
+        and viewer == deal.applicant
+        and pending_extra_days is None
+    ):
+        line += "（可申請延長）"
     return line
 
 
 def _lines_or_total(lines: list[str], total: int, omitted_note: str) -> str:
+    """total 是全集筆數；lines 應由呼叫方 slice 到 MAX_TOOL_LINES，這裡再切一次兜底。"""
     if total > MAX_TOOL_LINES:
         lines = lines[:MAX_TOOL_LINES]
         lines.append(omitted_note.format(omitted=total - MAX_TOOL_LINES))
@@ -148,29 +159,32 @@ def get_user_books(user, status: str = "ALL") -> str:
         books = SharedBook.objects.filter(Q(owner=user) | Q(keeper=user))
     else:
         raise ValueError("status 只能為 OWNED、HELD 或 ALL。")
-    books = books.select_related("official_book").order_by("-created_at")
+    # _book_line 要 official_book.title 與 keeper.username，一併 join 掉避免 N+1
+    books = books.select_related("official_book", "keeper").order_by("-created_at")
 
     empty_messages = {
         "OWNED": "你沒有擁有的書籍。",
         "HELD": "你沒有持有的書籍。",
         "ALL": "你沒有符合的書籍。",
     }
-    if not books.exists():
+    total = books.count()
+    if total == 0:
         return empty_messages[status]
 
-    lines = [_book_line(book) for book in books]
+    # 截斷在物化前：大帳號只取回 MAX_TOOL_LINES 行，tail note 用全集 count
+    lines = [_book_line(book) for book in books[:MAX_TOOL_LINES]]
     return _lines_or_total(
-        lines, len(lines), "（另有 {omitted} 本未列出，可改用 OWNED 或 HELD 縮小範圍）"
+        lines, total, "（另有 {omitted} 本未列出，可改用 OWNED 或 HELD 縮小範圍）"
     )
 
 
 @ToolRegistry.register(
     name="get_borrowing_status",
-    description="Get the status of current borrowing requests or active deals for the user.",
+    description="列出你目前進行中的借閱交易（含狀態、到期日、待審核的延長申請），並標記哪些可申請延長。",
     parameters={"type": "object", "properties": {}, "required": []},
 )
 def get_borrowing_status(user) -> str:
-    from django.db.models import Q
+    from django.db.models import Prefetch, Q
     from deals.models import Deal, LoanExtension
 
     deals = (
@@ -179,32 +193,45 @@ def get_borrowing_status(user) -> str:
             status__in=[Deal.Status.REQUESTED, Deal.Status.RESPONDED, Deal.Status.MEETED],
         )
         .filter(Q(applicant=user) | Q(responder=user))
-        .select_related("shared_book__official_book")
+        # _deal_line 要 official_book.title 與 applicant.username，一併 join 掉避免 N+1
+        .select_related("shared_book__official_book", "applicant")
+        # 每筆 deal 的 pending extension 一次 batch 取回，不再逐筆 filter
+        .prefetch_related(
+            Prefetch(
+                "extensions",
+                queryset=LoanExtension.objects.filter(status=LoanExtension.Status.PENDING),
+            )
+        )
         .order_by("-created_at")
     )
-    if not deals.exists():
+    total = deals.count()
+    if total == 0:
         return "你目前沒有進行中的借閱交易。"
 
     lines = []
-    for deal in deals:
-        pending = deal.extensions.filter(status=LoanExtension.Status.PENDING).first()
+    for deal in deals[:MAX_TOOL_LINES]:  # 截斷在物化前
+        pending = deal.extensions.first()  # 已 prefetch，且只有 PENDING
         lines.append(_deal_line(deal, user, pending.extra_days if pending else None))
-    return _lines_or_total(lines, len(lines), "（另有 {omitted} 項未列出）")
+    return _lines_or_total(lines, total, "（另有 {omitted} 項未列出）")
 
 
 @ToolRegistry.register(
     name="request_renewal",
-    description="Request a renewal for a book currently being borrowed.",
+    description=(
+        f"為借閱中的書申請延長到期日。僅該筆交易的借閱者本人可申請，且書必須已面交、"
+        f"狀態為借閱中；天數需為 {LoanExtension.MIN_EXTRA_DAYS}~{LoanExtension.MAX_EXTRA_DAYS} 之間。"
+        f"提交後為「待審核」，需書的擁有者核准。"
+    ),
     parameters={
         "type": "object",
         "properties": {
             "deal_id": {
                 "type": "string",
-                "description": "UUID of the transaction/deal to renew.",
+                "description": "要延長借期的交易 ID（UUID，可從 get_borrowing_status 取得）",
             },
             "days": {
                 "type": "integer",
-                "description": "Number of days to extend the borrowing period.",
+                "description": f"延長天數（{LoanExtension.MIN_EXTRA_DAYS}~{LoanExtension.MAX_EXTRA_DAYS} 之間）",
                 "minimum": LoanExtension.MIN_EXTRA_DAYS,
                 "maximum": LoanExtension.MAX_EXTRA_DAYS,
             },
@@ -257,5 +284,6 @@ def request_renewal(user, deal_id, days=7) -> str:
     return (
         f"已為交易 #{deal.pk}《{deal.shared_book.official_book.title}》"
         f"提交延長 {extra_days} 天的申請，目前為「待審核」，"
-        "需 book 所有者或持有者核准後才會實際延長到期日。"
+        # 面交後 keeper 就是借書人本人、service 又禁止自審自批，有效審核者只有 owner
+        "需書的擁有者核准後才會實際延長到期日。"
     )
