@@ -102,9 +102,10 @@ class ConsentView(LoginRequiredMixin, View):
             )
             logger.info("consent_view success", extra={"user_id": request.user.pk, "action": action})
             return JsonResponse({"status": "success", "result": result})
-        except Exception as e:
+        except Exception:
             logger.exception("consent_view failed", extra={"user_id": request.user.pk, "action": action})
-            return JsonResponse({"error": str(e)}, status=500)
+            # tool 例外訊息不回 client（可能含 signature/內部細節），只進 log
+            return JsonResponse({"error": "執行失敗，請稍後再試。"}, status=500)
 
 
 class ClearHistoryView(LoginRequiredMixin, View):

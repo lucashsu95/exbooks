@@ -242,6 +242,68 @@ class TestAIViews:
 
         assert response.status_code == 404
 
+    def test_consent_view_tool_error_returns_generic_message(self):
+        """tool 執行錯誤 → 500 通用訊息，不回 str(e)（防洩 signature/內部細節）。"""
+        import uuid
+
+        from ai.services.consent_store import ConsentStore
+
+        self.client.login(username="testuser", password="password")
+        token = ConsentStore.create(
+            self.user.id,
+            "request_renewal",
+            {"deal_id": str(uuid.uuid4()), "days": 7},  # 不存在的 deal
+        )
+        response = self.client.post(
+            self.url_consent,
+            data=json.dumps({"token": token, "confirmed": True}),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 500
+        assert response.json()["error"] == "執行失敗，請稍後再試。"
+        # 內部細節（tool 的例外訊息）不得外洩
+        assert "不存在" not in response.content.decode()
+
+    def test_consent_view_cross_user_token_404(self):
+        """token 綁定建立時的使用者；別的使用者拿不到也不能用。"""
+        from ai.services.consent_store import ConsentStore
+        from tests.factories import UserFactory
+
+        other = UserFactory(username="otheruser")
+        token = ConsentStore.create(self.user.id, "request_renewal", {"deal_id": "1"})
+        self.client.force_login(other)
+        response = self.client.post(
+            self.url_consent,
+            data=json.dumps({"token": token, "confirmed": True}),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 404
+
+    def test_consent_view_action_mismatch_consumes_token(self):
+        """打錯 action 的 POST 也吃掉 token（one-shot），改打正確 action 亦 404。"""
+        from ai.services.consent_store import ConsentStore
+
+        self.client.login(username="testuser", password="password")
+        deal = self._make_active_deal()
+        token = ConsentStore.create(
+            self.user.id, "request_renewal", {"deal_id": str(deal.pk), "days": 7}
+        )
+        mismatched = self.client.post(
+            reverse("ai:chat_consent", kwargs={"action": "get_user_books"}),
+            data=json.dumps({"token": token, "confirmed": True}),
+            content_type="application/json",
+        )
+        assert mismatched.status_code == 404
+
+        replay = self.client.post(
+            self.url_consent,
+            data=json.dumps({"token": token, "confirmed": True}),
+            content_type="application/json",
+        )
+        assert replay.status_code == 404
+
     def test_chat_view_invalid_json(self):
         """Should return 400 for invalid JSON."""
         self.client.login(username="testuser", password="password")
