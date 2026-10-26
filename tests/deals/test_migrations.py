@@ -49,5 +49,5 @@ class TestMigrationPendingPrecheck:
         """前置檢查必須排在 AddField 之前：MySQL DDL auto-commit，
         只有排在最前，fail 時資料庫才能零變更（半套用狀態的防線）。"""
         migration = self._migration_module()
-        op_types = [type(op).__name__ for op in migration.operations]
+        op_types = [type(op).__name__ for op in migration.Migration.operations]
         assert op_types == ["RunPython", "AddField", "AddConstraint"]
