@@ -22,7 +22,7 @@
 
 | 角色 | 說明 |
 |------|------|
-| **會員 (Member)** | 透過 Google Account 註冊，可上架書籍、申請借閱、評價交易對象 |
+| **會員 (Member)** | 註冊帳號，可上架書籍、申請借閱、評價交易對象 |
 | **貢獻者 (Owner)** | 分享自有書籍並上架至平臺供他人借閱 |
 | **持有者 (Keeper)** | 目前持有該書籍的用戶（不一定是貢獻者） |
 | **讀者 (Reader)** | 申請借閱書籍的用戶 |
@@ -37,6 +37,7 @@
 | 後端框架 | Django + Django REST Framework |
 | 資料庫 | MariaDB |
 | 身份驗證 | Django Auth / OAuth 2.0 (Google) / JWT |
+| AI 服務 | vLLM（OpenAI 相容端點），未設定 API key 時自動 fallback 到 mock 回應 |
 
 ## 本地啟動
 
@@ -92,6 +93,8 @@ cp .env.example .env
 ```
 DB_PASSWORD=你的MariaDB密碼
 ```
+
+其餘變數（AI、Email、Push、物件儲存等）都是選填，留空即停用或自動 fallback，詳見 `.env.example` 的必填/選填標註。
 
 ### 4. 建立資料庫
 
@@ -200,9 +203,9 @@ docker compose down -v
   (volume)            (volume)
 ```
 
-## CI/CD（Self-hosted Runner）
+## CI/CD
 
-本專案使用 GitHub Actions + Self-hosted Runner，CI/CD pipeline 全部在你自己的 VM 上執行。
+本專案使用 GitHub Actions：`lint` 與 `test` 跑在 GitHub-hosted runner（fork 即可用）；`deploy` 使用 Self-hosted Runner，部署到你自己的 VM。
 
 ### 流程圖
 
@@ -212,12 +215,10 @@ docker compose down -v
     ▼
 GitHub 觸發 webhook
     │
-    ▼
-VM 上的 Self-hosted Runner 接收任務
-    │
-    ├─ [1] lint    — ruff check .
-    ├─ [2] test    — pytest
+    ├─ [1] lint    — ruff check .          （GitHub-hosted runner）
+    ├─ [2] test    — pytest                （GitHub-hosted runner）
     └─ [3] deploy  — docker compose build + up
+                          （Self-hosted Runner，僅 push 到 master）
     │
     ▼
 服務上線（Nginx :80）
@@ -257,7 +258,7 @@ curl -o actions-runner-linux-x64.tar.gz -L \
 tar xzf actions-runner-linux-x64.tar.gz
 
 # 設定（token 從 GitHub 頁面取得）
-./config.sh --url https://github.com/你的帳號/exbook --token YOUR_TOKEN
+./config.sh --url https://github.com/你的帳號/exbooks --token YOUR_TOKEN
 
 # 安裝為 systemd 服務（開機自動啟動）
 sudo ./svc.sh install
@@ -270,8 +271,8 @@ sudo ./svc.sh status
 ```bash
 # 把 repo clone 到 VM
 cd ~
-git clone https://github.com/你的帳號/exbook.git
-cd exbook
+git clone https://github.com/你的帳號/exbooks.git
+cd exbooks
 
 # 設定環境變數
 cp .env.example .env
@@ -287,11 +288,11 @@ Pipeline 定義在 `.github/workflows/ci.yml`，分三個階段：
 
 | 階段 | 觸發條件 | 執行內容 |
 |------|----------|----------|
-| **lint** | push / PR 到 main | `ruff check .` 程式碼風格檢查 |
-| **test** | lint 通過後 | `pytest` 執行全部測試 |
-| **deploy** | test 通過 + push 到 main | `scripts/deploy.sh` 重建並啟動容器 |
+| **lint** | push / PR 到 master | `uv run ruff check .` 程式碼風格檢查 |
+| **test** | lint 通過後 | `uv run pytest` 執行全部測試 |
+| **deploy** | test 通過 + push 到 master | `scripts/deploy.sh` 重建並啟動容器 |
 
-> PR 只會跑 lint + test，不會觸發 deploy。只有 merge 到 main 才會部署。
+> PR 只會跑 lint + test，不會觸發 deploy。只有 merge 到 master 才會部署。
 
 ### GitHub Secrets 設定
 
