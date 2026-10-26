@@ -26,7 +26,7 @@ class ChatService:
 
     Seam：``AIClient``。可注入任意 adapter（生產：create_client() 組裝的
     RequestsTransport；測試：ScriptedTransport fake，見 ai/tests/fakes.py）。
-    端點／模型／金鑰由 VLLM_* 環境變數決定（AI-Forge SDK 預設即 BIRC H200 端點）。
+    端點／模型／金鑰由 VLLM_* 環境變數決定；有 key 時必須設定 VLLM_BASE_URL。
     當 ``VLLM_API_KEY`` 未設定時回傳 mock 回應，方便本地開發。
     """
 
@@ -47,7 +47,10 @@ class ChatService:
         if self._client is None and os.environ.get("VLLM_API_KEY"):
             from ai_client import create_client
 
-            self._client = create_client()
+            try:
+                self._client = create_client()
+            except ValueError as e:
+                logger.error("AI 端點設定錯誤，fallback 到 mock 回應：%s", e)
         if self._client is None:
             logger.warning("VLLM_API_KEY not set, ChatService will use mock responses")
 

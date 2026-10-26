@@ -6,8 +6,9 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
-DEFAULT_BASE_URL = "https://chatapi.ntubimdbirc.tw/v1"
-DEFAULT_MODEL = "Gemma4-31B"
+# 無預設端點：有 API key 時必須明確指定 VLLM_BASE_URL
+DEFAULT_BASE_URL = ""
+DEFAULT_MODEL = ""
 
 
 def load_project_env() -> None:
@@ -54,8 +55,12 @@ class AIConfig:
     @classmethod
     def from_env(cls) -> "AIConfig":
         load_project_env()
-        return cls(
-            api_key=os.getenv("VLLM_API_KEY", ""),
-            base_url=os.getenv("VLLM_BASE_URL", DEFAULT_BASE_URL),
-            model=os.getenv("VLLM_MODEL", DEFAULT_MODEL),
-        )
+        api_key = os.getenv("VLLM_API_KEY", "")
+        base_url = os.getenv("VLLM_BASE_URL", DEFAULT_BASE_URL)
+        model = os.getenv("VLLM_MODEL", DEFAULT_MODEL)
+        if api_key and not base_url:
+            raise ValueError(
+                "已設定 VLLM_API_KEY 但未設定 VLLM_BASE_URL。"
+                "請指定 OpenAI 相容端點（例如 https://your-host/v1）。"
+            )
+        return cls(api_key=api_key, base_url=base_url, model=model)
