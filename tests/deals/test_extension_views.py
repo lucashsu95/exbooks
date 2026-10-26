@@ -3,8 +3,10 @@
 """
 
 import pytest
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.urls import reverse
 
+from deals.forms import ExtensionRequestForm
 from deals.models import LoanExtension
 from tests.factories import (
     DealFactory,
@@ -116,6 +118,23 @@ class TestExtensionRequestView:
         # 表單驗證失敗，重新渲染頁面並顯示錯誤訊息
         assert response.status_code == 200
         assert not LoanExtension.objects.filter(deal=deal).exists()
+
+
+class TestExtensionRequestForm:
+    """表單的天數界限與 model 欄位 validator 同源。"""
+
+    @staticmethod
+    def _bounds(validators):
+        mins = [v.limit_value for v in validators if isinstance(v, MinValueValidator)]
+        maxs = [v.limit_value for v in validators if isinstance(v, MaxValueValidator)]
+        return mins, maxs
+
+    def test_form_bounds_match_model_validators(self):
+        model_bounds = self._bounds(
+            LoanExtension._meta.get_field("extra_days").validators
+        )
+        form_bounds = self._bounds(ExtensionRequestForm().fields["extra_days"].validators)
+        assert form_bounds == model_bounds
 
 
 class TestExtensionApproveView:

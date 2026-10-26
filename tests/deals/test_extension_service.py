@@ -1,9 +1,10 @@
 from datetime import date, timedelta
+from unittest.mock import patch
 
 import pytest
 from django.core.exceptions import ValidationError
 
-from deals.models import LoanExtension, Notification
+from deals.models import ExchangeEvent, LoanExtension, Notification
 from deals.services.extension_service import (
     approve_extension,
     cancel_extension,
@@ -53,6 +54,57 @@ class TestRequestExtension:
         stranger = UserFactory()
         with pytest.raises(ValidationError, match="借閱者"):
             request_extension(deal, stranger, extra_days=14)
+
+    def test_extra_days_below_min_raises(self):
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=applicant, status="O")
+        deal = DealFactory(
+            shared_book=book,
+            status="M",
+            applicant=applicant,
+            responder=owner,
+        )
+        with pytest.raises(ValidationError):
+            request_extension(deal, applicant, extra_days=6)
+        assert not LoanExtension.objects.exists()
+        assert not Notification.objects.exists()
+
+    def test_extra_days_above_max_raises(self):
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=applicant, status="O")
+        deal = DealFactory(
+            shared_book=book,
+            status="M",
+            applicant=applicant,
+            responder=owner,
+        )
+        with pytest.raises(ValidationError):
+            request_extension(deal, applicant, extra_days=31)
+        assert not LoanExtension.objects.exists()
+        assert not Notification.objects.exists()
+
+    @patch(
+        "deals.services.extension_service.notify_extend_requested",
+        side_effect=RuntimeError("notify boom"),
+    )
+    def test_rolls_back_when_notify_fails(self, _mock_notify):
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=applicant, status="O")
+        deal = DealFactory(
+            shared_book=book,
+            status="M",
+            applicant=applicant,
+            responder=owner,
+        )
+        with pytest.raises(RuntimeError):
+            request_extension(deal, applicant, extra_days=14)
+        assert not LoanExtension.objects.exists()
+        assert not ExchangeEvent.objects.filter(
+            event_type=ExchangeEvent.EventType.EXTENSION_REQUESTED
+        ).exists()
 
     def test_notification_sent_to_responder(self):
         owner = UserFactory()
