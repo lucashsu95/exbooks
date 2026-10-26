@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from django.core.exceptions import ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from django.db import models
@@ -223,17 +224,24 @@ class DealMessageViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+        content = serializer.validated_data["content"].strip()
+        if not content:
+            return Response(
+                {"error": "留言內容不能為空白。"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         try:
             message = deal_service.send_deal_message(
                 deal=deal,
                 sender=request.user,
-                content=serializer.validated_data["content"],
+                content=content,
             )
             return Response(
                 self.get_serializer(message).data,
                 status=status.HTTP_201_CREATED,
             )
-        except Exception as e:
+        except ValidationError as e:
             return Response(
                 {"error": service_error_message(e)}, status=status.HTTP_400_BAD_REQUEST
             )

@@ -4,6 +4,7 @@
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from accounts.models import TrustLevelConfig
@@ -186,3 +187,15 @@ class TrustServiceTest(TestCase):
         TrustLevelConfig.objects.filter(level=0).update(max_books=7)
         limits = get_borrowing_limits(0)
         self.assertEqual(limits["max_books"], 7)
+
+    def test_borrowing_limits_missing_level_falls_back_to_level_0(self):
+        TrustLevelConfig.objects.filter(level__gte=1).delete()
+        limits = get_borrowing_limits(3)
+        self.assertEqual(limits["max_books"], 1)
+        self.assertEqual(limits["max_days"], 30)
+
+    def test_borrowing_limits_no_config_raises(self):
+        """無任何等級列（含 0）→ 拋錯，不給錯誤額度。"""
+        TrustLevelConfig.objects.all().delete()
+        with self.assertRaises(ValidationError):
+            get_borrowing_limits(0)

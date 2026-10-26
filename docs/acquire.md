@@ -341,14 +341,14 @@
   - 等級 1：2 星
   - 等級 2：3 星
   - 等級 3：4~5 星（資深誠信用戶）
-- **借閱限制（`BORROWING_LIMITS`）**：
-  - 等級 0：每 30 天限借 1 本
-  - 等級 1：每 60 天限借 3 本
-  - 等級 2：每 90 天限借 5 本
+- **借閱限制（`TrustLevelConfig`，DB 可改）**：
+  - 等級 0：最多同時借 1 本、單次借期最長 30 天
+  - 等級 1：最多同時借 3 本、單次借期最長 60 天
+  - 等級 2：最多同時借 5 本、單次借期最長 90 天
   - 等級 3：無限制
 - 違規行為將降低信用分數，甚至導致帳號停權。
 
-> **實作現況：** `trust_service.py` 實作純函式 `compute_trust_score`、`compute_trust_stars`、`compute_borrowing_limits`，並透過 `recalculate_trust_scores` Celery 任務每週一凌晨批次重算。`TrustScoreLedger` 記錄每次積分變更的稽核條目。
+> **實作現況：** `trust_service.py` 實作 `compute_trust_score`、`compute_trust_stars` 等函式；借閱限制直接讀 `TrustLevelConfig`（DB，admin 可改，無 settings 副本），並透過 `recalculate_trust_scores` Celery 任務每週一凌晨批次重算。`TrustScoreLedger` 記錄每次積分變更的稽核條目。
 
 ---
 
@@ -498,10 +498,10 @@ stateDiagram-v2
 
 ### 7.3 安全與風險管控
 1. **禁止借閱自己的書 (BR-10)**：系統禁止用戶對自己貢獻或持有的書籍發起借閱/傳遞/返還申請（REGRESS 回歸交易除外），避免自借自還的信用操縱行為。
-2. **信賴階梯限制**：根據用戶的信用等級（Level 0-3）嚴格限制借閱數量與頻率：
-   - **Level 0**：每 30 天限借 1 本
-   - **Level 1**：每 60 天限借 3 本
-   - **Level 2**：每 90 天限借 5 本
+2. **信賴階梯限制**：根據用戶的信用等級（Level 0-3）限制同時借閱冊數與單次借期（`TrustLevelConfig`，DB 可改）：
+   - **Level 0**：最多同時借 1 本、單次借期最長 30 天
+   - **Level 1**：最多同時借 3 本、單次借期最長 60 天
+   - **Level 2**：最多同時借 5 本、單次借期最長 90 天
    - **Level 3**：無限制
 3. **LOAN 交易完成條件 (BR-17)**：「閱畢即還」交易必須先經 Owner 確認歸還（`confirm_return`）使書籍狀態變回 `T`，系統才會將交易推進至 `DONE`，確保書籍確實回到貢獻者手中。
 4. **逾期分級管理**：實作逾期嚴重程度分級（`overdue_service.py`）：

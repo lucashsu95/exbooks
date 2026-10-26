@@ -17,11 +17,13 @@ PREVIOUS_LIMITS = {
 
 
 def align_limits(apps, schema_editor):
+    """只更新仍是 seed 原值的列，admin 改過的設定不可被覆寫。"""
     TrustLevelConfig = apps.get_model("accounts", "TrustLevelConfig")
     for level, (max_books, max_days) in DOCUMENTED_LIMITS.items():
-        TrustLevelConfig.objects.filter(level=level).update(
-            max_books=max_books, max_days=max_days
-        )
+        prev_books, prev_days = PREVIOUS_LIMITS[level]
+        TrustLevelConfig.objects.filter(
+            level=level, max_books=prev_books, max_days=prev_days
+        ).update(max_books=max_books, max_days=max_days)
 
 
 def revert_limits(apps, schema_editor):

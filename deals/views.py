@@ -8,7 +8,6 @@ import json
 import logging
 
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import HttpResponse
@@ -315,8 +314,7 @@ def rating_create(request, pk):
                 )
                 messages.success(request, "評價已送出！")
                 return redirect("deals:detail", pk)
-            except Exception as e:
-                logger.exception("rating_create failed", extra={"user_id": request.user.pk, "deal_id": str(pk)})
+            except ValidationError as e:
                 messages.error(request, service_error_message(e))
                 return redirect("deals:detail", pk)
         else:

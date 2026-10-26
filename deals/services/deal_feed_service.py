@@ -102,7 +102,7 @@ def get_feed(user, tab):
     }
 
     def feed_for(name):
-        return feeds[name] if name == tab else DealFeed(total=feeds[name]._total)
+        return feeds[name] if name == tab else DealFeed(total=feeds[name].count())
 
     return {
         "current_tab": tab,

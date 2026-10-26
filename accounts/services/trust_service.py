@@ -12,6 +12,7 @@ from dataclasses import dataclass
 
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.utils import timezone
 
@@ -51,7 +52,7 @@ def _get_score_config() -> ScoreConfig:
 
 
 # ============================================================================
-# 借閱限制配置（從 settings 讀取，提供預設值）
+# 借閱限制配置
 # ============================================================================
 
 
@@ -59,12 +60,8 @@ def _get_score_config() -> ScoreConfig:
 class BorrowingLimit:
     """借閱限制定義"""
 
-    max_books: int | float
-    max_days: int | float
-
-
-# TrustLevelConfig 中「無限制」的哨兵值（模板 trust_badge 亦以此判斷）
-UNLIMITED = 999
+    max_books: int
+    max_days: int
 
 
 def _get_borrowing_limits() -> dict[int, BorrowingLimit]:
@@ -148,11 +145,19 @@ def compute_borrowing_limits(trust_level: int) -> BorrowingLimit:
         BorrowingLimit: 借閱限制（999 表示無限制）
     """
     limits = _get_borrowing_limits()
-    return limits.get(
-        trust_level,
-        limits.get(0, BorrowingLimit(max_books=0, max_days=0)),
-    )
+    if trust_level in limits:
+        return limits[trust_level]
 
+    # 缺列 = TrustLevelConfig 不完整（0012 應已 seed 0-3）。
+    # 退等級 0 而非 0 本：0 本會靜默擋掉所有借閱。
+    logger.error(
+        "TrustLevelConfig missing level, falling back to level 0",
+        extra={"trust_level": trust_level, "configured_levels": sorted(limits)},
+    )
+    if 0 in limits:
+        return limits[0]
+
+    raise ValidationError("信用等級設定不完整，請聯絡管理員")
 
 # ============================================================================
 # 資料取得函式（需要 DB）
