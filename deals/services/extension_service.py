@@ -12,7 +12,7 @@ from django.db import transaction
 from django_fsm import can_proceed
 
 from books.models import SharedBook
-from deals.models import LoanExtension, ExchangeEvent
+from deals.models import Deal, LoanExtension, ExchangeEvent
 from deals.services.exchange_event_service import record_exchange_event
 from deals.services.notification_service import (
     notify_extend_requested,
@@ -30,7 +30,7 @@ def request_extension(deal, applicant, extra_days):
     Rules:
     - 僅限借閱狀態為 O（借閱中）的書籍
     - BR-2: 延長天數 7~30 天（service 層執行 extra_days 欄位 validator）
-    - 同一筆交易可多次申請
+    - 同一筆交易同時只允許一筆待審核的延長申請，核准或拒絕後才能再申請
     - 申請者必須是 Deal 的 applicant（借入者）
 
     原子性：create 與 record_event 在同一 transaction，
@@ -45,6 +45,11 @@ def request_extension(deal, applicant, extra_days):
 
     if applicant != deal.applicant:
         raise ValidationError("只有借閱者可以申請延長")
+
+    # 先鎖定 deal 列再查 PENDING，並發申請會串行化，不會同時通過檢查
+    deal = Deal.objects.select_for_update().get(pk=deal.pk)
+    if deal.extensions.filter(status=LoanExtension.Status.PENDING).exists():
+        raise ValidationError("該交易已有待審核的延長申請，請等待審核完成")
 
     LoanExtension._meta.get_field("extra_days").clean(extra_days, None)
 

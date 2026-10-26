@@ -10,7 +10,7 @@ from core.models import UpdatableModel
 class LoanExtension(FSMModelMixin, UpdatableModel):
     """
     借閱延長申請與核准。
-    同一筆交易可多次申請延長，每次需重新審核。
+    同一筆交易同時只允許一筆待審核的延長申請，核准或拒絕後才能再申請。
 
     命名依 Schema 規範：
     - requested_by: 申請延長者
