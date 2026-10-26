@@ -93,10 +93,17 @@ cp .env.example .env
 
 ### 4. 執行遷移 & 建立管理員
 
-本地開發用 SQLite settings（同一個 terminal 內先 export，之後指令沿用）：
+本地開發用 SQLite settings（同一個 terminal 內先設定，之後指令沿用）：
 
 ```bash
+# macOS / Linux
 export DJANGO_SETTINGS_MODULE=exbook.dev_settings
+
+# Windows (PowerShell)
+$env:DJANGO_SETTINGS_MODULE="exbook.dev_settings"
+```
+
+```bash
 python manage.py migrate
 python manage.py createsuperuser
 ```
@@ -202,7 +209,7 @@ docker compose down -v
 
 ## CI/CD
 
-本專案使用 GitHub Actions：`lint` 與 `test` 跑在 GitHub-hosted runner（fork 即可用）；`deploy` 使用 Self-hosted Runner，部署到你自己的 VM。
+本專案使用 GitHub Actions：`lint` 與 `test` 跑在 GitHub-hosted runner（fork 即可用）。`deploy` 使用 Self-hosted Runner，僅在上游 repo 觸發（fork 自動跳過，CI 以 lint/test 為完整流程）。
 
 ### 流程圖
 
@@ -221,7 +228,7 @@ GitHub 觸發 webhook
 服務上線（Nginx :80）
 ```
 
-### VM 環境準備
+### VM 環境準備（上游維護者操作，fork 不需要）
 
 > 以 Ubuntu 22.04/24.04 為例，VM 最低規格：2 vCPU / 2 GB RAM / 25 GB Disk。
 
