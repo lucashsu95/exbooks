@@ -45,10 +45,7 @@ def request_extension(deal, applicant, extra_days):
     if applicant != deal.applicant:
         raise ValidationError("只有借閱者可以申請延長")
 
-    # Django 5.2 已移除 run_validators，直接執行 extra_days 的欄位 validators
-    field = LoanExtension._meta.get_field("extra_days")
-    for validator in field.validators:
-        validator(extra_days)
+    LoanExtension._meta.get_field("extra_days").clean(extra_days, None)
 
     extension = LoanExtension.objects.create(
         deal=deal,
