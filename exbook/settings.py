@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 
+from django.utils.translation import gettext_lazy as _
+
 from dotenv import load_dotenv
 
 from core.constants import SESSION_COOKIE_AGE, SESSION_EXPIRE_AT_BROWSER_CLOSE
@@ -149,8 +151,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
-
-from django.utils.translation import gettext_lazy as _
 
 LANGUAGE_CODE = "zh-hant"
 

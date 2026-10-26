@@ -4,7 +4,7 @@ import os
 from typing import Any, Dict, List
 from dataclasses import dataclass
 
-from ai_client import ChatMessage, ChatResponse as SDKChatResponse
+from ai_client import ChatMessage
 
 from .tool_registry import ToolRegistry
 

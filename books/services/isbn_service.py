@@ -99,7 +99,7 @@ def lookup_by_isbn(isbn: str) -> Optional[Dict[str, Any]]:
             "ISBN not found in database, checking cache",
             extra={"isbn": normalized_isbn},
         )
-    except Exception as e:
+    except Exception:
         logger.exception(
             "Error querying database for ISBN",
             extra={"isbn": normalized_isbn},
@@ -170,13 +170,13 @@ def lookup_by_isbn(isbn: str) -> Optional[Dict[str, Any]]:
             extra={"isbn": normalized_isbn, "status_code": e.response.status_code},
         )
         return {"error": "http_error"}
-    except httpx.RequestError as e:
+    except httpx.RequestError:
         logger.warning(
             "Network error querying Google Books API",
             extra={"isbn": normalized_isbn},
         )
         return {"error": "network_error"}
-    except Exception as e:
+    except Exception:
         logger.exception(
             "Unexpected error querying Google Books API",
             extra={"isbn": normalized_isbn},

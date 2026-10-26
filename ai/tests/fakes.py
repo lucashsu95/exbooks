@@ -6,7 +6,7 @@ Transport seam 的第二個 adapter：scriptable fake。
 純 Python，無额外相依。
 """
 
-from ai_client import AIClient, AIConfig, ChatResponse, Transport
+from ai_client import AIClient, AIConfig, ChatResponse
 
 
 class ScriptedTransport:

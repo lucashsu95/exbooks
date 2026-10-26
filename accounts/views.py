@@ -2,8 +2,6 @@ import json
 import logging
 
 from django.contrib import messages
-
-logger = logging.getLogger(__name__)
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Q
@@ -18,6 +16,8 @@ from deals.models import Deal, Rating
 from .forms import AppealForm, CompleteProfileForm, ProfileForm
 from .models import UserProfile
 from .services import user_stats_service
+
+logger = logging.getLogger(__name__)
 
 
 @login_required

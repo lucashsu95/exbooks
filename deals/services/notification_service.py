@@ -3,7 +3,7 @@ from datetime import timedelta
 
 from django.utils import timezone
 
-from deals.models import Deal, LoanExtension, Notification
+from deals.models import LoanExtension, Notification
 
 logger = logging.getLogger(__name__)
 
@@ -218,7 +218,7 @@ def batch_send_due_reminders(days: int = 3) -> dict:
         try:
             notify_book_due_soon(deal)
             sent += 1
-        except Exception as e:
+        except Exception:
             logger.exception(
                 "batch_send_due_reminders error",
                 extra={"deal_id": deal.id},

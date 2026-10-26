@@ -10,7 +10,7 @@ All detectors are safe to call from Celery beat tasks.
 import logging
 from datetime import timedelta
 
-from django.db.models import Avg, Count, F, Max, Min, Q
+from django.db.models import F, Max, Min
 from django.utils import timezone
 
 from core.observability.trace_context import new_trace

@@ -69,5 +69,9 @@ markers = [
 ]
 
 
+[tool.ruff]
+# scripts/ 為一次性開發/驗證腳本，不列入 lint
+extend-exclude = ["scripts"]
+
 [tool.djlint]
 profile = "django"

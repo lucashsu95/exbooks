@@ -125,7 +125,7 @@ def send_push_notification(
 
         return False
 
-    except Exception as e:
+    except Exception:
         logger.exception(
             "Push send unexpected error",
             extra={

@@ -4,11 +4,9 @@ from core.error_messages import service_error_message
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 
-logger = logging.getLogger(__name__)
 from django.db import transaction
 from django.db.models import Q, Count
 from django.contrib import messages
-from django.utils import timezone
 from django.http import HttpResponse, FileResponse
 from django.views.decorators.http import require_GET, require_POST
 from django.core.paginator import Paginator
@@ -27,6 +25,8 @@ from .services.book_service import (
     update_book,
 )
 from .forms import BookSearchForm
+
+logger = logging.getLogger(__name__)
 
 
 # Module-level constant for category pills (excludes OTHER)
