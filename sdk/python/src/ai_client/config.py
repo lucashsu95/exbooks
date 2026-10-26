@@ -58,9 +58,15 @@ class AIConfig:
         api_key = os.getenv("VLLM_API_KEY", "")
         base_url = os.getenv("VLLM_BASE_URL", DEFAULT_BASE_URL)
         model = os.getenv("VLLM_MODEL", DEFAULT_MODEL)
-        if api_key and not base_url:
-            raise ValueError(
-                "已設定 VLLM_API_KEY 但未設定 VLLM_BASE_URL。"
-                "請指定 OpenAI 相容端點（例如 https://your-host/v1）。"
-            )
+        if api_key:
+            if not base_url:
+                raise ValueError(
+                    "已設定 VLLM_API_KEY 但未設定 VLLM_BASE_URL。"
+                    "請指定 OpenAI 相容端點（例如 https://your-host/v1）。"
+                )
+            if not model:
+                raise ValueError(
+                    "已設定 VLLM_API_KEY 但未設定 VLLM_MODEL。"
+                    "請指定端點提供的模型名稱。"
+                )
         return cls(api_key=api_key, base_url=base_url, model=model)

@@ -44,15 +44,18 @@ class ChatService:
                     沒有則用 mock 回應。
         """
         self._client = client
-        if self._client is None and os.environ.get("VLLM_API_KEY"):
-            from ai_client import create_client
-
-            try:
-                self._client = create_client()
-            except ValueError as e:
-                logger.error("AI 端點設定錯誤，fallback 到 mock 回應：%s", e)
         if self._client is None:
-            logger.warning("VLLM_API_KEY not set, ChatService will use mock responses")
+            if os.environ.get("VLLM_API_KEY"):
+                from ai_client import create_client
+
+                try:
+                    self._client = create_client()
+                except ValueError as e:
+                    logger.error("AI 端點設定錯誤，fallback 到 mock 回應：%s", e)
+            else:
+                logger.warning(
+                    "VLLM_API_KEY not set, ChatService will use mock responses"
+                )
 
     def _build_tools(self) -> List[Dict[str, Any]]:
         """Convert ToolRegistry tools to OpenAI function format."""
@@ -91,8 +94,9 @@ class ChatService:
         """
         Processes a user message and returns a response from the AI backend.
 
-        When ``VLLM_API_KEY`` is available the real BIRC vLLM endpoint is called;
-        otherwise a mock response is returned for local development.
+        When ``VLLM_API_KEY``, ``VLLM_BASE_URL`` and ``VLLM_MODEL`` are
+        configured the configured vLLM endpoint is called; otherwise a mock
+        response is returned for local development.
         """
         logger.info(
             "AI chat called",
