@@ -12,6 +12,13 @@ from .settings import *  # noqa: F401, F403
 # ── Security ────────────────────────────────────────────────────
 DEBUG = False
 SECRET_KEY = os.environ["SECRET_KEY"]
+
+# settings.py 的安全旗標區塊在 import 時依 env 的 DEBUG 求值，
+# 此處 DEBUG=False 不會重新觸發該區塊。明確重設，
+# 讓生產安全不依賴 .env 的 DEBUG 值（.env.example 出貨為本地基準 DEBUG=True）
+SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "True").lower() == "true"
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 ALLOWED_HOSTS = [
     h.strip() for h in os.environ.get("ALLOWED_HOSTS", "").split(",") if h.strip()
 ]

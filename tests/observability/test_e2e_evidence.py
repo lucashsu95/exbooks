@@ -14,24 +14,19 @@ E2E 真實可觀測性證據測試
 
 import json
 import logging
-import os
-import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
 from django.utils import timezone
 
-from accounts.models import TrustScoreLedger
 from books.models import SharedBook
 from core.observability.anomaly_detectors import run_all as run_anomaly_detection
 from core.observability.business_events import emit_audit_event, emit_business_event
-from core.observability.trace_context import clear, get_trace_id, new_trace
+from core.observability.trace_context import clear, new_trace
 from deals.models import Deal
 from deals.services.deal_service import accept_deal, complete_meeting, create_deal
 from deals.services.deal_service import confirm_return
-from deals.services.overdue_service import batch_process_due_books as process_due_books
-from deals.tasks import send_push_notification_task as send_push_notification
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 輔助：發射 system 層日誌（技術除錯）日誌，帶入 trace_id
@@ -204,7 +199,7 @@ def capture_three_tier_logs(evidence_dir):
 @pytest.fixture
 def setup_users(db):
     """建立測試用戶：owner（書主）、applicant（借閱者）"""
-    from django.contrib.auth.models import Group, User
+    from django.contrib.auth.models import Group
     from tests.factories import UserFactory, UserProfileFactory
 
     # 確保 trust_lv 群組存在
