@@ -169,6 +169,24 @@ class LoanExtensionViewSet(viewsets.ModelViewSet):
 
             raise ValidationError(service_error_message(e))
 
+    def _method_not_allowed(self):
+        # 合法寫入只走 create（request_extension）與 approve/reject/cancel service；
+        # 預設 ModelViewSet 的 update/destroy 會繞過 service 直接改列
+        # （如 PATCH 搬移 deal），故一律 405。
+        return Response(
+            {"error": "此操作不被允許；延長申請的核准/拒絕請用 approve/reject。"},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
+
+    def update(self, request, *args, **kwargs):
+        return self._method_not_allowed()
+
+    def partial_update(self, request, *args, **kwargs):
+        return self._method_not_allowed()
+
+    def destroy(self, request, *args, **kwargs):
+        return self._method_not_allowed()
+
     @action(detail=True, methods=["post"])
     def approve(self, request, pk=None):
         extension = self.get_object()

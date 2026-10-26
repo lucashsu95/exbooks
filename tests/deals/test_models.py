@@ -200,7 +200,8 @@ class TestLoanExtension:
     def test_is_pending_generated_value(self):
         """generated column：PENDING 時為 1，離開 PENDING 後為 NULL。"""
         ext = LoanExtensionFactory()
-        assert ext.refresh_from_db() or True
+        # generated value 由 DB 端計算，factory 建立後 in-memory 為 None，需刷入
+        ext.refresh_from_db()
         assert ext.is_pending == 1
         ext.reject()
         ext.save()
@@ -214,7 +215,21 @@ class TestLoanExtension:
         LoanExtensionFactory(deal=deal)
         with pytest.raises(IntegrityError):
             with transaction.atomic():
-                LoanExtensionFactory(deal=deal, status=LoanExtension.Status.PENDING)
+                LoanExtensionFactory(deal=deal)
+
+    def test_db_rejects_queryset_update_flip_to_pending(self):
+        """queryset.update 把非 PENDING 行翻回 PENDING（第二寫入者的另一形態），
+        同樣撞 constraint。"""
+        deal = DealFactory()
+        first = LoanExtensionFactory(deal=deal)
+        first.reject()
+        first.save()
+        LoanExtensionFactory(deal=deal)  # slot 重新佔用
+        with pytest.raises(IntegrityError):
+            with transaction.atomic():
+                LoanExtension.objects.filter(pk=first.pk).update(
+                    status=LoanExtension.Status.PENDING
+                )
 
     def test_db_allows_re_request_after_review(self):
         """非 PENDING 行 is_pending=NULL，unique 允許多個 NULL——
@@ -223,7 +238,7 @@ class TestLoanExtension:
         first = LoanExtensionFactory(deal=deal)
         first.reject()
         first.save()
-        second = LoanExtensionFactory(deal=deal, status=LoanExtension.Status.PENDING)
+        second = LoanExtensionFactory(deal=deal)
         assert second.pk is not None
 
 

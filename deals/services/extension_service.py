@@ -8,7 +8,7 @@ import logging
 from datetime import timedelta
 
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django_fsm import can_proceed
 
 from books.models import SharedBook
@@ -59,12 +59,17 @@ def request_extension(deal, applicant, extra_days):
 
     LoanExtension._meta.get_field("extra_days").clean(extra_days, None)
 
-    extension = LoanExtension.objects.create(
-        deal=deal,
-        requested_by=applicant,
-        extra_days=extra_days,
-        status=LoanExtension.Status.PENDING,
-    )
+    try:
+        extension = LoanExtension.objects.create(
+            deal=deal,
+            requested_by=applicant,
+            extra_days=extra_days,
+            status=LoanExtension.Status.PENDING,
+        )
+    except IntegrityError:
+        # race 兜底：非 service 寫入者在 guard 與 INSERT 之間 commit 了同 deal PENDING，
+        # (deal, is_pending) unique constraint 在此擋下（#21）
+        raise ValidationError("該交易已有待審核的延長申請，請等待審核完成")
 
     transaction.on_commit(lambda: notify_extend_requested(extension))
 

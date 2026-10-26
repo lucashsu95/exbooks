@@ -68,6 +68,9 @@ class LoanExtension(FSMModelMixin, UpdatableModel):
     # 搭配 (deal, is_pending) unique constraint——MySQL/SQLite 的 unique
     # 皆允許多個 NULL，故結構上保證同一交易同時至多一筆 PENDING。
     # 不依賴「request_extension 是 PENDING 唯一寫入者」的隱性 invariant。
+    #
+    # 注意：本欄位僅供 DB constraint 使用，Python 端狀態判斷一律用 status。
+    # save() 後 in-memory 值不會同步（DB 端才重算），讀取需 refresh_from_db()。
     is_pending = models.GeneratedField(
         expression=Case(
             When(status=Status.PENDING, then=Value(1)),
