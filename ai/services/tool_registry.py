@@ -103,16 +103,21 @@ def _deal_line(deal, viewer, pending_extra_days) -> str:
             line += f"｜你已申請延長 {pending_extra_days} 天（待審核）"
         else:
             line += f"｜借閱者已申請延長 {pending_extra_days} 天（待你審核）"
-    # 可延期的前置＝書已面交（OCCUPIED）且 viewer 是借閱者本人；
-    # Q/P 階段或出借者視角不標，否則 LLM 會提案然後吃 service 的拒絕
-    if deal.shared_book.status == SharedBook.Status.OCCUPIED and viewer == deal.applicant:
+    # 可延期的前置＝書已面交（OCCUPIED）且 viewer 是借閱者本人、且尚無待審核申請；
+    # Q/P 階段、出借者視角、已有 PENDING 都不標，否則 LLM 會提案然後吃 service 的拒絕
+    if (
+        deal.shared_book.status == SharedBook.Status.OCCUPIED
+        and viewer == deal.applicant
+        and pending_extra_days is None
+    ):
         line += "（可申請延長）"
     return line
 
 
 def _lines_or_total(lines: list[str], total: int, omitted_note: str) -> str:
-    """lines 已由呼叫方 slice 到 MAX_TOOL_LINES；total 是全集筆數，超出時補一行尾註。"""
+    """total 是全集筆數；lines 應由呼叫方 slice 到 MAX_TOOL_LINES，這裡再切一次兜底。"""
     if total > MAX_TOOL_LINES:
+        lines = lines[:MAX_TOOL_LINES]
         lines.append(omitted_note.format(omitted=total - MAX_TOOL_LINES))
     return "\n".join(lines)
 
