@@ -14,6 +14,7 @@ import logging
 from typing import Any, Dict, Generator
 
 from .chat_service import ChatService
+from .consent_store import ConsentStore
 from .conversation_cache import ConversationCache
 from .tool_registry import ConsentRequirement, ToolRegistry
 
@@ -50,8 +51,10 @@ class ChatOrchestrator:
             tool_def = ToolRegistry.get_tool(tool_name)
 
             if tool_def and tool_def.consent == ConsentRequirement.USER_CONFIRM:
-                # 需要使用者確認：此輪不執行，ConsentView 稍後帶著 user 執行
-                yield _sse("consent_required", {"tool": tool_name, "args": arguments})
+                # 需要使用者確認：此輪不執行，ConsentView 稍後帶著 user 執行；
+                # args 存 server-side（one-shot token），client 回傳的 args 不可信
+                token = ConsentStore.create(user.id, tool_name, arguments)
+                yield _sse("consent_required", {"tool": tool_name, "args": arguments, "token": token})
             elif tool_def:
                 try:
                     result = tool_def.func(user=user, **arguments)
