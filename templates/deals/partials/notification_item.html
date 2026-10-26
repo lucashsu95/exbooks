@@ -1,27 +1,10 @@
-{% load tz %}
-{% with type_icon={
-    'DEAL_REQUESTED': 'swap_horiz',
-    'DEAL_RESPONDED': 'check_circle',
-    'DEAL_CANCELLED': 'cancel',
-    'DEAL_MEETED': 'handshake',
-    'BOOK_DUE_SOON': 'schedule',
-    'BOOK_OVERDUE': 'warning',
-    'BOOK_AVAILABLE': 'favorite',
-    'EXTEND_REQUESTED': 'more_time',
-    'EXTEND_APPROVED': 'check_circle',
-    'EXTEND_REJECTED': 'cancel',
-    'APPEAL_SUBMITTED': 'campaign',
-    'APPEAL_RESOLVED': 'task_alt',
-    'RATING_CREATED': 'star',
-    'VIOLATION_CREATED': 'gavel',
-    'APPEAL_STATUS_UPDATED': 'info',
-    } %}
+{% load tz deals_tags %}
     <div class="flex items-start gap-3 p-4 hover:bg-slate-50 transition-colors {% if not notification.is_read %}bg-primary/5{% endif %}"
          id="notification-{{ notification.id }}">
         <!-- Icon -->
         <div class="size-10 rounded-full {% if not notification.is_read %}bg-primary/20{% else %}bg-slate-100{% endif %} flex items-center justify-center shrink-0">
             <span class="material-symbols-outlined {% if not notification.is_read %}text-primary{% else %}text-slate-400{% endif %}">
-                {{ type_icon|get_item:notification.notification_type|default:'notifications' }}
+                {{ notification.notification_type|notification_icon }}
             </span>
         </div>
         <!-- Content -->
@@ -61,4 +44,3 @@
             </div>
         </div>
     </div>
-{% endwith %}
