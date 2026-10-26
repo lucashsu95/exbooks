@@ -124,7 +124,8 @@ class TestApproveExtension:
             due_date=date.today() + timedelta(days=10),
         )
         ext = LoanExtensionFactory(deal=deal, requested_by=applicant)
-        approve_extension(ext, owner)
+        with TestCase.captureOnCommitCallbacks(execute=True):
+            approve_extension(ext, owner)
         assert Notification.objects.filter(
             recipient=applicant,
             notification_type="EXTEND_APPROVED",
@@ -213,7 +214,8 @@ class TestRejectExtension:
     def test_notification_sent_to_applicant(self):
         ext = LoanExtensionFactory()
         responder = ext.deal.responder
-        reject_extension(ext, responder)
+        with TestCase.captureOnCommitCallbacks(execute=True):
+            reject_extension(ext, responder)
         assert Notification.objects.filter(
             recipient=ext.requested_by,
             notification_type="EXTEND_REJECTED",
