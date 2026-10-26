@@ -102,10 +102,17 @@ class TestAIViews:
         """Should execute tool if user confirms."""
         self.client.login(username="testuser", password="password")
 
-        # tool 現在帶使用者身份執行：deal 必須存在且使用者是當事人
-        from tests.factories import DealFactory
+        # tool 現在帶使用者身份執行：書籍要「借閱中」且使用者是借入者（applicant）
+        from tests.factories import DealFactory, SharedBookFactory
 
-        deal = DealFactory(applicant=self.user)
+        owner = User.objects.create_user(username="owner", password="password")
+        book = SharedBookFactory(owner=owner, keeper=self.user, status="O")
+        deal = DealFactory(
+            shared_book=book,
+            applicant=self.user,
+            responder=owner,
+            status="M",
+        )
         data = {"args": {"deal_id": str(deal.pk), "days": 7}, "confirmed": True}
         response = self.client.post(
             self.url_consent, data=json.dumps(data), content_type="application/json"
@@ -114,7 +121,9 @@ class TestAIViews:
         assert response.status_code == 200
         res_data = response.json()
         assert res_data["status"] == "success"
-        assert "request_renewal" in res_data["result"]
+        assert "提交" in res_data["result"]
+        assert "待審核" in res_data["result"]
+        assert "已延長" not in res_data["result"]
 
     def test_consent_view_cancel(self):
         """Should return cancelled if user does not confirm."""
