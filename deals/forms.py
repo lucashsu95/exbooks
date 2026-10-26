@@ -3,10 +3,27 @@
 """
 
 from django import forms
+from django.core.validators import MaxValueValidator, MinValueValidator
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field
 
-from .models import Deal
+from .models import Deal, LoanExtension
+
+
+def _extra_days_bounds() -> tuple[int, int]:
+    """延長天數上下限，以 LoanExtension.extra_days 欄位 validator 為唯一來源。"""
+    min_days = max_days = None
+    for validator in LoanExtension._meta.get_field("extra_days").validators:
+        if isinstance(validator, MinValueValidator):
+            min_days = validator.limit_value
+        elif isinstance(validator, MaxValueValidator):
+            max_days = validator.limit_value
+    if min_days is None or max_days is None:
+        raise RuntimeError("LoanExtension.extra_days 缺少 Min/MaxValueValidator")
+    return min_days, max_days
+
+
+_EXTRA_DAYS_MIN, _EXTRA_DAYS_MAX = _extra_days_bounds()
 
 
 class DealApplicationForm(forms.ModelForm):
@@ -169,21 +186,21 @@ class ExtensionRequestForm(forms.Form):
     """延長借閱申請表單。"""
 
     extra_days = forms.IntegerField(
-        min_value=7,
-        max_value=30,
+        min_value=_EXTRA_DAYS_MIN,
+        max_value=_EXTRA_DAYS_MAX,
         widget=forms.NumberInput(
             attrs={
                 "class": "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-colors",
-                "placeholder": "7-30 天",
-                "min": 7,
-                "max": 30,
-                "aria-valuemin": 7,
-                "aria-valuemax": 30,
-                "aria-label": "延長天數，最少7天最多30天",
+                "placeholder": f"{_EXTRA_DAYS_MIN}-{_EXTRA_DAYS_MAX} 天",
+                "min": _EXTRA_DAYS_MIN,
+                "max": _EXTRA_DAYS_MAX,
+                "aria-valuemin": _EXTRA_DAYS_MIN,
+                "aria-valuemax": _EXTRA_DAYS_MAX,
+                "aria-label": f"延長天數，最少{_EXTRA_DAYS_MIN}天最多{_EXTRA_DAYS_MAX}天",
             }
         ),
         label="延長天數",
-        help_text="請輸入 7 至 30 天的延長天數",
+        help_text=f"請輸入 {_EXTRA_DAYS_MIN} 至 {_EXTRA_DAYS_MAX} 天的延長天數",
     )
 
     def __init__(self, *args, **kwargs):

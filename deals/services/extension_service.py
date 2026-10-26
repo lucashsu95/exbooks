@@ -22,15 +22,19 @@ from deals.services.notification_service import (
 logger = logging.getLogger(__name__)
 
 
+@transaction.atomic
 def request_extension(deal, applicant, extra_days):
     """
     申請延長借閱。
 
     Rules:
     - 僅限借閱狀態為 O（借閱中）的書籍
-    - BR-2: 延長天數 7~30 天（Model validator 保障）
+    - BR-2: 延長天數 7~30 天（service 層執行 extra_days 欄位 validator）
     - 同一筆交易可多次申請
     - 申請者必須是 Deal 的 applicant（借入者）
+
+    原子性：create + notify + record_event 在同一 transaction，
+    中途中斷整體回滾，不會留孤兒 PENDING。
 
     Returns:
         LoanExtension: 建立的延長申請
@@ -40,6 +44,11 @@ def request_extension(deal, applicant, extra_days):
 
     if applicant != deal.applicant:
         raise ValidationError("只有借閱者可以申請延長")
+
+    # Django 5.2 已移除 run_validators，直接執行 extra_days 的欄位 validators
+    field = LoanExtension._meta.get_field("extra_days")
+    for validator in field.validators:
+        validator(extra_days)
 
     extension = LoanExtension.objects.create(
         deal=deal,
