@@ -11,26 +11,31 @@
     sleepAfterMs: 60000,
   };
 
-  // 11 格寬的像素小貓：o 身體、e 眼睛、p 腮紅、w 鼻頭、k 嘴／細節
+  // 11×11 像素小龍：d 描邊、o 身體、e 眼睛、g 眼高光、p 腮紅、w 口鼻／胸毛、k 嘴
   const W = 11;
   const BASE = [
-    '..o.....o..',
-    '..oo...oo..',
-    '.ooooooooo.',
-    'ooooooooooo',
-    'ooooooooooo',
-    '.ooooooooo.',
-    '..ooooooo..',
-    '...ooooo...',
+    '..d.....d..',
+    '.dod...dod.',
+    '.doooooooo.',
+    '.doooooooo.',
+    'doooooooood',
+    'dpoowwwoopd',
+    '..dwwowwd..',
+    '..doooood..',
+    '..dowwwod..',
+    'dodowwwod..',
+    '..dwwowwd..',
   ];
   const MOUTH = {
-    smile: { p: [5, 3], k: [4, 5], k2: [5, 5] },
-    open:  { p: [5, 3], k: [4, 5], k2: [6, 5] },
-    wave:  { k: [4, 5], k2: [5, 5], k3: [6, 5], k4: [7, 5] },
+    smile: { k: [5, 6] },
+    open:  { k: [5, 6], k2: [5, 5] },
+    wave:  { k: [4, 6], k2: [5, 6], k3: [6, 6] },
   };
   const COLORS = {
+    d: 'var(--mipet-outline)',
     o: 'var(--mipet-body)',
     e: 'var(--mipet-eye)',
+    g: 'var(--mipet-muzzle)',
     p: 'var(--mipet-cheek)',
     w: 'var(--mipet-muzzle)',
     k: 'var(--mipet-eye)',
@@ -48,29 +53,30 @@
 
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // 2x2 眼睛＋內側上高光；off：0 中、-1 左、+1 右
+  function stampEyes(rows, off) {
+    const L = [2 + off, 3 + off], R = [7 + off, 8 + off];
+    for (const c of L.concat(R)) { rows[4][c] = 'e'; rows[5][c] = 'e'; }
+    rows[4][L[1]] = 'g';
+    rows[4][R[0]] = 'g';
+  }
+
   function frame(o) {
     o = o || {};
     const rows = BASE.map(r => r.split(''));
-    rows[3][1] = 'p';
-    rows[3][9] = 'p';
-    const eyes = (o.eyes === undefined) ? [2, 8] : o.eyes;
     if (o.x) {
-      rows[2][2] = 'e'; rows[3][1] = 'e'; rows[3][3] = 'e'; rows[4][2] = 'e';
-      rows[2][8] = 'e'; rows[3][7] = 'e'; rows[3][9] = 'e'; rows[4][8] = 'e';
-    } else if (eyes === null) {
-      rows[4][2] = 'e';
-      rows[4][8] = 'e';
+      // X 眼（出錯）：眼睛放大到 2x3
+      for (const c of [2, 3, 7, 8]) { rows[3][c] = 'e'; rows[4][c] = 'e'; rows[5][c] = 'e'; }
+    } else if (o.eyes === null) {
+      for (const c of [2, 3, 7, 8]) rows[5][c] = 'e'; // 閉眼
     } else {
-      rows[3][eyes[0]] = 'e';
-      rows[3][eyes[1]] = 'e';
+      stampEyes(rows, o.eyes === 'left' ? -1 : o.eyes === 'right' ? 1 : 0);
     }
     if (o.mouth) {
       const m = MOUTH[o.mouth];
-      if (m.p) rows[m.p[1]][m.p[0]] = 'w';
       if (m.k) rows[m.k[1]][m.k[0]] = 'k';
       if (m.k2) rows[m.k2[1]][m.k2[0]] = 'k';
       if (m.k3) rows[m.k3[1]][m.k3[0]] = 'k';
-      if (m.k4) rows[m.k4[1]][m.k4[0]] = 'k';
     }
     return rows.map(r => r.join(''));
   }
@@ -92,7 +98,7 @@
 
   let state = 'idle';
   let t = 0;
-  let look = [2, 8];
+  let look = 'center';
   let fx = null; // 瞬態特效 { kind: 'cheer'|'hop'|'hearts'|'stars', left, total, back }
   let errorTimer = null;
   let lastActivity = Date.now();
@@ -132,18 +138,18 @@
       f = frame({ eyes: null, mouth: 'smile' });
       if (!reduce) dy = t % 16 < 8 ? 0 : -0.5;
     } else if (state === 'thinking') {
-      f = frame({ eyes: [3, 9], mouth: 'smile' });
+      f = frame({ eyes: 'left', mouth: 'smile' });
       if (!reduce) dy = -0.5;
     } else if (state === 'talking') {
-      f = frame({ eyes: [2, 8], mouth: t % 4 < 2 ? 'open' : 'smile' });
+      f = frame({ mouth: t % 4 < 2 ? 'open' : 'smile' });
       if (!reduce) dy = t % 3 === 2 ? -1 : 0;
     } else if (state === 'error') {
       f = frame({ x: true, mouth: 'wave' });
       if (!reduce) dy = 0.5;
     } else {
-      if (t % 17 === 12) look = [1, 7];
-      if (t % 17 === 14) look = [3, 9];
-      if (t % 17 === 16) look = [2, 8];
+      if (t % 17 === 12) look = 'left';
+      if (t % 17 === 14) look = 'right';
+      if (t % 17 === 16) look = 'center';
       const blink = t % 9 === 8 || Math.floor(t / 20) % 11 === 9;
       if (!reduce && t % 7 === 3 && Math.random() < 0.4) {
         extras.push({ x: Math.random() < 0.5 ? 0 : 10, y: 1 + Math.floor(Math.random() * 3), c: COLORS.p });
@@ -319,10 +325,6 @@
       for (const r of roots) {
         if (r.small) r.box.setAttribute('aria-label', smallLabel());
       }
-    },
-    // SSE 離線紅點的 class 由本模組擁有，chat widget 只傳布林值
-    setSseOffline(off) {
-      document.documentElement.classList.toggle('mipet-sse-offline', !!off);
     },
   };
 })();

@@ -29,7 +29,7 @@ class ChatSSEView(LoginRequiredMixin, View):
             try:
                 while True:
                     time.sleep(30)
-                    yield f": keepalive\n\n"
+                    yield ": keepalive\n\n"
             except GeneratorExit:
                 logger.info("chat_sse disconnected", extra={"user_id": request.user.pk})
 

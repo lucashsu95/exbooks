@@ -4,11 +4,9 @@ from core.error_messages import service_error_message
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 
-logger = logging.getLogger(__name__)
 from django.db import transaction
 from django.db.models import Q, Count
 from django.contrib import messages
-from django.utils import timezone
 from django.http import HttpResponse, FileResponse
 from django.views.decorators.http import require_GET, require_POST
 from django.core.paginator import Paginator
@@ -27,6 +25,8 @@ from .services.book_service import (
     update_book,
 )
 from .forms import BookSearchForm
+
+logger = logging.getLogger(__name__)
 
 
 # Module-level constant for category pills (excludes OTHER)
@@ -119,12 +119,14 @@ def book_detail(request, pk):
     from books.services.book_timeline_service import BookTimelineService
 
     logger.info("book_detail", extra={"user_id": request.user.pk, "book_pk": str(pk)})
-    book = get_object_or_404(
+    book = (
         SharedBook.objects.select_related(
             "official_book", "keeper__profile", "owner__profile"
-        ).prefetch_related("photos"),
-        pk=pk,
+        ).prefetch_related("photos").filter(pk=pk).first()
     )
+    if book is None:
+        logger.warning("book_detail 404", extra={"book_pk": str(pk)})
+        return render(request, "book_404.html", {"book_gone": True}, status=404)
 
     # 使用服務層處理時間線邏輯
     timeline_events = BookTimelineService.get_timeline_events(book)
@@ -633,7 +635,7 @@ def book_set_create(request):
                 for book in selected_books:
                     add_book_to_set(book_set, book)
 
-            logger.info("book_set_create", extra={"user_id": request.user.pk, "book_set_id": str(book_set.pk), "name": book_set.name, "book_count": len(selected_books)})
+            logger.info("book_set_create", extra={"user_id": request.user.pk, "book_set_id": str(book_set.pk), "book_set_name": book_set.name, "book_count": len(selected_books)})
             messages.success(request, "套書已建立並加入書籍")
             return redirect("books:book_set_detail", pk=book_set.pk)
     else:
@@ -706,7 +708,7 @@ def book_set_delete(request, pk):
     if request.method == "POST":
         try:
             delete_book_set(book_set)
-            logger.info("book_set_delete", extra={"user_id": request.user.pk, "book_set_id": str(pk), "name": book_set.name})
+            logger.info("book_set_delete", extra={"user_id": request.user.pk, "book_set_id": str(pk), "book_set_name": book_set.name})
             messages.success(request, "套書已刪除")
         except Exception as e:
             logger.exception("book_set_delete failed", extra={"user_id": request.user.pk, "book_set_id": str(pk)})

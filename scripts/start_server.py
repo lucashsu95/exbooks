@@ -1,6 +1,5 @@
 import subprocess
 import os
-import time
 
 env = os.environ.copy()
 env["DJANGO_SETTINGS_MODULE"] = "exbook.dev_settings"

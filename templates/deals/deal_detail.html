@@ -246,7 +246,7 @@
         {% endif %}
         <!-- Action Bar - Fixed Bottom -->
         {% if deal.status in 'QPM' %}
-            <div class="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-0 right-0 bg-white/90 backdrop-blur-2xl p-3 sm:p-4 border-t border-slate-200/60 z-[60] shadow-[0_-10px_30px_rgba(0,0,0,0.08)]">
+            <div id="deal-action-bar" class="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-0 right-0 bg-white/90 backdrop-blur-2xl p-3 sm:p-4 border-t border-slate-200/60 z-[60] shadow-[0_-10px_30px_rgba(0,0,0,0.08)]">
                 <div class="max-w-xl mx-auto flex flex-col gap-2 sm:gap-3">
                     {% if deal.status == 'Q' %}
                         {% if is_responder %}
@@ -342,4 +342,21 @@
             </div>
         {% endif %}
     </article>
+{% endblock %}
+{% block extra_js %}
+    <script>
+        // 底部有固定 action bar（z-60）的頁面，把米豆小版撐高到 bar 上方，避免被「切到」
+        (function () {
+            var bar = document.getElementById('deal-action-bar');
+            var pet = document.querySelector('.mipet-float');
+            if (!bar || !pet) return;
+            function place() {
+                var top = bar.getBoundingClientRect().top;
+                pet.style.bottom = Math.max(0, window.innerHeight - top + 12) + 'px';
+            }
+            place();
+            window.addEventListener('resize', place);
+            window.addEventListener('orientationchange', place);
+        })();
+    </script>
 {% endblock %}
