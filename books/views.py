@@ -635,7 +635,7 @@ def book_set_create(request):
                 for book in selected_books:
                     add_book_to_set(book_set, book)
 
-            logger.info("book_set_create", extra={"user_id": request.user.pk, "book_set_id": str(book_set.pk), "name": book_set.name, "book_count": len(selected_books)})
+            logger.info("book_set_create", extra={"user_id": request.user.pk, "book_set_id": str(book_set.pk), "book_set_name": book_set.name, "book_count": len(selected_books)})
             messages.success(request, "套書已建立並加入書籍")
             return redirect("books:book_set_detail", pk=book_set.pk)
     else:
@@ -708,7 +708,7 @@ def book_set_delete(request, pk):
     if request.method == "POST":
         try:
             delete_book_set(book_set)
-            logger.info("book_set_delete", extra={"user_id": request.user.pk, "book_set_id": str(pk), "name": book_set.name})
+            logger.info("book_set_delete", extra={"user_id": request.user.pk, "book_set_id": str(pk), "book_set_name": book_set.name})
             messages.success(request, "套書已刪除")
         except Exception as e:
             logger.exception("book_set_delete failed", extra={"user_id": request.user.pk, "book_set_id": str(pk)})

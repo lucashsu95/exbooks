@@ -62,7 +62,7 @@ def profile(request):
 def profile_edit(request):
     """編輯個人資料。"""
     profile, created = UserProfile.objects.get_or_create(user=request.user)
-    logger.info("profile_edit", extra={"user_id": request.user.pk, "created": created})
+    logger.info("profile_edit", extra={"user_id": request.user.pk, "profile_created": created})
 
     if request.method == "POST":
         form = ProfileForm(request.POST, request.FILES, instance=profile)
