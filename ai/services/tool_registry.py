@@ -105,8 +105,8 @@ def _deal_line(deal, viewer, pending_extra_days) -> str:
 
 
 def _lines_or_total(lines: list[str], total: int, omitted_note: str) -> str:
+    """lines 已由呼叫方 slice 到 MAX_TOOL_LINES；total 是全集筆數，超出時補一行尾註。"""
     if total > MAX_TOOL_LINES:
-        lines = lines[:MAX_TOOL_LINES]
         lines.append(omitted_note.format(omitted=total - MAX_TOOL_LINES))
     return "\n".join(lines)
 
@@ -148,19 +148,21 @@ def get_user_books(user, status: str = "ALL") -> str:
         books = SharedBook.objects.filter(Q(owner=user) | Q(keeper=user))
     else:
         raise ValueError("status 只能為 OWNED、HELD 或 ALL。")
-    books = books.select_related("official_book").order_by("-created_at")
+    books = books.select_related("official_book", "keeper").order_by("-created_at")
 
     empty_messages = {
         "OWNED": "你沒有擁有的書籍。",
         "HELD": "你沒有持有的書籍。",
         "ALL": "你沒有符合的書籍。",
     }
-    if not books.exists():
+    total = books.count()
+    if total == 0:
         return empty_messages[status]
 
-    lines = [_book_line(book) for book in books]
+    # 截斷在物化前：大帳號只取回 MAX_TOOL_LINES 行，tail note 用全集 count
+    lines = [_book_line(book) for book in books[:MAX_TOOL_LINES]]
     return _lines_or_total(
-        lines, len(lines), "（另有 {omitted} 本未列出，可改用 OWNED 或 HELD 縮小範圍）"
+        lines, total, "（另有 {omitted} 本未列出，可改用 OWNED 或 HELD 縮小範圍）"
     )
 
 
@@ -170,7 +172,7 @@ def get_user_books(user, status: str = "ALL") -> str:
     parameters={"type": "object", "properties": {}, "required": []},
 )
 def get_borrowing_status(user) -> str:
-    from django.db.models import Q
+    from django.db.models import Prefetch, Q
     from deals.models import Deal, LoanExtension
 
     deals = (
@@ -179,17 +181,26 @@ def get_borrowing_status(user) -> str:
             status__in=[Deal.Status.REQUESTED, Deal.Status.RESPONDED, Deal.Status.MEETED],
         )
         .filter(Q(applicant=user) | Q(responder=user))
-        .select_related("shared_book__official_book")
+        # _deal_line 要 official_book.title 與 applicant.username，一併 join 掉避免 N+1
+        .select_related("shared_book__official_book", "applicant")
+        # 每筆 deal 的 pending extension 一次 batch 取回，不再逐筆 filter
+        .prefetch_related(
+            Prefetch(
+                "extensions",
+                queryset=LoanExtension.objects.filter(status=LoanExtension.Status.PENDING),
+            )
+        )
         .order_by("-created_at")
     )
-    if not deals.exists():
+    total = deals.count()
+    if total == 0:
         return "你目前沒有進行中的借閱交易。"
 
     lines = []
-    for deal in deals:
-        pending = deal.extensions.filter(status=LoanExtension.Status.PENDING).first()
+    for deal in deals[:MAX_TOOL_LINES]:  # 截斷在物化前
+        pending = deal.extensions.first()  # 已 prefetch，且只有 PENDING
         lines.append(_deal_line(deal, user, pending.extra_days if pending else None))
-    return _lines_or_total(lines, len(lines), "（另有 {omitted} 項未列出）")
+    return _lines_or_total(lines, total, "（另有 {omitted} 項未列出）")
 
 
 @ToolRegistry.register(
