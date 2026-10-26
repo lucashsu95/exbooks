@@ -126,7 +126,7 @@ def book_detail(request, pk):
     )
     if book is None:
         logger.warning("book_detail 404", extra={"book_pk": str(pk)})
-        return render(request, "404.html", {"book_gone": True}, status=404)
+        return render(request, "book_404.html", {"book_gone": True}, status=404)
 
     # 使用服務層處理時間線邏輯
     timeline_events = BookTimelineService.get_timeline_events(book)
