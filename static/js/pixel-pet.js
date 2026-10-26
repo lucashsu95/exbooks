@@ -326,9 +326,5 @@
         if (r.small) r.box.setAttribute('aria-label', smallLabel());
       }
     },
-    // SSE 離線紅點的 class 由本模組擁有，chat widget 只傳布林值
-    setSseOffline(off) {
-      document.documentElement.classList.toggle('mipet-sse-offline', !!off);
-    },
   };
 })();
