@@ -139,6 +139,39 @@ class TestRequestExtension:
         mock_push.delay.assert_not_called()
         mock_email.delay.assert_not_called()
 
+    def test_existing_pending_extension_raises(self):
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=applicant, status="O")
+        deal = DealFactory(
+            shared_book=book,
+            status="M",
+            applicant=applicant,
+            responder=owner,
+        )
+        LoanExtensionFactory(deal=deal, requested_by=applicant)
+        with pytest.raises(ValidationError, match="待審核"):
+            request_extension(deal, applicant, extra_days=14)
+        assert deal.extensions.count() == 1
+
+    def test_request_allowed_after_rejection(self):
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=applicant, status="O")
+        deal = DealFactory(
+            shared_book=book,
+            status="M",
+            applicant=applicant,
+            responder=owner,
+        )
+        LoanExtensionFactory(
+            deal=deal,
+            requested_by=applicant,
+            status=LoanExtension.Status.REJECTED,
+        )
+        ext = request_extension(deal, applicant, extra_days=14)
+        assert ext.status == LoanExtension.Status.PENDING
+
     def test_notification_sent_to_responder(self):
         owner = UserFactory()
         applicant = UserFactory()
