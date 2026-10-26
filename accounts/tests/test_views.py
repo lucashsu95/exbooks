@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 
 from accounts.models import UserProfile
-from tests.factories import UserFactory
+from tests.factories import TrustLevelConfigFactory, UserFactory
 
 User = get_user_model()
 
@@ -20,6 +20,9 @@ class TestProfileView(TestCase):
 
     def setUp(self):
         self.client = Client()
+        # 測試 DB 不跑 migration，TrustLevelConfig 不會被 seed，需手動補列。
+        for level in range(4):
+            TrustLevelConfigFactory(level=level)
         self.user = UserFactory()
         self.profile = self.user.profile
         self.url = reverse("accounts:profile_edit")

@@ -12,10 +12,11 @@ from dataclasses import dataclass
 
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.db.models import Avg, Q
+from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.utils import timezone
 
-from deals.models import Deal, Rating
+from deals.models import Deal
 
 from accounts.models import TrustLevelConfig, TrustScoreLedger
 
@@ -51,7 +52,7 @@ def _get_score_config() -> ScoreConfig:
 
 
 # ============================================================================
-# 借閱限制配置（從 settings 讀取，提供預設值）
+# 借閱限制配置
 # ============================================================================
 
 
@@ -59,22 +60,19 @@ def _get_score_config() -> ScoreConfig:
 class BorrowingLimit:
     """借閱限制定義"""
 
-    max_books: int | float
-    max_days: int | float
+    max_books: int
+    max_days: int
 
 
 def _get_borrowing_limits() -> dict[int, BorrowingLimit]:
-    """從 settings 取得借閱限制配置"""
-    config = getattr(settings, "BORROWING_LIMITS", None)
-    if config is None:
-        # 預設值
-        config = {
-            0: {"max_books": 1, "max_days": 30},
-            1: {"max_books": 3, "max_days": 60},
-            2: {"max_books": 5, "max_days": 90},
-            3: {"max_books": float("inf"), "max_days": float("inf")},
-        }
-    return {k: BorrowingLimit(**v) for k, v in config.items()}
+    """從 TrustLevelConfig（唯一真源）取得各等級借閱限制"""
+    rows = TrustLevelConfig.objects.filter(level__gte=0).values_list(
+        "level", "max_books", "max_days"
+    )
+    return {
+        level: BorrowingLimit(max_books=max_books, max_days=max_days)
+        for level, max_books, max_days in rows
+    }
 
 
 # ============================================================================
@@ -138,17 +136,28 @@ def compute_trust_stars(score: int) -> int:
 
 def compute_borrowing_limits(trust_level: int) -> BorrowingLimit:
     """
-    純函式：根據信用等級計算借閱限制。
+    根據信用等級取得借閱限制（來源：TrustLevelConfig）。
 
     Args:
         trust_level: 信用等級 (0-3)
 
     Returns:
-        BorrowingLimit: 借閱限制
+        BorrowingLimit: 借閱限制（999 表示無限制）
     """
     limits = _get_borrowing_limits()
-    return limits.get(trust_level, limits[0])
+    if trust_level in limits:
+        return limits[trust_level]
 
+    # 缺列 = TrustLevelConfig 不完整（0012 應已 seed 0-3）。
+    # 退等級 0 而非 0 本：0 本會靜默擋掉所有借閱。
+    logger.error(
+        "TrustLevelConfig missing level, falling back to level 0",
+        extra={"trust_level": trust_level, "configured_levels": sorted(limits)},
+    )
+    if 0 in limits:
+        return limits[0]
+
+    raise ValidationError("信用等級設定不完整，請聯絡管理員")
 
 # ============================================================================
 # 資料取得函式（需要 DB）
@@ -193,22 +202,9 @@ def _calculate_avg_rating(user) -> float:
     Returns:
         float: 三項評分的平均值（0-5），無評價時返回 0
     """
-    ratings = Rating.objects.filter(ratee=user)
-    if not ratings.exists():
-        return 0.0
+    from accounts.services.user_stats_service import get_user_rating_summary
 
-    avg_scores = ratings.aggregate(
-        avg_integrity=Avg("friendliness_score"),
-        avg_punctuality=Avg("punctuality_score"),
-        avg_accuracy=Avg("accuracy_score"),
-    )
-
-    total = (
-        (avg_scores["avg_integrity"] or 0)
-        + (avg_scores["avg_punctuality"] or 0)
-        + (avg_scores["avg_accuracy"] or 0)
-    )
-    return total / 3
+    return float(get_user_rating_summary(user)["overall_average"] or 0.0)
 
 
 # ============================================================================
@@ -244,15 +240,27 @@ def calculate_trust_stars(user) -> int:
     return compute_trust_stars(score)
 
 
-def calculate_trust_level(user) -> int:
+def stars_to_level(stars: int) -> int:
     """
-    計算用戶信用等級。
+    星等 → 信用等級（純函式，唯一映射來源）。
 
-    映射關係：
     - 1星: Level 0 (新手)
     - 2星: Level 1 (一般)
     - 3星: Level 2 (可信)
     - 4-5星: Level 3 (優良)
+    """
+    if stars <= 1:
+        return 0
+    if stars == 2:
+        return 1
+    if stars == 3:
+        return 2
+    return 3
+
+
+def calculate_trust_level(user) -> int:
+    """
+    計算用戶信用等級（0-3）。
 
     Args:
         user: 用戶實例
@@ -260,15 +268,7 @@ def calculate_trust_level(user) -> int:
     Returns:
         int: 0-3 的信用等級
     """
-    stars = calculate_trust_stars(user)
-    if stars <= 1:
-        return 0
-    elif stars == 2:
-        return 1
-    elif stars == 3:
-        return 2
-    else:  # 4-5星
-        return 3
+    return stars_to_level(calculate_trust_stars(user))
 
 
 def _metrics_payload(metrics: UserMetrics) -> dict:
@@ -397,14 +397,7 @@ def get_upgrade_progress(user) -> dict:
     # 獲取當前積分和星等
     current_score = calculate_trust_score(user)
     current_stars = compute_trust_stars(current_score)
-    if current_stars <= 1:
-        current_level = 0
-    elif current_stars == 2:
-        current_level = 1
-    elif current_stars == 3:
-        current_level = 2
-    else:  # 4-5星
-        current_level = 3
+    current_level = stars_to_level(current_stars)
 
     # 獲取下一級所需積分
     next_stars = current_stars + 1 if current_stars < 5 else None
@@ -450,7 +443,9 @@ def get_upgrade_progress(user) -> dict:
     }
 
     result["summary"] = round(percentage, 1)
-    result["requirements"].append(f"ݦAo {remaining_score} n]F {required_score} n^")
+    result["requirements"].append(
+        f"再累積 {remaining_score} 分即可升級（門檻 {required_score} 分）"
+    )
 
     return result
 

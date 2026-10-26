@@ -2,6 +2,7 @@ import logging
 from datetime import timedelta
 
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from django.utils import timezone
 
 from accounts.models import TrustScoreLedger
@@ -42,15 +43,19 @@ def create_rating(
     else:
         raise ValidationError("只有交易雙方可以評價")
 
-    rating = Rating._default_manager.create(
-        deal=deal,
-        rater=rater,
-        ratee=ratee,
-        friendliness_score=friendliness_score,
-        punctuality_score=punctuality_score,
-        accuracy_score=accuracy_score,
-        comment=comment,
-    )
+    try:
+        rating = Rating._default_manager.create(
+            deal=deal,
+            rater=rater,
+            ratee=ratee,
+            friendliness_score=friendliness_score,
+            punctuality_score=punctuality_score,
+            accuracy_score=accuracy_score,
+            comment=comment,
+        )
+    except IntegrityError:
+        # race：兩請求同時通過旗標檢查，unique 約束在此兜底。
+        raise ValidationError("您已經評價過此交易")
 
     # 更新被評價者的信用積分
     from accounts.services.trust_service import update_trust_score
