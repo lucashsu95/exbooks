@@ -163,13 +163,20 @@ CELERY_TASK_ALWAYS_EAGER=false
 docker compose up -d --build
 ```
 
-這會啟動三個容器：
+這會啟動八個容器：
 
 | 容器 | 用途 | 對外 Port |
 |------|------|-----------|
 | `db` | MariaDB 10.11 | — (內部 3306) |
 | `web` | Django + Gunicorn | — (內部 8000) |
+| `celery_worker` | Celery worker（排程與延遲任務） | — |
+| `celery_beat` | Celery beat（排程觸發） | — |
 | `nginx` | 反向代理 + 靜態檔案 | **80** |
+| `redis` | Celery broker / 快取（AOF 持久化） | — (內部 6379) |
+| `minio` | 物件儲存（備份落地） | 9002 (SAPI)、9003 (console) |
+| `mailpit` | 本地 SMTP 捕獲（免真寄信） | 8025 (web UI) |
+
+另有 `backup`、`media_backup`、`redis_backup` 三個備份服務，歸在 `backup` profile，需 `docker compose --profile backup up -d` 才會啟動。
 
 首次啟動時 `web` 容器會自動執行 `migrate` 和 `collectstatic`。
 
@@ -199,7 +206,7 @@ docker compose down -v
 
 ### 架構圖
 
-使用者請求經 Nginx 反向代理（`:80`）轉發給 Django 應用容器（Gunicorn，內部 `:8000`），再連線至 MariaDB 資料庫容器（內部 `:3306`）；Django 同時讀寫 `static` 與 `media` 兩個 volume。
+使用者請求經 Nginx 反向代理（`:80`）轉發給 Django 應用容器（Gunicorn，內部 `:8000`），再連線至 MariaDB 資料庫容器（內部 `:3306`）；Django 同時讀寫 `static` 與 `media` 兩個 volume。排程與延遲任務由 Celery worker/beat 處理，以 Redis 為 broker；MinIO 承接備份，Mailpit 捕獲開發用郵件。
 
 ![Docker 部署架構圖](docs/diagrams/docker-deployment.png)
 
