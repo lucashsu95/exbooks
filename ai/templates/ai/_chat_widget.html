@@ -55,7 +55,7 @@
                 <div :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
                     <div :class="msg.role === 'user' ? 'bg-indigo-600 text-white rounded-l-xl rounded-tr-xl' : 'bg-white text-gray-800 border border-gray-200 rounded-r-xl rounded-tl-xl'"
                          class="max-w-[80%] p-3 shadow-sm text-sm leading-relaxed">
-                        <div x-html="msg.content"></div>
+                        <div x-text="msg.content"></div>
                         
                         <!-- Consent Action -->
                         <template x-if="msg.type === 'consent'">
@@ -249,7 +249,7 @@ function chatWidget() {
                         this.addMessage('assistant', 'This action requires your confirmation.', 'consent');
                         this.pendingAction = { tool: data.tool, args: data.args };
                     } else if (event === 'tool_result') {
-                        this.addMessage('assistant', `Tool result: ${JSON.stringify(data.result)}`, 'text');
+                        this.addMessage('assistant', `Tool result: ${data.error ?? data.result}`, 'text');
                     } else if (event === 'done') {
                         this.isTyping = false;
                     }
