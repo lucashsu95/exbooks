@@ -94,6 +94,11 @@
   --mipet-fg: #0f172a;
   --mipet-muted: #64748b;
 }
+/* 聊天視窗 header 大版：白底，文字走深色系 */
+.mipet-header-bar {
+  --mipet-fg: #0f172a;
+  --mipet-muted: #64748b;
+}
 
 .mipet-meta {
   display: flex;
