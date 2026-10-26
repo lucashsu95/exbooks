@@ -1,3 +1,4 @@
+import inspect
 import logging
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -122,6 +123,15 @@ def _extension_day_bounds() -> tuple[int, int]:
     if min_days is None or max_days is None:
         raise RuntimeError("LoanExtension.extra_days 缺少 Min/MaxValueValidator")
     return min_days, max_days
+
+
+def filter_args_by_signature(func: Callable, args: Dict[str, Any]) -> Dict[str, Any]:
+    """只留 tool signature 內的參數（user 由呼叫方注入），未知 kwarg 靜默丟掉。
+
+    在同意建立的來源端（orchestrator）過濾一次，存檔＝顯示＝執行。
+    """
+    accepted = set(inspect.signature(func).parameters) - {"user"}
+    return {k: v for k, v in args.items() if k in accepted}
 
 
 @ToolRegistry.register(

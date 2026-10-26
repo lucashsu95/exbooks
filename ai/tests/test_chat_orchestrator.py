@@ -91,6 +91,70 @@ def test_consent_required_skips_execution():
     assert len(transport.requests) == 1  # 沒有 follow-up
 
 
+def test_consent_required_filters_args_before_storing():
+    """未知 kwarg 在建立時過濾：存檔＝顯示（view 直接執行存檔值，不再二次過濾）。"""
+    import re
+
+    from ai.services.consent_store import ConsentStore
+
+    user = UserFactory()
+    sse, _ = _run(
+        user,
+        [
+            ChatResponse(
+                content="延長需要確認。",
+                tool_calls=[
+                    {
+                        "id": "c1",
+                        "type": "function",
+                        "function": {
+                            "name": "request_renewal",
+                            "arguments": '{"deal_id": "1", "days": 7, "bogus": 1}',
+                        },
+                    }
+                ],
+            )
+        ],
+    )
+    # 顯示面沒有 bogus
+    assert "bogus" not in sse
+    assert '"days": 7' in sse
+    # 存檔面＝顯示面：token 存檔的 args 已過濾
+    token_match = re.search(r'"token": "([^"]+)"', sse)
+    assert token_match is not None
+    stored = ConsentStore.consume(user.id, token_match.group(1))
+    assert stored is not None
+    assert stored["args"] == {"deal_id": "1", "days": 7}
+
+
+def test_consent_required_missing_required_arg_no_consent():
+    """缺 required 參數不發 consent（token 會不可執行）；tool_result 告知 AI 補齊重試。"""
+    user = UserFactory()
+    sse, transport = _run(
+        user,
+        [
+            ChatResponse(
+                content="",
+                tool_calls=[
+                    {
+                        "id": "c1",
+                        "type": "function",
+                        "function": {
+                            "name": "request_renewal",
+                            "arguments": '{"days": 7}',  # 缺 deal_id
+                        },
+                    }
+                ],
+            ),
+            ChatResponse(content="請告訴我交易編號。"),
+        ],
+    )
+    assert "event: consent_required" not in sse
+    assert "event: tool_result" in sse
+    assert "deal_id" in sse
+    assert len(transport.requests) == 2  # 有 follow-up
+
+
 def test_tool_error_yields_error_event():
     """tool 執行拋錯 → tool_result 帶 error，不中斷串流。"""
     user = UserFactory()

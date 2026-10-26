@@ -7,8 +7,9 @@ from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .services.chat_orchestrator import ChatOrchestrator
+from .services.consent_store import ConsentStore
 from .services.conversation_cache import ConversationCache
-from .services.tool_registry import ToolRegistry
+from .services.tool_registry import ConsentRequirement, ToolRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -64,20 +65,32 @@ class ConsentView(LoginRequiredMixin, View):
     def post(self, request, action, *args, **kwargs):
         try:
             data = json.loads(request.body)
-            arguments = data.get("args", {})
+            token = data.get("token")
             confirmed = data.get("confirmed", False)
         except json.JSONDecodeError:
             logger.warning("consent_view invalid JSON", extra={"user_id": request.user.pk, "action": action})
             return JsonResponse({"error": "Invalid JSON"}, status=400)
 
+        # 取消也把 token 吃掉：one-shot 對任何有效 POST 成立
+        payload = ConsentStore.consume(request.user.id, token)
         if not confirmed:
             logger.info("consent_view cancelled", extra={"user_id": request.user.pk, "action": action})
             return JsonResponse({"status": "cancelled"})
 
+        if payload is None:
+            logger.warning("consent_view token invalid", extra={"user_id": request.user.pk, "action": action})
+            return JsonResponse({"error": "Consent request not found or expired"}, status=404)
+        if payload["tool"] != action:
+            logger.warning("consent_view token/action mismatch", extra={"user_id": request.user.pk, "action": action})
+            return JsonResponse({"error": "Consent request not found or expired"}, status=404)
+
         tool_def = ToolRegistry.get_tool(action)
-        if not tool_def:
+        if tool_def is None or tool_def.consent != ConsentRequirement.USER_CONFIRM:
             logger.warning("consent_view action not found", extra={"user_id": request.user.pk, "action": action})
-            return JsonResponse({"error": "Action not found"}, status=404)
+            return JsonResponse({"error": "Consent request not found or expired"}, status=404)
+
+        # 存檔 args 在建立時（orchestrator）已依 signature 過濾，直接執行
+        arguments = payload["args"]
 
         try:
             # 帶著使用者身份執行（ownership 檢查在 tool 內）
@@ -89,9 +102,10 @@ class ConsentView(LoginRequiredMixin, View):
             )
             logger.info("consent_view success", extra={"user_id": request.user.pk, "action": action})
             return JsonResponse({"status": "success", "result": result})
-        except Exception as e:
+        except Exception:
             logger.exception("consent_view failed", extra={"user_id": request.user.pk, "action": action})
-            return JsonResponse({"error": str(e)}, status=500)
+            # tool 例外訊息不回 client（可能含 signature/內部細節），只進 log
+            return JsonResponse({"error": "執行失敗，請稍後再試。"}, status=500)
 
 
 class ClearHistoryView(LoginRequiredMixin, View):
