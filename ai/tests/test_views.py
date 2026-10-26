@@ -98,22 +98,29 @@ class TestAIViews:
         assert '"type": "consent_required"' in content
         assert "request_renewal" in content
 
-    def test_consent_view_confirm(self):
-        """Should execute tool if user confirms."""
-        self.client.login(username="testuser", password="password")
-
-        # tool 現在帶使用者身份執行：書籍要「借閱中」且使用者是借入者（applicant）
+    def _make_active_deal(self):
+        # tool 帶使用者身份執行：書籍要「借閱中」且使用者是借入者（applicant）
         from tests.factories import DealFactory, SharedBookFactory
 
         owner = User.objects.create_user(username="owner", password="password")
         book = SharedBookFactory(owner=owner, keeper=self.user, status="O")
-        deal = DealFactory(
+        return DealFactory(
             shared_book=book,
             applicant=self.user,
             responder=owner,
             status="M",
         )
-        data = {"args": {"deal_id": str(deal.pk), "days": 7}, "confirmed": True}
+
+    def test_consent_view_confirm(self):
+        """Should execute tool if user confirms."""
+        from ai.services.consent_store import ConsentStore
+
+        self.client.login(username="testuser", password="password")
+        deal = self._make_active_deal()
+        token = ConsentStore.create(
+            self.user.id, "request_renewal", {"deal_id": str(deal.pk), "days": 7}
+        )
+        data = {"token": token, "confirmed": True}
         response = self.client.post(
             self.url_consent, data=json.dumps(data), content_type="application/json"
         )
@@ -127,15 +134,132 @@ class TestAIViews:
 
     def test_consent_view_cancel(self):
         """Should return cancelled if user does not confirm."""
-        self.client.login(username="testuser", password="password")
+        from ai.services.consent_store import ConsentStore
 
-        data = {"args": {"deal_id": 1}, "confirmed": False}
+        self.client.login(username="testuser", password="password")
+        token = ConsentStore.create(self.user.id, "request_renewal", {"deal_id": "1"})
+        data = {"token": token, "confirmed": False}
         response = self.client.post(
             self.url_consent, data=json.dumps(data), content_type="application/json"
         )
 
         assert response.status_code == 200
         assert response.json()["status"] == "cancelled"
+
+    def test_consent_view_cancel_consumes_token(self):
+        """A cancelled consent token must not be confirmable afterwards."""
+        from ai.services.consent_store import ConsentStore
+
+        self.client.login(username="testuser", password="password")
+        deal = self._make_active_deal()
+        token = ConsentStore.create(
+            self.user.id, "request_renewal", {"deal_id": str(deal.pk), "days": 7}
+        )
+        cancelled = self.client.post(
+            self.url_consent,
+            data=json.dumps({"token": token, "confirmed": False}),
+            content_type="application/json",
+        )
+        assert cancelled.status_code == 200
+        assert cancelled.json()["status"] == "cancelled"
+
+        replay = self.client.post(
+            self.url_consent,
+            data=json.dumps({"token": token, "confirmed": True}),
+            content_type="application/json",
+        )
+        assert replay.status_code == 404
+
+    def test_consent_view_confirm_without_token_404(self):
+        """Confirm without a stored consent token should 404."""
+        self.client.login(username="testuser", password="password")
+        data = {"confirmed": True}
+        response = self.client.post(
+            self.url_consent, data=json.dumps(data), content_type="application/json"
+        )
+
+        assert response.status_code == 404
+
+    def test_consent_view_ignores_client_args(self):
+        """Args in the request body must be ignored; the stored args run."""
+        from ai.services.consent_store import ConsentStore
+        from deals.models import LoanExtension
+
+        self.client.login(username="testuser", password="password")
+        deal = self._make_active_deal()
+        token = ConsentStore.create(
+            self.user.id, "request_renewal", {"deal_id": str(deal.pk), "days": 7}
+        )
+        data = {
+            "token": token,
+            "confirmed": True,
+            "args": {"deal_id": str(deal.pk), "days": 14},
+        }
+        response = self.client.post(
+            self.url_consent, data=json.dumps(data), content_type="application/json"
+        )
+
+        assert response.status_code == 200
+        assert response.json()["status"] == "success"
+        assert "延長 7 天" in response.json()["result"]
+        assert (
+            LoanExtension.objects.get(deal=deal).extra_days
+            == 7
+        )
+
+    def test_consent_view_token_is_one_shot(self):
+        """A consumed consent token must not work a second time."""
+        from ai.services.consent_store import ConsentStore
+
+        self.client.login(username="testuser", password="password")
+        deal = self._make_active_deal()
+        token = ConsentStore.create(
+            self.user.id, "request_renewal", {"deal_id": str(deal.pk), "days": 7}
+        )
+        data = {"token": token, "confirmed": True}
+
+        first = self.client.post(
+            self.url_consent, data=json.dumps(data), content_type="application/json"
+        )
+        assert first.status_code == 200
+
+        second = self.client.post(
+            self.url_consent, data=json.dumps(data), content_type="application/json"
+        )
+        assert second.status_code == 404
+
+    def test_consent_view_non_user_confirm_tool_404(self):
+        """Non-USER_CONFIRM tools must not be executable via the consent path."""
+        from ai.services.consent_store import ConsentStore
+
+        self.client.login(username="testuser", password="password")
+        token = ConsentStore.create(self.user.id, "get_user_books", {})
+        url = reverse("ai:chat_consent", kwargs={"action": "get_user_books"})
+        response = self.client.post(
+            url, data=json.dumps({"token": token, "confirmed": True}),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 404
+
+    def test_consent_view_unknown_kwarg_ignored(self):
+        """Stored args with an unknown kwarg should not 500 the view."""
+        from ai.services.consent_store import ConsentStore
+
+        self.client.login(username="testuser", password="password")
+        deal = self._make_active_deal()
+        token = ConsentStore.create(
+            self.user.id,
+            "request_renewal",
+            {"deal_id": str(deal.pk), "days": 7, "bogus": 1},
+        )
+        data = {"token": token, "confirmed": True}
+        response = self.client.post(
+            self.url_consent, data=json.dumps(data), content_type="application/json"
+        )
+
+        assert response.status_code == 200
+        assert response.json()["status"] == "success"
 
     def test_chat_view_invalid_json(self):
         """Should return 400 for invalid JSON."""
