@@ -10,7 +10,7 @@ from books.services.book_service import (
     suspend_book,
     validate_book_set_completeness,
 )
-from tests.factories import BookSetFactory, SharedBookFactory
+from tests.factories import BookSetFactory, SharedBookFactory, UserFactory
 
 
 pytestmark = pytest.mark.django_db
@@ -106,6 +106,27 @@ class TestResolveException:
         resolve_exception(book, "found")
         book.refresh_from_db()
         assert book.status == SharedBook.Status.SUSPENDED
+
+    def test_resolve_found_resets_keeper_to_owner(self):
+        """「尋獲歸還」＝書物理上回到 owner 手上：keeper 一併重置，
+        清掉 stale keeper（原借閱者否則仍保有持有者身分與 UI 入口）"""
+        owner = UserFactory()
+        borrower = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=borrower, status="E")
+        resolve_exception(book, "found")
+        book.refresh_from_db()
+        assert book.status == SharedBook.Status.SUSPENDED
+        assert book.keeper == owner
+
+    def test_resolve_lost_keeps_keeper(self):
+        """lost 為終態，keeper 語意不變（不重置）"""
+        owner = UserFactory()
+        borrower = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=borrower, status="E")
+        resolve_exception(book, "lost")
+        book.refresh_from_db()
+        assert book.status == SharedBook.Status.LOST
+        assert book.keeper == borrower
 
     def test_non_exception_raises(self):
         book = SharedBookFactory(status="T")

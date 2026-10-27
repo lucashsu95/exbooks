@@ -109,6 +109,50 @@ def get_force_return_receiver(deal):
     return deal.shared_book.owner
 
 
+def can_confirm_return(deal, user, force=False):
+    """
+    歸還確認資格（單一事實來源）：
+
+    - 一般模式：僅 Responder（持有者）可確認
+    - 強制模式：僅收書方（get_force_return_receiver）可執行
+
+    寫側 confirm_return 與讀側 rules.py 的 is_return_confirmer
+    predicate（非強制語意）皆以此為準。
+    """
+    if force:
+        return user == get_force_return_receiver(deal)
+    return user == deal.responder
+
+
+def validate_deal_applicant(applicant, shared_book, deal_type):
+    """
+    F-7: 每類型 applicant 身分驗證（單一事實來源；web/API/AI 路徑共用）。
+
+    矩陣：RG → owner｜RS → keeper｜EX → keeper｜LG/TF → 第三人（BR-10）
+    註：RS 由持有者發起返還（responder=owner）。舊 BR-10 豁免清單漏了 RS，
+    導致合法 applicant（keeper）反被擋、第三人反而能發起——F-7 已修正。
+
+    讀側（rules.py 的 can_initiate_* predicates）delegate 到本函式，
+    不另行撰寫身分規則。
+
+    Raises:
+        PermissionDenied: applicant 不是該類型的合法發起者
+        ValidationError: LG/TF 對自己的書（BR-10）
+    """
+    if deal_type == Deal.DealType.REGRESS:
+        if applicant != shared_book.owner:
+            raise PermissionDenied("只有擁有者可以發起回歸（收回借出書籍）交易")
+    elif deal_type == Deal.DealType.RESTORE:
+        if applicant != shared_book.keeper:
+            raise PermissionDenied("只有目前持有者可以發起返還交易")
+    elif deal_type == Deal.DealType.EXCEPT:
+        if applicant != shared_book.keeper:
+            raise PermissionDenied("只有持有者可以申請例外處理")
+    elif applicant == shared_book.owner or applicant == shared_book.keeper:
+        # BR-10: 不能借閱自己貢獻或持有的書籍（LG/TF）
+        raise ValidationError("不能對自己貢獻或持有的書籍發起此交易")
+
+
 # ============================================================================
 # 交易建立
 # ============================================================================
@@ -135,6 +179,7 @@ def create_deal(
     - BR-6: 只有狀態為 R 的書籍可發起 RS 交易
     - BR-7: 套書必須整套借出
     - BR-10: 用戶不能借閱自己貢獻或持有的書籍（RG/EX 豁免，見內註）
+    - F-7: 每類型 applicant 身分驗證（RG→Owner、RS→Keeper、EX→Keeper、LG/TF→第三人）
 
     原子性：Deal、備註 DealMessage 與稽核事件在同一 transaction，
     中途中斷整體回滾，不會留半成品 deal。
@@ -198,15 +243,8 @@ def create_deal(
                 f"您目前信用等級最長只能借閱 {int(limits['max_days'])} 天"
             )
 
-    # BR-10: 不能借閱自己的書
-    # RG 交易的申請者是 Owner，EX 交易的申請者是 Keeper（對持有的書報例外），皆不受此限制
-    if deal_type not in (Deal.DealType.REGRESS, Deal.DealType.EXCEPT):
-        if applicant == shared_book.owner or applicant == shared_book.keeper:
-            raise ValidationError("不能對自己貢獻或持有的書籍發起此交易")
-
-    # EX: 申請者必須是持有者（keeper）（BR-10 豁免，故在此獨立驗證身份）
-    if deal_type == Deal.DealType.EXCEPT and applicant != shared_book.keeper:
-        raise PermissionDenied("只有持有者可以申請例外處理")
+    # F-7: 每類型 applicant 身分驗證（單一來源，見 validate_deal_applicant）
+    validate_deal_applicant(applicant, shared_book, deal_type)
 
     # BR-3/BR-4: 驗證交易類別與流通性
     if deal_type in DEAL_TYPE_TRANSFERABILITY:
@@ -698,13 +736,12 @@ def confirm_return(deal, confirmed_by, force=False):
     shared_book = SharedBook.objects.select_for_update().get(id=deal.shared_book_id)
     deal = Deal.objects.select_for_update().get(id=deal.id)
 
-    # 權限檢查：一般模式僅持有者(Responder)可確認
-    if not force and confirmed_by != deal.responder:
+    # 權限檢查：一般模式僅持有者(Responder)可確認、強制模式僅收書方
+    # （判定單一來源見 can_confirm_return）
+    if not can_confirm_return(deal, confirmed_by, force=force):
+        if force:
+            raise ValidationError("只有收書方可以強制確認歸還")
         raise ValidationError("只有持有者可以確認歸還")
-
-    # 權限檢查：強制模式僅收書方可執行
-    if force and confirmed_by != get_force_return_receiver(deal):
-        raise ValidationError("只有收書方可以強制確認歸還")
 
     # 一般模式：雙方完成互評才可確認歸還（強制模式跳過，由系統代評）
     if not force and not deal.both_parties_rated:

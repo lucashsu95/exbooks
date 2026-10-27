@@ -6,6 +6,8 @@ from .deal_service import (
     complete_meeting,
     confirm_return,
     process_book_due,
+    validate_deal_applicant,
+    can_confirm_return,
 )
 from .rating_service import create_rating, process_pending_ratings
 from .extension_service import (
@@ -14,6 +16,7 @@ from .extension_service import (
     reject_extension,
     cancel_extension,
     is_extension_eligible,
+    is_owner_or_keeper_reviewer,
 )
 from .notification_service import (
     notify,
@@ -54,6 +57,8 @@ __all__ = [
     "complete_meeting",
     "confirm_return",
     "process_book_due",
+    "validate_deal_applicant",
+    "can_confirm_return",
     # rating_service
     "create_rating",
     "process_pending_ratings",
@@ -63,6 +68,7 @@ __all__ = [
     "reject_extension",
     "cancel_extension",
     "is_extension_eligible",
+    "is_owner_or_keeper_reviewer",
     # notification_service
     "notify",
     "notify_deal_requested",

@@ -368,11 +368,11 @@ erDiagram
 | 代碼 | 常數名稱     | 說明     | 可觸發的交易類別      |
 | ---- | ------------ | -------- | --------------------- |
 | `S`  | SUSPENDED    | 暫不開放 | 無（Owner 手動管理）  |
-| `T`  | TRANSFERABLE | 可移轉   | TF (Transfer)         |
-| `R`  | RESTORABLE   | 應返還   | RS (Restore)          |
+| `T`  | TRANSFERABLE | 可移轉   | LN / TF / RG            |
+| `R`  | RESTORABLE   | 應返還   | RS (Restore)            |
 | `V`  | RESERVED     | 已被預約 | 無（等待面交中）      |
 | `O`  | OCCUPIED     | 借閱中   | EX (Except)、延長申請 |
-| `E`  | EXCEPTION    | 例外狀況 | EX (Except)           |
+| `E`  | EXCEPTION    | 例外狀況 | 無（EX 發起 gate 為 T/O/R，E 狀態不可再發） |
 | `L`  | LOST         | 已遺失   | 無（終態）            |
 | `D`  | DESTROYED    | 已損毀   | 無（終態）            |
 
@@ -402,7 +402,7 @@ stateDiagram-v2
 
     E --> L : 宣告遺失
     E --> D : 宣告損毀
-    E --> S : 尋獲歸還
+    E --> S : 尋獲歸還（keeper 重置為 owner）
 
     L --> [*]
     D --> [*]
