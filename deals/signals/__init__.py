@@ -42,8 +42,6 @@ def handle_deal_state_change(sender, instance, name, source, target, **kwargs):
         _handle_complete_meeting(instance)
     elif name == "complete":
         _handle_complete(instance)
-    elif name == "cancel":
-        _handle_cancel(instance, source)
 
 
 # ============================================================================
@@ -55,7 +53,7 @@ def _handle_accept(deal):
     """
     處理接受交易後的副作用。
 
-    被自動取消的 sibling 通知由它們各自的 cancel() 轉換觸發
+    被自動取消的 sibling 通知由它們各自的 auto_cancel() 轉換觸發
     （見 Deal.accept），此處不再重複發送。
     """
     transaction.on_commit(lambda: notify_deal_responded(deal))
@@ -95,15 +93,3 @@ def _handle_complete(deal):
     處理交易完成後的副作用。
     """
     pass
-
-
-def _handle_cancel(deal, source_status):
-    """
-    處理通用取消的副作用。
-    """
-    if source_status == Deal.Status.REQUESTED:
-        _handle_cancel_request(deal)
-    elif source_status == Deal.Status.RESPONDED:
-        transaction.on_commit(lambda: notify_deal_cancelled(deal, deal.applicant))
-    elif source_status == Deal.Status.MEETED:
-        transaction.on_commit(lambda: notify_deal_cancelled(deal, deal.applicant))

@@ -91,6 +91,19 @@ class TestDeal:
         with pytest.raises(Exception):
             deal.resolve_as_exception()
 
+    def test_cancel_transition_removed(self):
+        """通用 cancel() transition 已移除（F-1）。
+
+        原 cancel() 在 source 為 REQUESTED/RESPONDED 時直接對
+        shared_book.status（protected FSMField）賦值，任何真實呼叫路徑
+        都會炸。取消語意改由 cancel_request / auto_cancel / decline 三個
+        已宣告 transition 承擔。"""
+        assert not hasattr(Deal, "cancel")
+        # 三個仍存在的取消系 transition 要能正常宣告
+        assert hasattr(Deal, "cancel_request")
+        assert hasattr(Deal, "auto_cancel")
+        assert hasattr(Deal, "decline")
+
 
 class TestDealMessage:
     def test_create(self):

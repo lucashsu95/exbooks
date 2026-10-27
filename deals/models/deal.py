@@ -144,7 +144,7 @@ class Deal(FSMModelMixin, UpdatableModel):
         shared_book = self.shared_book
 
         # BR-15: 拒絕同一本書的其他申請。
-        # 逐筆走已宣告的 cancel() 轉換（各自觸發取消通知與還書狀態副作用），
+        # 逐筆走已宣告的 auto_cancel() 轉換（各自觸發取消通知），
         # 不使用 queryset.update 批量繞過 FSM。
         # _auto_cancelled_deals 僅供 accept_deal 記錄 DEAL_SUPERSEDED 稽核事件。
         self._auto_cancelled_deals = list(
@@ -277,7 +277,7 @@ class Deal(FSMModelMixin, UpdatableModel):
         - 通知被取消的申請者
 
         注意：不恢復書籍狀態——書即將被 reserve()，
-        也不得跑 cancel() 的還書邏輯。
+        也不得跑 cancel_request() 的還書邏輯。
         """
         logger.info("FSM transition", extra={
             "model": self.__class__.__name__,
@@ -330,30 +330,6 @@ class Deal(FSMModelMixin, UpdatableModel):
             "from": self.status,
             "to": Deal.Status.DONE,
         })
-
-    @transition(
-        field=status,
-        source=[Status.REQUESTED, Status.RESPONDED, Status.MEETED],
-        target=Status.CANCELLED,
-    )
-    def cancel(self):
-        """
-        通用取消方法。
-
-        狀態轉換：REQUESTED/RESPONDED/MEETED → CANCELLED
-        副作用：根據來源狀態恢復書籍狀態
-        """
-        logger.info("FSM transition", extra={
-            "model": self.__class__.__name__,
-            "pk": str(self.pk),
-            "from": self.status,
-            "to": Deal.Status.CANCELLED,
-        })
-        if self.status in [self.Status.REQUESTED, self.Status.RESPONDED]:
-            shared_book = self.shared_book
-            if self.previous_book_status:
-                shared_book.status = self.previous_book_status
-                shared_book.save(update_fields=["status", "updated_at"])
 
     @property
     def both_parties_rated(self):
