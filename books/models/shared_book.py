@@ -222,7 +222,13 @@ class SharedBook(FSMModelMixin, UpdatableModel):
         標記書籍為尋獲歸還。
 
         狀態轉換：EXCEPTION → SUSPENDED
+
+        語意：「尋獲歸還」＝書籍物理上回到 Owner 手上，因此同時將
+        keeper 重置為 owner。否則 stale keeper（原借閱者）會保留
+        持有者身分：UI 上仍看得到編輯 CTA 與例外處理入口，且對
+        一本他已不持有的書發 EX 申請仍會被 service 受理。
         """
+        self.keeper = self.owner
         logger.info("FSM transition", extra={
             "model": self.__class__.__name__,
             "pk": str(self.pk),

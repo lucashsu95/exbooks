@@ -402,7 +402,7 @@ stateDiagram-v2
 
     E --> L : 宣告遺失
     E --> D : 宣告損毀
-    E --> S : 尋獲歸還
+    E --> S : 尋獲歸還（keeper 重置為 owner）
 
     L --> [*]
     D --> [*]
