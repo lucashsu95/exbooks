@@ -1,13 +1,15 @@
 # pyright: reportAttributeAccessIssue=false, reportCallIssue=false
 
 from datetime import timedelta
+from unittest.mock import patch
 
 import pytest
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import transaction
 from django.utils import timezone
 
 from books.models import SharedBook
-from deals.models import Deal, Notification
+from deals.models import Deal, DealMessage, Notification
 from deals.services.deal_service import (
     accept_deal,
     cancel_deal,
@@ -386,6 +388,43 @@ class TestCreateDeal:
             recipient=book.owner,
             notification_type="DEAL_REQUESTED",
         ).exists()
+
+    # --- 原子性（F-2）---
+
+    def test_rollback_leaves_no_partial_state(self):
+        """create_deal 中途失敗整體回滾：無半成品 deal/備註、通知不外發。"""
+        applicant = UserFactory()
+        book = SharedBookFactory(status="T", transferability="RETURN")
+        with (
+            patch(
+                "deals.services.deal_service.record_exchange_event",
+                side_effect=RuntimeError("event boom"),
+            ),
+            patch("deals.tasks.send_push_notification_task") as mock_push,
+            patch("deals.tasks.send_email_notification_task") as mock_email,
+        ):
+            with pytest.raises(RuntimeError):
+                create_deal(applicant, book, Deal.DealType.LOAN, note="備註")
+        assert not Deal.objects.exists()
+        assert not DealMessage.objects.exists()
+        assert not Notification.objects.exists()
+        mock_push.delay.assert_not_called()
+        mock_email.delay.assert_not_called()
+
+    def test_notification_deferred_until_commit(self):
+        """通知經 on_commit 派發：atomic block commit 前任務未派發，commit 後才派發。"""
+        applicant = UserFactory()
+        book = SharedBookFactory(status="T", transferability="RETURN")
+        with (
+            patch("deals.tasks.send_push_notification_task") as mock_push,
+            patch("deals.tasks.send_email_notification_task") as mock_email,
+        ):
+            with transaction.atomic():
+                create_deal(applicant, book, Deal.DealType.LOAN)
+                assert mock_push.delay.call_count == 0
+                assert mock_email.delay.call_count == 0
+            assert mock_push.delay.call_count == 1
+            assert mock_email.delay.call_count == 1
 
 
 # ============================================================

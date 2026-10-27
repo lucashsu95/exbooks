@@ -114,6 +114,7 @@ def get_force_return_receiver(deal):
 # ============================================================================
 
 
+@transaction.atomic
 def create_deal(
     applicant,
     shared_book,
@@ -134,6 +135,10 @@ def create_deal(
     - BR-6: 只有狀態為 R 的書籍可發起 RS 交易
     - BR-7: 套書必須整套借出
     - BR-10: 用戶不能借閱自己貢獻或持有的書籍（RG/EX 豁免，見內註）
+
+    原子性：Deal、備註 DealMessage 與稽核事件在同一 transaction，
+    中途中斷整體回滾，不會留半成品 deal。
+    通知經 transaction.on_commit 延遲到 commit 後派發，回滾不會外發。
 
     Returns:
         Deal: 建立的交易
@@ -265,7 +270,7 @@ def create_deal(
     if note:
         DealMessage.objects.create(deal=deal, sender=applicant, content=note)
 
-    notify_deal_requested(deal)
+    transaction.on_commit(lambda: notify_deal_requested(deal))
 
     record_exchange_event(
         shared_book=shared_book,
