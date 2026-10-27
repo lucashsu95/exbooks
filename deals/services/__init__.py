@@ -13,6 +13,7 @@ from .extension_service import (
     approve_extension,
     reject_extension,
     cancel_extension,
+    is_extension_eligible,
 )
 from .notification_service import (
     notify,
@@ -61,6 +62,7 @@ __all__ = [
     "approve_extension",
     "reject_extension",
     "cancel_extension",
+    "is_extension_eligible",
     # notification_service
     "notify",
     "notify_deal_requested",

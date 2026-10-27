@@ -224,14 +224,14 @@
             </div>
         {% endif %}
         <!-- Extension Section -->
-        {% if deal.status == 'O' or extensions %}
+        {% if can_request_extension or extensions %}
             <div class="px-4 mb-32">
                 <div class="flex items-center justify-between mb-4">
                     <h4 class="text-slate-900 font-black text-sm uppercase tracking-widest flex items-center gap-2">
                         <span class="material-symbols-outlined text-primary text-xl leading-none">history_toggle_off</span>
                                         {% trans "延期申請紀錄" %}
                     </h4>
-                    {% if deal.status == 'O' and is_applicant %}
+                    {% if can_request_extension %}
                         <a href="{% url 'deals:extension_request' deal.id %}"
                            class="text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-lg font-bold hover:bg-primary/20 transition-colors flex items-center gap-1">
                             <span class="material-symbols-outlined text-sm leading-none">add_circle</span>

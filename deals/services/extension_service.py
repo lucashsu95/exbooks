@@ -21,17 +21,53 @@ from deals.services.notification_service import (
 
 logger = logging.getLogger(__name__)
 
+# Sentinel：區分「呼叫方尚未查 pending」（omitted）與「確認沒有 pending」（None）。
+# 避免 pending 參數的 None 二義性。
+_UNSET = object()
+
+
+def is_extension_eligible(user, deal, pending=_UNSET):
+    """
+    延長申請資格的讀側判定（單一事實來源）。
+
+    與 request_extension 的 guards 同一條規則（改規則時兩者必改）：
+    1. 書籍狀態為 OCCUPIED（借閱中）
+    2. user 是該交易的 applicant（借閱者）
+    3. 該交易沒有 PENDING 的延長申請
+
+    刻意不查 Deal 狀態：寫側 request_extension 同樣只以上列三條件為 guard，
+    讀側與寫側對齊，避免「入口藏起來但 service 仍受理」的讀寫分歧。
+
+    Call site（皆只讀不寫，寫入權威仍是 request_extension）：
+    - web deal_detail view context → 模板的「新增申請」入口條件
+    - ai read tool（get_borrowing_status）→「（可申請延長）」標記
+
+    pending: 該交易的 PENDING 延長申請（DB constraint 保證至多一筆）。
+    已取回 pending 的呼叫方（如 AI read tool 的 prefetch）應傳入以避免重複查詢；
+    傳 None 代表「已確認沒有 pending」。省略時本函式自行查 DB。
+    """
+    if deal.shared_book.status != SharedBook.Status.OCCUPIED:
+        return False
+    if user != deal.applicant:
+        return False
+    if pending is _UNSET:
+        pending = deal.extensions.filter(status=LoanExtension.Status.PENDING).first()
+    return pending is None
+
 
 @transaction.atomic
 def request_extension(deal, applicant, extra_days):
     """
     申請延長借閱。
 
-    Rules:
+    Rules（單一來源；讀側判定見 is_extension_eligible，改規則時兩者必改）：
     - 僅限借閱狀態為 O（借閱中）的書籍
     - BR-2: 延長天數 7~30 天（service 層執行 extra_days 欄位 validator）
     - 同一筆交易同時只允許一筆待審核的延長申請，核准或拒絕後才能再申請
     - 申請者必須是 Deal 的 applicant（借入者）
+
+    guards 是該規則的執行側：逐條件拋個別錯誤訊息，PENDING 檢查走
+    鎖定讀取（MySQL RR 下一致讀取看不到對方剛 commit 的列）。
 
     原子性：create 與 record_event 在同一 transaction，
     中途中斷整體回滾，不會留孤兒 PENDING。

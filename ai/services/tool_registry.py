@@ -81,10 +81,10 @@ def _book_line(book) -> str:
     return f"#{book.pk}《{book.official_book.title}》｜{book.get_status_display()}｜持有者：{book.keeper.username}"
 
 
-def _deal_line(deal, viewer, pending_extra_days) -> str:
+def _deal_line(deal, viewer, pending) -> str:
     from django.utils import timezone
 
-    from books.models import SharedBook
+    from deals.services.extension_service import is_extension_eligible
 
     # 出借者視角需要答得出「誰借了我的書」，故行內帶借閱者身分
     line = (
@@ -97,19 +97,15 @@ def _deal_line(deal, viewer, pending_extra_days) -> str:
             line += f"｜到期日：{deal.due_date:%Y-%m-%d}（已逾期 {-days_left} 天）"
         else:
             line += f"｜到期日：{deal.due_date:%Y-%m-%d}（剩 {days_left} 天）"
-    if pending_extra_days is not None:
+    if pending is not None:
         # pending 的申請永遠是借閱者建的，出借者視角不能說「你已申請」
         if viewer == deal.applicant:
-            line += f"｜你已申請延長 {pending_extra_days} 天（待審核）"
+            line += f"｜你已申請延長 {pending.extra_days} 天（待審核）"
         else:
-            line += f"｜借閱者已申請延長 {pending_extra_days} 天（待你審核）"
-    # 可延期的前置＝書已面交（OCCUPIED）且 viewer 是借閱者本人、且尚無待審核申請；
-    # Q/P 階段、出借者視角、已有 PENDING 都不標，否則 LLM 會提案然後吃 service 的拒絕
-    if (
-        deal.shared_book.status == SharedBook.Status.OCCUPIED
-        and viewer == deal.applicant
-        and pending_extra_days is None
-    ):
+            line += f"｜借閱者已申請延長 {pending.extra_days} 天（待你審核）"
+    # 資格判定與 service 同一來源；pending 必須傳入（prefetch 已取回），
+    # 省略會每筆 deal 多一筆 DB 查詢，打破讀 tool 的查詢量上界
+    if is_extension_eligible(viewer, deal, pending=pending):
         line += "（可申請延長）"
     return line
 
@@ -210,8 +206,9 @@ def get_borrowing_status(user) -> str:
 
     lines = []
     for deal in deals[:MAX_TOOL_LINES]:  # 截斷在物化前
-        pending = deal.extensions.first()  # 已 prefetch，且只有 PENDING
-        lines.append(_deal_line(deal, user, pending.extra_days if pending else None))
+        # 已 prefetch（只有 PENDING），pending 物件直接傳給 _deal_line 的資格判定
+        pending = deal.extensions.first()
+        lines.append(_deal_line(deal, user, pending))
     return _lines_or_total(lines, total, "（另有 {omitted} 項未列出）")
 
 

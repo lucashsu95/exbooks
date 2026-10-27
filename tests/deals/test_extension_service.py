@@ -3,13 +3,15 @@ from unittest.mock import patch
 
 import pytest
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
+from django.db import IntegrityError, connection
 from django.test import TestCase
+from django.test.utils import CaptureQueriesContext
 
 from deals.models import Deal, LoanExtension, Notification
 from deals.services.extension_service import (
     approve_extension,
     cancel_extension,
+    is_extension_eligible,
     reject_extension,
     request_extension,
 )
@@ -211,6 +213,128 @@ class TestRequestExtension:
             recipient=owner,
             notification_type="EXTEND_REQUESTED",
         ).exists()
+
+
+# ============================================================
+# is_extension_eligible — 讀側資格判定（單一來源）
+# ============================================================
+class TestIsExtensionEligible:
+    """讀側判定：web 入口與 AI 標記共用的資格規則。"""
+
+    def _eligible_deal(self):
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=applicant, status="O")
+        deal = DealFactory(
+            shared_book=book,
+            status="M",
+            applicant=applicant,
+            responder=owner,
+        )
+        return deal, applicant, owner
+
+    def test_eligible(self):
+        deal, applicant, _ = self._eligible_deal()
+        assert is_extension_eligible(applicant, deal) is True
+
+    def test_book_not_occupied(self):
+        book = SharedBookFactory(status="T")
+        deal = DealFactory(shared_book=book, status="M")
+        assert is_extension_eligible(deal.applicant, deal) is False
+
+    def test_responder_not_eligible(self):
+        deal, _, owner = self._eligible_deal()
+        assert is_extension_eligible(owner, deal) is False
+
+    def test_stranger_not_eligible(self):
+        deal, _, _ = self._eligible_deal()
+        assert is_extension_eligible(UserFactory(), deal) is False
+
+    def test_pending_extension_blocks(self):
+        deal, applicant, _ = self._eligible_deal()
+        LoanExtensionFactory(deal=deal, requested_by=applicant)
+        assert is_extension_eligible(applicant, deal) is False
+
+    def test_rejected_extension_does_not_block(self):
+        deal, applicant, _ = self._eligible_deal()
+        LoanExtensionFactory(
+            deal=deal,
+            requested_by=applicant,
+            status=LoanExtension.Status.REJECTED,
+        )
+        assert is_extension_eligible(applicant, deal) is True
+
+    def test_pending_param_is_trusted_and_skips_db(self):
+        """傳入 pending（含明確的 None）時不再查 DB——AI read tool 靠這保住查詢量上界。"""
+        deal, applicant, _ = self._eligible_deal()
+        deal = Deal.objects.select_related("shared_book", "applicant").get(pk=deal.pk)
+        with CaptureQueriesContext(connection) as ctx:
+            assert is_extension_eligible(applicant, deal, pending=None) is True
+        assert len(ctx.captured_queries) == 0
+
+    def test_pending_object_param_is_trusted_and_skips_db(self):
+        deal, applicant, _ = self._eligible_deal()
+        ext = LoanExtensionFactory(deal=deal, requested_by=applicant)
+        deal = Deal.objects.select_related("shared_book", "applicant").get(pk=deal.pk)
+        with CaptureQueriesContext(connection) as ctx:
+            assert is_extension_eligible(applicant, deal, pending=ext) is False
+        assert len(ctx.captured_queries) == 0
+
+    def test_db_lookup_when_pending_omitted(self):
+        deal, applicant, _ = self._eligible_deal()
+        deal = Deal.objects.select_related("shared_book", "applicant").get(pk=deal.pk)
+        with CaptureQueriesContext(connection) as ctx:
+            assert is_extension_eligible(applicant, deal) is True
+        assert len(ctx.captured_queries) == 1
+
+
+class TestEligibilityConsistentWithRequest:
+    """讀側判定與寫側 guards 是同一條規則：
+    is_extension_eligible 為 True ⟺ request_extension 成功。
+    改規則時這張表會同時卡到兩邊，防止再漂移。"""
+
+    def test_eligible_agrees(self):
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=applicant, status="O")
+        deal = DealFactory(
+            shared_book=book,
+            status="M",
+            applicant=applicant,
+            responder=owner,
+        )
+        assert is_extension_eligible(applicant, deal) is True
+        request_extension(deal, applicant, extra_days=14)  # 不得拋錯
+
+    def test_non_occupied_agrees(self):
+        book = SharedBookFactory(status="T")
+        deal = DealFactory(shared_book=book, status="M")
+        assert is_extension_eligible(deal.applicant, deal) is False
+        with pytest.raises(ValidationError):
+            request_extension(deal, deal.applicant, extra_days=14)
+
+    def test_non_applicant_agrees(self):
+        book = SharedBookFactory(status="O")
+        deal = DealFactory(shared_book=book, status="M")
+        stranger = UserFactory()
+        assert is_extension_eligible(stranger, deal) is False
+        with pytest.raises(ValidationError):
+            request_extension(deal, stranger, extra_days=14)
+
+    def test_pending_agrees(self):
+        owner = UserFactory()
+        applicant = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=applicant, status="O")
+        deal = DealFactory(
+            shared_book=book,
+            status="M",
+            applicant=applicant,
+            responder=owner,
+        )
+        LoanExtensionFactory(deal=deal, requested_by=applicant)
+        assert is_extension_eligible(applicant, deal) is False
+        with pytest.raises(ValidationError):
+            request_extension(deal, applicant, extra_days=14)
 
 
 # ============================================================

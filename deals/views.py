@@ -143,6 +143,10 @@ def deal_detail(request, pk):
             "extensions": extensions_list,
             "is_applicant": request.user == deal.applicant,
             "is_responder": request.user == deal.responder,
+            # 延期申請入口的資格判定（單一來源，見 extension_service）
+            "can_request_extension": extension_service.is_extension_eligible(
+                request.user, deal
+            ),
             "is_owner": request.user == deal.shared_book.owner,
             "is_keeper": request.user == deal.shared_book.keeper,
             "is_force_return_receiver": request.user
