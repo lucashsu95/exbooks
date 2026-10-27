@@ -87,16 +87,18 @@ class TestCreateDeal:
         assert deal.responder == book.keeper
 
     def test_restore_success(self):
-        """RS: RETURN 流通性 + R 狀態 → responder 為 Owner"""
+        """RS: RETURN 流通性 + R 狀態 → applicant 必須是 Keeper（F-7），responder 為 Owner"""
         owner = UserFactory()
-        applicant = UserFactory()
+        keeper = UserFactory()
         book = SharedBookFactory(
             owner=owner,
+            keeper=keeper,
             status="R",
             transferability="RETURN",
         )
-        deal = create_deal(applicant, book, Deal.DealType.RESTORE)
+        deal = create_deal(keeper, book, Deal.DealType.RESTORE)
         assert deal.deal_type == Deal.DealType.RESTORE
+        assert deal.applicant == keeper
         assert deal.responder == owner
         assert deal.due_date is None  # RS 不設到期日
 
@@ -129,10 +131,9 @@ class TestCreateDeal:
             create_deal(applicant, book, Deal.DealType.LOAN)
 
     def test_br3_restore_requires_return(self):
-        applicant = UserFactory()
         book = SharedBookFactory(status="R", transferability="TRANSFER")
         with pytest.raises(ValidationError, match="閱畢即還"):
-            create_deal(applicant, book, Deal.DealType.RESTORE)
+            create_deal(book.keeper, book, Deal.DealType.RESTORE)
 
     # --- BR-4: TF/RG 僅適用 TRANSFER ---
 
@@ -165,10 +166,9 @@ class TestCreateDeal:
     # --- BR-6: RS 需書籍狀態 R ---
 
     def test_br6_restore_requires_restorable(self):
-        applicant = UserFactory()
         book = SharedBookFactory(status="T", transferability="RETURN")
         with pytest.raises(ValidationError, match="應返還"):
-            create_deal(applicant, book, Deal.DealType.RESTORE)
+            create_deal(book.keeper, book, Deal.DealType.RESTORE)
 
     # --- BR-7: 套書完整性 ---
 
@@ -217,6 +217,55 @@ class TestCreateDeal:
         )
         deal = create_deal(owner, book, Deal.DealType.REGRESS)
         assert deal.applicant == owner
+
+    # --- F-7: 每類型 applicant 身分（RG→Owner、RS→Keeper、EX→Keeper、LG/TF→第三人）---
+
+    def test_f7_regress_requires_owner(self):
+        """RG: 只有 Owner 可發起；Keeper 與第三方皆拒絕。"""
+        owner = UserFactory()
+        keeper = UserFactory()
+        book = SharedBookFactory(
+            owner=owner,
+            keeper=keeper,
+            status="T",
+            transferability="TRANSFER",
+        )
+        with pytest.raises(PermissionDenied, match="擁有者"):
+            create_deal(keeper, book, Deal.DealType.REGRESS)
+        with pytest.raises(PermissionDenied, match="擁有者"):
+            create_deal(UserFactory(), book, Deal.DealType.REGRESS)
+
+    def test_f7_restore_requires_keeper(self):
+        """RS: 只有 Keeper 可發起；Owner 與第三方皆拒絕。"""
+        owner = UserFactory()
+        keeper = UserFactory()
+        book = SharedBookFactory(
+            owner=owner,
+            keeper=keeper,
+            status="R",
+            transferability="RETURN",
+        )
+        with pytest.raises(PermissionDenied, match="持有者"):
+            create_deal(owner, book, Deal.DealType.RESTORE)
+        with pytest.raises(PermissionDenied, match="持有者"):
+            create_deal(UserFactory(), book, Deal.DealType.RESTORE)
+
+    def test_f7_loan_transfer_third_party_only(self):
+        """LG/TF: Owner 與 Keeper 不可發起（BR-10），第三人可以。"""
+        owner = UserFactory()
+        keeper = UserFactory()
+        book = SharedBookFactory(
+            owner=owner,
+            keeper=keeper,
+            status="T",
+            transferability="RETURN",
+        )
+        with pytest.raises(ValidationError, match="自己"):
+            create_deal(owner, book, Deal.DealType.LOAN)
+        with pytest.raises(ValidationError, match="自己"):
+            create_deal(keeper, book, Deal.DealType.LOAN)
+        deal = create_deal(UserFactory(), book, Deal.DealType.LOAN)
+        assert deal.deal_type == Deal.DealType.LOAN
 
     def test_min_trust_level_rejects_low_trust_applicant(self):
         """申請者信用等級低於書籍門檻時，應拒絕建立交易。"""

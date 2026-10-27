@@ -1,4 +1,5 @@
 import pytest
+from uuid import uuid4
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -137,3 +138,125 @@ class TestDealsAPI:
         # LOAN deal should result in OCCUPIED status and keeper = applicant
         assert self.shared_book.status == SharedBook.Status.OCCUPIED
         assert self.shared_book.keeper == self.user_a
+
+
+@pytest.mark.django_db
+class TestDealCreateApplicantIdentity:
+    """F-7: 每類型 applicant 身分驗證（API 面安全邊界）。
+
+    矩陣：RG→Owner、RS→Keeper、EX→Keeper、LG/TF→第三人（owner/keeper 皆不可）。
+    註：DealViewSet.create 將 service 的 PermissionDenied/ValidationError
+    統一映射為 400，故拒絕格斷言 400。
+    """
+
+    def setup_method(self):
+        self.client = APIClient()
+        self.owner = User.objects.create_user(
+            username="f7_owner", password="password123", email="f7o@example.com"
+        )
+        self.keeper = User.objects.create_user(
+            username="f7_keeper", password="password123", email="f7k@example.com"
+        )
+        self.other = User.objects.create_user(
+            username="f7_other", password="password123", email="f7x@example.com"
+        )
+
+    def _make_book(self, status, transferability=None):
+        book = SharedBook.objects.create(
+            official_book=OfficialBook.objects.create(
+                isbn=str(uuid4().int % 10**13), title="F7 Book", author="F7 Author"
+            ),
+            owner=self.owner,
+            keeper=self.keeper,
+            status=status,
+            condition_description="Good",
+        )
+        if transferability is not None:
+            book.transferability = transferability
+            book.save()
+        return book
+
+    def _post_deal(self, user, book, deal_type):
+        token_url = reverse("token_obtain_pair")
+        res = self.client.post(
+            token_url, {"username": user.username, "password": "password123"}
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+        return self.client.post(
+            reverse("deals:deal-list"),
+            {
+                "shared_book": book.id,
+                "deal_type": deal_type,
+                # 註：serializer 要求 applicant/responder 欄位存在，
+                # 但 viewset 忽略兩欄（applicant 恆為 request.user、
+                # responder 由 service 自動判定）——安全邊界在 service 端。
+                "applicant": user.id,
+                "responder": self.owner.id,
+            },
+        )
+
+    def test_f7_regress_owner_only(self):
+        book = self._make_book(
+            SharedBook.Status.TRANSFERABLE, SharedBook.Transferability.TRANSFER
+        )
+        assert (
+            self._post_deal(self.owner, book, "RG").status_code
+            == status.HTTP_201_CREATED
+        )
+        assert (
+            self._post_deal(self.keeper, book, "RG").status_code
+            == status.HTTP_400_BAD_REQUEST
+        )
+        assert (
+            self._post_deal(self.other, book, "RG").status_code
+            == status.HTTP_400_BAD_REQUEST
+        )
+
+    def test_f7_restore_keeper_only(self):
+        book = self._make_book(
+            SharedBook.Status.RESTORABLE, SharedBook.Transferability.RETURN
+        )
+        assert (
+            self._post_deal(self.keeper, book, "RS").status_code
+            == status.HTTP_201_CREATED
+        )
+        assert (
+            self._post_deal(self.owner, book, "RS").status_code
+            == status.HTTP_400_BAD_REQUEST
+        )
+        assert (
+            self._post_deal(self.other, book, "RS").status_code
+            == status.HTTP_400_BAD_REQUEST
+        )
+
+    def test_f7_except_keeper_only(self):
+        book = self._make_book(SharedBook.Status.OCCUPIED)
+        assert (
+            self._post_deal(self.keeper, book, "EX").status_code
+            == status.HTTP_201_CREATED
+        )
+        assert (
+            self._post_deal(self.owner, book, "EX").status_code
+            == status.HTTP_400_BAD_REQUEST
+        )
+        assert (
+            self._post_deal(self.other, book, "EX").status_code
+            == status.HTTP_400_BAD_REQUEST
+        )
+
+    def test_f7_loan_third_party_only(self):
+        book = self._make_book(
+            SharedBook.Status.TRANSFERABLE, SharedBook.Transferability.RETURN
+        )
+        assert (
+            self._post_deal(self.other, book, "LN").status_code
+            == status.HTTP_201_CREATED
+        )
+        assert (
+            self._post_deal(self.owner, book, "LN").status_code
+            == status.HTTP_400_BAD_REQUEST
+        )
+        assert (
+            self._post_deal(self.keeper, book, "LN").status_code
+            == status.HTTP_400_BAD_REQUEST
+        )

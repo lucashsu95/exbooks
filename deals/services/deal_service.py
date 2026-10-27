@@ -135,6 +135,7 @@ def create_deal(
     - BR-6: 只有狀態為 R 的書籍可發起 RS 交易
     - BR-7: 套書必須整套借出
     - BR-10: 用戶不能借閱自己貢獻或持有的書籍（RG/EX 豁免，見內註）
+    - F-7: 每類型 applicant 身分驗證（RG→Owner、RS→Keeper、EX→Keeper、LG/TF→第三人）
 
     原子性：Deal、備註 DealMessage 與稽核事件在同一 transaction，
     中途中斷整體回滾，不會留半成品 deal。
@@ -198,15 +199,22 @@ def create_deal(
                 f"您目前信用等級最長只能借閱 {int(limits['max_days'])} 天"
             )
 
-    # BR-10: 不能借閱自己的書
-    # RG 交易的申請者是 Owner，EX 交易的申請者是 Keeper（對持有的書報例外），皆不受此限制
-    if deal_type not in (Deal.DealType.REGRESS, Deal.DealType.EXCEPT):
-        if applicant == shared_book.owner or applicant == shared_book.keeper:
-            raise ValidationError("不能對自己貢獻或持有的書籍發起此交易")
-
-    # EX: 申請者必須是持有者（keeper）（BR-10 豁免，故在此獨立驗證身份）
-    if deal_type == Deal.DealType.EXCEPT and applicant != shared_book.keeper:
-        raise PermissionDenied("只有持有者可以申請例外處理")
+    # F-7: 每類型 applicant 身分驗證（單一來源；web/API/AI 路徑共用此函式）
+    # 矩陣：RG → owner｜RS → keeper｜EX → keeper｜LG/TF → 第三人（BR-10：owner/keeper 皆可排除）
+    # 註：RS 由持有者發起返還（responder=owner）；舊 BR-10 豁免清單漏了 RS，
+    # 導致合法 applicant（keeper）反被擋、第三人反而能發起，此處一併修正。
+    if deal_type == Deal.DealType.REGRESS:
+        if applicant != shared_book.owner:
+            raise PermissionDenied("只有擁有者可以發起回歸（收回借出書籍）交易")
+    elif deal_type == Deal.DealType.RESTORE:
+        if applicant != shared_book.keeper:
+            raise PermissionDenied("只有目前持有者可以發起返還交易")
+    elif deal_type == Deal.DealType.EXCEPT:
+        if applicant != shared_book.keeper:
+            raise PermissionDenied("只有持有者可以申請例外處理")
+    elif applicant == shared_book.owner or applicant == shared_book.keeper:
+        # BR-10: 不能借閱自己貢獻或持有的書籍（LG/TF）
+        raise ValidationError("不能對自己貢獻或持有的書籍發起此交易")
 
     # BR-3/BR-4: 驗證交易類別與流通性
     if deal_type in DEAL_TYPE_TRANSFERABILITY:
