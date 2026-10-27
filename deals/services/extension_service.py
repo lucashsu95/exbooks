@@ -129,9 +129,13 @@ def request_extension(deal, applicant, extra_days):
     return extension
 
 
-def _is_owner_or_keeper_reviewer(deal, reviewer):
-    """檢查審核者是否為該書籍的 Owner 或 Keeper。"""
-    shared_book = deal.shared_book
+def is_owner_or_keeper_reviewer(shared_book, reviewer):
+    """
+    延長申請審核資格（單一事實來源）：審核者須為該書籍的 Owner 或 Keeper。
+
+    寫側 approve_extension / reject_extension 與讀側 rules.py 的
+    is_extension_reviewer predicate 皆以此為準。
+    """
     return reviewer in {shared_book.owner, shared_book.keeper}
 
 
@@ -151,7 +155,7 @@ def approve_extension(extension, reviewer):
     deal = Deal.objects.select_for_update().get(pk=extension.deal_id)
     extension = LoanExtension.objects.select_for_update().get(pk=extension.pk)
 
-    if not _is_owner_or_keeper_reviewer(deal, reviewer):
+    if not is_owner_or_keeper_reviewer(deal.shared_book, reviewer):
         raise ValidationError("只有書籍 Owner 或 Keeper 可以審核延長申請")
 
     if reviewer == extension.requested_by:
@@ -209,7 +213,7 @@ def reject_extension(extension, reviewer):
     deal = Deal.objects.select_for_update().get(pk=extension.deal_id)
     extension = LoanExtension.objects.select_for_update().get(pk=extension.pk)
 
-    if not _is_owner_or_keeper_reviewer(deal, reviewer):
+    if not is_owner_or_keeper_reviewer(deal.shared_book, reviewer):
         raise ValidationError("只有書籍 Owner 或 Keeper 可以審核延長申請")
 
     if reviewer == extension.requested_by:

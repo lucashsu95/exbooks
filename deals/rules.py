@@ -57,9 +57,13 @@ def is_extension_applicant(user, extension):
 
 @rules.predicate
 def is_extension_reviewer(user, extension):
-    return extension is not None and (
-        user == extension.deal.shared_book.owner
-        or user == extension.deal.shared_book.keeper
+    if extension is None:
+        return False
+    # delegate 到 service 單一來源，不另寫身分規則
+    from .services import extension_service
+
+    return extension_service.is_owner_or_keeper_reviewer(
+        extension.deal.shared_book, user
     )
 
 
@@ -71,7 +75,12 @@ rules.add_perm("deals.can_cancel_extension", is_extension_applicant)
 # Return permissions
 @rules.predicate
 def is_return_confirmer(user, deal):
-    return deal is not None and user == deal.responder
+    if deal is None:
+        return False
+    # delegate 到 service 單一來源（非強制語意）
+    from .services import deal_service
+
+    return deal_service.can_confirm_return(deal, user)
 
 
 rules.add_perm("deals.can_confirm_return", is_return_confirmer)

@@ -109,6 +109,21 @@ def get_force_return_receiver(deal):
     return deal.shared_book.owner
 
 
+def can_confirm_return(deal, user, force=False):
+    """
+    歸還確認資格（單一事實來源）：
+
+    - 一般模式：僅 Responder（持有者）可確認
+    - 強制模式：僅收書方（get_force_return_receiver）可執行
+
+    寫側 confirm_return 與讀側 rules.py 的 is_return_confirmer
+    predicate（非強制語意）皆以此為準。
+    """
+    if force:
+        return user == get_force_return_receiver(deal)
+    return user == deal.responder
+
+
 def validate_deal_applicant(applicant, shared_book, deal_type):
     """
     F-7: 每類型 applicant 身分驗證（單一事實來源；web/API/AI 路徑共用）。
@@ -721,13 +736,12 @@ def confirm_return(deal, confirmed_by, force=False):
     shared_book = SharedBook.objects.select_for_update().get(id=deal.shared_book_id)
     deal = Deal.objects.select_for_update().get(id=deal.id)
 
-    # 權限檢查：一般模式僅持有者(Responder)可確認
-    if not force and confirmed_by != deal.responder:
+    # 權限檢查：一般模式僅持有者(Responder)可確認、強制模式僅收書方
+    # （判定單一來源見 can_confirm_return）
+    if not can_confirm_return(deal, confirmed_by, force=force):
+        if force:
+            raise ValidationError("只有收書方可以強制確認歸還")
         raise ValidationError("只有持有者可以確認歸還")
-
-    # 權限檢查：強制模式僅收書方可執行
-    if force and confirmed_by != get_force_return_receiver(deal):
-        raise ValidationError("只有收書方可以強制確認歸還")
 
     # 一般模式：雙方完成互評才可確認歸還（強制模式跳過，由系統代評）
     if not force and not deal.both_parties_rated:
