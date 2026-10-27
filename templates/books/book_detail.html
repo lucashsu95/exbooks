@@ -163,29 +163,17 @@
                         <span class="material-symbols-outlined text-xl sm:text-2xl">auto_stories</span>
                         {% trans "申請借用" %}
                     </a>
-                {% elif book.status == 'T' and book.transferability == 'TRANSFER' %}
-                    <a href="{% url 'deals:create' book.id 'TF' %}"
-                       class="w-full bg-gradient-to-r from-primary to-primary/80 text-white font-bold py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-primary/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all duration-300 hover:shadow-xl hover:shadow-primary/40">
-                        <span class="material-symbols-outlined text-xl sm:text-2xl">swap_horiz</span>
-                        {% trans "申請傳遞" %}
-                    </a>
-                {% elif book.status == 'T' and book.transferability == 'TRANSFER' and book.owner == request.user and book.keeper != book.owner %}
+                {% elif book.status == 'T' and book.transferability == 'TRANSFER' and book.owner == request.user %}
                     <a href="{% url 'deals:create' book.id 'RG' %}"
                        class="w-full bg-gradient-to-r from-primary to-primary/80 text-white font-bold py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-primary/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all duration-300 hover:shadow-xl hover:shadow-primary/40">
                         <span class="material-symbols-outlined text-xl sm:text-2xl">home</span>
                         {% trans "申請回歸" %}
                     </a>
-                {% elif book.status in 'T,O,R' and book.keeper == request.user %}
-                    <a href="{% url 'deals:exception_create' book.id %}"
-                       class="w-full bg-gradient-to-r from-rose-500 to-rose-600 text-white font-bold py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-rose-500/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all duration-300 hover:shadow-xl hover:shadow-rose-500/40">
-                        <span class="material-symbols-outlined text-xl sm:text-2xl">report_problem</span>
-                        {% trans "申請例外處理" %}
-                    </a>
-                {% elif book.status in 'E,L,D' %}
-                    <a href="{% url 'deals:create' book.id 'EX' %}"
-                       class="w-full bg-gradient-to-r from-rose-500 to-rose-600 text-white font-bold py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-rose-500/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all duration-300 hover:shadow-xl hover:shadow-rose-500/40">
-                        <span class="material-symbols-outlined text-xl sm:text-2xl">report_problem</span>
-                        {% trans "申請例外處理" %}
+                {% elif book.status == 'T' and book.transferability == 'TRANSFER' %}
+                    <a href="{% url 'deals:create' book.id 'TF' %}"
+                       class="w-full bg-gradient-to-r from-primary to-primary/80 text-white font-bold py-2.5 sm:py-4 rounded-2xl shadow-lg shadow-primary/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all duration-300 hover:shadow-xl hover:shadow-primary/40">
+                        <span class="material-symbols-outlined text-xl sm:text-2xl">swap_horiz</span>
+                        {% trans "申請傳遞" %}
                     </a>
                 {% else %}
                     <div class="w-full bg-slate-200/80 backdrop-blur-md text-slate-500 font-bold py-2.5 sm:py-4 rounded-2xl flex items-center justify-center gap-3">
@@ -212,6 +200,14 @@
                         <span class="material-symbols-outlined text-xl sm:text-2xl">lock</span>
                         {% trans "新手暫無編輯權限" %}
                     </div>
+                {% endif %}
+                {# 持有者次要入口：例外處理（EX 的 applicant 僅限 keeper，狀態 gate T/O/R 與 service 一致） #}
+                {% if book.status in 'T,O,R' %}
+                    <a href="{% url 'deals:exception_create' book.id %}"
+                       class="w-full flex items-center justify-center gap-1.5 text-rose-600 font-semibold text-sm py-2 hover:text-rose-500">
+                        <span class="material-symbols-outlined text-lg">report_problem</span>
+                        {% trans "申請例外處理" %}
+                    </a>
                 {% endif %}
             {% endif %}
         </div>

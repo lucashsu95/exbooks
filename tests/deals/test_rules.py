@@ -185,3 +185,79 @@ class TestFSMTransitions:
 
         book.refresh_from_db()
         assert book.status == "T"
+
+
+class TestCanInitiatePredicates:
+    """F-7: can_initiate_* predicates delegate 到 service 單一來源。"""
+
+    def test_can_initiate_regress_owner_only(self):
+        from deals.rules import can_initiate_regress
+
+        owner = UserFactory()
+        keeper = UserFactory()
+        book = SharedBookFactory(
+            owner=owner, keeper=keeper, status="T", transferability="TRANSFER"
+        )
+        assert can_initiate_regress(owner, book) is True
+        assert can_initiate_regress(keeper, book) is False
+        assert can_initiate_regress(UserFactory(), book) is False
+        assert can_initiate_regress(owner, None) is False
+
+    def test_can_initiate_restore_keeper_only(self):
+        from deals.rules import can_initiate_restore
+
+        owner = UserFactory()
+        keeper = UserFactory()
+        book = SharedBookFactory(
+            owner=owner, keeper=keeper, status="R", transferability="RETURN"
+        )
+        assert can_initiate_restore(keeper, book) is True
+        assert can_initiate_restore(owner, book) is False
+        assert can_initiate_restore(UserFactory(), book) is False
+
+    def test_can_initiate_except_keeper_only(self):
+        from deals.rules import can_initiate_except
+
+        owner = UserFactory()
+        keeper = UserFactory()
+        book = SharedBookFactory(owner=owner, keeper=keeper, status="O")
+        assert can_initiate_except(keeper, book) is True
+        assert can_initiate_except(owner, book) is False
+        assert can_initiate_except(UserFactory(), book) is False
+
+    def test_can_initiate_loan_third_party_only(self):
+        from deals.rules import can_initiate_loan
+
+        owner = UserFactory()
+        keeper = UserFactory()
+        other = UserFactory()
+        book = SharedBookFactory(
+            owner=owner, keeper=keeper, status="T", transferability="RETURN"
+        )
+        assert can_initiate_loan(other, book) is True
+        assert can_initiate_loan(owner, book) is False
+        assert can_initiate_loan(keeper, book) is False
+
+    def test_can_initiate_transfer_third_party_only(self):
+        from deals.rules import can_initiate_transfer
+
+        owner = UserFactory()
+        keeper = UserFactory()
+        other = UserFactory()
+        book = SharedBookFactory(
+            owner=owner, keeper=keeper, status="T", transferability="TRANSFER"
+        )
+        assert can_initiate_transfer(other, book) is True
+        assert can_initiate_transfer(owner, book) is False
+        assert can_initiate_transfer(keeper, book) is False
+
+    def test_permissions_registered(self):
+        """五個 per-type 發起 permission 已註冊，且與 predicate 一致。"""
+        owner = UserFactory()
+        keeper = UserFactory()
+        book = SharedBookFactory(
+            owner=owner, keeper=keeper, status="T", transferability="TRANSFER"
+        )
+        assert owner.has_perm("deals.can_initiate_regress", book) is True
+        assert keeper.has_perm("deals.can_initiate_regress", book) is False
+        assert owner.has_perm("deals.can_initiate_loan", book) is False

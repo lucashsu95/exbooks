@@ -109,6 +109,35 @@ def get_force_return_receiver(deal):
     return deal.shared_book.owner
 
 
+def validate_deal_applicant(applicant, shared_book, deal_type):
+    """
+    F-7: 每類型 applicant 身分驗證（單一事實來源；web/API/AI 路徑共用）。
+
+    矩陣：RG → owner｜RS → keeper｜EX → keeper｜LG/TF → 第三人（BR-10）
+    註：RS 由持有者發起返還（responder=owner）。舊 BR-10 豁免清單漏了 RS，
+    導致合法 applicant（keeper）反被擋、第三人反而能發起——F-7 已修正。
+
+    讀側（rules.py 的 can_initiate_* predicates）delegate 到本函式，
+    不另行撰寫身分規則。
+
+    Raises:
+        PermissionDenied: applicant 不是該類型的合法發起者
+        ValidationError: LG/TF 對自己的書（BR-10）
+    """
+    if deal_type == Deal.DealType.REGRESS:
+        if applicant != shared_book.owner:
+            raise PermissionDenied("只有擁有者可以發起回歸（收回借出書籍）交易")
+    elif deal_type == Deal.DealType.RESTORE:
+        if applicant != shared_book.keeper:
+            raise PermissionDenied("只有目前持有者可以發起返還交易")
+    elif deal_type == Deal.DealType.EXCEPT:
+        if applicant != shared_book.keeper:
+            raise PermissionDenied("只有持有者可以申請例外處理")
+    elif applicant == shared_book.owner or applicant == shared_book.keeper:
+        # BR-10: 不能借閱自己貢獻或持有的書籍（LG/TF）
+        raise ValidationError("不能對自己貢獻或持有的書籍發起此交易")
+
+
 # ============================================================================
 # 交易建立
 # ============================================================================
@@ -199,22 +228,8 @@ def create_deal(
                 f"您目前信用等級最長只能借閱 {int(limits['max_days'])} 天"
             )
 
-    # F-7: 每類型 applicant 身分驗證（單一來源；web/API/AI 路徑共用此函式）
-    # 矩陣：RG → owner｜RS → keeper｜EX → keeper｜LG/TF → 第三人（BR-10：owner/keeper 皆可排除）
-    # 註：RS 由持有者發起返還（responder=owner）；舊 BR-10 豁免清單漏了 RS，
-    # 導致合法 applicant（keeper）反被擋、第三人反而能發起，此處一併修正。
-    if deal_type == Deal.DealType.REGRESS:
-        if applicant != shared_book.owner:
-            raise PermissionDenied("只有擁有者可以發起回歸（收回借出書籍）交易")
-    elif deal_type == Deal.DealType.RESTORE:
-        if applicant != shared_book.keeper:
-            raise PermissionDenied("只有目前持有者可以發起返還交易")
-    elif deal_type == Deal.DealType.EXCEPT:
-        if applicant != shared_book.keeper:
-            raise PermissionDenied("只有持有者可以申請例外處理")
-    elif applicant == shared_book.owner or applicant == shared_book.keeper:
-        # BR-10: 不能借閱自己貢獻或持有的書籍（LG/TF）
-        raise ValidationError("不能對自己貢獻或持有的書籍發起此交易")
+    # F-7: 每類型 applicant 身分驗證（單一來源，見 validate_deal_applicant）
+    validate_deal_applicant(applicant, shared_book, deal_type)
 
     # BR-3/BR-4: 驗證交易類別與流通性
     if deal_type in DEAL_TYPE_TRANSFERABILITY:

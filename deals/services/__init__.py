@@ -6,6 +6,7 @@ from .deal_service import (
     complete_meeting,
     confirm_return,
     process_book_due,
+    validate_deal_applicant,
 )
 from .rating_service import create_rating, process_pending_ratings
 from .extension_service import (
@@ -54,6 +55,7 @@ __all__ = [
     "complete_meeting",
     "confirm_return",
     "process_book_due",
+    "validate_deal_applicant",
     # rating_service
     "create_rating",
     "process_pending_ratings",

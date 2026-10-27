@@ -100,3 +100,55 @@ def is_book_owner(user, book):
 
 rules.add_perm("deals.can_create_exception", is_book_keeper)
 rules.add_perm("deals.can_resolve_exception", is_book_owner)
+
+
+# ============================================================================
+# 交易發起（book-scoped）：delegate 到 deals service 的單一來源
+# （validate_deal_applicant），rules 端不另寫身分規則。
+# ============================================================================
+
+
+def _can_initiate(user, book, deal_type):
+    from django.core.exceptions import PermissionDenied, ValidationError
+
+    from .services import deal_service
+
+    if book is None:
+        return False
+    try:
+        deal_service.validate_deal_applicant(user, book, deal_type)
+        return True
+    except (PermissionDenied, ValidationError):
+        return False
+
+
+@rules.predicate
+def can_initiate_loan(user, book):
+    return _can_initiate(user, book, "LN")
+
+
+@rules.predicate
+def can_initiate_transfer(user, book):
+    return _can_initiate(user, book, "TF")
+
+
+@rules.predicate
+def can_initiate_restore(user, book):
+    return _can_initiate(user, book, "RS")
+
+
+@rules.predicate
+def can_initiate_regress(user, book):
+    return _can_initiate(user, book, "RG")
+
+
+@rules.predicate
+def can_initiate_except(user, book):
+    return _can_initiate(user, book, "EX")
+
+
+rules.add_perm("deals.can_initiate_loan", can_initiate_loan)
+rules.add_perm("deals.can_initiate_transfer", can_initiate_transfer)
+rules.add_perm("deals.can_initiate_restore", can_initiate_restore)
+rules.add_perm("deals.can_initiate_regress", can_initiate_regress)
+rules.add_perm("deals.can_initiate_except", can_initiate_except)
