@@ -1,0 +1,35 @@
+{% load crispy_forms_tags i18n %}
+{% url 'books:bookshelf' as shelf_url %}
+{% if is_hx and messages %}
+    <div hx-swap-oob="beforeend:#toast-container">
+        {% for message in messages %}
+            <div class="toast rounded-lg border px-4 py-3 text-sm shadow-md {% if message.tags == 'success' %}border-green-200 bg-green-50 text-green-800 {% elif message.tags == 'error' %}border-red-200 bg-red-50 text-red-800 {% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-800 {% else %}border-blue-200 bg-blue-50 text-blue-800{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+{% include 'partials/_header.html' with title=title|default:_("新增分享書籍") back_url=request.META.HTTP_REFERER|default:shelf_url %}
+<main class="max-w-xl mx-auto p-4 pb-24">
+    <form method="POST" enctype="multipart/form-data" class="space-y-4"
+          hx-post="{% url 'books:add' %}"
+          hx-target="#main-content"
+          hx-swap="innerHTML">
+        {% csrf_token %}
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+            <div id="isbn-result"></div>
+            <span class="htmx-indicator text-sm text-slate-500 mb-2">
+                <span class="material-symbols-outlined animate-spin align-middle"
+                      aria-hidden="true">sync</span>
+                {% trans "查詢中…" %}
+                <span class="sr-only">{% trans "請稍候" %}</span>
+            </span>
+            {% crispy form %}
+            <div id="photo-preview" class="grid grid-cols-3 gap-2 mt-3"></div>
+        </div>
+        <button type="submit"
+                class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-transform">
+            {% trans "確認新增" %}
+        </button>
+    </form>
+</main>

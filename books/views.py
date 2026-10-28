@@ -3,6 +3,7 @@ import logging
 from core.error_messages import service_error_message
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 
 from django.db import transaction
 from django.db.models import Q, Count
@@ -272,9 +273,28 @@ def book_all(request):
     return render(request, "books/book_all.html", context)
 
 
+def _book_add_failure_response(request, form, is_hx):
+    """book_add 的 POST 失敗回應。
+
+    HTMX 以 XHR 送出、不產生歷史項，回表單片段原地重繪（保留已填
+    內容與欄位錯誤）。非 HTMX 是 top-level POST，絕不可回 2xx——
+    瀏覽器會留下 POST 歷史項，之後重新整理即彈出 Confirm Form
+    Resubmission 對話框——改用 303 重定向回表單頁。
+    """
+    if is_hx:
+        return render(
+            request, "books/partials/book_add_page.html", {"form": form, "is_hx": True}
+        )
+    response = redirect("books:add")
+    response.status_code = 303
+    return response
+
+
 @login_required
 def book_add(request):
     from .forms import BookAddForm
+
+    is_hx = bool(request.headers.get("HX-Request"))
 
     if request.method == "POST":
         form = BookAddForm(request.POST, request.FILES)
@@ -291,12 +311,17 @@ def book_add(request):
             except ValidationError as e:
                 logger.exception("book_add validation error", extra={"user_id": request.user.pk, "isbn": isbn})
                 messages.error(request, service_error_message(e))
-                return render(request, "books/book_add.html", {"form": form})
+                return _book_add_failure_response(request, form, is_hx)
 
             logger.info("book_add success", extra={"user_id": request.user.pk, "shared_book_id": str(shared.pk), "isbn": isbn})
             messages.success(request, "書籍已成功上架分享！")
+            if is_hx:
+                response = HttpResponse(status=204)
+                response["HX-Redirect"] = reverse("books:bookshelf")
+                return response
             return redirect("books:bookshelf")
         messages.error(request, "書籍資料有誤，請檢查後再送出。")
+        return _book_add_failure_response(request, form, is_hx)
     else:
         profile = request.user.profile
         initial_desc = ""
