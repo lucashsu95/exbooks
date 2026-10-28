@@ -41,7 +41,7 @@
                 <div :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
                     <div :class="msg.role === 'user' ? 'bg-primary text-white rounded-2xl rounded-tr-md' : 'bg-white text-slate-800 border border-slate-200 rounded-2xl rounded-tl-md'"
                          class="max-w-[80%] p-3 text-sm leading-relaxed">
-                        <div x-text="msg.content"></div>
+                        <div x-text="msg.content" class="whitespace-pre-line"></div>
                         
                         <!-- Consent Action -->
                         <template x-if="msg.type === 'consent'">
