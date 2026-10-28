@@ -17,6 +17,21 @@ class ChatWidgetTemplateTests(TestCase):
         self.assertNotIn("x-html", html)
         self.assertIn("data.error ?? data.result", html)
 
+    def test_message_content_preserves_line_breaks(self):
+        """契約 pin：訊息內容 div 需 whitespace-pre-line。
+
+        LLM 回覆與「喵」彩蛋（ASCII 貓）都含換行；沒有 pre-line 時
+        瀏覽器會把換行折成空白，整段擠成一行。
+        """
+        user = UserFactory()
+        self.client.force_login(user)
+
+        response = self.client.get("/books/")
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+
+        self.assertIn('<div x-text="msg.content" class="whitespace-pre-line">', html)
+
     def test_consent_buttons_bound_to_own_message(self):
         """契約 pin：consent 按鈕綁定該訊息自己的 token/state，
         不透過全域 pendingAction（舊氣泡誤執行新 token 的回歸防護）。"""
