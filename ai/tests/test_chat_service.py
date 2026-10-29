@@ -90,3 +90,16 @@ class TestChatService:
 
         assert "彩蛋" in response.content
         assert transport.requests == []
+
+    def test_chat_use_tools_false_omits_tools(self):
+        """use_tools=False（loop 強制收尾用）：request 不帶 tools/tool_choice，
+        結構上模型不可能回 tool_calls。"""
+        client, transport = make_client([ChatResponse(content="OK", tool_calls=None)])
+        service = ChatService(client=client)
+
+        service.chat(user_id=1, message="Hi", history=[], use_tools=False)
+
+        req = transport.requests[0]
+        assert req["tools"] is None
+        assert req["tool_choice"] is None
+        assert req["messages"][0].role == "system"

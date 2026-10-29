@@ -304,6 +304,54 @@ class TestAIViews:
         )
         assert replay.status_code == 404
 
+    def test_consent_cancel_persists_declined_note(self):
+        """使用者取消也記進對話紀錄：model 下一 turn 知道被拒，不再重複提出同一操作。"""
+        from ai.services.conversation_cache import ConversationCache
+        from ai.services.consent_store import ConsentStore
+
+        self.client.login(username="testuser", password="password")
+        token = ConsentStore.create(self.user.id, "request_renewal", {"deal_id": "1"})
+        response = self.client.post(
+            self.url_consent,
+            data=json.dumps({"token": token, "confirmed": False}),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.json()["status"] == "cancelled"
+        history = ConversationCache.get_history(self.user.id)
+        declines = [
+            m for m in history if m["role"] == "system" and "declined" in m["content"]
+        ]
+        assert len(declines) == 1
+        assert "request_renewal" in declines[0]["content"]
+
+    def test_consent_view_persists_fenced_record(self):
+        """#13 一致性：confirm 後持久化的 tool result 必須 fenced
+        （result 內含使用者可控書名，與 orchestrator 的 fence 同一個 wrapper）。"""
+        from ai.services.conversation_cache import ConversationCache
+        from ai.services.consent_store import ConsentStore
+
+        self.client.login(username="testuser", password="password")
+        deal = self._make_active_deal()
+        token = ConsentStore.create(
+            self.user.id, "request_renewal", {"deal_id": str(deal.pk), "days": 7}
+        )
+        response = self.client.post(
+            self.url_consent,
+            data=json.dumps({"token": token, "confirmed": True}),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        history = ConversationCache.get_history(self.user.id)
+        records = [
+            m for m in history if m["role"] == "system" and "User confirmed" in m["content"]
+        ]
+        assert len(records) == 1
+        content = records[0]["content"]
+        assert "Tool results" in content
+        assert "<<<" in content
+        assert "untrusted" in content.lower()
+
     def test_chat_view_invalid_json(self):
         """Should return 400 for invalid JSON."""
         self.client.login(username="testuser", password="password")
