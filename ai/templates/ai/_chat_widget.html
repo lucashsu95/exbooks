@@ -97,6 +97,22 @@
 </div>
 
 <script>
+// D3：模型（BIRC-LLM）有強 Markdown 偏好——5 輪真實量測，每個清單型
+// 答案都帶 ** 粗體段標，prompt-only（規則／負例／few-shot 共 5 版）都
+// 壓不掉。氣泡是 x-text 純文字渲染（防 XSS 契約），所以不渲染 Markdown，
+// 改在顯示前把記號剥掉。純文字函式：不碰「喵」彩蛋的 ASCII art
+// （無 **/#/>/`/| 開頭）與使用者輸入。
+function stripMarkdown(text) {
+    if (typeof text !== 'string') return text;
+    return text
+        .replace(/\*\*(.+?)\*\*/g, '$1')                 // **粗體**
+        .replace(/^#{1,6}\s+/gm, '')                     // ### 標題
+        .replace(/^>\s?/gm, '')                          // > 引用
+        .replace(/`([^`\n]*)`/g, '$1')                   // `行內代碼`
+        .replace(/^[ \t]*\|(?:[ \t]*:?-{2,}:?[ \t]*\|)+[ \t]*$/gm, '')  // |---| 表格分隔線
+        .replace(/^[ \t]*\|(.+)\|[ \t]*$/gm, (m, body) => body.replace(/[ \t]*\|[ \t]*/g, ' ').trim()); // | 欄位 | → 欄位
+}
+
 function chatWidget() {
     return {
         isOpen: false,
@@ -307,6 +323,10 @@ function chatWidget() {
         },
 
         addMessage(role, content, type = 'text', token = null, tool = null) {
+            // D3：LLM 文字在顯示前剥掉 Markdown 記號（氣泡是 x-text 純文字渲染）
+            if (role === 'assistant' && type === 'text') {
+                content = stripMarkdown(content);
+            }
             // Prevent duplicate hello messages if already in history
             if (content === '嗨！我是米豆，有什麼可以幫你的嗎？' && this.messages.some(m => m.content === content)) {
                 return;
