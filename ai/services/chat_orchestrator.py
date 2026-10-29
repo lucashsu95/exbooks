@@ -157,12 +157,16 @@ class ChatOrchestrator:
                 if consent_issued:
                     # consent 是「等使用者」的決策：turn 到此結束，
                     # 沒有 continuation call（執行結果在用戶下一 turn 才到 model）。
-                    final_content = response.content
+                    # D4a：與 tool_calls 同輪的中途內容（如「我幫你延期好了」）
+                    # 不得外洩成最終答案——使用者還沒按確認，模型先說出完成
+                    # 時表述會誤解；一律用 consent fallback。
+                    final_content = _CONSENT_FALLBACK
                     break
 
                 if not feedable:
-                    # 此輪沒有可學習的結果（如缺名的 tool_call）：不燒剩餘 budget
-                    final_content = response.content
+                    # 此輪沒有可學習的結果（如缺名的 tool_call）：不燒剩餘 budget。
+                    # D4a 同樣適用：中途內容不是最終答案。
+                    final_content = _GENERIC_FALLBACK
                     break
 
                 if round_no == MAX_TOOL_ROUNDS - 1:
