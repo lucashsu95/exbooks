@@ -115,8 +115,12 @@ class ChatOrchestrator:
         ConversationCache.add_message(user.id, "user", message)
 
         # transcript = 本 turn model 到目前為止看到的（含先前 history）。
-        # 本輪 append 的尾端條目在 turn 結束時原樣寫進 cache：
-        # model 看到的 == 被持久化的，沒有 sync。
+        # 持久化是逐輪增量：每輪 append 的 marker+fence 立刻落 cache
+        # （持久化形式用 _wrap_persisted，fence 內資料與回灌形式相同），
+        # turn 結束只補 assistant 尾條。這樣 generator 在任何 yield 點被關
+        # 掉（client 斷線：GeneratorExit 是 BaseException，except Exception
+        # 接不到），cache 仍等於「model 目前為止看到的」——tool 已執行、
+        # 幀已送出的情況下不會只剩孤兒 user 訊息（D4b：使用者不必重問）。
         transcript: List[Dict[str, str]] = history + [{"role": "user", "content": message}]
         final_content = ""
         consent_issued = False
@@ -134,25 +138,30 @@ class ChatOrchestrator:
                 frames, outcomes, consent_issued = self._process_tool_calls(
                     user, response.tool_calls
                 )
-                for frame in frames:
-                    yield frame
 
                 feedable = [o for o in outcomes if o.kind is not OutcomeKind.CONSENT_PENDING]
                 if feedable:
+                    # 先落 cache 再 yield 幀：幀的 yield 點被斷線時，
+                    # 此輪資料必須已經在 cache 裡
+                    marker = {
+                        "role": "assistant",
+                        "content": f"[Called tools: {', '.join(o.tool for o in feedable)}]",
+                    }
+                    tool_summary = "\n".join(o.summary_line() for o in feedable)
+                    transcript.append(marker)
                     transcript.append(
-                        {
-                            "role": "assistant",
-                            "content": f"[Called tools: {', '.join(o.tool for o in feedable)}]",
-                        }
+                        {"role": "user", "content": _wrap_untrusted(tool_summary)}
                     )
-                    transcript.append(
-                        {
-                            "role": "user",
-                            "content": _wrap_untrusted(
-                                "\n".join(o.summary_line() for o in feedable)
-                            ),
-                        }
+                    ConversationCache.add_messages(
+                        user.id,
+                        [
+                            marker,
+                            {"role": "user", "content": _wrap_persisted(tool_summary)},
+                        ],
                     )
+
+                for frame in frames:
+                    yield frame
 
                 if consent_issued:
                     # consent 是「等使用者」的決策：turn 到此結束，
@@ -192,11 +201,10 @@ class ChatOrchestrator:
         if not final_content:
             final_content = _CONSENT_FALLBACK if consent_issued else _GENERIC_FALLBACK
 
-        # 在 content 幀寫出前落 cache：中斷也不丟本輪的 tool 資料
-        tail = transcript[len(history) + 1:] + [
-            {"role": "assistant", "content": final_content}
-        ]
-        ConversationCache.add_messages(user.id, tail)
+        # turn 結束只補 assistant 尾條（各輪 tool 資料已逐輪增量落 cache）
+        ConversationCache.add_messages(
+            user.id, [{"role": "assistant", "content": final_content}]
+        )
 
         yield _sse("content", {"delta": final_content})
         yield _sse("done", {})
