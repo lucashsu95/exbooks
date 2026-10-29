@@ -2,32 +2,12 @@
 {% load crispy_forms_tags i18n %}
 {% block title %}{% trans "Exbooks - 新增書籍" %}{% endblock %}
 {% block content %}
-    {% url 'books:bookshelf' as shelf_url %}
-    {% include 'partials/_header.html' with title=title|default:_("新增分享書籍") back_url=request.META.HTTP_REFERER|default:shelf_url %}
-    <main class="max-w-xl mx-auto p-4 pb-24">
-        <form method="POST" enctype="multipart/form-data" class="space-y-4">
-            {% csrf_token %}
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <div id="isbn-result"></div>
-                <span class="htmx-indicator text-sm text-slate-500 mb-2">
-                    <span class="material-symbols-outlined animate-spin align-middle"
-                          aria-hidden="true">sync</span>
-                    {% trans "查詢中…" %}
-                    <span class="sr-only">{% trans "請稍候" %}</span>
-                </span>
-                {% crispy form %}
-                <div id="photo-preview" class="grid grid-cols-3 gap-2 mt-3"></div>
-            </div>
-            <button type="submit"
-                    class="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 active:scale-[0.98] transition-transform">
-                {% trans "確認新增" %}
-            </button>
-        </form>
-    </main>
+    {% include 'books/partials/book_add_page.html' %}
 {% endblock %}
 {% block extra_js %}
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        (function() {
+            // 事件委派到 document：HTMX 原地重繪表單後，新元素也能觸發
             // 封面上傳欄位顯示控制
             // 初始顯示（還沒查 ISBN），查到封面後隱藏
             window.setCoverFieldVisibility = function(hasCover) {
@@ -44,40 +24,35 @@
             };
 
             // ISBN 清空時顯示封面上傳欄位
-            var isbnInput = document.querySelector('input[name="isbn"]');
-            if (isbnInput) {
-                isbnInput.addEventListener('input', function(e) {
-                    if (!e.target.value.trim()) {
-                        // ISBN 被清空，顯示封面上傳欄位
-                        window.setCoverFieldVisibility(false);
-                        // 清空 ISBN 查詢結果
-                        var resultDiv = document.getElementById('isbn-result');
-                        if (resultDiv) resultDiv.innerHTML = '';
-                    }
-                });
-            }
+            document.addEventListener('input', function(e) {
+                if (!e.target.matches || !e.target.matches('input[name="isbn"]')) return;
+                if (e.target.value.trim()) return;
+                window.setCoverFieldVisibility(false);
+                // 清空 ISBN 查詢結果
+                var resultDiv = document.getElementById('isbn-result');
+                if (resultDiv) resultDiv.innerHTML = '';
+            });
 
             // 書況照片預覽
-            var photoInput = document.querySelector('input[name="photos"]');
-            var previewContainer = document.getElementById('photo-preview');
-            if (photoInput && previewContainer) {
-                photoInput.addEventListener('change', function(e) {
-                    previewContainer.innerHTML = '';
-                    var files = Array.from(e.target.files);
-                    files.forEach(function(file) {
-                        if (file.type.startsWith('image/')) {
-                            var reader = new FileReader();
-                            reader.onload = function(event) {
-                                var div = document.createElement('div');
-                                div.className = 'relative';
-                                div.innerHTML = '<img src="' + event.target.result + '" alt="書況照片預覽" class="w-full h-24 object-cover rounded-lg">';
-                                previewContainer.appendChild(div);
-                            };
-                            reader.readAsDataURL(file);
-                        }
-                    });
+            document.addEventListener('change', function(e) {
+                if (!e.target.matches || !e.target.matches('input[name="photos"]')) return;
+                var previewContainer = document.getElementById('photo-preview');
+                if (!previewContainer) return;
+                previewContainer.innerHTML = '';
+                var files = Array.from(e.target.files);
+                files.forEach(function(file) {
+                    if (file.type.startsWith('image/')) {
+                        var reader = new FileReader();
+                        reader.onload = function(event) {
+                            var div = document.createElement('div');
+                            div.className = 'relative';
+                            div.innerHTML = '<img src="' + event.target.result + '" alt="書況照片預覽" class="w-full h-24 object-cover rounded-lg">';
+                            previewContainer.appendChild(div);
+                        };
+                        reader.readAsDataURL(file);
+                    }
                 });
-            }
-        });
+            });
+        })();
     </script>
 {% endblock %}
