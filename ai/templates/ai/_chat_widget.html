@@ -119,8 +119,13 @@ function chatWidget() {
             this.isOpen = !this.isOpen;
             // 聊天視窗打開時，小版讓位給視窗內的大版
             document.documentElement.classList.toggle('mipet-chat-open', this.isOpen);
-            if (this.isOpen && !this.eventSource) {
-                this.connectSSE();
+            if (this.isOpen) {
+                // 打開路徑自己負責捲到底部：回訪使用者的 hello 已被 dedup，
+                // addMessage 的捲動不會觸發（D2）
+                this.$nextTick(() => this.scrollToBottom());
+                if (!this.eventSource) {
+                    this.connectSSE();
+                }
             }
             // 關閉聊天時斷開 SSE，釋放 worker
             if (!this.isOpen && this.eventSource) {
@@ -223,8 +228,6 @@ function chatWidget() {
                         this.addMessage('assistant', data.delta, 'text');
                     } else if (event === 'consent_required') {
                         this.addMessage('assistant', this.formatConsent(data), 'consent', data.token, data.tool);
-                    } else if (event === 'tool_result') {
-                        this.addMessage('assistant', `Tool result: ${data.error ?? data.result}`, 'text');
                     } else if (event === 'done') {
                         this.isTyping = false;
                     }
@@ -312,12 +315,7 @@ function chatWidget() {
             // token 不寫入 localStorage：重新載入後舊 consent 氣泡自然失效
             const toPersist = this.messages.map(({ token: _t, ...rest }) => rest);
             localStorage.setItem('chat_history', JSON.stringify(toPersist));
-            this.$nextTick(() => {
-                const container = this.$refs.messageContainer;
-                if (container) {
-                    container.scrollTop = container.scrollHeight;
-                }
-            });
+            this.$nextTick(() => this.scrollToBottom());
         },
 
         clearHistory() {
@@ -331,10 +329,24 @@ function chatWidget() {
             });
         },
 
+        scrollToBottom() {
+            const container = this.$refs.messageContainer;
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        },
+
         loadHistory() {
-            const history = localStorage.getItem('chat_history');
-            if (history) {
-                this.messages = JSON.parse(history);
+            const raw = localStorage.getItem('chat_history');
+            if (!raw) return;
+            // 損壞的 history（非 JSON / 非陣列）不得拋錯殺掉 bindOpenChat：
+            // 讀不出來就丟棄重新開始
+            try {
+                const parsed = JSON.parse(raw);
+                this.messages = Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                localStorage.removeItem('chat_history');
+                this.messages = [];
             }
         },
 

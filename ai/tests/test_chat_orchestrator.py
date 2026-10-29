@@ -19,6 +19,17 @@ from tests.factories import DealFactory, SharedBookFactory, UserFactory
 pytestmark = pytest.mark.django_db
 
 
+@pytest.fixture(autouse=True)
+def _isolate_conversation_cache():
+    # SQLite 測試庫回滾每個測試，user pk 會重用 1，而 locmem cache 不跨測試
+    # 清除——不清空的話 ai_conv:1 會累積前面測試的 tool fence 造成污染。
+    from django.core.cache import cache
+
+    cache.clear()
+    yield
+    cache.clear()
+
+
 def _run(user, responses):
     """跑完 stream()，回傳 (完整 SSE 文字, transport)。"""
     client, transport = make_client(responses)

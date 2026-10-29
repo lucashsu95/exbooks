@@ -6,7 +6,7 @@ from django.http import JsonResponse, StreamingHttpResponse
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from .services.chat_orchestrator import ChatOrchestrator
+from .services.chat_orchestrator import ChatOrchestrator, _wrap_untrusted
 from .services.consent_store import ConsentStore
 from .services.conversation_cache import ConversationCache
 from .services.tool_registry import ConsentRequirement, ToolRegistry
@@ -75,6 +75,13 @@ class ConsentView(LoginRequiredMixin, View):
         payload = ConsentStore.consume(request.user.id, token)
         if not confirmed:
             logger.info("consent_view cancelled", extra={"user_id": request.user.pk, "action": action})
+            # 拒絕也記進對話紀錄：下一 turn model 知道被拒，不會再重複提出
+            args_desc = payload["args"] if payload else "(unknown)"
+            ConversationCache.add_message(
+                request.user.id,
+                "system",
+                f"User declined to execute action: {action} with args {args_desc}.",
+            )
             return JsonResponse({"status": "cancelled"})
 
         if payload is None:
@@ -95,10 +102,13 @@ class ConsentView(LoginRequiredMixin, View):
         try:
             # 帶著使用者身份執行（ownership 檢查在 tool 內）
             result = tool_def.func(user=request.user, **arguments)
+            # result 含使用者可控書名：持久化紀錄用與 orchestrator 同一個
+            # fence wrapper（#13 一致性）
             ConversationCache.add_message(
                 request.user.id,
                 "system",
-                f"User confirmed and executed action: {action} with args {arguments}. Result: {result}",
+                f"User confirmed and executed action: {action} with args {arguments}. "
+                f"Result: {_wrap_untrusted(str(result))}",
             )
             logger.info("consent_view success", extra={"user_id": request.user.pk, "action": action})
             return JsonResponse({"status": "success", "result": result})

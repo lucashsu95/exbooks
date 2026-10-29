@@ -7,6 +7,17 @@ from unittest.mock import patch
 from ai.services.chat_service import AIResponse
 
 
+@pytest.fixture(autouse=True)
+def _isolate_conversation_cache():
+    # SQLite 測試庫回滾每個測試，user pk 會重用 1，而 locmem cache 不跨測試
+    # 清除——consent/對話紀錄會累積成前面測試的殘留。
+    from django.core.cache import cache
+
+    cache.clear()
+    yield
+    cache.clear()
+
+
 @pytest.mark.django_db
 class TestAIViews:
     def setup_method(self):
