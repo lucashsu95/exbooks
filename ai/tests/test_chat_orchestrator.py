@@ -171,6 +171,10 @@ def test_consent_required_skips_execution():
     assert "request_renewal" in sse
     assert "event: tool_result" not in sse
     assert len(transport.requests) == 1  # 沒有 follow-up
+    # D4a：同輪的中途內容（「我幫你延期」——使用者還沒按確認）不得外洩成
+    # 最終答案；最終答案是 consent 專用 fallback
+    assert "我幫你延期" not in sse
+    assert "我已送出確認請求" in sse
 
 
 def test_consent_required_filters_args_before_storing():
@@ -394,7 +398,9 @@ def test_tool_results_persisted_for_next_turn():
 def test_consent_ends_turn_with_executed_tools():
     """mixed round：同一輪有執行的讀取 tool + consent tool →
     兩幀都發、turn 結束（沒有 continuation call）；
-    但已執行 tool 的結果仍要持久化（fence 進 cache）。"""
+    但已執行 tool 的結果仍要持久化（fence 進 cache）。
+    D4a：同輪的中途內容（「我先看你有哪些書…」——使用者還沒按確認）
+    不得外洩成最終答案，也不得持久化；最終答案是 consent fallback。"""
     from ai.services.conversation_cache import ConversationCache
 
     user = UserFactory()
@@ -413,10 +419,18 @@ def test_consent_ends_turn_with_executed_tools():
     assert "event: tool_result" in sse
     assert "event: consent_required" in sse
     assert len(transport.requests) == 1  # consent 結束 turn
-    assert "我先看你有哪些書" in sse
+    # D4a：中途內容不是最終答案
+    assert "我先看你有哪些書" not in sse
+    assert "我已送出確認請求" in sse
     history = ConversationCache.get_history(user.id)
     contents = [m["content"] for m in history]
     assert any("Tool results" in c and "<<<" in c for c in contents)
+    # turn 的 assistant 尾條是 consent fallback（不是中途內容）
+    assert history[-1] == {
+        "role": "assistant",
+        "content": "我已送出確認請求，請在上方訊息按「確認」或「取消」。",
+    }
+    assert not any("我先看你有哪些書" in c for c in contents)
 
 
 def test_consent_only_empty_content_gets_consent_fallback():
@@ -431,6 +445,68 @@ def test_consent_only_empty_content_gets_consent_fallback():
     assert len(transport.requests) == 1
     assert "我已送出確認請求" in sse
     assert "AI 正在思考中" not in sse
+
+
+def test_nameless_tool_call_round_gets_generic_fallback():
+    """no-feedable 分支：無名的 tool_call 沒有可回灌的結果，turn 直接結束；
+    D4a 同樣適用——同輪的中途內容不得外洩成最終答案。"""
+    user = UserFactory()
+    sse, transport = _run(
+        user,
+        [
+            ChatResponse(
+                content="讓我處理一下。",
+                tool_calls=[
+                    {
+                        "id": "c1",
+                        "type": "function",
+                        "function": {"name": None, "arguments": "{}"},
+                    }
+                ],
+            ),
+        ],
+    )
+    assert len(transport.requests) == 1  # 不燒剩餘 budget
+    assert "讓我處理一下。" not in sse
+    assert "AI 正在思考中" in sse
+    assert "event: done" in sse
+
+
+def test_client_disconnect_mid_stream_still_persists_tool_data():
+    """D4b 契約：client 中途斷線（yield 點收到 GeneratorExit——BaseException，
+    except Exception 接不到）不得丟掉已執行的 tool 資料：cache 至少等於
+    「model 目前為止看到的」（user 訊息 + 已執行輪的 marker/fence），
+    使用者不必重問。"""
+    from ai.services.conversation_cache import ConversationCache
+
+    user = UserFactory()
+    SharedBookFactory(owner=user, official_book__title="Python 高效能程式設計")
+    client, _ = make_client(
+        [
+            ChatResponse(
+                content="", tool_calls=[_call("get_user_books", {"status": "OWNED"})]
+            ),
+            ChatResponse(content="你有 1 本書"),
+        ]
+    )
+    gen = ChatOrchestrator(service=ChatService(client=client)).stream(
+        user=user, message="hi"
+    )
+    # 吃到第一幀（tool_result）：tool 已執行、幀已送出，最終答案還沒出
+    first = next(gen)
+    assert "tool_result" in first
+    gen.close()  # client 斷線：Django 在目前 yield 點丟入 GeneratorExit
+
+    history = ConversationCache.get_history(user.id)
+    contents = [m["content"] for m in history]
+    # tool 資料（fenced）與 marker 已落 cache——不是只剩孤兒 user 訊息
+    fence_entries = [c for c in contents if "<<<" in c]
+    assert len(fence_entries) == 1
+    assert "Python 高效能程式設計" in fence_entries[0]
+    assert any(
+        m["role"] == "assistant" and "[Called tools: get_user_books]" in m["content"]
+        for m in history
+    )
 
 
 def test_unknown_tool_reported_and_fed_back():
