@@ -102,15 +102,76 @@
 // 壓不掉。氣泡是 x-text 純文字渲染（防 XSS 契約），所以不渲染 Markdown，
 // 改在顯示前把記號剥掉。純文字函式：不碰「喵」彩蛋的 ASCII art
 // （無 **/#/>/`/| 開頭）與使用者輸入。
+//
+// 邊界紀律（實測誤傷/漏剝的修復）：
+// 1. 表格行只在「表格」內扁平化——連續 | 行且含 |---| 分隔線的塊；
+//    單立的 |a| = |b|（絕對值式）不是表格，內容不得被改寫。
+// 2. 行首 > 只在「>+空白」時才剝；行首 >>>（REPL/shell 提示）不吃字元。
+// 3. ``` 代碼塊內部不剥反引號/表格/引用（inline-code regex 會把 fence
+//    拆成孤立反引號＋裸露原始碼）；只移除兩條 fence 行。
+// 4. ** 粗體可跨單行換行，但不跨空行段落界（CommonMark 的 emphasis
+//    同樣不跨段）。
+function _stripInlineLine(line) {
+    return line
+        .replace(/^#{1,6}\s+/, '')                     // ### 標題
+        .replace(/^>\s+/, '')                          // > 引用（只 >+空白）
+        .replace(/`([^\n]*)`/g, '$1');                 // `行內代碼`
+}
+
+function _isTableRowish(line) {
+    return /^[ \t]*\|.+\|[ \t]*$/.test(line);
+}
+
+function _isTableSeparatorLine(line) {
+    return /^[ \t]*\|(?:[ \t]*:?-{2,}:?[ \t]*\|)+[ \t]*$/.test(line);
+}
+
+function _flattenTableRow(line) {
+    const body = line.replace(/^[ \t]*\|/, '').replace(/\|[ \t]*$/, '');
+    return body.replace(/[ \t]*\|[ \t]*/g, ' ').trim();
+}
+
 function stripMarkdown(text) {
     if (typeof text !== 'string') return text;
-    return text
-        .replace(/\*\*(.+?)\*\*/g, '$1')                 // **粗體**
-        .replace(/^#{1,6}\s+/gm, '')                     // ### 標題
-        .replace(/^>\s?/gm, '')                          // > 引用
-        .replace(/`([^`\n]*)`/g, '$1')                   // `行內代碼`
-        .replace(/^[ \t]*\|(?:[ \t]*:?-{2,}:?[ \t]*\|)+[ \t]*$/gm, '')  // |---| 表格分隔線
-        .replace(/^[ \t]*\|(.+)\|[ \t]*$/gm, (m, body) => body.replace(/[ \t]*\|[ \t]*/g, ' ').trim()); // | 欄位 | → 欄位
+    // **粗體**：整段處理——跨單行換行、不跨空行段落界
+    text = text.replace(/\*\*((?:(?!\n\n)[\s\S])+?)\*\*/g, '$1');
+    const out = [];
+    let inCode = false;
+    let pending = [];  // 連續 | 行緩衝（表格候選）
+    const flushTable = () => {
+        if (!pending.length) return;
+        // 塊內含分隔線才是表格（扁平化、丟分隔線）；
+        // 否則（如單立的絕對值式）原樣保留
+        if (pending.some(_isTableSeparatorLine)) {
+            for (const line of pending) {
+                if (_isTableSeparatorLine(line)) continue;
+                out.push(_stripInlineLine(_flattenTableRow(line)));
+            }
+        } else {
+            out.push(...pending);
+        }
+        pending = [];
+    };
+    for (const rawLine of text.split('\n')) {
+        if (/^[ \t]*```/.test(rawLine)) {              // ``` fence 行：移除，切換代碼狀態
+            flushTable();
+            inCode = !inCode;
+            continue;
+        }
+        if (inCode) {
+            out.push(rawLine);                          // 代碼塊內部：原樣
+            continue;
+        }
+        const line = _stripInlineLine(rawLine);
+        if (_isTableRowish(line)) {
+            pending.push(line);
+            continue;
+        }
+        flushTable();
+        out.push(line);
+    }
+    flushTable();
+    return out.join('\n');
 }
 
 function chatWidget() {

@@ -53,7 +53,7 @@ def _run_node_strip(script: str, cases: list[tuple[str, str]]) -> subprocess.Com
         "    }\n"
         "}\n"
     )
-    fd, js_path = tempfile.mkstemp(suffix=".js", encoding="utf-8")
+    fd, js_path = tempfile.mkstemp(suffix=".js")
     with os.fdopen(fd, "w", encoding="utf-8") as f:
         f.write(script)
         f.write("\n")
