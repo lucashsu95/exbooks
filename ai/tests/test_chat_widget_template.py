@@ -80,3 +80,25 @@ class ChatWidgetTemplateTests(TestCase):
         self.assertGreaterEqual(
             html.count("localStorage.removeItem('chat_history')"), 2
         )
+
+    def test_widget_strips_markdown_markers(self):
+        """契約 pin（D3）：LLM 文字氣泡進 addMessage 前須剥掉 Markdown 記號。
+
+        5 輪真實 LLM 量測：BIRC-LLM 每個清單型答案都帶 ** 粗體段標，
+        prompt-only（規則／負例／few-shot 共 5 版）都無法壓掉。
+        氣泡維持 x-text 純文字渲染（防 XSS 契約不變、零新依賴），
+        所以改在 client 端 strip 記號。
+        """
+        user = UserFactory()
+        self.client.force_login(user)
+
+        response = self.client.get("/books/")
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+
+        self.assertIn("function stripMarkdown(text)", html)
+        # 只對 assistant 文字訊息套用（使用者輸入與 consent 氣泡不碰）
+        self.assertIn("content = stripMarkdown(content)", html)
+        # 渲染契約保持：仍是 x-text 純文字，沒有 x-html
+        self.assertIn('x-text="msg.content"', html)
+        self.assertNotIn("x-html", html)
