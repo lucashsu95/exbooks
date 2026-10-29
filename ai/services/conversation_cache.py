@@ -37,18 +37,22 @@ class ConversationCache:
         return history if history is not None else []
 
     @classmethod
-    def add_message(cls, user_id: Any, role: str, content: str) -> None:
-        """Add a new message to the history and enforce length limits."""
+    def add_messages(cls, user_id: Any, messages: List[Dict[str, str]]) -> None:
+        """Append a batch of messages, then trim and refresh TTL (single source)."""
+        if not messages:
+            return
         key = cls._get_key(user_id)
         history = cls.get_history(user_id)
 
-        history.append({"role": role, "content": content})
+        history.extend(messages)
 
         # Keep only the last MAX_MESSAGES
-        if len(history) > cls.MAX_MESSAGES:
-            history = history[-cls.MAX_MESSAGES :]
+        cache.set(key, history[-cls.MAX_MESSAGES :], cls.TTL)
 
-        cache.set(key, history, cls.TTL)
+    @classmethod
+    def add_message(cls, user_id: Any, role: str, content: str) -> None:
+        """Add a new message to the history and enforce length limits."""
+        cls.add_messages(user_id, [{"role": role, "content": content}])
 
     @classmethod
     def clear_history(cls, user_id: Any) -> None:
