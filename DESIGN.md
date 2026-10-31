@@ -139,16 +139,32 @@ Tailwind opacity class 會套用於上述基礎色，現況包括：
 
 ### MeDou 像素寵物
 
-來源：[`static/css/pixel-pet.css`](./static/css/pixel-pet.css)
+來源：[`static/js/pixel-pet.js`](./static/js/pixel-pet.js)、[`static/css/pixel-pet.css`](./static/css/pixel-pet.css)、精靈圖 [`static/img/medou/medou-sheet.png`](./static/img/medou/medou-sheet.png)
 
-| CSS variable | 淺色值 | dark 值 | 用途 |
+米豆是點陣圖精靈，不再由 CSS 變數上色：白色口鼻／胸毛在深色模式也維持白色，深色模式只對浮動小版加一圈淡白 `drop-shadow` 勾邊（聊天 header 的大版固定白底，不加）。精靈圖是一張水平排列的索引色 PNG，每格 48×48 px、共 10 格；顯示尺寸必須是 48 的整數倍（目前浮動小版與聊天 header 都是 48 px，`image-rendering: pixelated`），用 `background-position` 切換影格，JS 只在影格真的改變時寫入 `--mipet-frame`。
+
+| 影格 | 狀態 | 來源 | 說明 |
 |---|---|---|---|
-| `--mipet-body` | `#14B8A6` | `#14B8A6` | 身體 |
-| `--mipet-cheek` | `#06B6D4` | `#22D3EE` | 臉頰 |
-| `--mipet-muzzle` | `#F0FDFA` | `#134E4A` | 口鼻 |
-| `--mipet-eye` | `#134E4A` | `#0F172A` | 眼睛 |
-| `--mipet-muted` | `#64748B` | `#94A3B8` | 陰影、狀態文字 |
-| `--mipet-fg` | `#0F172A` | `#E2E8F0` | 名稱與前景文字 |
+| 0 / 1 | `idle` | s0 / s0 衍生 | 正面坐姿；偶爾眨眼（衍生影格：閉眼） |
+| 2 | `thinking` | s1 | 歪頭、手托下巴、「?」 |
+| 3 / 4 | `talking` | s2 / s2 衍生 | 側身張嘴、「…」對話框；`MiPet.pulse()` 帶動開合，最後一次 pulse 後約 600 ms 闔嘴（衍生影格：閉嘴） |
+| 5 | `error` | s3 | >< 眼、紅色「!」、汗滴；2.5 秒後回 `idle` |
+| 6 | `sleep` | s4 | 趴睡、Zzz；60 秒無互動自動進入 |
+| 7 | `hover` | s5 | 眨眼＋游標；只在 `idle` / `sleep` 時滑鼠移入或鍵盤聚焦浮動小版才觸發（其他狀態不打斷），離開後回 `idle` |
+| 8 | `notify` | s6 | 側眼、黃色閃光；4 秒後回 `idle` |
+| 9 | `cheer` | s7 | ^^ 眼、舉手、星星；`MiPet.cheer()`，約 2.4 秒後回 `idle` |
+
+`thinking` / `talking` 30 秒內沒有新的 `setState` 或 `pulse` 會自動回 `idle`。`hover` 是內部狀態：只能由小版的 `mouseenter`/`focus` 進入、`mouseleave`/`blur` 離開，`MiPet.setState('hover')` 會被忽略（外部設定沒有回程）；聊天視窗開關（`html.mipet-chat-open` 變化或 `MiPet.setChatOpen`）、視窗失焦、分頁切走時一律強制離開 `hover`，因為小版被隱藏後不一定收得到 `mouseleave`。聊天 header 的狀態文字（`aria-live`）初始值直接寫在 markup，不在載入時朗讀，之後狀態改變才更新。`prefers-reduced-motion: reduce` 時（即時監聽）停止計時器、每個狀態只畫上表第一張影格、不跳動。
+
+| CSS variable | 預設 | 用途 |
+|---|---|---|
+| `--mipet-bottom` | `4rem + 1.5rem + safe-area`（墊在 bottom nav 上方）；頁面沒有 `#bottom-nav` 時 JS 在 `<html>` 加 `.mipet-no-nav`，改為 `1.5rem + safe-area` | 浮動小版離底部距離；不依賴 `:has()`。交易詳情頁由 action bar 的 `ResizeObserver` 以 inline style 改寫 |
+| `--mipet-focus` | `#14B8A6`（= `primary`） | 浮動小版鍵盤焦點框 |
+| `--mipet-scale` | `1` | 顯示倍率（整數），精靈尺寸 = 48 px × 倍率 |
+| `--mipet-muted` | `#64748B` / dark `#94A3B8` | 地面陰影、狀態文字 |
+| `--mipet-fg` | `#0F172A` / dark `#E2E8F0` | 名稱文字（聊天 header 固定白底，走淺色值） |
+
+**重新產生精靈圖**：原始參考圖（業主核可）放在 `docs/assets/medou/s0.png … s7.png`，執行 `uv run python scripts/medou/build_sprites.py`（加 `--preview` 另存 10× 預覽到 `/tmp`）。腳本會自動偵測放大倍率、取每格中心色並量化到 10 色色盤、從邊緣 flood fill 去掉白底／淺灰暈邊／地影、補出眨眼與閉嘴兩張衍生影格，最後底部對齊輸出精靈圖。影格順序寫在腳本的 `FRAME_ORDER`，與 `pixel-pet.js` 的 `FRAME` 對照表必須一致；來源檔清單由 `FRAME_ORDER` 推出。輸出單格必須是 `FRAME_PX`＝48 px（= `--mipet-frame-px`），尺寸改變時腳本會直接失敗，避免精靈圖與 CSS 切格錯位。
 
 ## 4. 登入入口與錯誤頁
 

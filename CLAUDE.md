@@ -45,7 +45,7 @@ Django apps：`accounts`（會員、信任分數、違規／申訴）、`books`�
   - 每次轉換由 `exchange_event_service` 寫入 ExchangeEvent 審計紀錄。
 - **權限**：物件層級權限用 `rules`（如 `deals/rules.py` 的 predicates）；信用等級（TrustLevel 0–3）影響可借冊數、借期與編輯權限。
 - **AI**：`ai/services/chat_orchestrator.py` 負責一輪對話（tool 呼叫迴圈、發出 consent 請求、follow-up 呼叫、history 寫入）並集中定義時間預算（turn deadline、單次 LLM 上限、用戶端逾時；鎖 TTL 與 widget 逾時皆由此推導），tools 註冊在 `tool_registry.py`（可預期錯誤 raise `ToolError`，訊息會回灌模型；其他例外只進 log），以 SSE 串流回前端。使用者按下確認／取消後的執行與紀錄由 `consent_service.py` 處理；`turn_guard.py` 負責每位使用者的 in-flight 鎖與每分鐘限流（依賴共享 cache，Redis 不可用退回 LocMemCache 時會變成 per-process）；`fencing.py` 把 tool 結果等 untrusted 資料包成 fence 再回灌／持久化。LLM 經 `sdk/python` 的 `ai-client` 套件（本地 path 依賴）呼叫 vLLM 的 OpenAI 相容端點；provider 透過 `AIClient` / `Transport` seam 注入（生產 `RequestsTransport`，測試用 scripted transport）。未設定 `VLLM_API_KEY` 時走 mock 回應。
-- **前端寵物**：全站像素寵物「米豆 MeDou」在 `static/js/pixel-pet.js` + `static/css/pixel-pet.css`，由 `templates/base.html` 載入；精靈圖是 JS 內嵌 SVG 產生，不是讀 PNG。
+- **前端寵物**：全站像素寵物「米豆 MeDou」在 `static/js/pixel-pet.js` + `static/css/pixel-pet.css`，由 `templates/base.html` 載入；精靈圖讀 `static/img/medou/medou-sheet.png`（由 `scripts/medou/build_sprites.py` 從 `docs/assets/medou/` 參考圖產生）。
 
 ## 測試結構
 
