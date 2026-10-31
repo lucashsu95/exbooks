@@ -48,6 +48,9 @@ server {
     location /media/ {
         alias /app/media/;
         expires 7d;
+        # 使用者上傳內容：禁止 MIME sniffing，且以 sandbox 執行，避免同源 XSS
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Content-Security-Policy "sandbox; default-src 'none'; img-src 'self'" always;
     }
 
     # 登入相關端點限速
