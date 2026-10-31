@@ -101,29 +101,20 @@
                             }
 
                             // 檢查是否已登入（透過檢查是否有登入後才有的元素）
-                            {
-                                %
-                                if user.is_authenticated %
-                            }
+                            {% if user.is_authenticated %}
                             // 延遲初始化 Push，避免在頁面載入時立即發送請求
                             // 這可以減少並發請求對 SQLite 的壓力
                             setTimeout(async () => {
                                 await initPushNotifications(registration);
                             }, 1000);
-                            {
-                                %
-                                endif %
-                            }
+                            {% endif %}
                         } catch (error) {
                             console.log('[PWA] Service Worker 註冊失敗:', error);
                         }
                     });
                 }
 
-                {
-                    %
-                    if user.is_authenticated %
-                }
+                {% if user.is_authenticated %}
                 async function initPushNotifications(registration) {
                     try {
                         // 取得 VAPID 公開金鑰（帶重試機制）
@@ -225,10 +216,8 @@
                         outputArray[i] = rawData.charCodeAt(i);
                     }
                     return outputArray;
-                } {
-                    %
-                    endif %
                 }
+                {% endif %}
             })();
         </script>
         <!-- 給好奇的開發者：打開 console 看看有什麼驚喜 ✨ -->
