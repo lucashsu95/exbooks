@@ -56,6 +56,14 @@ class SharedBookViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("Only the owner can update this book.")
         serializer.save()
 
+    def perform_destroy(self, instance):
+        # 與 Web 端 book_delete 一致：僅 owner 可刪除
+        if instance.owner != self.request.user:
+            from rest_framework.exceptions import PermissionDenied
+
+            raise PermissionDenied("Only the owner can delete this book.")
+        instance.delete()
+
     @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
     def list_for_transfer(self, request, pk=None):
         """

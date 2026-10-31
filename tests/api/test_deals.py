@@ -187,9 +187,8 @@ class TestDealCreateApplicantIdentity:
             {
                 "shared_book": book.id,
                 "deal_type": deal_type,
-                # 註：serializer 要求 applicant/responder 欄位存在，
-                # 但 viewset 忽略兩欄（applicant 恆為 request.user、
-                # responder 由 service 自動判定）——安全邊界在 service 端。
+                # 註：applicant/responder 為唯讀欄位，送了也會被忽略
+                # （applicant 恆為 request.user、responder 由 service 判定）。
                 "applicant": user.id,
                 "responder": self.owner.id,
             },
