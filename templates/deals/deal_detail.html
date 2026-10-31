@@ -345,18 +345,19 @@
 {% endblock %}
 {% block extra_js %}
     <script>
-        // 底部有固定 action bar（z-60）的頁面，把米豆小版撐高到 bar 上方，避免被「切到」
+        // 底部有固定 action bar（z-60）的頁面，把米豆小版撐高到 bar 上方，避免被「切到」：
+        // 只設定 pixel-pet.css 的 --mipet-bottom，bar 尺寸變動（換行、展開）時重算
         (function () {
             var bar = document.getElementById('deal-action-bar');
             var pet = document.querySelector('.mipet-float');
             if (!bar || !pet) return;
             function place() {
                 var top = bar.getBoundingClientRect().top;
-                pet.style.bottom = Math.max(0, window.innerHeight - top + 12) + 'px';
+                pet.style.setProperty('--mipet-bottom', Math.max(0, window.innerHeight - top + 12) + 'px');
             }
             place();
+            if (window.ResizeObserver) new ResizeObserver(place).observe(bar);
             window.addEventListener('resize', place);
-            window.addEventListener('orientationchange', place);
         })();
     </script>
 {% endblock %}

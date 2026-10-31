@@ -1,29 +1,29 @@
-/* 米豆 MeDou 像素小寵物 — 顏色（品牌色）與外殼樣式，由 pixel-pet.js 使用 */
+/* 米豆 MeDou 像素小寵物 — 外殼與精靈圖樣式，由 pixel-pet.js 使用。
+   精靈圖：static/img/medou/medou-sheet.png（scripts/medou/build_sprites.py 產生），
+   10 格 × 48×48，顯示尺寸必須是 48 的整數倍，像素才會整齊。 */
 
 :root {
-  --mipet-outline: #0f766e;
-  --mipet-body: #14b8a6;
-  --mipet-cheek: #06b6d4;
-  --mipet-muzzle: #f0fdfa;
-  --mipet-eye: #134e4a;
+  --mipet-frame-px: 48px;  /* 精靈圖單格原始尺寸 */
+  --mipet-frames: 10;      /* 精靈圖格數 */
   --mipet-muted: #64748b;
   --mipet-fg: #0f172a;
+  /* 浮動小版離底部的距離：預設貼右下角；有 bottom nav 時改由下方規則墊高；
+     特殊頁面（如交易詳情的 action bar）可在 .mipet-float 上覆寫 */
+  --mipet-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+}
+html:has(#bottom-nav) {
+  --mipet-bottom: calc(4rem + 1.5rem + env(safe-area-inset-bottom, 0px));
 }
 .dark {
-  --mipet-outline: #0f766e;
-  --mipet-body: #14b8a6;
-  --mipet-cheek: #22d3ee;
-  --mipet-muzzle: #134e4a;
-  --mipet-eye: #0f172a;
   --mipet-muted: #94a3b8;
   --mipet-fg: #e2e8f0;
 }
 
-/* 全站右下角浮動小版：浮在 bottom nav（h-16 + safe-area）上方 */
+/* 全站右下角浮動小版 */
 .mipet-float {
   position: fixed;
   right: max(1.5rem, env(safe-area-inset-right, 0px));
-  bottom: calc(4rem + 1.5rem + env(safe-area-inset-bottom, 0px));
+  bottom: var(--mipet-bottom);
   z-index: 40;
   pointer-events: none;
 }
@@ -32,24 +32,28 @@
   display: none;
 }
 
-
-
 .mipet {
   position: relative;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  --mipet-scale: 1;
+  --mipet-px: calc(var(--mipet-frame-px) * var(--mipet-scale));
 }
 .mipet--small {
   flex-direction: column;
-  width: 44px;
+  justify-content: center;
+  /* 觸控目標 ≥ 48px：精靈 48px，外加一圈 4px 點擊範圍 */
+  min-width: 56px;
+  min-height: 56px;
   pointer-events: auto;
   cursor: pointer;
+  border-radius: 12px;
+  -webkit-tap-highlight-color: transparent;
 }
 .mipet--small:focus-visible {
-  outline: 2px solid var(--mipet-body);
-  outline-offset: 2px;
-  border-radius: 4px;
+  outline: 2px solid #14b8a6;
+  outline-offset: 0;
 }
 .mipet--large {
   flex-direction: row;
@@ -60,42 +64,37 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 100%;
-}
-.mipet--large .mipet-col {
-  width: 48px;
   flex: none;
+}
+/* 地面陰影（原圖的灰色地影已在建置時去掉，這裡用 CSS 補一個不分深淺色都看得到的） */
+.mipet-col::after {
+  content: "";
+  width: calc(var(--mipet-px) * 0.6);
+  height: calc(var(--mipet-px) / 12);
+  margin-top: calc(var(--mipet-px) / -24);
+  border-radius: 50%;
+  background: var(--mipet-muted);
+  opacity: 0.18;
 }
 
 .mipet-sprite {
-  line-height: 0;
+  --mipet-frame: 0;
+  position: relative;
+  z-index: 1;
+  width: var(--mipet-px);
+  height: var(--mipet-px);
+  background-image: url("../img/medou/medou-sheet.png");
+  background-repeat: no-repeat;
+  background-size: calc(var(--mipet-px) * var(--mipet-frames)) var(--mipet-px);
+  background-position: calc(var(--mipet-px) * var(--mipet-frame) * -1) 0;
+  image-rendering: pixelated;
 }
-.mipet-sprite svg {
-  width: 100%;
-  height: auto;
-  display: block;
-  shape-rendering: crispEdges;
-}
-.mipet[data-state="error"] .mipet-sprite svg {
-  filter: saturate(0.45) brightness(0.9);
-}
-
-.mipet-shadow {
-  width: 20px;
-  height: 4px;
-  margin-top: 1px;
-  background: var(--mipet-muted);
-  opacity: 0.14;
-  border-radius: 50%;
-  transition: transform 0.12s, opacity 0.12s;
+/* 深色背景上描邊會吃進底色：加一圈淡淡的亮光勾邊，不重新上色（白色口鼻、胸毛維持原色） */
+.dark .mipet-float .mipet-sprite {
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.55)) drop-shadow(0 0 2px rgba(255, 255, 255, 0.15));
 }
 
-/* 聊天視窗大版：widget 版面永遠是淺色底，文字顏色固定走淺色值 */
-.mipet-large-bar {
-  --mipet-fg: #0f172a;
-  --mipet-muted: #64748b;
-}
-/* 聊天視窗 header 大版：白底，文字走深色系 */
+/* 聊天視窗 header 大版：widget 永遠是白底，文字固定走深色值 */
 .mipet-header-bar {
   --mipet-fg: #0f172a;
   --mipet-muted: #64748b;
@@ -118,80 +117,27 @@
   color: var(--mipet-muted);
 }
 
-/* 思考泡泡：三顆小像素沿著往上飄 */
-.mipet-thought {
-  position: absolute;
-  top: 2px;
-  right: calc(100% + 4px);
-  width: 13px;
-  height: 30px;
-  visibility: hidden;
-  pointer-events: none;
+/* 動態（全部在減少動態時關閉）：
+   - cheer / 逗逗：跳一下
+   - sleep：慢慢呼吸 */
+.mipet--hop .mipet-sprite {
+  animation: mipet-hop 0.6s steps(3) 2;
 }
-.mipet[data-state="thinking"] .mipet-thought {
-  visibility: visible;
+@keyframes mipet-hop {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(calc(var(--mipet-px) / -12)); }
 }
-.mipet-thought i {
-  position: absolute;
-  width: 5px;
-  height: 5px;
-  background: var(--mipet-muted);
-  left: 0;
-  bottom: 0;
-  animation: mipet-rise 1.5s steps(4) infinite;
+.mipet[data-state="sleep"] .mipet-sprite {
+  animation: mipet-breathe 3s steps(2) infinite;
 }
-.mipet-thought i:nth-child(2) {
-  left: 4px;
-  bottom: 5px;
-  animation-delay: 0.45s;
-}
-.mipet-thought i:nth-child(3) {
-  left: 8px;
-  bottom: 10px;
-  animation-delay: 0.9s;
-}
-@keyframes mipet-rise {
-  0% { opacity: 0; }
-  30% { opacity: 0.4; }
-  60% { opacity: 0.9; }
-  100% { opacity: 0; bottom: 24px; }
+@keyframes mipet-breathe {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(calc(var(--mipet-px) / 48)); }
 }
 
-/* 睡覺時頭上飄像素 z z z */
-.mipet-zzz {
-  position: absolute;
-  top: 0;
-  right: calc(100% + 2px);
-  width: 14px;
-  height: 30px;
-  display: none;
-  pointer-events: none;
-}
-.mipet[data-state="sleep"] .mipet-zzz {
-  display: block;
-}
-.mipet-zzz span {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  font: 700 8px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
-  color: var(--mipet-muted);
-  animation: mipet-rise 2.2s steps(4) infinite;
-}
-.mipet-zzz span:nth-child(2) {
-  animation-delay: 0.7s;
-}
-.mipet-zzz span:nth-child(3) {
-  font-size: 10px;
-  animation-delay: 1.4s;
-}
-
-/* 減少動態：shared.css 把動畫壓成 0.01ms 會讓氣泡停在 opacity:0，
-   小版又沒有狀態文字，所以改成靜態顯示，保住「思考／睡覺」的提示 */
 @media (prefers-reduced-motion: reduce) {
-  .mipet-thought i,
-  .mipet-zzz span {
+  .mipet-sprite {
     animation: none !important;
-    opacity: 0.9;
+    transform: none !important;
   }
 }
