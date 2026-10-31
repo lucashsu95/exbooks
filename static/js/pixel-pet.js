@@ -7,7 +7,8 @@
  * 只有影格真的變了才寫 DOM。
  *
  * 公開 API（window.MiPet）：
- *   setState(s)       idle | thinking | talking | error | sleep | hover | notify | cheer
+ *   setState(s)       idle | thinking | talking | error | sleep | notify | cheer
+ *                     （hover 只由滑鼠移入／鍵盤聚焦浮動小版觸發，外部傳 'hover' 會被忽略）
  *   cheer()           慶祝一下（s7），結束後回 idle
  *   pulse()           串流每收到一段 delta 呼叫一次：切到 talking 並讓嘴巴開合，
  *                     最後一次 pulse 後約 600ms 闔嘴
@@ -29,20 +30,20 @@
   };
 
   // 精靈圖影格索引（順序見 build_sprites.py 的 FRAME_ORDER）
-  const F = {
+  const FRAME = {
     idle: 0, blink: 1, thinking: 2, talking: 3, talkingShut: 4,
     error: 5, sleep: 6, hover: 7, notify: 8, cheer: 9,
   };
   // 各狀態的代表影格（減少動態時只畫這張）
-  const REP = {
-    idle: F.idle,
-    thinking: F.thinking,
-    talking: F.talking,
-    error: F.error,
-    sleep: F.sleep,
-    hover: F.hover,
-    notify: F.notify,
-    cheer: F.cheer,
+  const STATE_FRAME = {
+    idle: FRAME.idle,
+    thinking: FRAME.thinking,
+    talking: FRAME.talking,
+    error: FRAME.error,
+    sleep: FRAME.sleep,
+    hover: FRAME.hover,
+    notify: FRAME.notify,
+    cheer: FRAME.cheer,
   };
   const LABEL = {
     idle: '閒置中',
@@ -60,7 +61,7 @@
   let reduce = motionQuery.matches;
 
   let state = 'idle';
-  let t = 0;
+  let tick = 0;            // 進入目前狀態後經過的 tick 數
   let blinkAt = 0;          // 下一次眨眼的 tick
   let lastPulse = 0;        // 最近一次 pulse() 的時間；0 表示這輪 talking 沒有 pulse
   let hovered = false;      // 滑鼠／焦點在小版上
@@ -79,21 +80,21 @@
   const smallLabel = () => NAME + (openChatHandler ? '，點擊開啟 AI 聊天' : '，點擊逗逗我');
 
   function scheduleBlink() {
-    blinkAt = t + 10 + Math.floor(Math.random() * 14); // 約 3–7 秒眨一次
+    blinkAt = tick + 10 + Math.floor(Math.random() * 14); // 約 3–7 秒眨一次
   }
 
   function currentFrame() {
-    if (reduce) return REP[state];
-    if (state === 'idle') return t === blinkAt ? F.blink : F.idle;
+    if (reduce) return STATE_FRAME[state];
+    if (state === 'idle') return tick === blinkAt ? FRAME.blink : FRAME.idle;
     if (state === 'talking') {
       if (lastPulse) {
         // 跟著串流：最近有 delta 就開合，停下來就闔嘴
-        if (Date.now() - lastPulse > config.mouthCloseMs) return F.talkingShut;
-        return t % 2 === 0 ? F.talking : F.talkingShut;
+        if (Date.now() - lastPulse > config.mouthCloseMs) return FRAME.talkingShut;
+        return tick % 2 === 0 ? FRAME.talking : FRAME.talkingShut;
       }
-      return t % 4 < 2 ? F.talking : F.talkingShut;
+      return tick % 4 < 2 ? FRAME.talking : FRAME.talkingShut;
     }
-    return REP[state];
+    return STATE_FRAME[state];
   }
 
   function render() {
@@ -139,7 +140,7 @@
     if (s === 'thinking' || s === 'talking') armBusy();
     if (s === state) return;
     state = s;
-    t = 0;
+    tick = 0;
     scheduleBlink();
     backTimer = clearTimer(backTimer);
     if (s !== 'thinking' && s !== 'talking') busyTimer = clearTimer(busyTimer);
@@ -178,7 +179,7 @@
     if (state !== 'talking') setState('talking');
     armBusy();
     lastPulse = Date.now();
-    t -= t % 2; // 每個 delta 都先張嘴（偶數 tick = 張嘴），下一個 tick 闔上
+    tick -= tick % 2; // 每個 delta 都先張嘴（偶數 tick = 張嘴），下一個 tick 闔上
     render();
   }
 
@@ -187,9 +188,9 @@
     cheer();
   }
 
-  function tick() {
-    t++;
-    if (state === 'idle' && t > blinkAt + 1) scheduleBlink();
+  function onTick() {
+    tick++;
+    if (state === 'idle' && tick > blinkAt + 1) scheduleBlink();
     render();
   }
 
@@ -198,7 +199,7 @@
   }
 
   function startTick() {
-    if (!timer && !reduce && !document.hidden) timer = setInterval(tick, config.tickMs);
+    if (!timer && !reduce && !document.hidden) timer = setInterval(onTick, config.tickMs);
   }
 
   function onActivity() {
@@ -214,6 +215,7 @@
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       stopTick();
+      resetHover();
     } else {
       startTick();
       onActivity();
@@ -248,6 +250,15 @@
     if (state === 'hover') setState(hoverBack);
   }
 
+  // 強制離開 hover：小版被隱藏（聊天視窗開啟）、視窗失焦或分頁切走時，
+  // mouseleave / blur 不一定會觸發，不重設的話 hovered 會卡住（不會睡著、
+  // 狀態結束後又回到 hover，聊天 header 的大版也會顯示「點我」影格）
+  function resetHover() {
+    hovered = false;
+    if (state === 'hover') setState(hoverBack);
+  }
+  window.addEventListener('blur', resetHover);
+
   function syncExpanded() {
     for (const r of roots) {
       if (!r.small) continue;
@@ -281,7 +292,7 @@
       '</div>' +
       (large
         ? '<div class="mipet-meta"><div class="mipet-name">' + NAME + '</div>' +
-          '<div class="mipet-status" role="status" aria-live="polite"></div></div>'
+          '<div class="mipet-status" role="status" aria-live="polite">' + LABEL[state] + '</div></div>'
         : '');
     if (!large) {
       box.setAttribute('role', 'button');
@@ -307,13 +318,17 @@
       status: large ? box.querySelector('.mipet-status') : null,
       small: !large,
       frame: -1,
-      state: null,
+      // 初始狀態文字已寫在 markup 裡，不經 aria-live 朗讀；之後狀態改變才更新
+      state,
     });
   }
 
   function init() {
     const els = document.querySelectorAll('[data-mipet-root]');
     for (const el of els) buildRoot(el);
+    // 沒有 bottom nav 的頁面（未登入、建立／上傳等全螢幕表單）把浮動小版放低，
+    // 預設值則保留 bottom nav 上方的安全距離（見 pixel-pet.css 的 --mipet-bottom）
+    if (!document.getElementById('bottom-nav')) document.documentElement.classList.add('mipet-no-nav');
     chatOpen = document.documentElement.classList.contains('mipet-chat-open');
     resolveControls();
     syncExpanded();
@@ -323,6 +338,7 @@
       if (open !== chatOpen) {
         chatOpen = open;
         syncExpanded();
+        resetHover();
       }
     }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     scheduleBlink();
@@ -338,7 +354,9 @@
   }
 
   window.MiPet = {
-    setState(s) { setState(s); },
+    // hover 只能由小版的滑鼠／焦點事件進出；外部設定 hover 沒有回程（沒有 backTimer、
+    // 不會 armSleep），所以直接忽略
+    setState(s) { if (s !== 'hover') setState(s); },
     cheer() { cheer(); },
     pulse() { pulse(); },
     bindOpenChat(fn, opts) {
@@ -353,6 +371,7 @@
     setChatOpen(open) {
       chatOpen = !!open;
       syncExpanded();
+      resetHover();
     },
     get state() { return state; },
   };

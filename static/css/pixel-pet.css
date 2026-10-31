@@ -7,12 +7,14 @@
   --mipet-frames: 10;      /* 精靈圖格數 */
   --mipet-muted: #64748b;
   --mipet-fg: #0f172a;
-  /* 浮動小版離底部的距離：預設貼右下角；有 bottom nav 時改由下方規則墊高；
-     特殊頁面（如交易詳情的 action bar）可在 .mipet-float 上覆寫 */
-  --mipet-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
-}
-html:has(#bottom-nav) {
+  --mipet-focus: #14b8a6;  /* 鍵盤焦點框，對齊 tailwind-config.js 的 primary */
+  /* 浮動小版離底部的距離：預設墊在 bottom nav（h-16）上方，確保任何瀏覽器都不會蓋住導覽列；
+     pixel-pet.js 偵測到頁面沒有 #bottom-nav 時在 <html> 加 .mipet-no-nav 放低。
+     特殊頁面（如交易詳情的 action bar）可在 .mipet-float 上以 inline style 覆寫 */
   --mipet-bottom: calc(4rem + 1.5rem + env(safe-area-inset-bottom, 0px));
+}
+.mipet-no-nav {
+  --mipet-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
 }
 .dark {
   --mipet-muted: #94a3b8;
@@ -52,7 +54,7 @@ html:has(#bottom-nav) {
   -webkit-tap-highlight-color: transparent;
 }
 .mipet--small:focus-visible {
-  outline: 2px solid #14b8a6;
+  outline: 2px solid var(--mipet-focus);
   outline-offset: 0;
 }
 .mipet--large {
