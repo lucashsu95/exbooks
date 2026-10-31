@@ -9,7 +9,8 @@
     uv run python scripts/medou/build_sprites.py            # 產生精靈圖
     uv run python scripts/medou/build_sprites.py --preview  # 另存 10× 預覽到 /tmp
 
-影格順序（pixel-pet.js 的 FRAMES 依此索引，改動時兩邊要一起改）：
+影格順序（pixel-pet.js 的 FRAME 對照表依此索引，改動時兩邊要一起改；
+輸出單格必須是 FRAME_PX＝48px，與 pixel-pet.css 的 --mipet-frame-px 一致）：
 
     0 idle        s0 正面坐姿
     1 idle-blink  s0 衍生：閉眼
@@ -30,6 +31,7 @@ from __future__ import annotations
 import argparse
 import math
 from collections import Counter
+from collections.abc import Callable
 from pathlib import Path
 
 from PIL import Image
@@ -55,9 +57,11 @@ PALETTE = {
 BACKGROUND = {"w", "g"}
 TRANSPARENT = "."
 
-# 來源檔 → 狀態；衍生影格在 build() 裡處理
-SOURCES = ["s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7"]
-FRAME_ORDER = [
+# 輸出單格尺寸，必須等於 pixel-pet.css 的 --mipet-frame-px
+FRAME_PX = 48
+
+# （狀態, 來源檔, 衍生操作）；衍生影格在 build() 裡處理
+FRAME_ORDER: list[tuple[str, str, str | None]] = [
     ("idle", "s0", None),
     ("idle-blink", "s0", "blink"),
     ("thinking", "s1", None),
@@ -69,33 +73,38 @@ FRAME_ORDER = [
     ("notify", "s6", None),
     ("cheer", "s7", None),
 ]
+# 來源檔清單由 FRAME_ORDER 推出（保留順序、去重），避免兩處各寫一份
+SOURCES = list(dict.fromkeys(src for _, src, _ in FRAME_ORDER))
 
 
 def detect_pitch(img: Image.Image) -> tuple[int, int, int]:
-    """偵測放大倍率（一個像素畫格子幾 px）與格線起點。
+    """偵測放大倍率（一個像素畫格子幾 px）與 x、y 方向的格線起點。
 
     逐列／逐行找顏色變化的位置，相鄰變化的間距取最大公因數就是格寬；
-    起點取變化位置對格寬的餘數眾數。
+    起點取變化位置對格寬的餘數眾數，水平（x）與垂直（y）各自計算。
+
+    回傳 (pitch, origin_x, origin_y)。
     """
     w, h = img.size
     px = img.load()
 
-    def runs(length, get):
-        edges = [i for i in range(1, length) if get(i) != get(i - 1)]
-        return edges
+    def edge_positions(length: int, get: Callable[[int], object]) -> list[int]:
+        """沿一條掃描線回傳顏色改變的位置（該位置與前一個像素不同色）。"""
+        return [i for i in range(1, length) if get(i) != get(i - 1)]
 
     gaps: Counter[int] = Counter()
-    offsets: Counter[int] = Counter()
+    x_edges: Counter[int] = Counter()
+    y_edges: Counter[int] = Counter()
     for y in range(0, h, max(1, h // 64)):
-        edges = runs(w, lambda x, y=y: px[x, y])
+        edges = edge_positions(w, lambda x, y=y: px[x, y])
         for a, b in zip(edges, edges[1:], strict=False):
             gaps[b - a] += 1
-        offsets.update(edges)
+        x_edges.update(edges)
     for x in range(0, w, max(1, w // 64)):
-        edges = runs(h, lambda y, x=x: px[x, y])
+        edges = edge_positions(h, lambda y, x=x: px[x, y])
         for a, b in zip(edges, edges[1:], strict=False):
             gaps[b - a] += 1
-        offsets.update(edges)
+        y_edges.update(edges)
 
     # 只看常見的間距，避免偶發雜訊把 gcd 拉成 1
     common = [g for g, n in gaps.most_common(8) if g > 1]
@@ -104,11 +113,14 @@ def detect_pitch(img: Image.Image) -> tuple[int, int, int]:
         pitch = math.gcd(pitch, g)
     if pitch < 2:
         raise SystemExit("偵測不到像素格，來源圖可能不是整數倍放大")
-    off = Counter({k: 0 for k in range(pitch)})
-    for e, n in offsets.items():
-        off[e % pitch] += n
-    origin = off.most_common(1)[0][0]
-    return pitch, origin, origin
+
+    def origin(edges: Counter[int]) -> int:
+        off = Counter({k: 0 for k in range(pitch)})
+        for e, n in edges.items():
+            off[e % pitch] += n
+        return off.most_common(1)[0][0]
+
+    return pitch, origin(x_edges), origin(y_edges)
 
 
 def nearest(rgb: tuple[int, int, int]) -> str:
@@ -205,6 +217,11 @@ def build(preview: bool = False) -> None:
     tallest = max(b[3] - b[1] for b in boxes)
     size = max(ux1 - ux0, tallest)
     size += size % 2  # 取偶數，方便 CSS 以整數倍縮放時置中
+    if size != FRAME_PX:
+        # CSS 以 --mipet-frame-px: 48px 切格，尺寸一變所有影格都會錯位
+        raise SystemExit(
+            f"影格尺寸 {size}px ≠ FRAME_PX {FRAME_PX}px：請同步修改 pixel-pet.css 的 --mipet-frame-px 與 FRAME_PX"
+        )
     pad_x = (size - (ux1 - ux0)) // 2
 
     keys = [TRANSPARENT, *PALETTE]
