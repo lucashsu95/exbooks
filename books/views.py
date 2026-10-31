@@ -408,6 +408,7 @@ def book_delete(request, pk):
     return redirect("books:bookshelf")
 
 
+@login_required
 @require_GET
 def isbn_lookup(request):
     """HTMX endpoint: ISBN 查詢"""
