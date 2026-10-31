@@ -10,7 +10,7 @@ import logging
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator
 
@@ -112,6 +112,10 @@ def deal_detail(request, pk):
         ).prefetch_related("ratings__rater__profile"),
         pk=pk,
     )
+    # 非當事人一律 404（不洩漏交易是否存在，也不暴露私訊）
+    if not request.user.has_perm("deals.can_view_deal", deal):
+        logger.warning("deal_detail forbidden", extra={"user_id": request.user.pk, "deal_id": str(pk)})
+        raise Http404
     messages_list = DealMessage.objects.filter(deal=deal).select_related("sender")[:50]
     extensions_list = LoanExtension.objects.filter(deal=deal).select_related(
         "requested_by__profile",
@@ -174,6 +178,7 @@ def deal_list(request):
 
 
 @login_required
+@require_POST
 def deal_accept(request, pk):
     """接受交易申請。"""
     deal = get_object_or_404(Deal, pk=pk)
@@ -192,6 +197,7 @@ def deal_accept(request, pk):
 
 
 @login_required
+@require_POST
 def deal_reject(request, pk):
     """拒絕交易申請。"""
     deal = get_object_or_404(Deal, pk=pk)
@@ -210,6 +216,7 @@ def deal_reject(request, pk):
 
 
 @login_required
+@require_POST
 def deal_cancel(request, pk):
     """取消交易申請。"""
     deal = get_object_or_404(Deal, pk=pk)

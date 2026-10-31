@@ -34,7 +34,24 @@ def is_involved(user, deal):
     return is_applicant(user, deal) | is_responder(user, deal)
 
 
+@rules.predicate
+def is_deal_party(user, deal):
+    """交易當事人：applicant / responder / 書籍 owner / keeper。"""
+    return (
+        deal is not None
+        and user.is_authenticated
+        and user.pk
+        in {
+            deal.applicant_id,
+            deal.responder_id,
+            deal.shared_book.owner_id,
+            deal.shared_book.keeper_id,
+        }
+    )
+
+
 # Deal permissions
+rules.add_perm("deals.can_view_deal", is_deal_party)
 rules.add_perm("deals.can_accept_deal", is_responder)
 rules.add_perm("deals.can_decline_deal", is_responder)
 rules.add_perm("deals.can_cancel_deal", is_applicant)
