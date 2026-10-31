@@ -24,8 +24,8 @@ def _renewal(user, args: Dict[str, Any]) -> str:
         days = 7
     title = _deal_book_title(user, args.get("deal_id"))
     if title:
-        return f"申請延長《{title}》的借期 {days} 天"
-    return f"申請延長借期 {days} 天"
+        return f"申請延長借閱《{title}》{days} 天"
+    return f"申請延長借閱 {days} 天"
 
 
 def _deal_book_title(user, deal_id) -> str | None:

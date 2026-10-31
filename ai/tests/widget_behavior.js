@@ -84,13 +84,12 @@ const last = (w) => w.messages[w.messages.length - 1];
 
     // 6. consent：人類可讀描述
     await send(w, '延期', async () => new Response(sse(
-        ['consent_required', { tool: 'request_renewal', args: { deal_id: 'x', days: 7 }, token: 't1', description: '申請延長《小王子》的借期 7 天' }],
+        ['consent_required', { tool: 'request_renewal', args: { deal_id: 'x', days: 7 }, token: 't1', description: '申請延長借閱《小王子》7 天' }],
         ['content', { delta: '請確認' }],
         ['done', {}],
     )));
     const consent = w.messages.find((m) => m.type === 'consent');
-    assert.equal(consent.content, '確認要申請延長《小王子》的借期 7 天嗎？');
-    assert.equal(w.formatConsent({ tool: 'request_renewal' }), '確認要申請延長借期嗎？');
+    assert.equal(consent.content, '確認要申請延長借閱《小王子》7 天嗎？');
 
     // 7. consent 失敗：終止狀態（不可重試），提示重新詢問
     globalThis.fetch = async () => new Response(JSON.stringify({ error: '這個確認請求已失效。' }), { status: 404 });
@@ -133,6 +132,27 @@ const last = (w) => w.messages[w.messages.length - 1];
     const other = Object.assign(new HTMLFormElement(), { getAttribute: () => '/books/' });
     listeners.submit.forEach((fn) => fn({ target: other }));
     assert.equal(store.has('chat_history:7'), true);
+
+    // localStorage 不可用（隱私模式：任何存取都拋 SecurityError）：
+    // init／開窗／對話／清除／登出都不得拋錯
+    const realStorage = globalThis.localStorage;
+    const deny = () => { const e = new Error('denied'); e.name = 'SecurityError'; throw e; };
+    globalThis.localStorage = {
+        getItem: deny, setItem: deny, removeItem: deny, key: deny,
+        get length() { return deny(); },
+    };
+    w = makeWidget();
+    assert.equal(w.messages.length, 0);
+    w.setOpen(true);
+    assert.equal(w.messages.length, 1);
+    await send(w, '隱私模式', async () => new Response(sse(['content', { delta: '收到' }], ['done', {}])));
+    assert.equal(w.isTyping, false);
+    assert.equal(last(w).content, '收到');
+    globalThis.fetch = async () => new Response('{}');
+    w.clearHistory();
+    assert.equal(w.messages.length, 0);
+    listeners.submit.forEach((fn) => fn({ target: form }));
+    globalThis.localStorage = realStorage;
 
     // MiPet 不存在時 pulse 呼叫是 no-op
     globalThis.window.MiPet = undefined;

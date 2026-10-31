@@ -132,10 +132,8 @@ class ChatWidgetTemplateTests(TestCase):
         html = response.content.decode()
 
         self.assertIn("Array.isArray", html)
-        # guard 與 clearHistory 各有一處 removeItem（per-user key）
-        self.assertGreaterEqual(
-            html.count("localStorage.removeItem(this.storageKey)"), 2
-        )
+        # guard 與 clearHistory 各有一處 remove（per-user key），且都經過安全 helper
+        self.assertGreaterEqual(html.count("chatStorage.remove(this.storageKey)"), 2)
 
     def test_widget_strips_markdown_markers(self):
         """契約 pin（D3）：LLM 文字氣泡進 addMessage 前須剥掉 Markdown 記號。
@@ -258,6 +256,13 @@ class ChatWidgetHardeningTests(TestCase):
         )
         raw = _read_widget_template()
         self.assertNotIn("220000", raw)
+
+    def test_consent_label_single_source_on_server(self):
+        """consent 描述只由伺服器 describe_consent 產生，前端不另備對照表。"""
+        html, _ = _rendered_widget(self)
+        script = _extract_widget_script(html)
+        self.assertNotIn("CHAT_TOOL_LABELS", script)
+        self.assertNotIn("延長借期", script)
 
     def test_no_english_ui_strings(self):
         html, _ = _rendered_widget(self)

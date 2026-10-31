@@ -190,22 +190,46 @@ const CHAT_MAX_STORED = 50;
 // 用戶端等待上限：由伺服器端時間預算注入（ai/services/chat_orchestrator.py CLIENT_TIMEOUT_SECONDS）
 const CHAT_CLIENT_TIMEOUT_MS = {% chat_client_timeout_ms %};
 const CHAT_GREETING = '嗨！我是米豆，有什麼可以幫你的嗎？';
-// consent 氣泡的人類可讀說明（伺服器沒帶 description 時的後備）
-const CHAT_TOOL_LABELS = {
-    request_renewal: '申請延長借期',
+// 所有 localStorage 存取都經過這裡：不可用（隱私模式 SecurityError、配額滿等）時
+// 一律吞掉——本機紀錄只影響重新整理後的顯示，不能擋住 widget 初始化、對話或登出
+const chatStorage = {
+    get(key) {
+        try {
+            return localStorage.getItem(key);
+        } catch (e) {
+            return null;
+        }
+    },
+    set(key, value) {
+        try {
+            localStorage.setItem(key, value);
+        } catch (e) {
+            // 配額滿或不可用
+        }
+    },
+    remove(key) {
+        try {
+            localStorage.removeItem(key);
+        } catch (e) {
+            // 不可用
+        }
+    },
+    removeByPrefix(prefix) {
+        try {
+            const keys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith(prefix)) keys.push(key);
+            }
+            keys.forEach((key) => localStorage.removeItem(key));
+        } catch (e) {
+            // 不可用
+        }
+    },
 };
 
 function clearChatStorage() {
-    try {
-        const keys = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith(CHAT_HISTORY_PREFIX)) keys.push(key);
-        }
-        keys.forEach((key) => localStorage.removeItem(key));
-    } catch (e) {
-        // localStorage 不可用（隱私模式等）時不擋登出
-    }
+    chatStorage.removeByPrefix(CHAT_HISTORY_PREFIX);
 }
 
 // 登出時清掉本機聊天記錄：登出可能是 POST 表單或連結，兩種都接
@@ -242,7 +266,7 @@ function chatWidget(userId, logoutUrl) {
 
         init() {
             // 舊版不分使用者的共用 key：可能是別的帳號的對話，直接丟棄
-            localStorage.removeItem(CHAT_HISTORY_PREFIX);
+            chatStorage.remove(CHAT_HISTORY_PREFIX);
             this.loadHistory();
             bindChatLogoutCleanup(logoutUrl);
             // 米豆小版取代原紫色按鈕：點貓開關聊天視窗
@@ -352,8 +376,8 @@ function chatWidget(userId, logoutUrl) {
         },
 
         formatConsent(data) {
-            const label = data.description || CHAT_TOOL_LABELS[data.tool] || '執行這項操作';
-            return `確認要${label}嗎？`;
+            // description 由伺服器（consent_labels.describe_consent）一律提供，前端不另備對照表
+            return `確認要${data.description}嗎？`;
         },
 
         parseSSE(text) {
@@ -440,16 +464,12 @@ function chatWidget(userId, logoutUrl) {
         persist() {
             // token 不寫入 localStorage：重新載入後舊 consent 氣泡自然失效
             const toPersist = this.messages.slice(-CHAT_MAX_STORED).map(({ token: _t, ...rest }) => rest);
-            try {
-                localStorage.setItem(this.storageKey, JSON.stringify(toPersist));
-            } catch (e) {
-                // 配額滿或不可用：只影響重新整理後的顯示，不影響對話
-            }
+            chatStorage.set(this.storageKey, JSON.stringify(toPersist));
         },
 
         clearHistory() {
             this.messages = [];
-            localStorage.removeItem(this.storageKey);
+            chatStorage.remove(this.storageKey);
             fetch('{% url "ai:chat_clear" %}', {
                 method: 'POST',
                 headers: {
@@ -466,7 +486,7 @@ function chatWidget(userId, logoutUrl) {
         },
 
         loadHistory() {
-            const raw = localStorage.getItem(this.storageKey);
+            const raw = chatStorage.get(this.storageKey);
             if (!raw) return;
             // 損壞的 history（非 JSON / 非陣列）不得拋錯殺掉 bindOpenChat：
             // 讀不出來就丟棄重新開始
@@ -474,7 +494,7 @@ function chatWidget(userId, logoutUrl) {
                 const parsed = JSON.parse(raw);
                 this.messages = Array.isArray(parsed) ? parsed.slice(-CHAT_MAX_STORED) : [];
             } catch (e) {
-                localStorage.removeItem(this.storageKey);
+                chatStorage.remove(this.storageKey);
                 this.messages = [];
             }
         },

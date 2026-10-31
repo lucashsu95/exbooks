@@ -231,7 +231,7 @@ def get_borrowing_status(user) -> str:
         "properties": {
             "deal_id": {
                 "type": "string",
-                "description": "要延長借期的交易 ID（UUID，可從 get_borrowing_status 取得）",
+                "description": "要延長借閱的交易 ID（UUID，可從 get_borrowing_status 取得）",
             },
             "days": {
                 "type": "integer",
