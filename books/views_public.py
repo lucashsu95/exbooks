@@ -93,11 +93,17 @@ def public_book_detail(request, pk):
         "og_title": f"{title} | Exbooks",
         "og_description": desc or title,
         "og_image_url": og_image_url,
-        "book_json_ld": json.dumps(
-            _build_book_json_ld(request, book), ensure_ascii=False
-        ),
+        "book_json_ld": _dump_json_ld(_build_book_json_ld(request, book)),
     }
     return render(request, "books/public/browse_detail.html", context)
+
+
+# 模板以 |safe 放進 <script>，需跳脫 HTML 特殊字元，避免書名含 </script> 時跳出 script
+_JSON_LD_ESCAPES = {ord("<"): "\\u003c", ord(">"): "\\u003e", ord("&"): "\\u0026"}
+
+
+def _dump_json_ld(data):
+    return json.dumps(data, ensure_ascii=False).translate(_JSON_LD_ESCAPES)
 
 
 def _build_book_json_ld(request, book):
