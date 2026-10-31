@@ -158,6 +158,13 @@ def set_language(request):
             corrected = new_path
         if parsed.fragment:
             corrected += f"#{parsed.fragment}"
+        # 去掉語言前綴可能讓 /en//evil.com/ 變成 //evil.com/，需重新驗證
+        if not url_has_allowed_host_and_scheme(
+            url=corrected,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            corrected = "/"
         response = HttpResponseRedirect(request.build_absolute_uri(corrected))
         response.set_cookie(
             settings.LANGUAGE_COOKIE_NAME,
