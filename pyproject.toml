@@ -74,7 +74,7 @@ markers = [
 # 已知限制：實測 ruff 0.15.12 的 exclude 對 scripts 無任意深度錨定選項
 # （"scripts" 匹配任意層級、"/scripts" 與 "scripts/*" 皆不符合預期），
 # 未來若出現 tests/scripts/ 等路徑需改用明示檔案清單
-extend-exclude = ["scripts"]
+extend-exclude = ["scripts", ".claude"]
 
 [tool.djlint]
 profile = "django"
