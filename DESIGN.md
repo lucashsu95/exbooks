@@ -139,16 +139,31 @@ Tailwind opacity class 會套用於上述基礎色，現況包括：
 
 ### MeDou 像素寵物
 
-來源：[`static/css/pixel-pet.css`](./static/css/pixel-pet.css)
+來源：[`static/js/pixel-pet.js`](./static/js/pixel-pet.js)、[`static/css/pixel-pet.css`](./static/css/pixel-pet.css)、精靈圖 [`static/img/medou/medou-sheet.png`](./static/img/medou/medou-sheet.png)
 
-| CSS variable | 淺色值 | dark 值 | 用途 |
+米豆是點陣圖精靈，不再由 CSS 變數上色：白色口鼻／胸毛在深色模式也維持白色，深色背景只加一圈淡白 `drop-shadow` 勾邊。精靈圖是一張水平排列的索引色 PNG，每格 48×48 px、共 10 格；顯示尺寸必須是 48 的整數倍（目前浮動小版與聊天 header 都是 48 px，`image-rendering: pixelated`），用 `background-position` 切換影格，JS 只在影格真的改變時寫入 `--mipet-frame`。
+
+| 影格 | 狀態 | 來源 | 說明 |
 |---|---|---|---|
-| `--mipet-body` | `#14B8A6` | `#14B8A6` | 身體 |
-| `--mipet-cheek` | `#06B6D4` | `#22D3EE` | 臉頰 |
-| `--mipet-muzzle` | `#F0FDFA` | `#134E4A` | 口鼻 |
-| `--mipet-eye` | `#134E4A` | `#0F172A` | 眼睛 |
-| `--mipet-muted` | `#64748B` | `#94A3B8` | 陰影、狀態文字 |
-| `--mipet-fg` | `#0F172A` | `#E2E8F0` | 名稱與前景文字 |
+| 0 / 1 | `idle` | s0 / s0 衍生 | 正面坐姿；偶爾眨眼（衍生影格：閉眼） |
+| 2 | `thinking` | s1 | 歪頭、手托下巴、「?」 |
+| 3 / 4 | `talking` | s2 / s2 衍生 | 側身張嘴、「…」對話框；`MiPet.pulse()` 帶動開合，最後一次 pulse 後約 600 ms 闔嘴（衍生影格：閉嘴） |
+| 5 | `error` | s3 | >< 眼、紅色「!」、汗滴；2.5 秒後回 `idle` |
+| 6 | `sleep` | s4 | 趴睡、Zzz；60 秒無互動自動進入 |
+| 7 | `hover` | s5 | 眨眼＋游標；滑鼠移入或鍵盤聚焦浮動小版時 |
+| 8 | `notify` | s6 | 側眼、黃色閃光；4 秒後回 `idle` |
+| 9 | `cheer` | s7 | ^^ 眼、舉手、星星；`MiPet.cheer()`，約 2.4 秒後回 `idle` |
+
+`thinking` / `talking` 30 秒內沒有新的 `setState` 或 `pulse` 會自動回 `idle`。`prefers-reduced-motion: reduce` 時（即時監聽）停止計時器、每個狀態只畫上表第一張影格、不跳動。
+
+| CSS variable | 預設 | 用途 |
+|---|---|---|
+| `--mipet-bottom` | `1.5rem + safe-area`；有 `#bottom-nav` 時 `4rem + 1.5rem + safe-area` | 浮動小版離底部距離；交易詳情頁由 action bar 的 `ResizeObserver` 改寫 |
+| `--mipet-scale` | `1` | 顯示倍率（整數），精靈尺寸 = 48 px × 倍率 |
+| `--mipet-muted` | `#64748B` / dark `#94A3B8` | 地面陰影、狀態文字 |
+| `--mipet-fg` | `#0F172A` / dark `#E2E8F0` | 名稱文字（聊天 header 固定白底，走淺色值） |
+
+**重新產生精靈圖**：原始參考圖（業主核可）放在 `docs/assets/medou/s0.png … s7.png`，執行 `uv run python scripts/medou/build_sprites.py`（加 `--preview` 另存 10× 預覽到 `/tmp`）。腳本會自動偵測放大倍率、取每格中心色並量化到 10 色色盤、從邊緣 flood fill 去掉白底／淺灰暈邊／地影、補出眨眼與閉嘴兩張衍生影格，最後底部對齊輸出精靈圖。影格順序寫在腳本的 `FRAME_ORDER`，與 `pixel-pet.js` 的 `F` 對照表必須一致。
 
 ## 4. 登入入口與錯誤頁
 

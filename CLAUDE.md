@@ -45,7 +45,7 @@ Django apps：`accounts`（會員、信任分數、違規／申訴）、`books`�
   - 每次轉換由 `exchange_event_service` 寫入 ExchangeEvent 審計紀錄。
 - **權限**：物件層級權限用 `rules`（如 `deals/rules.py` 的 predicates）；信用等級（TrustLevel 0–3）影響可借冊數、借期與編輯權限。
 - **AI**：`ai/services/chat_orchestrator.py` 負責一輪對話（tool 呼叫迴圈、consent 決策、follow-up 呼叫、history 寫入），tools 註冊在 `tool_registry.py`，以 SSE 串流回前端。LLM 經 `sdk/python` 的 `ai-client` 套件（本地 path 依賴）呼叫 vLLM 的 OpenAI 相容端點；provider 透過 `AIClient` / `Transport` seam 注入（生產 `RequestsTransport`，測試用 scripted transport）。未設定 `VLLM_API_KEY` 時走 mock 回應。
-- **前端寵物**：全站像素寵物「米豆 MeDou」在 `static/js/pixel-pet.js` + `static/css/pixel-pet.css`，由 `templates/base.html` 載入；精靈圖是 JS 內嵌 SVG 產生，不是讀 PNG。
+- **前端寵物**：全站像素寵物「米豆 MeDou」在 `static/js/pixel-pet.js` + `static/css/pixel-pet.css`，由 `templates/base.html` 載入；精靈圖讀 `static/img/medou/medou-sheet.png`（由 `scripts/medou/build_sprites.py` 從 `docs/assets/medou/` 參考圖產生）。
 
 ## 測試結構
 
