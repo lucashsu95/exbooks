@@ -17,9 +17,9 @@ uv run python manage.py runserver
 
 uv run ruff check .               # CI lint（scripts/ 已排除）
 uv run djlint templates --check   # 模板格式（profile=django）
-uv run pytest                     # CI test
-uv run pytest tests/deals/test_x.py::TestY::test_z   # 單一測試
-uv run pytest -m "not slow"
+uv run --group test pytest        # CI test（pytest 在 test 群組，裸 `uv run pytest` 找不到）
+uv run --group test pytest tests/deals/test_x.py::TestY::test_z   # 單一測試
+uv run --group test pytest -m "not slow"
 ```
 
 - Browser e2e（`tests/e2e/`）需 `uv run playwright install chromium`，未安裝時自動略過。
@@ -28,7 +28,7 @@ uv run pytest -m "not slow"
 ## 設定檔（容易踩錯）
 
 - `manage.py` 預設 `exbook.dev_settings`（SQLite）；`wsgi.py` / `celery.py` 預設 `exbook.settings`（MariaDB）；`prod_settings.py` 給部署。
-- 測試用 `exbook.test_settings`（pytest 設定已指定）：每次執行在 /tmp 建獨立 SQLite 檔，不需 MariaDB。
+- 測試用 `exbook.test_settings`（pytest 設定已指定）：每次執行在 `$TMPDIR`（預設 /tmp）建獨立 SQLite 檔，不需 MariaDB。磁碟慢時用 `TMPDIR=/dev/shm/<dir>` 把測試 DB 放進記憶體，完整測試可從數十分鐘降到約 30 秒。
 - 本地 `CELERY_TASK_ALWAYS_EAGER=true`，任務同步執行，不需 Redis/worker。
 - 生產環境見 `docker-compose.yml`（db / web / celery_worker / celery_beat / nginx / redis / minio / mailpit；備份服務在 `backup` profile）。
 
@@ -56,6 +56,7 @@ Django apps：`accounts`（會員、信任分數、違規／申訴）、`books`�
 - 討論與命名使用 `GLOSSARY.md` 的詞彙（例如「發布 publish」「逾期 overdue」「AI 對話編排」），不要用函式名或類別名代替。業務規則以 BR-x 編號。
 - `docs/adr/2026-10-24-architecture-followups.md` 列出已知但延後處理的問題，動到相關程式前先看。例如：
   - F-1：`Deal.cancel()` 直接改 protected FSM 欄位，被呼叫就會崩。
-  - F-8：`_attach_cover` 直接抓取使用者輸入的 `cover_url`，有 SSRF 風險。
-  - 注意：這份 ADR 的狀態可能落後於程式碼。例如 F-2 已在 master 修好（`create_deal` 已加 `@transaction.atomic`），文件還沒更新，引用前要對照程式確認。
+  - F-2、F-6、F-7、F-8 已解決；封面網址下載走 `books/services/cover_service.py`（SSRF 防護＋重新編碼），不要繞過它直接抓外部 URL。
+  - ADR 狀態可能落後於程式碼，引用前先對照程式確認。
+- 交易的可見與操作權限以 `deals/rules.py` 的「交易當事人」規則（applicant／responder／書的 owner／keeper）為準，Web、API、照片共用；非當事人一律 404。
 - 設計 token（顏色、元件樣式）記錄在 `DESIGN.md`；其他文件索引見 `docs/index.md`。
