@@ -241,32 +241,18 @@ def test_consent_required_missing_required_arg_no_consent():
     assert len(transport.requests) == 2  # 有 follow-up
 
 
-def test_tool_error_yields_error_event():
-    """tool 執行拋錯 → tool_result 帶 error，不中斷串流。"""
-    user = UserFactory()
-
-    def _boom(user, **kwargs):
-        raise RuntimeError("downstream 壞了")
-
+def _run_with_tool(user, func):
+    """以 func 取代 get_user_books 跑一輪（第一輪呼叫 tool、第二輪收尾）。"""
     fake_tool = ToolDefinition(
         name="get_user_books",
         description="",
         parameters={},
-        func=_boom,
+        func=func,
         consent=ConsentRequirement.NOT_REQUIRED,
     )
     client, transport = make_client(
         [
-            ChatResponse(
-                content="",
-                tool_calls=[
-                    {
-                        "id": "c1",
-                        "type": "function",
-                        "function": {"name": "get_user_books", "arguments": "{}"},
-                    }
-                ],
-            ),
+            ChatResponse(content="", tool_calls=[_call("get_user_books")]),
             ChatResponse(content="查不到，出錯了"),
         ]
     )
@@ -275,9 +261,68 @@ def test_tool_error_yields_error_event():
             user=user, message="hi"
         )
         sse = "".join(gen)
+    return sse, transport
+
+
+def test_unexpected_tool_error_is_not_leaked(caplog):
+    """非預期例外：訊息只進 log（logger.exception），
+    tool_result 幀、回灌給模型與持久化 history 一律用通用中文訊息。"""
+    from ai.services.chat_orchestrator import TOOL_UNEXPECTED_ERROR
+    from ai.services.conversation_cache import ConversationCache
+
+    user = UserFactory()
+
+    def _boom(user, **kwargs):
+        raise RuntimeError("db password=hunter2 壞了")
+
+    with caplog.at_level("ERROR", logger="ai.services.chat_orchestrator"):
+        sse, transport = _run_with_tool(user, _boom)
+
     assert '"error"' in sse
-    assert "downstream 壞了" in sse
+    assert "hunter2" not in sse
+    assert TOOL_UNEXPECTED_ERROR in sse
     assert "查不到，出錯了" in sse
+    fed_back = "\n".join(m.content for m in transport.requests[1]["messages"])
+    assert "hunter2" not in fed_back
+    assert TOOL_UNEXPECTED_ERROR in fed_back
+    persisted = json.dumps(ConversationCache.get_history(user.id), ensure_ascii=False)
+    assert "hunter2" not in persisted
+    assert TOOL_UNEXPECTED_ERROR in persisted
+    # 例外細節留在 log（含 traceback）
+    assert any(r.exc_info and "hunter2" in str(r.exc_info[1]) for r in caplog.records)
+
+
+def test_intentional_tool_error_message_passed_through():
+    """tool 刻意 raise 的 ToolError：訊息是給模型自我修正的，照常回傳與回灌。"""
+    from ai.services.conversation_cache import ConversationCache
+    from ai.services.tool_registry import ToolError
+
+    user = UserFactory()
+
+    def _invalid(user, **kwargs):
+        raise ToolError("status 只能為 OWNED、HELD 或 ALL。")
+
+    sse, transport = _run_with_tool(user, _invalid)
+    assert "status 只能為 OWNED、HELD 或 ALL。" in sse
+    fed_back = "\n".join(m.content for m in transport.requests[1]["messages"])
+    assert "status 只能為 OWNED、HELD 或 ALL。" in fed_back
+    persisted = json.dumps(ConversationCache.get_history(user.id), ensure_ascii=False)
+    assert "status 只能為 OWNED、HELD 或 ALL。" in persisted
+
+
+def test_builtin_tools_raise_tool_error():
+    """內建 tool 的參數／權限錯誤是刻意的 ToolError（仍相容 ValueError）。"""
+    import uuid
+
+    from ai.services.tool_registry import ToolError, get_user_books, request_renewal
+
+    user = UserFactory()
+    with pytest.raises(ToolError):
+        get_user_books(user, status="BOGUS")
+    with pytest.raises(ToolError):
+        request_renewal(user, uuid.uuid4())
+    with pytest.raises(ToolError):
+        request_renewal(user, "not-a-uuid")
 
 
 def test_empty_content_fallback():

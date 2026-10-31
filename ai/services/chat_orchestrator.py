@@ -25,7 +25,12 @@ from .consent_labels import describe_consent
 from .consent_store import ConsentStore
 from .conversation_cache import ConversationCache
 from .fencing import wrap_persisted, wrap_untrusted
-from .tool_registry import ConsentRequirement, ToolRegistry, filter_args_by_signature
+from .tool_registry import (
+    ConsentRequirement,
+    ToolError,
+    ToolRegistry,
+    filter_args_by_signature,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +75,8 @@ class ToolOutcome:
 
 _GENERIC_FALLBACK = "（AI 正在思考中，請稍後再試）"
 _CONSENT_FALLBACK = "我已送出確認請求，請在上方訊息按「確認」或「取消」。"
+# 非預期 tool 例外對外（幀／回灌／history）的通用訊息；細節只進 log
+TOOL_UNEXPECTED_ERROR = "系統暫時無法完成這項查詢，請稍後再試。"
 TIMEOUT_FALLBACK = "這個問題處理得比較久，我先停在這裡。請再問一次，或把問題拆小一點試試。"
 
 
@@ -275,10 +282,21 @@ class ChatOrchestrator:
                         )
                     )
                     frames.append(_sse("tool_result", {"tool": tool_name, "result": result}))
-                except Exception as e:
+                except ToolError as e:
+                    # 刻意的錯誤（參數／權限）：訊息是給模型自我修正的
+                    error = str(e)
+                    logger.info("tool rejected call", extra={"tool_name": tool_name})
+                    outcomes.append(ToolOutcome(tool_name, OutcomeKind.ERROR, error))
+                    frames.append(_sse("tool_result", {"tool": tool_name, "error": error}))
+                except Exception:
+                    # 非預期例外：str(e) 可能含內部細節，不得進幀／回灌／history
                     logger.exception("tool execution failed", extra={"tool_name": tool_name})
-                    outcomes.append(ToolOutcome(tool_name, OutcomeKind.ERROR, str(e)))
-                    frames.append(_sse("tool_result", {"tool": tool_name, "error": str(e)}))
+                    outcomes.append(
+                        ToolOutcome(tool_name, OutcomeKind.ERROR, TOOL_UNEXPECTED_ERROR)
+                    )
+                    frames.append(
+                        _sse("tool_result", {"tool": tool_name, "error": TOOL_UNEXPECTED_ERROR})
+                    )
             else:
                 # 未知 tool 名：回報並回灌，模型才能自我修正
                 #（靜默丟掉在 loop 下會燒掉 budget 且模型不知原因）
