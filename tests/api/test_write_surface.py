@@ -96,7 +96,84 @@ class TestDealWriteSurface:
             "due_date",
             "applicant_rated",
             "responder_rated",
+            "book_set",
         } <= read_only
+
+
+class TestDealCreateBookSetNotClientSettable:
+    """審查後修正：book_set 由 shared_book 推導，client 送的值一律忽略。"""
+
+    def test_client_book_set_is_ignored(self):
+        owner = UserFactory()
+        keeper = UserFactory()
+        stranger_set = BookSetFactory(owner=UserFactory())
+        book = SharedBookFactory(
+            owner=owner,
+            keeper=keeper,
+            status=SharedBook.Status.RESTORABLE,
+            transferability=SharedBook.Transferability.RETURN,
+        )
+        res = _client(keeper).post(
+            reverse("deals:deal-list"),
+            {
+                "shared_book": str(book.pk),
+                "deal_type": "RS",
+                "book_set": str(stranger_set.pk),
+            },
+            format="json",
+        )
+        assert res.status_code == 201, res.data
+        deal = Deal.objects.get(pk=res.data["id"])
+        assert deal.book_set_id is None
+
+
+class TestDealApiPartyScope:
+    """審查後修正：API 交易可見範圍 = 交易當事人（含 owner / keeper）。"""
+
+    def setup_method(self):
+        self.owner = UserFactory()
+        self.keeper = UserFactory()
+        self.deal = DealFactory(
+            shared_book__owner=self.owner,
+            shared_book__keeper=self.keeper,
+            responder=UserFactory(),
+        )
+        self.other_deal = DealFactory()
+
+    def _ids(self, user):
+        res = _client(user).get(reverse("deals:deal-list"))
+        assert res.status_code == 200
+        rows = res.data["results"] if isinstance(res.data, dict) else res.data
+        return {str(row["id"]) for row in rows}
+
+    def test_owner_and_keeper_see_deal_in_list(self):
+        assert self._ids(self.owner) == {str(self.deal.pk)}
+        assert self._ids(self.keeper) == {str(self.deal.pk)}
+
+    def test_outsider_list_is_empty_and_retrieve_404(self):
+        outsider = UserFactory()
+        assert self._ids(outsider) == set()
+        url = reverse("deals:deal-detail", kwargs={"pk": self.deal.pk})
+        assert _client(outsider).get(url).status_code == 404
+
+    def test_keeper_can_retrieve(self):
+        url = reverse("deals:deal-detail", kwargs={"pk": self.deal.pk})
+        assert _client(self.keeper).get(url).status_code == 200
+
+    def test_owner_can_create_message(self):
+        res = _client(self.owner).post(
+            reverse("deals:message-list"),
+            {"deal": str(self.deal.pk), "content": "owner 留言"},
+            format="json",
+        )
+        assert res.status_code == 201
+
+    def test_owner_sees_deal_messages(self):
+        msg = DealMessageFactory(deal=self.deal, sender=self.deal.applicant)
+        res = _client(self.owner).get(
+            reverse("deals:message-detail", kwargs={"pk": msg.pk})
+        )
+        assert res.status_code == 200
 
 
 # ---------------------------------------------------------------------------

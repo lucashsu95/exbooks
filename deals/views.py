@@ -46,6 +46,19 @@ from .services.api_response import api_success, api_error, ErrorCode
 logger = logging.getLogger(__name__)
 
 
+def _require_deal_party(request, deal):
+    """非交易當事人一律 404（與交易詳情一致，不洩漏交易是否存在）。
+
+    當事人但無該動作權限者，仍由各 view 自行回應（維持原行為）。
+    """
+    if not request.user.has_perm("deals.can_view_deal", deal):
+        logger.warning(
+            "deal access by non-party",
+            extra={"user_id": request.user.pk, "deal_id": str(deal.pk)},
+        )
+        raise Http404
+
+
 @login_required
 def deal_create(request, book_id, deal_type):
     """建立交易申請。"""
@@ -113,9 +126,7 @@ def deal_detail(request, pk):
         pk=pk,
     )
     # 非當事人一律 404（不洩漏交易是否存在，也不暴露私訊）
-    if not request.user.has_perm("deals.can_view_deal", deal):
-        logger.warning("deal_detail forbidden", extra={"user_id": request.user.pk, "deal_id": str(pk)})
-        raise Http404
+    _require_deal_party(request, deal)
     messages_list = DealMessage.objects.filter(deal=deal).select_related("sender")[:50]
     extensions_list = LoanExtension.objects.filter(deal=deal).select_related(
         "requested_by__profile",
@@ -182,6 +193,7 @@ def deal_list(request):
 def deal_accept(request, pk):
     """接受交易申請。"""
     deal = get_object_or_404(Deal, pk=pk)
+    _require_deal_party(request, deal)
     if not request.user.has_perm("deals.can_accept_deal", deal):
         logger.warning("deal_accept forbidden", extra={"user_id": request.user.pk, "deal_id": str(pk)})
         messages.error(request, "您無權接受此交易。")
@@ -201,6 +213,7 @@ def deal_accept(request, pk):
 def deal_reject(request, pk):
     """拒絕交易申請。"""
     deal = get_object_or_404(Deal, pk=pk)
+    _require_deal_party(request, deal)
     if not request.user.has_perm("deals.can_decline_deal", deal):
         logger.warning("deal_reject forbidden", extra={"user_id": request.user.pk, "deal_id": str(pk)})
         messages.error(request, "您無權拒絕此交易。")
@@ -220,6 +233,7 @@ def deal_reject(request, pk):
 def deal_cancel(request, pk):
     """取消交易申請。"""
     deal = get_object_or_404(Deal, pk=pk)
+    _require_deal_party(request, deal)
     if not request.user.has_perm("deals.can_cancel_deal", deal):
         logger.warning("deal_cancel forbidden", extra={"user_id": request.user.pk, "deal_id": str(pk)})
         messages.error(request, "您無權取消此交易。")
@@ -239,6 +253,7 @@ def deal_cancel(request, pk):
 def deal_complete_meeting(request, pk):
     """確認面交完成。"""
     deal = get_object_or_404(Deal, pk=pk)
+    _require_deal_party(request, deal)
 
     if not request.user.has_perm("deals.can_complete_meeting", deal):
         logger.warning("deal_complete_meeting forbidden", extra={"user_id": request.user.pk, "deal_id": str(pk)})
@@ -260,6 +275,7 @@ def deal_complete_meeting(request, pk):
 def deal_message_send(request, pk):
     """發送交易留言（HTMX endpoint）。"""
     deal = get_object_or_404(Deal, pk=pk)
+    _require_deal_party(request, deal)
     logger.info("deal_message_send", extra={"user_id": request.user.pk, "deal_id": str(pk)})
 
     # 檢查權限
@@ -302,6 +318,7 @@ def rating_create(request, pk):
         ).prefetch_related("shared_book__photos"),
         pk=pk,
     )
+    _require_deal_party(request, deal)
 
     # 檢查權限
     if not request.user.has_perm("deals.can_rate_deal", deal):
@@ -502,6 +519,7 @@ def extension_request(request, deal_pk):
         ),
         pk=deal_pk,
     )
+    _require_deal_party(request, deal)
 
     # 權限檢查
     if not request.user.has_perm("deals.can_request_extension", deal):
@@ -548,6 +566,7 @@ def extension_approve(request, extension_pk):
         ),
         pk=extension_pk,
     )
+    _require_deal_party(request, extension.deal)
 
     # 權限檢查
     if not request.user.has_perm("deals.can_approve_extension", extension):
@@ -581,6 +600,7 @@ def extension_reject(request, extension_pk):
         ),
         pk=extension_pk,
     )
+    _require_deal_party(request, extension.deal)
 
     # 權限檢查
     if not request.user.has_perm("deals.can_reject_extension", extension):
@@ -609,6 +629,7 @@ def extension_cancel(request, extension_pk):
         LoanExtension.objects.select_related("deal", "requested_by"),
         pk=extension_pk,
     )
+    _require_deal_party(request, extension.deal)
 
     # 權限檢查
     if not request.user.has_perm("deals.can_cancel_extension", extension):
@@ -738,6 +759,7 @@ def deal_confirm_return(request, pk):
         ),
         pk=pk,
     )
+    _require_deal_party(request, deal)
 
     force = request.POST.get("force") == "true"
 
@@ -817,6 +839,7 @@ def exception_resolve(request, pk):
         Deal.objects.select_related("shared_book"),
         pk=pk,
     )
+    _require_deal_party(request, deal)
     logger.info("exception_resolve", extra={"user_id": request.user.pk, "deal_id": str(pk)})
 
     if not request.user.has_perm("deals.can_resolve_exception", deal.shared_book):
@@ -871,6 +894,7 @@ def deal_upload_photos(request, pk):
         Deal.objects.select_related("shared_book", "shared_book__official_book"),
         pk=pk,
     )
+    _require_deal_party(request, deal)
 
     # 權限檢查
     if not request.user.has_perm("deals.can_upload_deal_photos", deal):

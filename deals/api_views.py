@@ -18,6 +18,7 @@ from deals.serializers import (
     NotificationSerializer,
 )
 from core.error_messages import service_error_message
+from deals.rules import deal_party_q
 from deals.services import deal_service, extension_service, notification_service
 
 
@@ -59,7 +60,6 @@ class DealViewSet(
                 applicant=request.user,
                 shared_book=serializer.validated_data["shared_book"],
                 deal_type=serializer.validated_data["deal_type"],
-                book_set=serializer.validated_data.get("book_set"),
                 meeting_location=serializer.validated_data.get("meeting_location", ""),
                 meeting_time=serializer.validated_data.get("meeting_time"),
             )
@@ -70,10 +70,9 @@ class DealViewSet(
             return Response({"error": service_error_message(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def get_queryset(self):
-        return self.queryset.filter(
-            models.Q(applicant=self.request.user)
-            | models.Q(responder=self.request.user)
-        )
+        # 可見範圍 = 交易當事人（applicant / responder / owner / keeper），
+        # 與 Web 交易詳情同一規則（deals.rules.is_deal_party）
+        return self.queryset.filter(deal_party_q(self.request.user))
 
     @action(detail=True, methods=["post"])
     def accept(self, request, pk=None):
@@ -244,8 +243,7 @@ class DealMessageViewSet(
     def get_queryset(self):
         return self.queryset.filter(
             models.Q(sender=self.request.user)
-            | models.Q(deal__applicant=self.request.user)
-            | models.Q(deal__responder=self.request.user)
+            | deal_party_q(self.request.user, prefix="deal__")
         )
 
     def create(self, request, *args, **kwargs):

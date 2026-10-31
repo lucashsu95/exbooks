@@ -34,19 +34,21 @@ def is_involved(user, deal):
     return is_applicant(user, deal) | is_responder(user, deal)
 
 
-@rules.predicate
-def is_deal_party(user, deal):
-    """交易當事人：applicant / responder / 書籍 owner / keeper。"""
+# 交易當事人（見 GLOSSARY）：applicant / responder / 書籍 owner / keeper。
+# 交易詳情、子路由可見性、留言、面交照片、API 可見範圍都用這一條規則；
+# 查詢集版本見 deal_party_q（欄位清單須與此一致）。
+is_deal_party = is_involved | is_owner | is_keeper
+
+
+def deal_party_q(user, prefix=""):
+    """is_deal_party 的 queryset 版本；prefix 例如 "deal__"。"""
+    from django.db.models import Q
+
     return (
-        deal is not None
-        and user.is_authenticated
-        and user.pk
-        in {
-            deal.applicant_id,
-            deal.responder_id,
-            deal.shared_book.owner_id,
-            deal.shared_book.keeper_id,
-        }
+        Q(**{f"{prefix}applicant": user})
+        | Q(**{f"{prefix}responder": user})
+        | Q(**{f"{prefix}shared_book__owner": user})
+        | Q(**{f"{prefix}shared_book__keeper": user})
     )
 
 
@@ -57,7 +59,7 @@ rules.add_perm("deals.can_decline_deal", is_responder)
 rules.add_perm("deals.can_cancel_deal", is_applicant)
 
 rules.add_perm("deals.can_complete_meeting", is_involved)
-rules.add_perm("deals.can_send_message", is_involved)
+rules.add_perm("deals.can_send_message", is_deal_party)
 rules.add_perm("deals.can_rate_deal", is_involved)
 
 # Extension permissions

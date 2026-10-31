@@ -366,26 +366,16 @@ class TestCreateDeal:
         with pytest.raises(ValidationError):
             create_deal(applicant, book, Deal.DealType.LOAN, loan_duration_days=5)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "Dead DealCreationService validated the book_set argument "
-            "(required for set books, must match, forbidden for non-set "
-            "books and non-loan/transfer deals); live deal_service ignores "
-            "the argument and defaults it to the book's own set. "
-            "If argument validation is re-introduced, un-xfail."
-        ),
-    )
     def test_book_set_argument_validated(self):
         """Ported from test_validate_book_set_compatibility。
 
-        已知分歧：現行 deal_service 忽略 caller 傳入的 book_set 參數
-        （僅在書籍本身屬於套書時自動帶上該套書），不會因參數不符而拒絕。
+        caller 傳入的 book_set 必須等於 shared_book.book_set，否則拒絕
+        （防止 mass-assignment 把交易掛到別人的套書）。
         """
         owner = UserFactory()
         applicant = UserFactory()
         book_set = BookSetFactory(owner=owner)
-        # Case 1: 書籍不屬於套書，但提供了套書參數 → live 不拒絕
+        # Case 1: 書籍不屬於套書，但提供了套書參數 → 拒絕
         non_set_book = SharedBookFactory(
             owner=owner,
             status="T",
@@ -400,10 +390,10 @@ class TestCreateDeal:
                 loan_duration_days=30,
                 book_set=book_set,
             )
-        # Case 2: EX 交易不應接受套書參數 → live 不拒絕
+        # Case 2: EX 交易（keeper 發起）帶不符的套書參數 → 拒絕
         with pytest.raises(ValidationError):
             create_deal(
-                applicant,
+                non_set_book.keeper,
                 non_set_book,
                 Deal.DealType.EXCEPT,
                 book_set=book_set,

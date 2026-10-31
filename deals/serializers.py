@@ -56,8 +56,10 @@ class DealSerializer(serializers.ModelSerializer):
             "responder_rated",
         ]
         # applicant 恆為 request.user、responder 由 service 判定；
+        # book_set 由 service 依 shared_book 推導（不接受 client 指定）；
         # due_date 與評價旗標只能經 service 寫入。
         read_only_fields = [
+            "book_set",
             "status",
             "previous_book_status",
             "applicant",
