@@ -341,7 +341,7 @@ try:
             "KEY_PREFIX": "exbook",
         }
     }
-except (redis.ConnectionError, redis.exceptions.TimeoutError, Exception):
+except (redis.ConnectionError, redis.exceptions.TimeoutError, Exception) as _redis_exc:
     # Redis not available, use in-memory cache for local development
     CACHES = {
         "default": {
@@ -349,7 +349,19 @@ except (redis.ConnectionError, redis.exceptions.TimeoutError, Exception):
             "LOCATION": "exbook-unique-snowflake",
         }
     }
-    # Fallback to LocMemCache silently for development
+    # 不可靜默退回：LocMemCache 是 per-process，多 worker 時共享狀態全部失效。
+    # 此時 LOGGING 尚未套用（Django 載入完 settings 才 dictConfig），
+    # 具名 logger 沒有 handler 會走 logging.lastResort 印到 stderr；
+    # 不用 logging.warning()（會對 root 做 basicConfig 的副作用）。
+    import logging as _logging
+
+    _logging.getLogger("exbook.settings").warning(
+        "Redis 無法連線（%s: %s），cache 退回 LocMemCache。LocMemCache 是 per-process："
+        "多個 gunicorn worker 時，AI 對話的 in-flight 鎖與限流會變成每個 process 各自計算"
+        "（等於失效），ConsentStore／對話紀錄也不跨 worker 共享。正式環境請確認 REDIS_URL。",
+        type(_redis_exc).__name__,
+        _redis_exc,
+    )
 
 # === Redis Connection for AI Conversation Cache ===
 REDIS_CONNECTION_URL = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
