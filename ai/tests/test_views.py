@@ -142,6 +142,7 @@ class TestChatView:
         second = self._post({"message": "二"})
         assert second.status_code == 429
         assert _has_cjk(second.json()["error"])
+        assert second.json()["code"] == "in_flight"
 
         b"".join(first.streaming_content)  # 串流結束釋放鎖
         third = self._post({"message": "三"})
@@ -160,6 +161,7 @@ class TestChatView:
         response = self._post({"message": "hi"})
         assert response.status_code == 429
         assert _has_cjk(response.json()["error"])
+        assert response.json()["code"] == "rate_limited"
 
 
 @pytest.mark.django_db

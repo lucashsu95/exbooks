@@ -33,12 +33,6 @@ def _read_widget_template() -> str:
     ).read_text(encoding="utf-8")
 
 
-def _extract_script(html: str) -> str:
-    m = re.search(r"<script>(.*?)</script>", html, re.S)
-    assert m, "widget template 缺少 <script> 區塊"
-    return m.group(1)
-
-
 def _run_node_strip(script: str, cases: list[tuple[str, str]]) -> subprocess.CompletedProcess:
     """把模板裡的 stripMarkdown 與一組 (input, expected) 用 node 實跑。"""
     driver = (
@@ -178,7 +172,9 @@ class ChatWidgetTemplateTests(TestCase):
         """
         if not _NODE:
             self.skipTest("stripMarkdown 行為測試需要 node")
-        script = _extract_script(_read_widget_template())
+        # 用渲染後的 script（模板含 template tag，原始檔不是合法 JS）
+        html, _ = _rendered_widget(self)
+        script = _extract_widget_script(html)
         cases: list[tuple[str, str]] = [
             # PR 原目標：段標粗體
             ("**書籍相關**\n- 書A\n- 書B", "書籍相關\n- 書A\n- 書B"),
@@ -251,6 +247,17 @@ class ChatWidgetHardeningTests(TestCase):
         html, user = _rendered_widget(self)
         self.assertIn(f"chatWidget('{user.pk}'", html)
         self.assertNotIn("localStorage.setItem('chat_history'", html)
+
+    def test_client_timeout_injected_from_server_budget(self):
+        """用戶端逾時由伺服器端時間預算注入，不在 JS 寫死。"""
+        from ai.services.chat_orchestrator import CLIENT_TIMEOUT_SECONDS
+
+        html, _ = _rendered_widget(self)
+        self.assertIn(
+            f"const CHAT_CLIENT_TIMEOUT_MS = {int(CLIENT_TIMEOUT_SECONDS * 1000)};", html
+        )
+        raw = _read_widget_template()
+        self.assertNotIn("220000", raw)
 
     def test_no_english_ui_strings(self):
         html, _ = _rendered_widget(self)

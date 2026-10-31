@@ -51,8 +51,10 @@ class ChatSSEView(LoginRequiredMixin, View):
         user_id = request.user.pk
         rejection = begin_turn(user_id)
         if rejection is not None:
-            logger.info("chat turn rejected", extra={"user_id": user_id, "reason": rejection.name})
-            return JsonResponse({"error": rejection.message}, status=429)
+            logger.info("chat turn rejected", extra={"user_id": user_id, "reason": rejection.value})
+            return JsonResponse(
+                {"error": rejection.message, "code": rejection.value}, status=429
+            )
 
         logger.info("chat message", extra={"user_id": user_id, "message_length": len(message)})
         # 編排（tool loop / consent / follow-up / history）在 orchestrator；

@@ -12,21 +12,32 @@ from typing import Iterable, Iterator, Optional
 
 from django.core.cache import cache
 
+from .chat_orchestrator import CLIENT_TIMEOUT_SECONDS
+
 RATE_LIMIT_PER_MINUTE = 20
-# 鎖的保底 TTL：需大於一輪最長時間（turn deadline 90s + 單次 LLM 呼叫上限 120s）
-IN_FLIGHT_TTL_SECONDS = 240
+# 鎖的保底 TTL：需大於一輪最長時間與用戶端逾時（皆由 orchestrator 時間預算推導），
+# 否則前一輪還在跑時鎖就過期、允許同一使用者並行兩輪
+IN_FLIGHT_TTL_SECONDS = int(CLIENT_TIMEOUT_SECONDS) + 30
 
 _LOCK_PREFIX = "ai_turn_lock:"
 _RATE_PREFIX = "ai_turn_rate:"
 
 
 class TurnRejection(Enum):
-    IN_FLIGHT = "上一則訊息還在回覆中，請等它完成後再送出。"
-    RATE_LIMITED = "訊息送得太頻繁了，請稍候一分鐘再試。"
+    """拒絕原因；值是機器可讀代碼（回應的 ``code``／log），中文訊息另行對應。"""
+
+    IN_FLIGHT = "in_flight"
+    RATE_LIMITED = "rate_limited"
 
     @property
     def message(self) -> str:
-        return self.value
+        return _REJECTION_MESSAGES[self]
+
+
+_REJECTION_MESSAGES = {
+    TurnRejection.IN_FLIGHT: "上一則訊息還在回覆中，請等它完成後再送出。",
+    TurnRejection.RATE_LIMITED: "訊息送得太頻繁了，請稍候一分鐘再試。",
+}
 
 
 def _lock_key(user_id) -> str:

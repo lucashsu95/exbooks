@@ -43,6 +43,26 @@ def test_rejection_messages_are_traditional_chinese():
         assert any("一" <= ch <= "鿿" for ch in rejection.message)
 
 
+def test_rejection_values_are_stable_codes():
+    """enum 值是機器可讀的代碼；中文訊息另外對應（改文案不動代碼）。"""
+    assert TurnRejection.IN_FLIGHT.value == "in_flight"
+    assert TurnRejection.RATE_LIMITED.value == "rate_limited"
+    for rejection in TurnRejection:
+        assert rejection.message != rejection.value
+
+
+def test_in_flight_ttl_derived_from_turn_budget():
+    """鎖的保底 TTL 由 orchestrator 的時間預算推導，不各自寫死：
+    一輪最長 = turn deadline + 單次 LLM 呼叫上限 < 用戶端逾時 < 鎖 TTL。"""
+    from ai_client import AIConfig
+
+    from ai.services import chat_orchestrator as orch
+
+    assert orch.LLM_CALL_TIMEOUT_SECONDS == AIConfig(api_key="x").timeout
+    assert orch.TURN_MAX_SECONDS == orch.TURN_DEADLINE_SECONDS + orch.LLM_CALL_TIMEOUT_SECONDS
+    assert orch.TURN_MAX_SECONDS < orch.CLIENT_TIMEOUT_SECONDS < turn_guard.IN_FLIGHT_TTL_SECONDS
+
+
 def test_guard_stream_releases_lock_after_full_iteration():
     assert begin_turn(1) is None
     stream = guard_stream(1, iter(["a", "b"]))

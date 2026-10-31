@@ -1,4 +1,4 @@
-<div x-data="chatWidget('{{ user.pk|escapejs }}', '{% url "account_logout" %}')"
+{% load ai_chat %}<div x-data="chatWidget('{{ user.pk|escapejs }}', '{% url "account_logout" %}')"
      @keydown.escape.window="isOpen && setOpen(false)"
      class="fixed bottom-6 right-6 z-50 font-sans">
     <!-- Alpine 3 會自動呼叫 init()，不要再加 x-init="init()"（會跑兩次） -->
@@ -187,8 +187,8 @@ function stripMarkdown(text) {
 // 登出時清掉所有 chat_history* key。舊版共用的 'chat_history' key 一律丟棄。
 const CHAT_HISTORY_PREFIX = 'chat_history';
 const CHAT_MAX_STORED = 50;
-// 用戶端等待上限：伺服器整輪 deadline 90s + 單次模型呼叫上限 120s，再留一點餘裕
-const CHAT_CLIENT_TIMEOUT_MS = 220000;
+// 用戶端等待上限：由伺服器端時間預算注入（ai/services/chat_orchestrator.py CLIENT_TIMEOUT_SECONDS）
+const CHAT_CLIENT_TIMEOUT_MS = {% chat_client_timeout_ms %};
 const CHAT_GREETING = '嗨！我是米豆，有什麼可以幫你的嗎？';
 // consent 氣泡的人類可讀說明（伺服器沒帶 description 時的後備）
 const CHAT_TOOL_LABELS = {

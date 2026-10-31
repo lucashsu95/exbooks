@@ -16,9 +16,11 @@ View 層只負責：HTTP framing（StreamingHttpResponse）與授權
 import json
 import logging
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from enum import Enum
 from typing import Any, Callable, Dict, Generator, List, Tuple
+
+from ai_client import AIConfig
 
 from .chat_service import ChatService
 from .consent_labels import describe_consent
@@ -38,8 +40,17 @@ logger = logging.getLogger(__name__)
 # 「無 tools」的強制收尾呼換出綜合所有結果的文字答案（而非空道歉）。
 MAX_TOOL_ROUNDS = 3
 
+# --- 時間預算（單一來源；turn_guard 的鎖 TTL、widget 的用戶端逾時都由此推導，
+# nginx 的 proxy_read_timeout 需大於 LLM_CALL_TIMEOUT_SECONDS）---
 # 整輪對話的時間上限（秒）：只在發下一次 LLM 呼叫前檢查。
 TURN_DEADLINE_SECONDS = 90
+# 單次 LLM 呼叫上限＝ai-client AIConfig.timeout 的預設值
+#（ChatService 以 AIConfig.from_env 建 client，不覆寫 timeout）
+LLM_CALL_TIMEOUT_SECONDS: float = next(f.default for f in fields(AIConfig) if f.name == "timeout")
+# 一輪最長：deadline 只在呼叫前檢查，最後一次呼叫可能在 deadline 前一刻才發出
+TURN_MAX_SECONDS = TURN_DEADLINE_SECONDS + LLM_CALL_TIMEOUT_SECONDS
+# 用戶端等待上限：比一輪最長多一點餘裕（且小於 turn_guard 的鎖 TTL）
+CLIENT_TIMEOUT_SECONDS = TURN_MAX_SECONDS + 10
 
 
 def _sse(event: str, payload: Dict[str, Any]) -> str:
