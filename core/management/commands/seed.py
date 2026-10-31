@@ -1,5 +1,6 @@
 import random
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
@@ -28,6 +29,7 @@ DEMO_ACCOUNTS = [
         "role": "一般會員",
     },
 ]
+_ADMIN = next(a for a in DEMO_ACCOUNTS if a["is_superuser"])
 
 
 class Command(BaseCommand):
@@ -53,8 +55,21 @@ class Command(BaseCommand):
             dest="clear",
             help="Do not clear existing data before seeding",
         )
+        parser.add_argument(
+            "--force",
+            action="store_true",
+            default=False,
+            help="Allow running when DEBUG is False (creates fixed demo admin credentials!)",
+        )
 
     def handle(self, *args, **options):
+        if not settings.DEBUG and not options["force"]:
+            raise CommandError(
+                "拒絕執行：DEBUG=False（疑似正式環境）。seed 會清除資料並建立固定帳密的"
+                f"示範管理員帳號（{_ADMIN['email']} / {_ADMIN['password']}）。"
+                "若確定要在此環境執行，請加上 --force。"
+            )
+
         amount = options["amount"]
         clear = options["clear"]
 

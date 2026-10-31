@@ -34,6 +34,11 @@ SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 ACCOUNT_RATE_LIMITS = {
     "login_failed": "5/m/ip,5/5m/key",
 }
+# web 前面只有一層 nginx（$proxy_add_x_forwarded_for），allauth 取 X-Forwarded-For
+# 最後一段作為用戶端 IP；否則所有人的 REMOTE_ADDR 都是 nginx，共用同一個限流額度。
+# 前提：nginx 直接對外。若 nginx 前面再加 CDN／負載平衡器，需把這個值加 1，
+# 否則會取到那一層的 IP，所有人又共用同一個額度（REST_FRAMEWORK NUM_PROXIES 同理）
+ALLAUTH_TRUSTED_PROXY_COUNT = 1
 
 # ── Logging / Monitoring ────────────────────────────────────────
 from core.logging_config import build_prod_logging  # noqa: E402

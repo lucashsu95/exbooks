@@ -1,5 +1,5 @@
 <div class="rating-slider"
-     x-data="{ value: {{ field.value|default:3 }} }"
+     x-data="{ value: parseInt('{{ field.value|default:3|escapejs }}', 10) || 3 }"
      x-init="$refs.rangeInput.value = value">
     <div class="flex items-center justify-between mb-2">
         <label class="flex items-center gap-2 text-sm font-medium text-slate-700"
