@@ -225,7 +225,7 @@ ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # 強制驗證
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
-ACCOUNT_LOGOUT_ON_GET = True
+ACCOUNT_LOGOUT_ON_GET = False  # 登出須 POST，避免跨站 GET 強制登出
 
 SESSION_COOKIE_AGE = SESSION_COOKIE_AGE
 SESSION_EXPIRE_AT_BROWSER_CLOSE = SESSION_EXPIRE_AT_BROWSER_CLOSE
@@ -384,7 +384,12 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "100/hour",
         "user": "1000/hour",
+        # /api/token/ 帳密登入（accounts.api_auth），防暴力破解
+        "token_obtain": "10/min",
     },
+    # 只信任 nginx 一層代理附加的 X-Forwarded-For 最後一段，
+    # 避免攻擊者偽造 XFF 讓 throttle 每次換 key
+    "NUM_PROXIES": 1,
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
 }

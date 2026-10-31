@@ -41,6 +41,15 @@ def setup_trust_levels(db):
     Group.objects.get_or_create(name="banned")
 
 
+@pytest.fixture(autouse=True)
+def _clear_cache():
+    """LocMemCache 跨測試共用；清空避免 DRF throttle 計數互相影響。"""
+    from django.core.cache import cache
+
+    cache.clear()
+    yield
+
+
 @pytest.fixture
 def test_user(db):
     """Generic test user."""

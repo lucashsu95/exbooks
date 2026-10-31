@@ -425,22 +425,19 @@ def isbn_lookup(request):
 def serve_protected_photo(request, pk):
     """
     提供面交照片的權限檢查存取。
-    - 權限者：uploader, deal.applicant, deal.responder
+    - 權限者：uploader，或交易當事人（applicant / responder / owner / keeper，
+      與交易詳情同一規則 deals.can_view_deal）
     - 權限通過後，透過 X-Accel-Redirect 由 Nginx 內部轉發 MinIO 檔案。
     - Local Dev (DEBUG=True) 則直接由 Django serve。
     """
     photo = get_object_or_404(
-        BookPhoto.objects.select_related(
-            "deal", "uploader", "deal__applicant", "deal__responder"
-        ),
+        BookPhoto.objects.select_related("deal", "deal__shared_book"),
         pk=pk,
         deal__isnull=False,
     )
 
-    if (
-        request.user != photo.uploader
-        and request.user != photo.deal.applicant
-        and request.user != photo.deal.responder
+    if request.user.pk != photo.uploader_id and not request.user.has_perm(
+        "deals.can_view_deal", photo.deal
     ):
         logger.warning("serve_protected_photo forbidden", extra={"user_id": request.user.pk, "photo_pk": str(pk)})
         return HttpResponse(status=403)
