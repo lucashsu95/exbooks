@@ -23,3 +23,17 @@ def test_isbn_lookup_works_for_logged_in_user(authenticated_client):
         )
     assert resp.status_code == 200
     mock_lookup.assert_called_once_with("9789861234567")
+
+
+@pytest.mark.django_db
+def test_isbn_lookup_htmx_anonymous_gets_401_with_hx_redirect(client):
+    """htmx 請求不跟隨 302，否則整頁登入頁會被塞進 ISBN 結果片段。"""
+    with patch("books.views.lookup_by_isbn") as mock_lookup:
+        resp = client.get(
+            reverse("books:isbn_lookup"),
+            {"isbn": "9789861234567"},
+            HTTP_HX_REQUEST="true",
+        )
+    assert resp.status_code == 401
+    assert "/accounts/login/" in resp["HX-Redirect"]
+    mock_lookup.assert_not_called()

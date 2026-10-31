@@ -420,7 +420,15 @@ def push_subscribe(request):
                 status=400,
             )
 
-        if not push_service.is_allowed_push_endpoint(endpoint):
+        try:
+            subscription_obj, created = push_service.subscribe(
+                request.user,
+                endpoint,
+                p256dh,
+                auth,
+                request.META.get("HTTP_USER_AGENT", ""),
+            )
+        except ValueError:
             logger.warning(
                 "push_subscribe rejected endpoint",
                 extra={"user_id": request.user.pk},
@@ -430,18 +438,6 @@ def push_subscribe(request):
                 code=ErrorCode.VALIDATION_ERROR,
                 status=400,
             )
-
-        # 使用 update_or_create 確保同一端點不重複
-        subscription_obj, created = PushSubscription.objects.update_or_create(
-            endpoint=endpoint,
-            defaults={
-                "user": request.user,
-                "p256dh": p256dh,
-                "auth": auth,
-                "user_agent": request.META.get("HTTP_USER_AGENT", "")[:500],
-                "is_active": True,
-            },
-        )
 
         action = "registered" if created else "updated"
         logger.info("push_subscribe", extra={"user_id": request.user.pk, "action": action, "endpoint_prefix": endpoint[:50]})

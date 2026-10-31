@@ -2,6 +2,7 @@ import logging
 
 from core.error_messages import service_error_message
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import redirect_to_login
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 
@@ -408,10 +409,15 @@ def book_delete(request, pk):
     return redirect("books:bookshelf")
 
 
-@login_required
 @require_GET
 def isbn_lookup(request):
-    """HTMX endpoint: ISBN 查詢"""
+    """HTMX endpoint: ISBN 查詢（需登入：會呼叫外部 Google Books）"""
+    if not request.user.is_authenticated:
+        login_url = redirect_to_login(request.get_full_path())["Location"]
+        if request.headers.get("HX-Request"):
+            # htmx 跟隨 302 會把整頁登入頁塞進結果片段；改回 401 並請 htmx 整頁導向
+            return HttpResponse(status=401, headers={"HX-Redirect": login_url})
+        return redirect(login_url)
     isbn = request.GET.get("isbn", "").strip()
     result = lookup_by_isbn(isbn) if isbn else None
     logger.info("isbn_lookup", extra={"isbn": isbn, "found": result is not None})

@@ -29,6 +29,7 @@ DEMO_ACCOUNTS = [
         "role": "一般會員",
     },
 ]
+_ADMIN = next(a for a in DEMO_ACCOUNTS if a["is_superuser"])
 
 
 class Command(BaseCommand):
@@ -65,7 +66,7 @@ class Command(BaseCommand):
         if not settings.DEBUG and not options["force"]:
             raise CommandError(
                 "拒絕執行：DEBUG=False（疑似正式環境）。seed 會清除資料並建立固定帳密的"
-                "示範管理員帳號（admin@example.com / admin12345）。"
+                f"示範管理員帳號（{_ADMIN['email']} / {_ADMIN['password']}）。"
                 "若確定要在此環境執行，請加上 --force。"
             )
 

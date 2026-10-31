@@ -102,7 +102,7 @@ def public_book_detail(request, pk):
 _JSON_LD_ESCAPES = {ord("<"): "\\u003c", ord(">"): "\\u003e", ord("&"): "\\u0026"}
 
 
-def _dump_json_ld(data):
+def _dump_json_ld(data: object) -> str:
     return json.dumps(data, ensure_ascii=False).translate(_JSON_LD_ESCAPES)
 
 

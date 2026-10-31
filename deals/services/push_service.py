@@ -30,7 +30,7 @@ PUSH_ENDPOINT_WILDCARD_SUFFIXES = (
 )
 
 
-def is_allowed_push_endpoint(endpoint) -> bool:
+def is_allowed_push_endpoint(endpoint: object) -> bool:
     """
     檢查 Web Push 訂閱端點是否為可信任的瀏覽器 Push 服務。
 
@@ -68,6 +68,29 @@ try:
 except ImportError:
     WEBPUSH_AVAILABLE = False
     logger.warning("pywebpush 套件未安裝，Web Push 功能將停用")
+
+
+def subscribe(
+    user, endpoint: str, p256dh: str, auth: str, user_agent: str = ""
+) -> tuple[PushSubscription, bool]:
+    """
+    建立或更新使用者的 Push 訂閱（同一 endpoint 不重複）。
+
+    endpoint 不在白名單時拋 ValueError，由呼叫端轉成 400。
+    回傳 (訂閱, 是否新建)。
+    """
+    if not is_allowed_push_endpoint(endpoint):
+        raise ValueError("不支援的推播端點")
+    return PushSubscription.objects.update_or_create(
+        endpoint=endpoint,
+        defaults={
+            "user": user,
+            "p256dh": p256dh,
+            "auth": auth,
+            "user_agent": user_agent[:500],
+            "is_active": True,
+        },
+    )
 
 
 def send_push_notification(
