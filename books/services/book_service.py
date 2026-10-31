@@ -14,16 +14,14 @@ Service 層負責：
 """
 
 import logging
-import os
 
-import httpx
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.core.files.base import ContentFile
 from django.db import transaction
 from django.utils import timezone
 from django_fsm import can_proceed
 
 from books.models import BookPhoto, OfficialBook, SharedBook, WishListItem
+from books.services import cover_service
 from books.services.photo_service import validate_and_process as process_book_photo
 from deals.services.notification_service import notify_book_available
 
@@ -116,14 +114,9 @@ def _attach_cover(official_book, uploaded_cover, cover_url=""):
         return
 
     try:
-        resp = httpx.get(cover_url, timeout=10, follow_redirects=True)
-        resp.raise_for_status()
-        ext = os.path.splitext(cover_url.split("?")[0])[1] or ".jpg"
-        official_book.cover_image.save(
-            f"{official_book.pk}{ext}",
-            ContentFile(resp.content),
-            save=True,
-        )
+        # SSRF 防護 + 圖片驗證與重新編碼（一律 .jpg），見 cover_service
+        cover_file = cover_service.fetch_cover_image(cover_url, official_book.pk)
+        official_book.cover_image.save(cover_file.name, cover_file, save=True)
     except Exception:
         logger.exception(
             "cover download failed",
