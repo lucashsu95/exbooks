@@ -40,6 +40,7 @@ from .services import (
     rating_service,
     extension_service,
     notification_service,
+    push_service,
 )
 from .services.api_response import api_success, api_error, ErrorCode
 
@@ -419,6 +420,17 @@ def push_subscribe(request):
                 status=400,
             )
 
+        if not push_service.is_allowed_push_endpoint(endpoint):
+            logger.warning(
+                "push_subscribe rejected endpoint",
+                extra={"user_id": request.user.pk},
+            )
+            return api_error(
+                message="不支援的推播端點",
+                code=ErrorCode.VALIDATION_ERROR,
+                status=400,
+            )
+
         # 使用 update_or_create 確保同一端點不重複
         subscription_obj, created = PushSubscription.objects.update_or_create(
             endpoint=endpoint,
@@ -445,10 +457,10 @@ def push_subscribe(request):
             code=ErrorCode.INVALID_JSON,
             status=400,
         )
-    except Exception as e:
+    except Exception:
         logger.exception("push_subscribe failed", extra={"user_id": request.user.pk})
         return api_error(
-            message=str(e),
+            message="推播訂閱失敗，請稍後再試",
             status=500,
         )
 
