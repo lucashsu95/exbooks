@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from books.models.official_book import OfficialBook
@@ -51,16 +52,12 @@ class SharedBookViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         # Ensure only the owner can update the book
         if serializer.instance.owner != self.request.user:
-            from rest_framework.exceptions import PermissionDenied
-
             raise PermissionDenied("Only the owner can update this book.")
         serializer.save()
 
     def perform_destroy(self, instance):
         # 與 Web 端 book_delete 一致：僅 owner 可刪除
         if instance.owner != self.request.user:
-            from rest_framework.exceptions import PermissionDenied
-
             raise PermissionDenied("Only the owner can delete this book.")
         instance.delete()
 

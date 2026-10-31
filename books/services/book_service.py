@@ -116,9 +116,7 @@ def _attach_cover(official_book, uploaded_cover, cover_url=""):
     try:
         # SSRF 防護 + 圖片驗證與重新編碼（一律 .jpg），見 cover_service
         cover_file = cover_service.fetch_cover_image(cover_url, official_book.pk)
-        official_book.cover_image.save(
-            f"{official_book.pk}.jpg", cover_file, save=True
-        )
+        official_book.cover_image.save(cover_file.name, cover_file, save=True)
     except Exception:
         logger.exception(
             "cover download failed",

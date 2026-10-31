@@ -12,6 +12,9 @@ MAX_SIZE_MB = 5
 MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 ALLOWED_MIME_TYPES = {"image/jpeg", "image/png"}
+# Pillow 解碼器白名單：與副檔名／MIME 一致只收 JPG / PNG
+# （cover_service 也引用這個常數，兩邊允許的格式不會分歧）
+ALLOWED_IMAGE_FORMATS = ("JPEG", "PNG")
 
 
 def validate_and_process(image_file):
@@ -51,7 +54,7 @@ def validate_and_process(image_file):
 
     # 3. 預先檢查圖片尺寸（避免超大圖片載入超時）
     try:
-        img = Image.open(image_file)
+        img = Image.open(image_file, formats=ALLOWED_IMAGE_FORMATS)
         width, height = img.size
         if width > 8192 or height > 8192:
             raise ValidationError(
@@ -64,7 +67,7 @@ def validate_and_process(image_file):
 
     # 4. 再次開啟圖片進行處理（第一次開啟已驗證）
     image_file.seek(0)  # 重置檔案指針
-    img = Image.open(image_file)
+    img = Image.open(image_file, formats=ALLOWED_IMAGE_FORMATS)
 
     # 5. 處理 EXIF 旋轉
     img = ImageOps.exif_transpose(img)

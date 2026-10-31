@@ -2,11 +2,14 @@
 封面 URL 下載服務（ADR F-8）。
 
 cover_url 來自使用者輸入，下載時必須防範：
-- SSRF：只允許 http/https；主機解析後的每個 IP 都必須是公網位址；
+- SSRF：只允許 http/https 且只連預設埠（80/443）；主機解析後的每個 IP
+  都必須是公網位址，且不可落在會內嵌 IPv4 的 IPv6 轉譯／隧道前綴
+  （NAT64、6to4、Teredo）；
   實際連線釘選到已驗證的 IP（Host header + TLS SNI 保留原主機名），
   避免 DNS rebinding；不跟隨重導向；短 timeout；大小上限。
-- 儲存型 XSS：下載內容必須是可辨識的點陣圖，經 photo_service 重新編碼為
-  JPEG 後才儲存，副檔名一律 .jpg（不採用 URL 的副檔名）。
+- 儲存型 XSS：下載內容必須是 JPG / PNG（與 photo_service 相同的格式白名單），
+  經 photo_service 重新編碼為 JPEG 後才儲存，檔名一律 cover_filename()
+  （不採用 URL 的副檔名）。
 
 錯誤契約：失敗一律 raise ValidationError。
 """
@@ -21,11 +24,20 @@ from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from PIL import Image
 
-from books.services.photo_service import validate_and_process
+from books.services.photo_service import ALLOWED_IMAGE_FORMATS, validate_and_process
 
 ALLOWED_SCHEMES = {"http", "https"}
 DEFAULT_PORTS = {"http": 80, "https": 443}
-ALLOWED_IMAGE_FORMATS = ("JPEG", "PNG", "GIF", "WEBP")
+# 這些 IPv6 前綴會把任意 IPv4（含內網）包進位址裡，一律拒絕
+BLOCKED_IPV6_NETWORKS = tuple(
+    ipaddress.ip_network(net)
+    for net in (
+        "64:ff9b::/96",  # NAT64 well-known prefix (RFC 6052)
+        "64:ff9b:1::/48",  # NAT64 local-use prefix (RFC 8215)
+        "2002::/16",  # 6to4 (RFC 3056)
+        "2001::/32",  # Teredo (RFC 4380)
+    )
+)
 MAX_COVER_BYTES = 5 * 1024 * 1024
 TIMEOUT_SECONDS = 5
 
@@ -39,8 +51,11 @@ def _make_client():
 
 def _is_public(ip_str):
     ip = ipaddress.ip_address(ip_str.split("%", 1)[0])
-    if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped:
-        ip = ip.ipv4_mapped
+    if isinstance(ip, ipaddress.IPv6Address):
+        if ip.ipv4_mapped:
+            ip = ip.ipv4_mapped
+        elif any(ip in net for net in BLOCKED_IPV6_NETWORKS):
+            return False
     return ip.is_global and not ip.is_multicast
 
 
@@ -74,7 +89,10 @@ def download_cover(url):
     if parts.username or parts.password:
         raise ValidationError("封面網址不可包含帳號密碼。")
 
-    port = port or DEFAULT_PORTS[scheme]
+    default_port = DEFAULT_PORTS[scheme]
+    if port is not None and port != default_port:
+        raise ValidationError("封面網址只接受預設埠（http 80 / https 443）。")
+    port = default_port
     ip = _resolve_public_ip(host, port)
 
     ip_netloc = f"[{ip}]" if ":" in ip else ip
@@ -82,8 +100,6 @@ def download_cover(url):
         (scheme, f"{ip_netloc}:{port}", parts.path or "/", parts.query, "")
     )
     host_header = f"[{host}]" if ":" in host else host
-    if port != DEFAULT_PORTS[scheme]:
-        host_header = f"{host_header}:{port}"
 
     buf = bytearray()
     with _make_client() as client:
@@ -119,6 +135,11 @@ def process_cover_bytes(data, filename):
     return validate_and_process(upload)
 
 
+def cover_filename(basename):
+    """封面檔名的單一來源（一律 .jpg，見 process_cover_bytes）。"""
+    return f"{basename}.jpg"
+
+
 def fetch_cover_image(url, basename):
-    """下載並處理封面，回傳可直接存入 ImageField 的 .jpg 檔案。"""
-    return process_cover_bytes(download_cover(url), f"{basename}.jpg")
+    """下載並處理封面，回傳可直接存入 ImageField 的檔案（name 為 cover_filename）。"""
+    return process_cover_bytes(download_cover(url), cover_filename(basename))
