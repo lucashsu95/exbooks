@@ -34,7 +34,7 @@ chat orchestration、due-deals 查詢合併。以下項目在檢視中發現、
 
 **啟動觸發**：任何新功能要呼叫 `cancel()` 之前，先修這個。
 
-### F-2 · `deal_service.create_deal` 沒有 `@transaction.atomic`
+### F-2 · `deal_service.create_deal` 沒有 `@transaction.atomic` — ✅ 已解決（2026-10-31）
 
 **現象**：`create_deal` 依序寫 Deal、DealMessage（備註）、
 `notify_deal_requested`、`record_exchange_event`，中途失敗會留下半成品。
@@ -42,6 +42,9 @@ chat orchestration、due-deals 查詢合併。以下項目在檢視中發現、
 
 **建議修法**：加 `@transaction.atomic`，並補一個 rollback 測試
 （C2 搬遷時因此標記為不搬，見 `tests/deals/test_deal_service.py`）。
+
+**解決**：master 已在 `create_deal` 加上 `@transaction.atomic`，通知改經
+`transaction.on_commit` 派發，回滾不留半成品也不外發通知。
 
 ### F-3 · `AIConfig.from_env` 的隱藏副作用
 
@@ -86,7 +89,7 @@ SDK 不需要自己再做一次）。
 
 **解決**：依建議修法更新斷言，測試全綠。
 
-### F-7 · DRF `DealViewSet.create` 缺每類型 applicant 身份驗證（建議 P2）
+### F-7 · DRF `DealViewSet.create` 缺每類型 applicant 身份驗證（建議 P2）— ✅ 已解決（2026-10-31）
 
 **現象**：`deals/api_views.py::create` 的 `deal_type` 直接透傳 `create_deal`，
 未做每類型的申請者身份驗證（與 master 相同）。本輪審查已在 `create_deal`
@@ -96,7 +99,11 @@ SDK 不需要自己再做一次）。
 **建議修法**：`DealViewSet.create` 對 API 支援的 `deal_type` 設白名單，
 或為每類型在 `rules.py` 補 applicant predicate 並在 viewset 檢查。
 
-### F-8 · `_attach_cover` 直接抓取使用者輸入的 cover_url（SSRF，既有，建議 P1）
+**解決**：`deal_service.validate_deal_applicant` 成為單一來源（RG→Owner、
+RS/EX→Keeper、LN/TF→第三人），`create_deal` 對 Web/API/AI 所有入口統一檢查，
+`rules.py` 的 `can_initiate_*` 也 delegate 到它；API 的 `book_set` 改為唯讀。
+
+### F-8 · `_attach_cover` 直接抓取使用者輸入的 cover_url（SSRF，既有，建議 P1）— ✅ 已解決（2026-10-31）
 
 **現象**：`books/services/book_service.py::_attach_cover` 對
 `book_add` 表單傳入的 `cover_url`（`request.POST`）直接
@@ -110,6 +117,10 @@ service 層，非本 PR regression。
 **建議修法**：`cover_url` 限制為 https 白名單網域（或已知封面服務）；
 以 httpx 自訂 transport / `event_hooks` 封鎖內部位址範圍與 localhost；
 redirect 需驗證最終 URL。
+
+**解決**：下載改走 `books/services/cover_service.py`：只收 http/https 預設埠、
+解析後 IP 須為公網（另擋 NAT64/6to4/Teredo）、連線釘選已驗證 IP、不跟隨
+重導向、大小上限，內容限 JPG/PNG 並重新編碼為 JPEG（PR #33）。
 
 ### F-9 · 信用等級有兩套 score→level 判定（2026-10-26 PR #7 審查記錄）
 

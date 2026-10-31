@@ -33,6 +33,11 @@ Exbooks 共享書籍平臺的 domain 詞彙。討論架構、命名 module、寫
 - **Deal（交易）**：两人之間對一冊 SharedBook 的互動，類型 LN/TF/RS/EX，
   狀態機 REQUESTED → RESPONDED → MEETED → DONE（可 CANCELLED），由
   django-fsm 管理。BR-3 ~ BR-12 為其業務規則編號。
+- **交易當事人（deal party）**：與某筆 Deal 有關的四種人——applicant、
+  responder、書籍 owner、書籍 keeper。交易詳情與其子路由（非當事人一律 404）、
+  交易留言、面交照片、API 交易可見範圍都用這一條規則。實作：
+  `deals/rules.py::is_deal_party`（查詢集版本 `deal_party_q`）。
+  能否執行特定動作（接受、取消、評價…）另有各自的規則。
 - **LoanExtension（延長借閱）**：借閱者對 MEETED 交易的延期申請。
 - **Rating（互評）**：交易完成後雙方互評。
 - **Appeal（申訴）**：對交易糾紛的申訴流程。
