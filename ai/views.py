@@ -6,7 +6,7 @@ from django.http import JsonResponse, StreamingHttpResponse
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from .services.chat_orchestrator import ChatOrchestrator
+from .services.chat_orchestrator import ChatOrchestrator, _wrap_persisted
 from .services.consent_store import ConsentStore
 from .services.conversation_cache import ConversationCache
 from .services.tool_registry import ConsentRequirement, ToolRegistry
@@ -71,23 +71,37 @@ class ConsentView(LoginRequiredMixin, View):
             logger.warning("consent_view invalid JSON", extra={"user_id": request.user.pk, "action": action})
             return JsonResponse({"error": "Invalid JSON"}, status=400)
 
-        # 取消也把 token 吃掉：one-shot 對任何有效 POST 成立
+        # 取消與確認同紀律：token 一律吃掉（one-shot），但 transcript 只在
+        # 全部校驗通過後才寫——token 過期/不存在、action 不符或未註冊都
+        # 404 且不寫（舊 cancel 路徑對過期 token 會寫下「declined (unknown)」
+        # 的虛假紀錄，action 也完全未校驗）。
         payload = ConsentStore.consume(request.user.id, token)
-        if not confirmed:
-            logger.info("consent_view cancelled", extra={"user_id": request.user.pk, "action": action})
-            return JsonResponse({"status": "cancelled"})
-
         if payload is None:
-            logger.warning("consent_view token invalid", extra={"user_id": request.user.pk, "action": action})
+            logger.warning("consent_view token invalid", extra={"user_id": request.user.pk, "action": action, "confirmed": confirmed})
             return JsonResponse({"error": "Consent request not found or expired"}, status=404)
         if payload["tool"] != action:
-            logger.warning("consent_view token/action mismatch", extra={"user_id": request.user.pk, "action": action})
+            logger.warning("consent_view token/action mismatch", extra={"user_id": request.user.pk, "action": action, "confirmed": confirmed})
             return JsonResponse({"error": "Consent request not found or expired"}, status=404)
 
         tool_def = ToolRegistry.get_tool(action)
         if tool_def is None or tool_def.consent != ConsentRequirement.USER_CONFIRM:
-            logger.warning("consent_view action not found", extra={"user_id": request.user.pk, "action": action})
+            logger.warning("consent_view action not found", extra={"user_id": request.user.pk, "action": action, "confirmed": confirmed})
             return JsonResponse({"error": "Consent request not found or expired"}, status=404)
+
+        if not confirmed:
+            logger.info("consent_view cancelled", extra={"user_id": request.user.pk, "action": action})
+            # 拒絕也記進對話紀錄：下一 turn model 知道被拒，不會再重複提出。
+            # 整則紀錄視為一筆 untrusted payload 統一 fence＋escaped——
+            # action 來自 URL、args 可能含使用者可控字串（任一 tool 加 string
+            # 參數時不得在 fence 外裸奔）。
+            ConversationCache.add_message(
+                request.user.id,
+                "system",
+                _wrap_persisted(
+                    f"User declined to execute action: {action} with args {payload['args']}."
+                ),
+            )
+            return JsonResponse({"status": "cancelled"})
 
         # 存檔 args 在建立時（orchestrator）已依 signature 過濾，直接執行
         arguments = payload["args"]
@@ -95,10 +109,17 @@ class ConsentView(LoginRequiredMixin, View):
         try:
             # 帶著使用者身份執行（ownership 檢查在 tool 內）
             result = tool_def.func(user=request.user, **arguments)
+            # 整則紀錄（action/args/result）視為一筆 untrusted payload
+            # 統一 fence＋escaped：今天 args 恰好都是 UUID/int 才安全，
+            # 任一 USER_CONFIRM tool 加 string 參數（備註、書名引用）
+            # 就不應在 fence 外（#13 與 orchestrator 回灌路徑同紀律）。
             ConversationCache.add_message(
                 request.user.id,
                 "system",
-                f"User confirmed and executed action: {action} with args {arguments}. Result: {result}",
+                _wrap_persisted(
+                    f"User confirmed and executed action: {action} with args {arguments}. "
+                    f"Result: {result}"
+                ),
             )
             logger.info("consent_view success", extra={"user_id": request.user.pk, "action": action})
             return JsonResponse({"status": "success", "result": result})

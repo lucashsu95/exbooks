@@ -4,6 +4,7 @@ ChatOrchestrator 測試 — 用 ScriptedTransport fake 直接打 stream()，
 tool 執行失敗、內容空 fallback、renewal ownership。
 """
 
+import json
 from unittest.mock import patch
 
 import pytest
@@ -18,6 +19,17 @@ from tests.factories import DealFactory, SharedBookFactory, UserFactory
 pytestmark = pytest.mark.django_db
 
 
+@pytest.fixture(autouse=True)
+def _isolate_conversation_cache():
+    # SQLite 測試庫回滾每個測試，user pk 會重用 1，而 locmem cache 不跨測試
+    # 清除——不清空的話 ai_conv:1 會累積前面測試的 tool fence 造成污染。
+    from django.core.cache import cache
+
+    cache.clear()
+    yield
+    cache.clear()
+
+
 def _run(user, responses):
     """跑完 stream()，回傳 (完整 SSE 文字, transport)。"""
     client, transport = make_client(responses)
@@ -25,6 +37,15 @@ def _run(user, responses):
         user=user, message="hi"
     )
     return "".join(gen), transport
+
+
+def _call(name, arguments=None):
+    """組 SDK 同形的 tool_call dict（新測試共用）。"""
+    return {
+        "id": "c1",
+        "type": "function",
+        "function": {"name": name, "arguments": json.dumps(arguments or {})},
+    }
 
 
 def test_content_only():
@@ -150,6 +171,10 @@ def test_consent_required_skips_execution():
     assert "request_renewal" in sse
     assert "event: tool_result" not in sse
     assert len(transport.requests) == 1  # 沒有 follow-up
+    # D4a：同輪的中途內容（「我幫你延期」——使用者還沒按確認）不得外洩成
+    # 最終答案；最終答案是 consent 專用 fallback
+    assert "我幫你延期" not in sse
+    assert "我已送出確認請求" in sse
 
 
 def test_consent_required_filters_args_before_storing():
@@ -262,6 +287,260 @@ def test_empty_content_fallback():
     # service 層對空回應會回「我沒有收到回應」；orchestrator 照樣輸出為 delta
     assert "delta" in sse
     assert "event: done" in sse
+
+
+def test_pretool_content_never_emitted():
+    """D4a：content 與 tool_calls 同輪出現時，中途內容不得成為最終答案；
+    工具結果回灌後，下一輪的內容才是唯一答案。"""
+    user = UserFactory()
+    sse, transport = _run(
+        user,
+        [
+            ChatResponse(
+                content="我先查一下你的書。",
+                tool_calls=[_call("get_user_books", {"status": "OWNED"})],
+            ),
+            ChatResponse(content="你有 2 本書"),
+        ],
+    )
+    assert len(transport.requests) == 2
+    assert sse.count("event: content") == 1
+    assert "你有 2 本書" in sse
+    assert "我先查一下你的書。" not in sse
+
+
+def test_multi_round_tool_iteration():
+    """真正的迭代：round 2 的 tool_calls 不得被丟掉；
+    每一輪結果都 fenced 回灌（舊 pipeline 只有一個 follow-up 且其 tool_calls 直接被丟）。"""
+    user = UserFactory()
+    sse, transport = _run(
+        user,
+        [
+            ChatResponse(
+                content="", tool_calls=[_call("get_user_books", {"status": "OWNED"})]
+            ),
+            ChatResponse(content="", tool_calls=[_call("get_borrowing_status")]),
+            ChatResponse(content="你持有 2 本書，1 筆借閱中"),
+        ],
+    )
+    assert len(transport.requests) == 3
+    assert sse.count("event: tool_result") == 2
+    assert "你持有 2 本書，1 筆借閱中" in sse
+    # round 2 的 request 帶 round 1 的 fence；round 3 的 request 帶兩輪 fence
+    r2_fences = sum(
+        "Tool results" in (m.content or "") for m in transport.requests[1]["messages"]
+    )
+    r3_fences = sum(
+        "Tool results" in (m.content or "") for m in transport.requests[2]["messages"]
+    )
+    assert r2_fences == 1
+    assert r3_fences == 2
+
+
+def test_bound_forces_toolless_closeout():
+    """bound：模型連續 3 輪都要 tool → 第 4 次是 tools-off 的強制收尾
+    （request 無 tools，結構上不可能再回 tool_calls）。
+    只腳本 4 個回應：迴圈若多打一次 call，ScriptedTransport 會 IndexError。"""
+    user = UserFactory()
+    always_tool = ChatResponse(
+        content="", tool_calls=[_call("get_user_books", {"status": "OWNED"})]
+    )
+    sse, transport = _run(
+        user,
+        [
+            always_tool,
+            always_tool,
+            always_tool,
+            ChatResponse(content="查完了，你有 2 本書"),
+        ],
+    )
+    assert len(transport.requests) == 4
+    assert transport.requests[3]["tools"] is None
+    assert transport.requests[3]["tool_choice"] is None
+    assert sse.count("event: tool_result") == 3  # 前三輪都有執行
+    assert "查完了，你有 2 本書" in sse
+    assert "event: done" in sse
+
+
+def test_tool_results_persisted_for_next_turn():
+    """D4b：tool 結果要進 ConversationCache（fenced + marker），
+    下一 turn 的 model 看得到，使用者不必重問。"""
+    from ai.services.conversation_cache import ConversationCache
+
+    user = UserFactory()
+    SharedBookFactory(owner=user, official_book__title="Python 高效能程式設計")
+    _run(
+        user,
+        [
+            ChatResponse(
+                content="", tool_calls=[_call("get_user_books", {"status": "OWNED"})]
+            ),
+            ChatResponse(content="你有 1 本書"),
+        ],
+    )
+    history = ConversationCache.get_history(user.id)
+    contents = [m["content"] for m in history]
+    fence_entries = [c for c in contents if "Tool results" in c and "<<<" in c]
+    assert len(fence_entries) == 1
+    assert "Python 高效能程式設計" in fence_entries[0]
+    assert "untrusted" in fence_entries[0].lower()
+    assert any("[Called tools: get_user_books]" in c for c in contents)
+    assert history[-1] == {"role": "assistant", "content": "你有 1 本書"}
+
+    # 下一 turn：fence 進入 model 的 request
+    _sse2, transport2 = _run(user, [ChatResponse(content="上次查到你有 1 本書")])
+    first_turn_msgs = [
+        m.content or "" for m in transport2.requests[0]["messages"]
+    ]
+    assert any("Tool results" in c for c in first_turn_msgs)
+
+
+def test_consent_ends_turn_with_executed_tools():
+    """mixed round：同一輪有執行的讀取 tool + consent tool →
+    兩幀都發、turn 結束（沒有 continuation call）；
+    但已執行 tool 的結果仍要持久化（fence 進 cache）。
+    D4a：同輪的中途內容（「我先看你有哪些書…」——使用者還沒按確認）
+    不得外洩成最終答案，也不得持久化；最終答案是 consent fallback。"""
+    from ai.services.conversation_cache import ConversationCache
+
+    user = UserFactory()
+    sse, transport = _run(
+        user,
+        [
+            ChatResponse(
+                content="我先看你有哪些書，再幫你延期。",
+                tool_calls=[
+                    _call("get_user_books", {"status": "OWNED"}),
+                    _call("request_renewal", {"deal_id": 1, "days": 7}),
+                ],
+            )
+        ],
+    )
+    assert "event: tool_result" in sse
+    assert "event: consent_required" in sse
+    assert len(transport.requests) == 1  # consent 結束 turn
+    # D4a：中途內容不是最終答案
+    assert "我先看你有哪些書" not in sse
+    assert "我已送出確認請求" in sse
+    history = ConversationCache.get_history(user.id)
+    contents = [m["content"] for m in history]
+    assert any("Tool results" in c and "<<<" in c for c in contents)
+    # turn 的 assistant 尾條是 consent fallback（不是中途內容）
+    assert history[-1] == {
+        "role": "assistant",
+        "content": "我已送出確認請求，請在上方訊息按「確認」或「取消」。",
+    }
+    assert not any("我先看你有哪些書" in c for c in contents)
+
+
+def test_consent_only_empty_content_gets_consent_fallback():
+    """consent-only round 且 content 為空：發 consent 專用 fallback
+    （提示按確認/取消），不是通用的「思考中」行。"""
+    user = UserFactory()
+    sse, transport = _run(
+        user,
+        [ChatResponse(content="", tool_calls=[_call("request_renewal", {"deal_id": 1, "days": 7})])],
+    )
+    assert "event: consent_required" in sse
+    assert len(transport.requests) == 1
+    assert "我已送出確認請求" in sse
+    assert "AI 正在思考中" not in sse
+
+
+def test_nameless_tool_call_round_gets_generic_fallback():
+    """no-feedable 分支：無名的 tool_call 沒有可回灌的結果，turn 直接結束；
+    D4a 同樣適用——同輪的中途內容不得外洩成最終答案。"""
+    user = UserFactory()
+    sse, transport = _run(
+        user,
+        [
+            ChatResponse(
+                content="讓我處理一下。",
+                tool_calls=[
+                    {
+                        "id": "c1",
+                        "type": "function",
+                        "function": {"name": None, "arguments": "{}"},
+                    }
+                ],
+            ),
+        ],
+    )
+    assert len(transport.requests) == 1  # 不燒剩餘 budget
+    assert "讓我處理一下。" not in sse
+    assert "AI 正在思考中" in sse
+    assert "event: done" in sse
+
+
+def test_client_disconnect_mid_stream_still_persists_tool_data():
+    """D4b 契約：client 中途斷線（yield 點收到 GeneratorExit——BaseException，
+    except Exception 接不到）不得丟掉已執行的 tool 資料：cache 至少等於
+    「model 目前為止看到的」（user 訊息 + 已執行輪的 marker/fence），
+    使用者不必重問。"""
+    from ai.services.conversation_cache import ConversationCache
+
+    user = UserFactory()
+    SharedBookFactory(owner=user, official_book__title="Python 高效能程式設計")
+    client, _ = make_client(
+        [
+            ChatResponse(
+                content="", tool_calls=[_call("get_user_books", {"status": "OWNED"})]
+            ),
+            ChatResponse(content="你有 1 本書"),
+        ]
+    )
+    gen = ChatOrchestrator(service=ChatService(client=client)).stream(
+        user=user, message="hi"
+    )
+    # 吃到第一幀（tool_result）：tool 已執行、幀已送出，最終答案還沒出
+    first = next(gen)
+    assert "tool_result" in first
+    gen.close()  # client 斷線：Django 在目前 yield 點丟入 GeneratorExit
+
+    history = ConversationCache.get_history(user.id)
+    contents = [m["content"] for m in history]
+    # tool 資料（fenced）與 marker 已落 cache——不是只剩孤兒 user 訊息
+    fence_entries = [c for c in contents if "<<<" in c]
+    assert len(fence_entries) == 1
+    assert "Python 高效能程式設計" in fence_entries[0]
+    assert any(
+        m["role"] == "assistant" and "[Called tools: get_user_books]" in m["content"]
+        for m in history
+    )
+
+
+def test_unknown_tool_reported_and_fed_back():
+    """未知 tool 名：不得靜默丟掉（loop 下那會燒掉 budget 且模型不知原因）；
+    以 error 回灌 fenced，模型才能自我修正。"""
+    user = UserFactory()
+    sse, transport = _run(
+        user,
+        [
+            ChatResponse(content="", tool_calls=[_call("fetch_weather")]),
+            ChatResponse(content="我沒有氣象工具"),
+        ],
+    )
+    assert "event: tool_result" in sse
+    assert "fetch_weather" in sse
+    assert len(transport.requests) == 2
+    fences = [
+        m.content
+        for m in transport.requests[1]["messages"]
+        if "Tool results" in (m.content or "")
+    ]
+    assert len(fences) == 1
+    assert "fetch_weather" in fences[0]
+
+
+def test_system_prompt_plain_text_direct_answer():
+    """D3/D4：SYSTEM_PROMPT 須禁 Markdown（純文字顯示）
+    並要求直接依工具資料給完整答案（不請使用者重問）。"""
+    user = UserFactory()
+    _sse, transport = _run(user, [ChatResponse(content="你好")])
+    content = transport.requests[0]["messages"][0].content
+    assert "純文字" in content
+    assert "Markdown" in content
+    assert "重新提問" in content
 
 
 class TestRequestRenewalOwnership:
