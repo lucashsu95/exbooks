@@ -157,10 +157,12 @@ class ChatService:
                 temperature=0.7,
                 max_tokens=1024,
             )
-        except Exception as e:
+        except Exception:
+            # 例外細節（主機、連線錯誤）只進 log：這段文字會顯示給使用者
+            # 並寫進對話歷史
             logger.exception("AI API call failed", extra={"user_id": str(user_id)})
             return AIResponse(
-                content=f"抱歉，AI 服務暫時無法回應，請稍後再試。 ({e})",
+                content="抱歉，AI 服務暫時無法回應，請稍後再試。",
                 tool_calls=[],
                 raw_response=None,
             )

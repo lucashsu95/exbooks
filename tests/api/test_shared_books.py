@@ -2,6 +2,8 @@ import pytest
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
+
+from tests.api._auth import mark_email_verified
 from django.contrib.auth import get_user_model
 from books.models.official_book import OfficialBook
 from books.models.shared_book import SharedBook
@@ -16,9 +18,11 @@ class TestSharedBookAPI:
         self.user = User.objects.create_user(
             username="bookowner", password="password123", email="owner@example.com"
         )
+        mark_email_verified(self.user)
         self.other_user = User.objects.create_user(
             username="otheruser", password="password123", email="other@example.com"
         )
+        mark_email_verified(self.other_user)
 
         self.off_book = OfficialBook.objects.create(
             isbn="1112223334445", title="Shared Book Title", author="Shared Author"

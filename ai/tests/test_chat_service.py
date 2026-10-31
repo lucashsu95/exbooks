@@ -103,3 +103,19 @@ class TestChatService:
         assert req["tools"] is None
         assert req["tool_choice"] is None
         assert req["messages"][0].role == "system"
+
+    def test_api_failure_does_not_leak_exception_text(self):
+        """provider 例外只進 log；使用者看到（並寫進歷史）的是通用訊息。"""
+        from ai_client import AIClient, AIConfig
+
+        class _BoomTransport:
+            def chat(self, **kwargs):
+                raise RuntimeError("secret-host:8000 connection refused token=abc")
+
+        client = AIClient(AIConfig(api_key="k"), transport=_BoomTransport())
+        response = ChatService(client=client).chat(user_id=1, message="Hi", history=[])
+
+        assert "暫時無法回應" in response.content
+        assert "secret-host" not in response.content
+        assert "connection refused" not in response.content
+        assert "(" not in response.content

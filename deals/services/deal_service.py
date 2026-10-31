@@ -274,6 +274,11 @@ def create_deal(
                 f"才能發起此交易，目前為「{shared_book.get_status_display()}」"
             )
 
+    # 套書歸屬以 shared_book 為準；caller 指定的 book_set 必須一致，
+    # 避免把交易掛到別人的套書（API 端 book_set 已是唯讀欄位）
+    if book_set is not None and book_set != shared_book.book_set:
+        raise ValidationError("指定的套書與書籍所屬套書不符。")
+
     # BR-7: 套書驗證
     if shared_book.book_set and deal_type in (
         Deal.DealType.LOAN,

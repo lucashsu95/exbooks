@@ -95,16 +95,16 @@ class TestPublishBook:
         assert shared.official_book.cover_image
 
     def test_publish_cover_url_download_failure_does_not_block(self, monkeypatch):
-        import books.services.book_service as bs
+        import books.services.cover_service as cs
 
         def _boom(*args, **kwargs):
             raise RuntimeError("network down")
 
-        monkeypatch.setattr(bs.httpx, "get", _boom)
+        monkeypatch.setattr(cs, "download_cover", _boom)
         user = UserFactory()
-        data = _publish_data()
-        data["cover_url"] = "http://cover.test/cover.jpg"
-        shared = publish_book(user, data, photos=[_jpeg()])
+        shared = publish_book(
+            user, _publish_data(), photos=[_jpeg()], cover_url="http://cover.test/cover.jpg"
+        )
         assert shared.status == SharedBook.Status.TRANSFERABLE
         assert not shared.official_book.cover_image
 

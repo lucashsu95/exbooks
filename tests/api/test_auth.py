@@ -4,6 +4,8 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from tests.api._auth import mark_email_verified
+
 User = get_user_model()
 
 
@@ -18,6 +20,7 @@ class TestJWTAuth:
             email=f"{self.username}@example.com",
             password=self.password,
         )
+        mark_email_verified(self.user)
 
     def test_token_obtain_pair(self):
         url = reverse("token_obtain_pair")

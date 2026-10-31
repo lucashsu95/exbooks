@@ -42,4 +42,5 @@ class SharedBookSerializer(serializers.ModelSerializer):
             "min_trust_level",
             "listed_at",
         ]
-        read_only_fields = ["status", "listed_at"]
+        # owner / keeper / book_set 只能經 service 變更（發布、交易、書套管理）
+        read_only_fields = ["status", "listed_at", "owner", "keeper", "book_set"]

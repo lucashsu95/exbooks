@@ -1,35 +1,19 @@
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
 
-from .models import SharedBook
-
 
 class StaticViewSitemap(Sitemap):
+    """公開頁面的 sitemap。
+
+    書籍列表與詳情頁皆需登入（books:list / books:detail），目前沒有公開
+    瀏覽路由，因此只列出首頁。
+    """
+
     priority = 1.0
     changefreq = "weekly"
 
     def items(self):
-        return ["landing", "public_browse"]
+        return ["landing"]
 
     def location(self, item):
-        if item == "landing":
-            return reverse("landing")
-        return reverse("books:public_list")
-
-
-class PublicSharedBookSitemap(Sitemap):
-    changefreq = "weekly"
-    priority = 0.7
-
-    def items(self):
-        return (
-            SharedBook.objects.filter(status=SharedBook.Status.TRANSFERABLE)
-            .select_related("official_book")
-            .order_by("-updated_at")
-        )
-
-    def lastmod(self, obj):
-        return obj.updated_at
-
-    def location(self, obj):
-        return reverse("books:public_detail", kwargs={"pk": obj.pk})
+        return reverse(item)

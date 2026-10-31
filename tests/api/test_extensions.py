@@ -5,6 +5,8 @@ LoanExtension API 測試（#21）：update/destroy 已收為 405。
 import pytest
 from django.urls import reverse
 from rest_framework.test import APIClient
+
+from tests.api._auth import mark_email_verified
 from django.contrib.auth import get_user_model
 
 from deals.models import LoanExtension
@@ -24,6 +26,7 @@ class TestLoanExtensionAPIWriteSurface:
         self.user = User.objects.create_user(
             username="ext_applicant", password="password123", email="ext@example.com"
         )
+        mark_email_verified(self.user)
         self.ext = LoanExtensionFactory(requested_by=self.user)
         token_url = reverse("token_obtain_pair")
         res = self.client.post(

@@ -18,9 +18,12 @@ Exbooks 共享書籍平臺的 domain 詞彙。討論架構、命名 module、寫
   皆以此為依據。實作：`overdue_service`。
 
 - **AI 對話編排（chat orchestration）**：一輪 AI 對話的完整流程——tool 呼叫迴圈、
-  consent 決策、follow-up 二次呼叫、history 寫入。實作：
-  `ai/services/chat_orchestrator.py`。AI provider 經 `AIClient`/`Transport`
-  seam 注入（生產：RequestsTransport；測試：ScriptedTransport）。
+  發出 consent 請求、follow-up 二次呼叫、history 寫入。實作：
+  `ai/services/chat_orchestrator.py`（含整輪時間預算的單一來源）。使用者確認／取消後的
+  執行與紀錄在 `ai/services/consent_service.py`；每位使用者同時一輪（in-flight 鎖）與
+  每分鐘限流在 `ai/services/turn_guard.py`；untrusted 資料（tool 結果、consent 紀錄）
+  回灌與持久化前的 fence 包裝在 `ai/services/fencing.py`。AI provider 經
+  `AIClient`/`Transport` seam 注入（生產：RequestsTransport；測試：ScriptedTransport）。
 
 ## 實體
 
@@ -33,6 +36,11 @@ Exbooks 共享書籍平臺的 domain 詞彙。討論架構、命名 module、寫
 - **Deal（交易）**：两人之間對一冊 SharedBook 的互動，類型 LN/TF/RS/EX，
   狀態機 REQUESTED → RESPONDED → MEETED → DONE（可 CANCELLED），由
   django-fsm 管理。BR-3 ~ BR-12 為其業務規則編號。
+- **交易當事人（deal party）**：與某筆 Deal 有關的四種人——applicant、
+  responder、書籍 owner、書籍 keeper。交易詳情與其子路由（非當事人一律 404）、
+  交易留言、面交照片、API 交易可見範圍都用這一條規則。實作：
+  `deals/rules.py::is_deal_party`（查詢集版本 `deal_party_q`）。
+  能否執行特定動作（接受、取消、評價…）另有各自的規則。
 - **LoanExtension（延長借閱）**：借閱者對 MEETED 交易的延期申請。
 - **Rating（互評）**：交易完成後雙方互評。
 - **Appeal（申訴）**：對交易糾紛的申訴流程。

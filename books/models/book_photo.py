@@ -68,5 +68,5 @@ class BookPhoto(BaseModel):
         - 無關聯交易: 回傳原媒體檔案 URL。
         """
         if self.deal_id:
-            return reverse("serve_protected_photo", kwargs={"pk": self.pk})
+            return reverse("books:serve_protected_photo", kwargs={"pk": self.pk})
         return self.photo.url

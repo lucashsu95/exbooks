@@ -1,18 +1,20 @@
-<div x-data="chatWidget()" 
-     x-init="init()" 
+{% load ai_chat %}<div x-data="chatWidget('{{ user.pk|escapejs }}', '{% url "account_logout" %}')"
+     @keydown.escape.window="isOpen && setOpen(false)"
      class="fixed bottom-6 right-6 z-50 font-sans">
-    
+    <!-- Alpine 3 會自動呼叫 init()，不要再加 x-init="init()"（會跑兩次） -->
     <!-- 開關由右下角的米豆小版承擔（pixel-pet.js bindOpenChat），此 div 只當聊天視窗的錨點 -->
 
-    <!-- Chat Window -->
-    <div x-show="isOpen" 
+    <!-- 聊天視窗 -->
+    <div x-show="isOpen"
+         role="dialog"
+         aria-label="米豆聊天助理"
          x-transition:enter="transition ease-out duration-300"
          x-transition:enter-start="opacity-0 translate-y-10 scale-95"
          x-transition:enter-end="opacity-100 translate-y-0 scale-100"
          x-transition:leave="transition ease-in duration-200"
          x-transition:leave-start="opacity-100 translate-y-0 scale-100"
          x-transition:leave-end="opacity-0 translate-y-10 scale-95"
-         class="absolute bottom-20 right-0 w-[400px] max-w-[calc(100vw-3rem)] sm:h-[600px] h-[calc(100vh-10rem)] bg-white rounded-2xl shadow-xl border border-slate-200 flex flex-col overflow-hidden"
+         class="absolute bottom-20 right-0 w-[400px] max-w-[calc(100vw-3rem)] sm:h-[600px] h-[calc(100dvh-10rem)] bg-white rounded-2xl shadow-xl border border-slate-200 flex flex-col overflow-hidden"
          style="display: none;">
         
         <!-- Header：米豆大版（白底，跟全站一致） -->
@@ -24,7 +26,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                 </button>
-                <button @click="toggleChat()" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="關閉" aria-label="關閉">
+                <button @click="setOpen(false)" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="關閉" aria-label="關閉">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -32,8 +34,11 @@
             </div>
         </div>
 
-        <!-- Messages Area -->
-        <div id="chat-messages" 
+        <!-- 訊息區 -->
+        <div id="chat-messages"
+             role="log"
+             aria-live="polite"
+             aria-label="對話內容"
              class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50"
              x-ref="messageContainer">
             
@@ -43,7 +48,7 @@
                          class="max-w-[80%] p-3 text-sm leading-relaxed">
                         <div x-text="msg.content" class="whitespace-pre-line"></div>
                         
-                        <!-- Consent Action -->
+                        <!-- 敏感操作確認 -->
                         <template x-if="msg.type === 'consent'">
                             <div class="mt-3 flex gap-2">
                                 <button @click="sendAction(msg, 'confirm')"
@@ -62,9 +67,9 @@
                 </div>
             </template>
 
-            <!-- Typing Indicator -->
+            <!-- 回覆中指示 -->
             <template x-if="isTyping">
-                <div class="flex justify-start">
+                <div class="flex justify-start" role="status" aria-label="米豆正在回覆">
                     <div class="bg-white border border-slate-200 rounded-2xl rounded-tl-md p-3">
                         <div class="flex gap-1">
                             <span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0ms"></span>
@@ -76,16 +81,20 @@
             </template>
         </div>
 
-        <!-- Input Area -->
+        <!-- 輸入區 -->
         <div class="p-4 bg-white border-t border-slate-200">
             <form @submit.prevent="sendMessage()" class="flex gap-2">
-                <input type="text" 
-                       x-model="userInput" 
-                       :disabled="!isConnected || isTyping"
-                       placeholder="有什麼想問的？" 
+                <input type="text"
+                       x-ref="input"
+                       x-model="userInput"
+                       :disabled="isTyping"
+                       maxlength="1000"
+                       aria-label="輸入要問米豆的訊息"
+                       placeholder="有什麼想問的？"
                        class="flex-1 px-3 py-2 border border-slate-300 rounded-full bg-slate-50 focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none text-sm text-slate-800 placeholder:text-slate-400 transition-colors disabled:bg-slate-100 disabled:cursor-not-allowed">
-                <button type="submit" 
-                        :disabled="!userInput.trim() || !isConnected || isTyping"
+                <button type="submit"
+                        aria-label="送出訊息"
+                        :disabled="!userInput.trim() || isTyping"
                         class="bg-primary text-white p-2.5 rounded-full hover:bg-secondary transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
@@ -174,139 +183,163 @@ function stripMarkdown(text) {
     return out.join('\n');
 }
 
-function chatWidget() {
+// 聊天記錄依使用者分開存（同一瀏覽器換帳號不會看到別人的對話），只留最後 N 則；
+// 登出時清掉所有 chat_history* key。舊版共用的 'chat_history' key 一律丟棄。
+const CHAT_HISTORY_PREFIX = 'chat_history';
+const CHAT_MAX_STORED = 50;
+// 用戶端等待上限：由伺服器端時間預算注入（ai/services/chat_orchestrator.py CLIENT_TIMEOUT_SECONDS）
+const CHAT_CLIENT_TIMEOUT_MS = {% chat_client_timeout_ms %};
+const CHAT_GREETING = '嗨！我是米豆，有什麼可以幫你的嗎？';
+// 所有 localStorage 存取都經過這裡：不可用（隱私模式 SecurityError、配額滿等）時
+// 一律吞掉——本機紀錄只影響重新整理後的顯示，不能擋住 widget 初始化、對話或登出
+const chatStorage = {
+    get(key) {
+        try {
+            return localStorage.getItem(key);
+        } catch (e) {
+            return null;
+        }
+    },
+    set(key, value) {
+        try {
+            localStorage.setItem(key, value);
+        } catch (e) {
+            // 配額滿或不可用
+        }
+    },
+    remove(key) {
+        try {
+            localStorage.removeItem(key);
+        } catch (e) {
+            // 不可用
+        }
+    },
+    removeByPrefix(prefix) {
+        try {
+            const keys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith(prefix)) keys.push(key);
+            }
+            keys.forEach((key) => localStorage.removeItem(key));
+        } catch (e) {
+            // 不可用
+        }
+    },
+};
+
+function clearChatStorage() {
+    chatStorage.removeByPrefix(CHAT_HISTORY_PREFIX);
+}
+
+// 登出時清掉本機聊天記錄：登出可能是 POST 表單或連結，兩種都接
+function bindChatLogoutCleanup(logoutUrl) {
+    if (window.__chatLogoutCleanupBound) return;
+    window.__chatLogoutCleanupBound = true;
+    const logoutPath = new URL(logoutUrl, window.location.origin).pathname;
+    const isLogout = (url) => {
+        try {
+            return new URL(url, window.location.origin).pathname === logoutPath;
+        } catch (e) {
+            return false;
+        }
+    };
+    document.addEventListener('submit', (e) => {
+        const form = e.target;
+        if (form instanceof HTMLFormElement && isLogout(form.getAttribute('action') || window.location.href)) {
+            clearChatStorage();
+        }
+    }, true);
+    document.addEventListener('click', (e) => {
+        const link = e.target instanceof Element ? e.target.closest('a[href]') : null;
+        if (link && isLogout(link.getAttribute('href'))) clearChatStorage();
+    }, true);
+}
+
+function chatWidget(userId, logoutUrl) {
     return {
         isOpen: false,
-        isConnected: false,
-        connectionStatus: 'Disconnected',
         userInput: '',
         messages: [],
         isTyping: false,
-        eventSource: null,
+        storageKey: `${CHAT_HISTORY_PREFIX}:${userId}`,
 
         init() {
+            // 舊版不分使用者的共用 key：可能是別的帳號的對話，直接丟棄
+            chatStorage.remove(CHAT_HISTORY_PREFIX);
             this.loadHistory();
+            bindChatLogoutCleanup(logoutUrl);
             // 米豆小版取代原紫色按鈕：點貓開關聊天視窗
-            window.MiPet?.bindOpenChat(() => this.toggleChat());
-            // SSE 延遲到用戶主動打開聊天視窗時才連線，
-            // 避免每個頁面都佔用一個 Gunicorn sync worker
+            window.MiPet?.bindOpenChat?.(() => this.toggleChat());
         },
 
         toggleChat() {
-            this.isOpen = !this.isOpen;
-            // 聊天視窗打開時，小版讓位給視窗內的大版
-            document.documentElement.classList.toggle('mipet-chat-open', this.isOpen);
-            if (this.isOpen) {
-                // 打開路徑自己負責捲到底部：回訪使用者的 hello 已被 dedup，
-                // addMessage 的捲動不會觸發（D2）
-                this.$nextTick(() => this.scrollToBottom());
-                if (!this.eventSource) {
-                    this.connectSSE();
-                }
-            }
-            // 關閉聊天時斷開 SSE，釋放 worker
-            if (!this.isOpen && this.eventSource) {
-                this.eventSource.close();
-                this.eventSource = null;
-                this.isConnected = false;
-                this.connectionStatus = 'Disconnected';
-            }
+            this.setOpen(!this.isOpen);
         },
 
-        connectSSE() {
-            this.connectionStatus = 'Connecting...';
-            this.eventSource = new EventSource('/ai/chat/');
-
-            // 頁面卸載時主動關閉，避免殘留連線佔用 worker
-            window.addEventListener('beforeunload', () => {
-                if (this.eventSource) {
-                    this.eventSource.close();
-                    this.eventSource = null;
-                }
-            });
-
-            this.eventSource.addEventListener('connection', (e) => {
-                const data = JSON.parse(e.data);
-                if (data.status === 'connected') {
-                    this.isConnected = true;
-                    this.connectionStatus = 'Online';
-                    this.addMessage('assistant', '嗨！我是米豆，有什麼可以幫你的嗎？');
-                }
-            });
-
-            this.eventSource.addEventListener('message', (e) => {
-                const data = JSON.parse(e.data);
-                this.isTyping = data.status === 'typing';
-                if (data.delta) {
-                    this.addMessage('assistant', data.delta, 'text');
-                }
-                if (data.type === 'content' && data.delta) {
-                    this.addMessage('assistant', data.delta, 'text');
-                }
-            });
-
-            this.eventSource.addEventListener('content', (e) => {
-                const data = JSON.parse(e.data);
-                if (data.delta) {
-                    this.addMessage('assistant', data.delta, 'text');
-                }
-            });
-
-            this.eventSource.addEventListener('consent_required', (e) => {
-                const data = JSON.parse(e.data);
-                this.addMessage('assistant', this.formatConsent(data), 'consent', data.token, data.tool);
-            });
-
-            this.eventSource.addEventListener('error', (e) => {
-                this.isConnected = false;
-                this.connectionStatus = 'Connection Error';
-                console.error('SSE Error:', e);
-                window.MiPet?.setState('error');
-            });
-
-            this.eventSource.addEventListener('done', () => {
-                this.isTyping = false;
+        setOpen(open) {
+            this.isOpen = open;
+            // 聊天視窗打開時，小版讓位給視窗內的大版
+            document.documentElement.classList.toggle('mipet-chat-open', open);
+            if (!open) return;
+            // 問候語在本機產生，輸入框不依賴任何長連線
+            if (!this.messages.length) this.addMessage('assistant', CHAT_GREETING);
+            // 打開路徑自己負責捲到底部並聚焦輸入框
+            this.$nextTick(() => {
+                this.scrollToBottom();
+                this.$refs.input?.focus();
             });
         },
 
         async sendMessage() {
-            if (!this.userInput.trim()) return;
-            window.MiPet?.setState('thinking');
+            const text = this.userInput.trim();
+            if (!text || this.isTyping) return;
+            window.MiPet?.setState?.('thinking');
 
-            const text = this.userInput;
             this.addMessage('user', text);
             this.userInput = '';
             this.isTyping = true;
 
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), CHAT_CLIENT_TIMEOUT_MS);
+            let gotContent = false;
+            let gotDone = false;
+
             try {
-                const response = await fetch('/ai/chat/', {
+                const response = await fetch('{% url "ai:chat_sse" %}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': this.getCookie('csrftoken')
                     },
-                    body: JSON.stringify({ message: text })
+                    body: JSON.stringify({ message: text }),
+                    signal: controller.signal,
                 });
 
-                if (!response.ok) throw new Error('Failed to send message');
+                if (!response.ok) {
+                    // 400／429 帶有中文錯誤訊息，直接顯示給使用者
+                    const err = await response.json().catch(() => ({}));
+                    window.MiPet?.setState?.('error');
+                    this.addMessage('assistant', err.error || '訊息送出失敗，請稍後再試。', 'notice');
+                    return;
+                }
 
                 // POST 回傳 SSE 串流：邊讀邊處理，talking 才有機會被畫出來
                 // （先 await response.text() 會把整段讀完，thinking→talking 併成同一個 frame）
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let buf = '';
-                let talked = false;
                 const handle = ({ event, data }) => {
                     if (event === 'content' && data.delta) {
-                        if (!talked) {
-                            window.MiPet?.setState('talking');
-                            talked = true;
-                        }
+                        if (!gotContent) window.MiPet?.setState?.('talking');
+                        gotContent = true;
+                        // 每個內容片段讓米豆的嘴巴跟著動一下
+                        window.MiPet?.pulse?.();
                         this.addMessage('assistant', data.delta, 'text');
                     } else if (event === 'consent_required') {
                         this.addMessage('assistant', this.formatConsent(data), 'consent', data.token, data.tool);
                     } else if (event === 'done') {
-                        this.isTyping = false;
+                        gotDone = true;
                     }
                 };
 
@@ -319,17 +352,32 @@ function chatWidget() {
                     for (const part of parts) this.parseSSE(part).forEach(handle);
                 }
                 if (buf.trim()) this.parseSSE(buf).forEach(handle);
-                window.MiPet?.cheer();
+
+                if (!gotDone && !gotContent) {
+                    window.MiPet?.setState?.('error');
+                    this.addMessage('assistant', '回覆中斷了，請再試一次。', 'notice');
+                } else {
+                    window.MiPet?.cheer?.();
+                }
             } catch (error) {
-                window.MiPet?.setState('error');
-                this.addMessage('assistant', 'Sorry, I encountered an error sending your message.');
+                window.MiPet?.setState?.('error');
+                const timedOut = error && error.name === 'AbortError';
+                this.addMessage(
+                    'assistant',
+                    timedOut ? '等太久了，這次回覆先停止，請再試一次。' : '訊息送出失敗，請檢查網路後再試一次。',
+                    'notice'
+                );
+            } finally {
+                // 不論串流怎麼結束（有沒有 done、斷線、逾時），輸入框都要解鎖
+                clearTimeout(timer);
                 this.isTyping = false;
+                this.$nextTick(() => this.$refs.input?.focus());
             }
         },
 
         formatConsent(data) {
-            const args = data.args ? Object.entries(data.args).map(([k, v]) => `${k}=${v}`).join(', ') : '';
-            return `Confirm ${data.tool}(${args})?`;
+            // description 由伺服器（consent_labels.describe_consent）一律提供，前端不另備對照表
+            return `確認要${data.description}嗎？`;
         },
 
         parseSSE(text) {
@@ -358,29 +406,46 @@ function chatWidget() {
 
         async sendAction(msg, action) {
             // 每個氣泡帶自己的 token（one-shot）與狀態：舊氣泡不再誤用新 token，
-            // sending 防雙點重覆 POST，done/無 token 時按鈕停用
+            // sending 防雙點重覆 POST，done/failed/無 token 時按鈕停用
             if (msg.consentState !== 'pending' || !msg.token) return;
+            const confirmed = action === 'confirm';
             msg.consentState = 'sending';
+            let data = {};
+            let ok = false;
             try {
-                const response = await fetch(`/ai/chat/consent/${msg.tool}/`, {
+                const url = '{% url "ai:chat_consent" action="__tool__" %}'.replace('__tool__', encodeURIComponent(msg.tool));
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': this.getCookie('csrftoken')
                     },
-                    body: JSON.stringify({
-                        confirmed: action === 'confirm',
-                        token: msg.token
-                    })
+                    body: JSON.stringify({ confirmed, token: msg.token })
                 });
-                if (!response.ok) throw new Error('Action failed');
-                this.addMessage('user', action === 'confirm' ? 'Confirmed' : 'Cancelled');
-                msg.consentState = 'done';
-                msg.token = null;
+                data = await response.json().catch(() => ({}));
+                ok = response.ok;
             } catch (error) {
-                msg.consentState = 'pending';  // 失敗還原，可重試
-                this.addMessage('assistant', 'Error processing your action.');
+                ok = false;
             }
+            // 伺服器一收到請求就作廢 token：不論成敗都不能重試
+            msg.token = null;
+            if (ok) {
+                msg.consentState = 'done';
+                this.addMessage('user', confirmed ? '確認' : '取消');
+                if (confirmed) {
+                    this.addMessage('assistant', typeof data.result === 'string' && data.result ? data.result : '已完成。', 'text');
+                } else {
+                    this.addMessage('assistant', '好的，已取消這項操作。', 'notice');
+                }
+            } else {
+                msg.consentState = 'failed';
+                this.addMessage(
+                    'assistant',
+                    `${data.error || '這項操作沒有完成。'}如果還需要，請再問米豆一次。`,
+                    'notice'
+                );
+            }
+            this.persist();
         },
 
         addMessage(role, content, type = 'text', token = null, tool = null) {
@@ -388,21 +453,24 @@ function chatWidget() {
             if (role === 'assistant' && type === 'text') {
                 content = stripMarkdown(content);
             }
-            // Prevent duplicate hello messages if already in history
-            if (content === '嗨！我是米豆，有什麼可以幫你的嗎？' && this.messages.some(m => m.content === content)) {
-                return;
-            }
             this.messages.push({ role, content, type, tool, token, consentState: type === 'consent' ? 'pending' : null });
-            // token 不寫入 localStorage：重新載入後舊 consent 氣泡自然失效
-            const toPersist = this.messages.map(({ token: _t, ...rest }) => rest);
-            localStorage.setItem('chat_history', JSON.stringify(toPersist));
+            if (this.messages.length > CHAT_MAX_STORED) {
+                this.messages.splice(0, this.messages.length - CHAT_MAX_STORED);
+            }
+            this.persist();
             this.$nextTick(() => this.scrollToBottom());
+        },
+
+        persist() {
+            // token 不寫入 localStorage：重新載入後舊 consent 氣泡自然失效
+            const toPersist = this.messages.slice(-CHAT_MAX_STORED).map(({ token: _t, ...rest }) => rest);
+            chatStorage.set(this.storageKey, JSON.stringify(toPersist));
         },
 
         clearHistory() {
             this.messages = [];
-            localStorage.removeItem('chat_history');
-            fetch('/ai/chat/clear/', {
+            chatStorage.remove(this.storageKey);
+            fetch('{% url "ai:chat_clear" %}', {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': this.getCookie('csrftoken')
@@ -418,15 +486,15 @@ function chatWidget() {
         },
 
         loadHistory() {
-            const raw = localStorage.getItem('chat_history');
+            const raw = chatStorage.get(this.storageKey);
             if (!raw) return;
             // 損壞的 history（非 JSON / 非陣列）不得拋錯殺掉 bindOpenChat：
             // 讀不出來就丟棄重新開始
             try {
                 const parsed = JSON.parse(raw);
-                this.messages = Array.isArray(parsed) ? parsed : [];
+                this.messages = Array.isArray(parsed) ? parsed.slice(-CHAT_MAX_STORED) : [];
             } catch (e) {
-                localStorage.removeItem('chat_history');
+                chatStorage.remove(this.storageKey);
                 this.messages = [];
             }
         },

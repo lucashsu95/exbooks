@@ -225,7 +225,7 @@ ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # 強制驗證
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
-ACCOUNT_LOGOUT_ON_GET = True
+ACCOUNT_LOGOUT_ON_GET = False  # 登出須 POST，避免跨站 GET 強制登出
 
 SESSION_COOKIE_AGE = SESSION_COOKIE_AGE
 SESSION_EXPIRE_AT_BROWSER_CLOSE = SESSION_EXPIRE_AT_BROWSER_CLOSE
@@ -341,7 +341,7 @@ try:
             "KEY_PREFIX": "exbook",
         }
     }
-except (redis.ConnectionError, redis.exceptions.TimeoutError, Exception):
+except (redis.ConnectionError, redis.exceptions.TimeoutError, Exception) as _redis_exc:
     # Redis not available, use in-memory cache for local development
     CACHES = {
         "default": {
@@ -349,7 +349,19 @@ except (redis.ConnectionError, redis.exceptions.TimeoutError, Exception):
             "LOCATION": "exbook-unique-snowflake",
         }
     }
-    # Fallback to LocMemCache silently for development
+    # 不可靜默退回：LocMemCache 是 per-process，多 worker 時共享狀態全部失效。
+    # 此時 LOGGING 尚未套用（Django 載入完 settings 才 dictConfig），
+    # 具名 logger 沒有 handler 會走 logging.lastResort 印到 stderr；
+    # 不用 logging.warning()（會對 root 做 basicConfig 的副作用）。
+    import logging as _logging
+
+    _logging.getLogger("exbook.settings").warning(
+        "Redis 無法連線（%s: %s），cache 退回 LocMemCache。LocMemCache 是 per-process："
+        "多個 gunicorn worker 時，AI 對話的 in-flight 鎖與限流會變成每個 process 各自計算"
+        "（等於失效），ConsentStore／對話紀錄也不跨 worker 共享。正式環境請確認 REDIS_URL。",
+        type(_redis_exc).__name__,
+        _redis_exc,
+    )
 
 # === Redis Connection for AI Conversation Cache ===
 REDIS_CONNECTION_URL = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
@@ -372,7 +384,12 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "100/hour",
         "user": "1000/hour",
+        # /api/token/ 帳密登入（accounts.api_auth），防暴力破解
+        "token_obtain": "10/min",
     },
+    # 只信任 nginx 一層代理附加的 X-Forwarded-For 最後一段，
+    # 避免攻擊者偽造 XFF 讓 throttle 每次換 key
+    "NUM_PROXIES": 1,
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
 }

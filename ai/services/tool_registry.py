@@ -9,6 +9,12 @@ from deals.models import LoanExtension
 logger = logging.getLogger(__name__)
 
 
+class ToolError(ValueError):
+    """tool 刻意 raise 的錯誤：訊息是寫給模型看的（繁中、可自我修正），
+    orchestrator 會原樣回灌與持久化。其他例外一律視為非預期，
+    訊息只進 log、不外流（可能含內部細節）。"""
+
+
 class ConsentRequirement(Enum):
     """Defines if a tool requires explicit user consent before execution."""
 
@@ -72,7 +78,8 @@ class ToolRegistry:
 #
 # 約定：所有 tool 函式的第一個參數是 `user`（由呼叫方注入的當前使用者），
 # 其餘參數才來自 AI 的 function calling arguments（已 json.loads，值可能是字串）。
-# 回傳一律 str；錯誤一律 raise，str(e) 會直接餵給 AI。
+# 回傳一律 str；可預期的錯誤 raise ToolError（訊息會直接餵給 AI），
+# 其他例外被 orchestrator 視為非預期：只記 log，模型只看到通用錯誤訊息。
 
 MAX_TOOL_LINES = 20
 
@@ -154,7 +161,7 @@ def get_user_books(user, status: str = "ALL") -> str:
     elif status == "ALL":
         books = SharedBook.objects.filter(Q(owner=user) | Q(keeper=user))
     else:
-        raise ValueError("status 只能為 OWNED、HELD 或 ALL。")
+        raise ToolError("status 只能為 OWNED、HELD 或 ALL。")
     # _book_line 要 official_book.title 與 keeper.username，一併 join 掉避免 N+1
     books = books.select_related("official_book", "keeper").order_by("-created_at")
 
@@ -224,7 +231,7 @@ def get_borrowing_status(user) -> str:
         "properties": {
             "deal_id": {
                 "type": "string",
-                "description": "要延長借期的交易 ID（UUID，可從 get_borrowing_status 取得）",
+                "description": "要延長借閱的交易 ID（UUID，可從 get_borrowing_status 取得）",
             },
             "days": {
                 "type": "integer",
@@ -252,32 +259,32 @@ def request_renewal(user, deal_id, days=7) -> str:
     try:
         uuid.UUID(str(deal_id))
     except (TypeError, ValueError):
-        raise ValueError(not_found)
+        raise ToolError(not_found)
 
     deal = Deal.objects.filter(pk=deal_id).first()
     if deal is None:
-        raise ValueError(not_found)
+        raise ToolError(not_found)
 
     try:
         extra_days = int(days)
     except (TypeError, ValueError):
-        raise ValueError(
+        raise ToolError(
             f"days 需要是整數天數，{LoanExtension.MIN_EXTRA_DAYS}~{LoanExtension.MAX_EXTRA_DAYS} 之間。"
         )
     if not (
         LoanExtension.MIN_EXTRA_DAYS <= extra_days <= LoanExtension.MAX_EXTRA_DAYS
     ):
-        raise ValueError(
+        raise ToolError(
             f"延長天數需為 {LoanExtension.MIN_EXTRA_DAYS}~{LoanExtension.MAX_EXTRA_DAYS} 天之間"
             f"（收到 {extra_days} 天）。請改用範圍內的數值重試。"
         )
 
     # 權限與書狀態由 service 判定（responder 與路人同吃 service 的權限錯誤）
-    # service 的 ValidationError 經 str() 會帶出 "['…']" 括號，轉成一般 ValueError
+    # service 的 ValidationError 經 str() 會帶出 "['…']" 括號，轉成 ToolError
     try:
         request_extension(deal, user, extra_days)
     except ValidationError as e:
-        raise ValueError(service_error_message(e)) from None
+        raise ToolError(service_error_message(e)) from None
     return (
         f"已為交易 #{deal.pk}《{deal.shared_book.official_book.title}》"
         f"提交延長 {extra_days} 天的申請，目前為「待審核」，"

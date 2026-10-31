@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status
+from rest_framework import mixins, viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -18,12 +18,22 @@ from deals.serializers import (
     NotificationSerializer,
 )
 from core.error_messages import service_error_message
+from deals.rules import deal_party_q
 from deals.services import deal_service, extension_service, notification_service
 
 
-class DealViewSet(viewsets.ModelViewSet):
+class DealViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
     """
     API endpoint for managing Deals.
+
+    只開放 list / retrieve / create 與自訂 action（accept/decline/cancel/
+    complete_meeting）。狀態與當事人只能經 deal_service 變更；不提供
+    update / destroy，避免 PATCH 改 due_date / 當事人 / 評價旗標或直接刪除。
     """
 
     queryset = (
@@ -50,7 +60,6 @@ class DealViewSet(viewsets.ModelViewSet):
                 applicant=request.user,
                 shared_book=serializer.validated_data["shared_book"],
                 deal_type=serializer.validated_data["deal_type"],
-                book_set=serializer.validated_data.get("book_set"),
                 meeting_location=serializer.validated_data.get("meeting_location", ""),
                 meeting_time=serializer.validated_data.get("meeting_time"),
             )
@@ -61,10 +70,9 @@ class DealViewSet(viewsets.ModelViewSet):
             return Response({"error": service_error_message(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def get_queryset(self):
-        return self.queryset.filter(
-            models.Q(applicant=self.request.user)
-            | models.Q(responder=self.request.user)
-        )
+        # 可見範圍 = 交易當事人（applicant / responder / owner / keeper），
+        # 與 Web 交易詳情同一規則（deals.rules.is_deal_party）
+        return self.queryset.filter(deal_party_q(self.request.user))
 
     @action(detail=True, methods=["post"])
     def accept(self, request, pk=None):
@@ -211,9 +219,17 @@ class LoanExtensionViewSet(viewsets.ModelViewSet):
             return Response({"error": service_error_message(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class DealMessageViewSet(viewsets.ModelViewSet):
+class DealMessageViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
     """
     API endpoint for managing Deal Messages.
+
+    留言建立後不可修改、刪除或搬移到其他交易；只開放 list / retrieve /
+    create（create 走 deal_service.send_deal_message 並檢查當事人權限）。
     """
 
     queryset = (
@@ -227,8 +243,7 @@ class DealMessageViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return self.queryset.filter(
             models.Q(sender=self.request.user)
-            | models.Q(deal__applicant=self.request.user)
-            | models.Q(deal__responder=self.request.user)
+            | deal_party_q(self.request.user, prefix="deal__")
         )
 
     def create(self, request, *args, **kwargs):
@@ -265,9 +280,11 @@ class DealMessageViewSet(viewsets.ModelViewSet):
             )
 
 
-class NotificationViewSet(viewsets.ModelViewSet):
+class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint for managing Notifications.
+
+    通知由系統產生，API 端唯讀；唯一的寫入是 mark_as_read action。
     """
 
     queryset = (
@@ -287,6 +304,3 @@ class NotificationViewSet(viewsets.ModelViewSet):
         return Response(
             {"status": "Notification marked as read."}, status=status.HTTP_200_OK
         )
-
-
-

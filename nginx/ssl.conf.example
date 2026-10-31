@@ -48,6 +48,9 @@ server {
     location /media/ {
         alias /app/media/;
         expires 7d;
+        # 使用者上傳內容：禁止 MIME sniffing，且以 sandbox 執行，避免同源 XSS
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Content-Security-Policy "sandbox; default-src 'none'; img-src 'self'" always;
     }
 
     # 登入相關端點限速
@@ -61,9 +64,36 @@ server {
         proxy_redirect off;
     }
 
+    # REST API 帳密換 JWT — 與登入頁共用 login 限流
+    location = /api/token/ {
+        limit_req zone=login burst=3 nodelay;
+        proxy_pass http://django;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_redirect off;
+    }
+
     # ACME 憑證驗證（certbot webroot mode）
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
+    }
+
+    # AI 聊天（SSE 串流）：見 default.conf 同名 location 的說明
+    location /ai/chat/ {
+        proxy_pass http://django;
+        proxy_http_version 1.1;
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 180s;
+        proxy_send_timeout 180s;
+        proxy_set_header Connection        "";
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_redirect off;
     }
 
     # 其餘請求轉發
