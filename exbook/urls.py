@@ -8,12 +8,11 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from accounts.api_auth import VerifiedEmailTokenObtainPairView
 
-from books.sitemaps import PublicSharedBookSitemap, StaticViewSitemap
+from books.sitemaps import StaticViewSitemap
 from core import views as core_views
 
 SITEMAPS = {
     "static": StaticViewSitemap,
-    "shared_books": PublicSharedBookSitemap,
 }
 
 admin.site.site_header = "Exbooks 後台管理"
