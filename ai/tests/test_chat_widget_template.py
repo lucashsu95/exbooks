@@ -123,10 +123,9 @@ class ChatWidgetTemplateTests(TestCase):
         html = response.content.decode()
 
         self.assertIn("scrollToBottom", html)
-        # 兩個呼叫點：toggleChat 打開路徑 + addMessage（共用同一實作）
-        self.assertGreaterEqual(
-            html.count("this.$nextTick(() => this.scrollToBottom())"), 2
-        )
+        # 打開路徑在 $nextTick 裡捲到底＋聚焦輸入框；addMessage 也捲動
+        self.assertIn("this.scrollToBottom();\n                this.$refs.input?.focus();", html)
+        self.assertIn("this.$nextTick(() => this.scrollToBottom())", html)
 
     def test_load_history_guarded(self):
         """契約 pin（健壯性）：損壞的 localStorage 不得在 init() 拋錯、
@@ -139,9 +138,9 @@ class ChatWidgetTemplateTests(TestCase):
         html = response.content.decode()
 
         self.assertIn("Array.isArray", html)
-        # guard 與 clearHistory 各有一處 removeItem
+        # guard 與 clearHistory 各有一處 removeItem（per-user key）
         self.assertGreaterEqual(
-            html.count("localStorage.removeItem('chat_history')"), 2
+            html.count("localStorage.removeItem(this.storageKey)"), 2
         )
 
     def test_widget_strips_markdown_markers(self):
@@ -218,3 +217,79 @@ class ChatWidgetTemplateTests(TestCase):
             0,
             f"stripMarkdown 邊界失守：{proc.stdout.strip() or proc.stderr.strip()}",
         )
+
+
+def _rendered_widget(test_case) -> str:
+    user = UserFactory()
+    test_case.client.force_login(user)
+    response = test_case.client.get("/books/")
+    test_case.assertEqual(response.status_code, 200)
+    return response.content.decode(), user
+
+
+class ChatWidgetHardeningTests(TestCase):
+    """長回應／輸入驗證／consent UX／localStorage／a11y 的模板契約。"""
+
+    def test_no_get_sse_long_connection(self):
+        html, _ = _rendered_widget(self)
+        self.assertNotIn("EventSource", html)
+        self.assertNotIn("beforeunload", html)
+        self.assertNotIn("isConnected", html)
+
+    def test_input_constraints_and_accessibility(self):
+        html, _ = _rendered_widget(self)
+        self.assertIn('maxlength="1000"', html)
+        self.assertIn('role="log"', html)
+        self.assertIn('aria-live="polite"', html)
+        self.assertIn('aria-label="輸入要問米豆的訊息"', html)
+        self.assertIn('aria-label="送出訊息"', html)
+        self.assertIn("@keydown.escape.window", html)
+        self.assertIn("100dvh", html)
+        self.assertNotIn("100vh", html)
+
+    def test_storage_key_is_per_user(self):
+        html, user = _rendered_widget(self)
+        self.assertIn(f"chatWidget('{user.pk}'", html)
+        self.assertNotIn("localStorage.setItem('chat_history'", html)
+
+    def test_no_english_ui_strings(self):
+        html, _ = _rendered_widget(self)
+        script = _extract_widget_script(html)
+        for phrase in (
+            "Sorry",
+            "Error processing",
+            "'Confirmed'",
+            "'Cancelled'",
+            "Confirm ${",
+            "Failed to send",
+            "Connecting",
+            "Online",
+        ):
+            self.assertNotIn(phrase, script)
+
+    def test_widget_behavior_in_node(self):
+        """行為契約：用 node 實跑 chatWidget（fake fetch／localStorage）。"""
+        if not _NODE:
+            self.skipTest("widget 行為測試需要 node")
+        html, _ = _rendered_widget(self)
+        script = _extract_widget_script(html)
+        driver = Path(__file__).resolve().parent / "widget_behavior.js"
+        fd, js_path = tempfile.mkstemp(suffix=".js")
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(driver.read_text(encoding="utf-8").replace("/*__WIDGET__*/", script))
+        try:
+            proc = subprocess.run(
+                [_NODE, js_path], capture_output=True, text=True, timeout=60
+            )
+        finally:
+            os.unlink(js_path)
+        self.assertEqual(
+            proc.returncode, 0, proc.stdout.strip() + "\n" + proc.stderr.strip()
+        )
+
+
+def _extract_widget_script(html: str) -> str:
+    for m in re.finditer(r"<script>(.*?)</script>", html, re.S):
+        if "function chatWidget" in m.group(1):
+            return m.group(1)
+    raise AssertionError("找不到 chatWidget 的 <script> 區塊")
