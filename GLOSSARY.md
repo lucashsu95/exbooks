@@ -15,6 +15,9 @@ Exbooks 共享書籍平臺的 domain 詞彙。討論架構、命名 module、寫
   或更新時只能補上空白欄位（分類「未分類」視同空白），不能覆寫既有內容；更正由管理員在
   Django admin 處理。封面同理：共用書目沒有封面時可補上；已有封面時使用者上傳的封面只存在
   自己那一冊（`SharedBook.cover_image`），顯示一律走 `SharedBook.display_cover`。
+  「是否空白」在鎖住 OfficialBook（`select_for_update`）後重新判斷，併發發布不互相覆寫；
+  上傳封面與書況照片走同一套驗證／重新編碼（JPG/PNG、5MB、輸出 .jpg），發布回滾時已存
+  檔案會刪除，SharedBook 刪除或換封面時舊檔由 `books/signals.py` 清理。
   實作：`book_service.fill_blank_catalog_fields` / `_attach_cover`。
 - **上架 / 下架（list / suspend）**：SharedBook 在 TRANSFERABLE ↔ SUSPENDED 之間的切換。
   實作：`list_book` / `suspend_book`，對外入口 `toggle_listing`。

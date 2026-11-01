@@ -5,6 +5,7 @@ import logging
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models.fields.files import ImageFieldFile
 from django.utils.translation import gettext_lazy as _
 from django_fsm import FSMField, FSMModelMixin, transition
 
@@ -123,7 +124,7 @@ class SharedBook(FSMModelMixin, UpdatableModel):
         return f"{self.official_book.title} (by {self.owner})"  # pyright: ignore[reportAttributeAccessIssue]
 
     @property
-    def display_cover(self):
+    def display_cover(self) -> ImageFieldFile | None:
         """顯示用封面：此冊自訂封面優先，否則用共用書目封面；都沒有回傳 None。"""
         if self.cover_image:
             return self.cover_image
