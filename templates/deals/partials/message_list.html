@@ -1,3 +1,4 @@
+{% load user_tags %}
 {% for message in messages %}
     <!-- 判斷是否為當前用戶發送的訊息 -->
     {% if message.sender == request.user %}
@@ -20,10 +21,10 @@
             <div class="size-8 rounded-full bg-primary/20 overflow-hidden shrink-0 flex items-center justify-center">
                 {% if message.sender.profile.avatar %}
                     <img src="{{ message.sender.profile.avatar.url }}"
-                         alt="{{ message.sender.profile.nickname }}"
+                         alt="{{ message.sender|display_name }}"
                          class="w-full h-full object-cover" />
                 {% else %}
-                    <span class="text-primary text-xs font-bold">{{ message.sender.profile.nickname|default:message.sender.email|truncatechars:1 }}</span>
+                    <span class="text-primary text-xs font-bold">{{ message.sender|display_name|truncatechars:1 }}</span>
                 {% endif %}
             </div>
         </div>
@@ -33,15 +34,15 @@
             <div class="size-8 rounded-full bg-primary/20 overflow-hidden shrink-0 flex items-center justify-center">
                 {% if message.sender.profile.avatar %}
                     <img src="{{ message.sender.profile.avatar.url }}"
-                         alt="{{ message.sender.profile.nickname }}"
+                         alt="{{ message.sender|display_name }}"
                          class="w-full h-full object-cover" />
                 {% else %}
-                    <span class="text-primary text-xs font-bold">{{ message.sender.profile.nickname|default:message.sender.email|truncatechars:1 }}</span>
+                    <span class="text-primary text-xs font-bold">{{ message.sender|display_name|truncatechars:1 }}</span>
                 {% endif %}
             </div>
             <div class="flex-1">
                 <p class="text-xs text-slate-500 mb-1">
-                    {{ message.sender.profile.nickname|default:message.sender.email }} ·
+                    {{ message.sender|display_name }} ·
                     {% if message.sender == deal.applicant %}
                         申請者
                     {% else %}

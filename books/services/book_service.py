@@ -14,8 +14,14 @@ Service 層負責：
 """
 
 import logging
+from collections.abc import Iterator, Mapping
+from contextlib import contextmanager
+from typing import Any
 
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.files import File
+from django.core.files.storage import Storage
+from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 from django.utils import timezone
 from django_fsm import can_proceed
@@ -97,17 +103,129 @@ def suspend_book(shared_book):
 # ============================================================================
 
 
-def _attach_cover(official_book, uploaded_cover, cover_url=""):
-    """
-    為 OfficialBook 附上封面。
+# 使用者可「補空白」的共用書目欄位，以及各欄位視同空白的值
+# （分類的預設值「其他（未分類）」視同空白）。
+_CATALOG_BLANK_VALUES: dict[str, frozenset[str]] = {
+    "title": frozenset({""}),
+    "author": frozenset({""}),
+    "publisher": frozenset({""}),
+    "category": frozenset({"", OfficialBook.Category.OTHER}),
+}
+CATALOG_FILLABLE_FIELDS = tuple(_CATALOG_BLANK_VALUES)
 
-    優先序：上傳檔 > 既有封面 > 下載 cover_url。
-    下載失敗只記錄日誌、不中斷發布。
+
+def _clean_catalog_value(value: object) -> str:
+    return str(value or "").strip()
+
+
+def _is_blank_catalog_value(field: str, value: object) -> bool:
+    return _clean_catalog_value(value) in _CATALOG_BLANK_VALUES[field]
+
+
+def _lock_official_book(official_book: OfficialBook) -> OfficialBook:
+    """重新從資料庫取出並鎖住該 OfficialBook 列（需在 transaction 內呼叫）。"""
+    return OfficialBook.objects.select_for_update().get(pk=official_book.pk)
+
+
+def fill_blank_catalog_fields(
+    official_book: OfficialBook, data: Mapping[str, Any]
+) -> list[str]:
+    """
+    共用書目保護：既有 OfficialBook 只補空白欄位，不覆寫已有內容。
+
+    OfficialBook 由多位 owner 的 SharedBook 共用，一般使用者發布同 ISBN
+    或編輯自己的書時不能改掉別人看到的書目；更正既有內容由管理員在
+    Django admin 處理。
+
+    併發安全：以 select_for_update 鎖住並重新讀取該列後才判斷哪些欄位
+    仍是空白，呼叫端手上的 instance 即使過時也不會覆寫別人剛補上的值；
+    結束後把最新的書目欄位同步回 official_book。
+
+    Returns:
+        實際被補上的欄位名稱
+    """
+    with transaction.atomic():
+        locked = _lock_official_book(official_book)
+        filled = []
+        for field in CATALOG_FILLABLE_FIELDS:
+            incoming = _clean_catalog_value(data.get(field))
+            if _is_blank_catalog_value(field, incoming):
+                continue
+            if _is_blank_catalog_value(field, getattr(locked, field)):
+                setattr(locked, field, incoming)
+                filled.append(field)
+        if filled:
+            locked.save(update_fields=[*filled, "updated_at"])
+
+    for field in CATALOG_FILLABLE_FIELDS:
+        setattr(official_book, field, getattr(locked, field))
+    return filled
+
+
+# 本次發布已寫入 storage 的檔案（storage, name），事務回滾時據以刪除
+SavedFiles = list[tuple[Storage, str]]
+
+
+@contextmanager
+def _delete_saved_files_on_error() -> Iterator[SavedFiles]:
+    """
+    區塊內拋例外（事務已回滾）時，刪除區塊中已寫入 storage 的檔案，避免孤兒檔。
+
+    Django 沒有 on_rollback 掛勾；呼叫端把 transaction.atomic() 放在此區塊內，
+    例外穿出 atomic（回滾完成）後在這裡清檔，再原樣拋出。
+    """
+    saved: SavedFiles = []
+    try:
+        yield saved
+    except BaseException:
+        for storage, name in saved:
+            try:
+                storage.delete(name)
+            except Exception:
+                logger.exception("orphan cover cleanup failed", extra={"file": name})
+        raise
+
+
+def _save_cover(
+    instance: OfficialBook | SharedBook,
+    content: File,
+    saved_files: SavedFiles | None,
+) -> None:
+    """把已處理的封面寫入 instance.cover_image 並只更新該欄位。"""
+    field_file = instance.cover_image
+    field_file.save(content.name, content, save=False)
+    if saved_files is not None:
+        saved_files.append((field_file.storage, field_file.name))
+    instance.save(update_fields=["cover_image", "updated_at"])
+
+
+def _attach_cover(
+    official_book: OfficialBook,
+    shared_book: SharedBook,
+    uploaded_cover: UploadedFile | None = None,
+    cover_url: str = "",
+    saved_files: SavedFiles | None = None,
+) -> None:
+    """
+    附上封面（需在 transaction 內呼叫）。
+
+    共用書目沒有封面時視同空白欄位：上傳檔（優先）或下載 cover_url 補到
+    OfficialBook。共用書目已有封面時，上傳檔只存到這一冊的 SharedBook，
+    不取代其他人看到的共用封面；cover_url 則略過。
+
+    上傳檔一律走書況照片的驗證／重新編碼流程（JPG/PNG、5MB、輸出 .jpg），
+    不合法時 raise ValidationError。是否「仍為空白」在鎖住 OfficialBook 後
+    重新判斷，併發發布不會互相覆寫封面。下載失敗只記錄日誌、不中斷發布。
+    寫入的檔案記錄到 saved_files，供事務回滾時清除。
     """
     if uploaded_cover:
-        official_book.cover_image.save(
-            uploaded_cover.name, uploaded_cover, save=True
-        )
+        processed = process_book_photo(uploaded_cover)
+        locked = _lock_official_book(official_book)
+        if locked.cover_image:
+            _save_cover(shared_book, processed, saved_files)
+        else:
+            _save_cover(locked, processed, saved_files)
+            official_book.cover_image = locked.cover_image.name
         return
 
     if not cover_url or official_book.cover_image:
@@ -116,7 +234,6 @@ def _attach_cover(official_book, uploaded_cover, cover_url=""):
     try:
         # SSRF 防護 + 圖片驗證與重新編碼（一律 .jpg），見 cover_service
         cover_file = cover_service.fetch_cover_image(cover_url, official_book.pk)
-        official_book.cover_image.save(cover_file.name, cover_file, save=True)
     except Exception:
         logger.exception(
             "cover download failed",
@@ -126,6 +243,15 @@ def _attach_cover(official_book, uploaded_cover, cover_url=""):
                 "cover_url": cover_url,
             },
         )
+        return
+
+    locked = _lock_official_book(official_book)
+    if locked.cover_image:
+        # 下載期間已有人補上共用封面：捨棄下載結果，不覆寫
+        official_book.cover_image = locked.cover_image.name
+        return
+    _save_cover(locked, cover_file, saved_files)
+    official_book.cover_image = locked.cover_image.name
 
 
 def _create_book_photo(shared_book, uploader, image):
@@ -142,9 +268,11 @@ def publish_book(owner, data, photos=(), cover=None, cover_url=""):
     發布（publish）：將一冊實體書上架為 SharedBook 並進入 TRANSFERABLE 狀態。
 
     完整流程：
-    1. OfficialBook 依 ISBN upsert
-    2. 附封面（上傳檔優先，其次下載 cover_url；下載失敗不中斷）
-    3. 建立 SharedBook（owner = keeper = 發布者，初始狀態 SUSPENDED）
+    1. OfficialBook 依 ISBN 建立；已存在時只補空白欄位、不覆寫
+       （見 fill_blank_catalog_fields）
+    2. 建立 SharedBook（owner = keeper = 發布者，初始狀態 SUSPENDED）
+    3. 附封面（見 _attach_cover：共用書目無封面才補上；已有封面時
+       上傳檔只存在這一冊；下載失敗不中斷）
     4. 寫入書況照片
     5. 透過 list_book() 走合法 FSM 通道 S → T
        （副作用：記錄上架時間、通知願望清單使用者）
@@ -169,32 +297,18 @@ def publish_book(owner, data, photos=(), cover=None, cover_url=""):
         ValidationError: 照片驗證/處理失敗
     """
     isbn = data["isbn"]
-    with transaction.atomic():
+    with _delete_saved_files_on_error() as saved_files, transaction.atomic():
         off_book, created = OfficialBook.objects.get_or_create(
             isbn=isbn,
             defaults={
-                "title": data["title"],
-                "author": data.get("author", ""),
-                "publisher": data.get("publisher", ""),
+                "title": _clean_catalog_value(data["title"]),
+                "author": _clean_catalog_value(data.get("author")),
+                "publisher": _clean_catalog_value(data.get("publisher")),
                 "category": data["category"],
             },
         )
         if not created:
-            off_book.title = data["title"]
-            off_book.author = data.get("author", "")
-            off_book.publisher = data.get("publisher", "")
-            off_book.category = data["category"]
-            off_book.save(
-                update_fields=[
-                    "title",
-                    "author",
-                    "publisher",
-                    "category",
-                    "updated_at",
-                ]
-            )
-
-        _attach_cover(off_book, cover, cover_url)
+            fill_blank_catalog_fields(off_book, data)
 
         shared = SharedBook.objects.create(
             official_book=off_book,
@@ -204,6 +318,8 @@ def publish_book(owner, data, photos=(), cover=None, cover_url=""):
             condition_description=data.get("condition_description", ""),
             loan_duration_days=data.get("loan_duration_days", 30),
         )
+
+        _attach_cover(off_book, shared, cover, cover_url, saved_files)
 
         for image in photos:
             _create_book_photo(shared, owner, image)
@@ -242,7 +358,7 @@ def assert_book_toggle_permission(user):
 
 def update_book(book, user, data, photos=()):
     """
-    更新書籍資訊（OfficialBook 基本資料 + SharedBook 欄位 + 新增照片）。
+    更新書籍資訊（SharedBook 欄位 + 新增照片；OfficialBook 只補空白欄位）。
 
     Args:
         book: 要更新的 SharedBook（ownership 由 View 層以
@@ -263,12 +379,8 @@ def update_book(book, user, data, photos=()):
     assert_book_edit_permission(user)
 
     with transaction.atomic():
-        official_book = book.official_book
-        official_book.title = data["title"]
-        official_book.author = data.get("author", "")
-        official_book.publisher = data.get("publisher", "")
-        official_book.category = data["category"]
-        official_book.save()
+        # 共用書目只補空白欄位，不覆寫其他 owner 也看得到的內容
+        fill_blank_catalog_fields(book.official_book, data)
 
         book.transferability = data["transferability"]
         book.min_trust_level = data["min_trust_level"]

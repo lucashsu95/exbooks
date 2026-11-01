@@ -5,6 +5,7 @@ from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
+from accounts.services.display_name_service import display_name_for
 from ai.services.tool_registry import (
     ConsentRequirement,
     ToolDefinition,
@@ -97,7 +98,7 @@ class GetUserBooksTests(TestCase):
         self.assertIn(book.official_book.title, result)
         self.assertIn(f"#{book.pk}", result)
         self.assertIn(book.get_status_display(), result)
-        self.assertIn(f"持有者：{book.keeper.username}", result)
+        self.assertIn(f"持有者：{display_name_for(book.keeper)}", result)
 
     def test_held(self):
         book = SharedBookFactory(owner=UserFactory(), keeper=self.user)
@@ -207,7 +208,7 @@ class GetBorrowingStatusTests(TestCase):
 
         line = _line_of(get_borrowing_status(borrower), deal)
         self.assertIn("你已申請延長 14 天（待審核）", line)
-        self.assertIn(f"借閱者：{borrower.username}", line)
+        self.assertIn(f"借閱者：{display_name_for(borrower)}", line)
 
     def test_pending_extension_lender_view(self):
         """出借者視角：pending 是借閱者建的，不能寫成「你已申請」，也要看得出是誰借的。"""
@@ -219,7 +220,7 @@ class GetBorrowingStatusTests(TestCase):
         line = _line_of(get_borrowing_status(owner), deal)
         self.assertIn("借閱者已申請延長 14 天（待你審核）", line)
         self.assertNotIn("你已申請", line)
-        self.assertIn(f"借閱者：{borrower.username}", line)
+        self.assertIn(f"借閱者：{display_name_for(borrower)}", line)
 
     def test_overdue_flag(self):
         owner = UserFactory()

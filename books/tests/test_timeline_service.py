@@ -242,13 +242,14 @@ class TestBookTimelineService:
         assert "測試暱稱 分享了這本書" in result
 
     def test_format_user_display_without_nickname(self):
-        """測試格式化用戶顯示名稱（無暱稱）"""
+        """測試格式化用戶顯示名稱（無暱稱顯示「會員#<pk>」，不洩漏 email）"""
         user = UserFactory()
         user.profile.nickname = ""
         user.profile.save()
 
         result = BookTimelineService._format_user_display(user)
-        assert f"{user.email} 分享了這本書" in result
+        assert f"會員#{user.pk} 分享了這本書" in result
+        assert user.email not in result
 
     def test_format_photo_description_with_caption(self):
         """測試格式化照片描述（有標題）"""

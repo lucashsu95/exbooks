@@ -1,3 +1,4 @@
+{% load user_tags %}
 {% for extension in extensions %}
     <div class="bg-white rounded-xl border border-slate-200 p-4 mb-3">
         <div class="flex items-start justify-between mb-2">
@@ -12,7 +13,7 @@
         <div class="text-sm text-slate-600 space-y-1 mb-3">
             <p class="flex items-center gap-2">
                 <span class="material-symbols-outlined text-sm">person</span>
-                申請者：{{ extension.requested_by.profile.nickname|default:extension.requested_by.email }}
+                申請者：{{ extension.requested_by|display_name }}
             </p>
             <p class="flex items-center gap-2">
                 <span class="material-symbols-outlined text-sm">schedule</span>
@@ -21,7 +22,7 @@
             {% if extension.approved_by %}
                 <p class="flex items-center gap-2">
                     <span class="material-symbols-outlined text-sm">check_circle</span>
-                    審核者：{{ extension.approved_by.profile.nickname|default:extension.approved_by.email }}
+                    審核者：{{ extension.approved_by|display_name }}
                 </p>
             {% endif %}
         </div>

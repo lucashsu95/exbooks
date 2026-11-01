@@ -1,5 +1,5 @@
 {% load static i18n %}
-{# 傳入: book (OfficialBook), class (CSS) #}
+{# 傳入: book (OfficialBook), class (CSS)。顯示某一冊 SharedBook 時請改用 partials/book_cover.html（含此冊自訂封面） #}
 {% if book.cover_image %}
     <img class="{{ class|default:'w-full h-full object-cover' }}"
          alt="{{ book.title }}"

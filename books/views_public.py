@@ -82,8 +82,8 @@ def public_book_detail(request, pk):
 
     canonical_url = request.build_absolute_uri(request.path)
     og_image_url = ""
-    if ob.cover_image:
-        og_image_url = request.build_absolute_uri(ob.cover_image.url)
+    if book.display_cover:
+        og_image_url = request.build_absolute_uri(book.display_cover.url)
 
     context = {
         "book": book,
@@ -136,6 +136,6 @@ def _build_book_json_ld(request, book):
         data["publisher"] = {"@type": "Organization", "name": ob.publisher}
     if ob.description:
         data["description"] = ob.description[:5000]
-    if ob.cover_image:
-        data["image"] = request.build_absolute_uri(ob.cover_image.url)
+    if book.display_cover:
+        data["image"] = request.build_absolute_uri(book.display_cover.url)
     return data

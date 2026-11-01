@@ -128,7 +128,7 @@ def deal_detail(request, pk):
     )
     # 非當事人一律 404（不洩漏交易是否存在，也不暴露私訊）
     _require_deal_party(request, deal)
-    messages_list = DealMessage.objects.filter(deal=deal).select_related("sender")[:50]
+    messages_list = DealMessage.objects.filter(deal=deal).select_related("sender__profile")[:50]
     extensions_list = LoanExtension.objects.filter(deal=deal).select_related(
         "requested_by__profile",
         "approved_by__profile",
@@ -299,7 +299,7 @@ def deal_message_send(request, pk):
         )
 
     # 返回更新後的留言列表 partial
-    messages_list = DealMessage.objects.filter(deal=deal).select_related("sender")[:50]
+    messages_list = DealMessage.objects.filter(deal=deal).select_related("sender__profile")[:50]
     return render(
         request,
         "deals/partials/message_list.html",

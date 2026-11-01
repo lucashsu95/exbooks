@@ -42,7 +42,7 @@
                     <a href="{% url 'books:public_detail' book.pk %}"
                        class="snap-start shrink-0 w-36 flex flex-col gap-2 touch-spring">
                         <div class="aspect-[2/3] rounded-xl overflow-hidden shadow-lg bg-white ring-1 ring-black/5">
-                            {% include 'partials/official_book_cover.html' with book=book.official_book %}
+                            {% include 'partials/book_cover.html' with book=book %}
                         </div>
                         <p class="text-xs font-semibold text-slate-800 line-clamp-2">{{ book.official_book.title }}</p>
                     </a>
@@ -78,7 +78,7 @@
                 <a href="{% url 'books:public_detail' book.pk %}"
                    class="flex gap-4 p-3 rounded-2xl bg-white/80 border border-white shadow-sm hover:shadow-md transition-shadow">
                     <div class="w-16 h-24 shrink-0 rounded-lg overflow-hidden ring-1 ring-black/5">
-                        {% include 'partials/official_book_cover.html' with book=book.official_book %}
+                        {% include 'partials/book_cover.html' with book=book %}
                     </div>
                     <div class="flex-1 min-w-0">
                         <h3 class="font-bold text-slate-900 line-clamp-2">{{ book.official_book.title }}</h3>

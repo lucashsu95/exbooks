@@ -1,3 +1,4 @@
+{% load user_tags %}
 <div id="bookshelf-page">
     <!-- Header -->
     <header class="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-200"
@@ -118,7 +119,7 @@
                             <p class="text-sm text-primary font-medium flex items-center gap-1">
                                 <span class="material-symbols-outlined text-sm">book</span> {{ book.get_status_display }}
                             </p>
-                            <p class="text-xs text-slate-500 mt-1">擁有者：{{ book.owner.profile.nickname|default:book.owner.email }}</p>
+                            <p class="text-xs text-slate-500 mt-1">擁有者：{{ book.owner|display_name }}</p>
                         </div>
                     </div>
                 </a>
@@ -145,7 +146,7 @@
                         <div class="flex-1 min-w-0">
                             <h3 class="font-bold text-base truncate">{{ book.official_book.title }}</h3>
                             <p class="text-sm font-medium flex items-center gap-1 text-slate-600">
-                                <span class="material-symbols-outlined text-sm">person</span> 目前持有人：{{ book.keeper.profile.nickname|default:book.keeper.email }}
+                                <span class="material-symbols-outlined text-sm">person</span> 目前持有人：{{ book.keeper|display_name }}
                             </p>
                             <p class="text-xs text-slate-500 mt-1">狀態：{{ book.get_status_display }}</p>
                         </div>
@@ -179,9 +180,9 @@
                             <p class="text-xs text-slate-500 mt-1">
                                 對象：
                                 {% if deal.applicant == request.user %}
-                                    {{ deal.responder.profile.nickname|default:deal.responder.email }}
+                                    {{ deal.responder|display_name }}
                                 {% else %}
-                                    {{ deal.applicant.profile.nickname|default:deal.applicant.email }}
+                                    {{ deal.applicant|display_name }}
                                 {% endif %}
                             </p>
                         </div>

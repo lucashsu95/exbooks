@@ -122,22 +122,13 @@ class TestUserProfile:
         profile.save(update_fields=["nickname"])
         assert str(profile) == "小明"
 
-    def test_str_fallback_full_name(self):
+    def test_str_blank_nickname_uses_member_number(self):
         user = UserFactory(first_name="明", last_name="王")
         profile = user.profile
         profile.nickname = ""
         profile.save(update_fields=["nickname"])
-        result = str(profile)
-        # Falls back to get_full_name() or username
-        assert result  # Non-empty
-
-    def test_str_fallback_username(self):
-        user = UserFactory(first_name="", last_name="")
-        profile = user.profile
-        profile.nickname = ""
-        profile.save(update_fields=["nickname"])
-        # Falls back to email since username is no longer used
-        assert str(profile) == user.email
+        # 不回退到姓名或 email（L-2）
+        assert str(profile) == f"會員#{user.pk}"
 
     def test_one_to_one_user(self):
         """Signal 已建立 profile，手動再建一個應衝突。"""

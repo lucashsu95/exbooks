@@ -4,6 +4,7 @@ from django.db.models import Q
 from django.utils import timezone
 from datetime import timedelta
 
+from accounts.services.display_name_service import display_name_for
 from books.models import SharedBook
 from deals.models import Deal
 
@@ -57,7 +58,7 @@ def get_overdue_books(days=7):
     # 找出借閱中（MEETED 狀態）且到期的交易
     overdue_deals = meeted_deals(
         Q(due_date__lt=threshold)
-    ).select_related("shared_book", "applicant")
+    ).select_related("shared_book", "applicant__profile")
 
     logger.debug(
         "overdue books queried",
@@ -84,10 +85,8 @@ def get_public_overdue_info(deal):
     today = timezone.now().date()
     overdue_days = (today - deal.due_date).days if deal.due_date else 0
 
-    # 取得暱稱，若無則使用 Email 前綴
-    nickname = deal.applicant.profile.nickname
-    if not nickname:
-        nickname = deal.applicant.email.split("@")[0]
+    # 公開頁面：暱稱，空白時「會員#<pk>」，不得洩漏 email
+    nickname = display_name_for(deal.applicant)
 
     logger.debug(
         "public overdue info",
@@ -147,7 +146,9 @@ def batch_process_due_books() -> dict:
     today = timezone.now().date()
     overdue_deals = meeted_deals(
         Q(due_date__lte=today), book_must_be_occupied=True
-    ).select_related("shared_book__official_book", "applicant", "responder")
+    ).select_related(
+        "shared_book__official_book", "applicant__profile", "responder__profile"
+    )
 
     processed, errors = 0, 0
     for deal in overdue_deals:

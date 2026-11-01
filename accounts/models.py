@@ -391,8 +391,12 @@ class UserProfile(UpdatableModel):
         verbose_name = _("用戶資料")
         verbose_name_plural = _("用戶資料")
 
-    def __str__(self):
-        return self.nickname or self.user.get_full_name() or self.user.email
+    def __str__(self) -> str:
+        # 不回退到 email／姓名（admin 下拉選單等處也會出現），規則見 display_name_service。
+        # 延遲 import：accounts.services 套件初始化會反向 import 本模組。
+        from accounts.services.display_name_service import member_display_name
+
+        return member_display_name(self.user_id, self.nickname)  # pyright: ignore[reportAttributeAccessIssue]
 
     @property
     def age(self):

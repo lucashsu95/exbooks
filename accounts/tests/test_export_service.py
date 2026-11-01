@@ -5,6 +5,7 @@ import pytest
 from django.core.cache import cache
 
 from accounts.services import export_service
+from accounts.services.display_name_service import display_name_for
 from accounts.services.export_service import (
     EXPORT_LIMIT_PER_DAY,
     ExportLimitExceededError,
@@ -223,7 +224,8 @@ class TestCollectRatingsReceived:
         ratings = data["ratings_received"]
 
         assert len(ratings) == 1
-        assert ratings[0]["rater_email"] == user2.email
+        assert "rater_email" not in ratings[0]
+        assert ratings[0]["rater_display_name"] == display_name_for(user2)
         assert ratings[0]["friendliness_score"] == 5
         assert ratings[0]["punctuality_score"] == 4
         assert ratings[0]["accuracy_score"] == 5
@@ -374,7 +376,8 @@ class TestConvertToCSV:
 
         assert "評價統計" in csv_content
         assert "評價詳情" in csv_content
-        assert user2.email in csv_content
+        assert user2.email not in csv_content
+        assert display_name_for(user2) in csv_content
         assert "很棒的交易！" in csv_content
 
     def test_export_user_data_csv_format(self):

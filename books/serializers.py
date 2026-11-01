@@ -1,4 +1,6 @@
 from rest_framework import serializers
+
+from accounts.serializers import DisplayNameField
 from books.models.official_book import OfficialBook
 from books.models.shared_book import SharedBook
 
@@ -21,8 +23,8 @@ class OfficialBookSerializer(serializers.ModelSerializer):
 
 class SharedBookSerializer(serializers.ModelSerializer):
     official_book = OfficialBookSerializer(read_only=True)
-    owner_nickname = serializers.ReadOnlyField(source="owner.profile.nickname")
-    keeper_nickname = serializers.ReadOnlyField(source="keeper.profile.nickname")
+    owner_nickname = DisplayNameField(source="owner")
+    keeper_nickname = DisplayNameField(source="keeper")
 
     class Meta:
         model = SharedBook

@@ -1,3 +1,4 @@
+{% load user_tags %}
 <div id="public-profile-tabs">
     <div class="border-b border-slate-200">
         <nav class="flex">
@@ -30,7 +31,7 @@
                         <a href="{% url 'books:detail' book.id %}"
                            class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                             <div class="aspect-[3/4] bg-slate-100">
-                                {% include 'partials/official_book_cover.html' with book=book.official_book %}
+                                {% include 'partials/book_cover.html' with book=book %}
                             </div>
                             <div class="p-2">
                                 <p class="text-sm font-medium text-slate-900 truncate">{{ book.official_book.title }}</p>
@@ -60,15 +61,15 @@
                         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3">
                             <a href="{% url 'deals:detail' deal.id %}" class="flex items-center gap-3">
                                 <div class="size-12 rounded-lg bg-slate-100 overflow-hidden shrink-0">
-                                    {% include 'partials/official_book_cover.html' with book=deal.shared_book.official_book %}
+                                    {% include 'partials/book_cover.html' with book=deal.shared_book %}
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <p class="text-sm font-medium text-slate-900 truncate">{{ deal.shared_book.official_book.title }}</p>
                                     <p class="text-xs text-slate-500">
                                         {% if deal.applicant == viewed_user %}
-                                            向 {{ deal.responder.profile.nickname|default:deal.responder.email }}
+                                            向 {{ deal.responder|display_name }}
                                         {% else %}
-                                            借給 {{ deal.applicant.profile.nickname|default:deal.applicant.email }}
+                                            借給 {{ deal.applicant|display_name }}
                                         {% endif %}
                                     </p>
                                 </div>

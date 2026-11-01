@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Exbooks - {{ profile.nickname|default:viewed_user.email }} 的資料{% endblock %}
+{% load user_tags %}
+{% block title %}Exbooks - {{ viewed_user|display_name }} 的資料{% endblock %}
 {% block content %}
     <!-- Header Section -->
     <header class="flex items-center bg-background-light-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
@@ -26,11 +27,11 @@
                          class="h-24 w-24 rounded-full object-cover border-4 border-white-slate-800 shadow-md">
                 {% else %}
                     <div class="flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-primary text-3xl font-bold border-4 border-white-slate-800 shadow-md">
-                        {{ profile.nickname|default:viewed_user.email|truncatechars:1 }}
+                        {{ viewed_user|display_name|truncatechars:1 }}
                     </div>
                 {% endif %}
             </div>
-            <h2 class="text-2xl font-bold text-slate-900 mb-1">{{ profile.nickname|default:viewed_user.email }}</h2>
+            <h2 class="text-2xl font-bold text-slate-900 mb-1">{{ viewed_user|display_name }}</h2>
             <p class="text-sm text-slate-500">會員</p>
         </div>
         <!-- Trust Level Badge -->

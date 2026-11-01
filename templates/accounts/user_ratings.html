@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Exbooks - {{ profile.nickname|default:viewed_user.email }} 的評價{% endblock %}
+{% load user_tags %}
+{% block title %}Exbooks - {{ viewed_user|display_name }} 的評價{% endblock %}
 {% block content %}
     <!-- Header Section -->
     <header class="flex items-center bg-background-light-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-primary/10">
@@ -21,11 +22,11 @@
                          alt="頭像"
                          class="w-full h-full object-cover">
                 {% else %}
-                    <span class="text-primary font-bold text-lg">{{ profile.nickname|default:viewed_user.email|truncatechars:1 }}</span>
+                    <span class="text-primary font-bold text-lg">{{ viewed_user|display_name|truncatechars:1 }}</span>
                 {% endif %}
             </div>
             <div>
-                <p class="font-bold text-slate-900">{{ profile.nickname|default:viewed_user.email }}</p>
+                <p class="font-bold text-slate-900">{{ viewed_user|display_name }}</p>
                 <p class="text-xs text-slate-500">共 {{ rating_summary.total_ratings }} 則評價</p>
             </div>
         </div>
@@ -88,14 +89,14 @@
                                          alt=""
                                          class="w-full h-full object-cover">
                                 {% else %}
-                                    <span class="text-primary font-bold text-sm">{{ rating.rater.profile.nickname|default:rating.rater.email|truncatechars:1 }}</span>
+                                    <span class="text-primary font-bold text-sm">{{ rating.rater|display_name|truncatechars:1 }}</span>
                                 {% endif %}
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center justify-between">
                                     <a href="{% url 'accounts:public_profile' rating.rater.id %}"
                                        class="text-sm font-medium text-slate-900 hover:underline">
-                                        {{ rating.rater.profile.nickname|default:rating.rater.email }}
+                                        {{ rating.rater|display_name }}
                                     </a>
                                     <div class="flex items-center gap-0.5">
                                         <span class="material-symbols-outlined text-amber-400 text-sm">star</span>

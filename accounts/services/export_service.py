@@ -12,6 +12,7 @@ from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
 
+from accounts.services.display_name_service import display_name_for
 from books.models import SharedBook
 from deals.models import Deal, Rating
 
@@ -198,13 +199,14 @@ def collect_ratings_received(user):
         list: 評價列表
     """
     ratings = Rating.objects.filter(ratee=user).select_related(
-        "rater", "deal__shared_book__official_book"
+        "rater__profile", "deal__shared_book__official_book"
     )
 
     return [
         {
             "id": str(rating.id),
-            "rater_email": rating.rater.email if rating.rater else None,
+            # 評分人是其他使用者：只匯出顯示名稱，不得含對方 email（L-2）
+            "rater_display_name": display_name_for(rating.rater) if rating.rater else None,
             "friendliness_score": rating.friendliness_score,
             "punctuality_score": rating.punctuality_score,
             "accuracy_score": rating.accuracy_score,
@@ -316,7 +318,7 @@ def convert_to_csv(data, user):
             writer.writerow(
                 [
                     rating.get("created_at", "")[:10],
-                    rating.get("rater_email", ""),
+                    rating.get("rater_display_name", ""),
                     rating.get("book_title", ""),
                     rating.get("friendliness_score", ""),
                     rating.get("punctuality_score", ""),

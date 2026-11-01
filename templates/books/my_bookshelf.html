@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load user_tags %}
 {% load i18n %}
 {% block title %}{% trans "Exbooks - 我的書架" %}{% endblock %}
 {% block body_class %}pb-24{% endblock %}
@@ -127,7 +128,7 @@
                 {% for book in contributions_books %}
                     {% url 'books:detail' book.id as book_url %}
                     {% trans "目前持有人：" as owner_prefix %}
-                    {% include 'partials/_book_card.html' with book=book url=book_url subtitle_prefix=owner_prefix subtitle=book.keeper.profile.nickname|default:book.keeper.email badge_text=book.get_status_display %}
+                    {% include 'partials/_book_card.html' with book=book url=book_url subtitle_prefix=owner_prefix subtitle=book.keeper|display_name badge_text=book.get_status_display %}
                 {% empty %}
                     {% include 'partials/_empty_state.html' with icon='inbox' message=message|default:_("目前沒有資料") %}
                 {% endfor %}

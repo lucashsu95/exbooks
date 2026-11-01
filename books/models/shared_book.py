@@ -5,6 +5,7 @@ import logging
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models.fields.files import ImageFieldFile
 from django.utils.translation import gettext_lazy as _
 from django_fsm import FSMField, FSMModelMixin, transition
 
@@ -99,6 +100,13 @@ class SharedBook(FSMModelMixin, UpdatableModel):
         blank=True,
         verbose_name=_("上架時間"),
     )
+    cover_image = models.ImageField(
+        upload_to="shared_book_covers/%Y/%m/",
+        null=True,
+        blank=True,
+        verbose_name=_("自訂封面"),
+        help_text=_("此冊專屬封面；共用書目已有封面時，使用者上傳的封面存在這裡"),
+    )
 
     class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
         db_table = "exbook_shared_book"
@@ -114,6 +122,13 @@ class SharedBook(FSMModelMixin, UpdatableModel):
 
     def __str__(self):
         return f"{self.official_book.title} (by {self.owner})"  # pyright: ignore[reportAttributeAccessIssue]
+
+    @property
+    def display_cover(self) -> ImageFieldFile | None:
+        """顯示用封面：此冊自訂封面優先，否則用共用書目封面；都沒有回傳 None。"""
+        if self.cover_image:
+            return self.cover_image
+        return self.official_book.cover_image or None  # pyright: ignore[reportAttributeAccessIssue]
 
     # ========================================================================
     # FSM 狀態轉換方法
