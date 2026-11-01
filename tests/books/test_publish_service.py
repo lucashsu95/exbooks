@@ -83,11 +83,12 @@ class TestPublishBook:
         assert shared.official_book.title == "新書"
         assert BookPhoto.objects.filter(shared_book=shared).count() == 1
 
-    def test_publish_updates_existing_official_book(self):
+    def test_publish_existing_official_book_only_fills_blanks(self):
         user = UserFactory()
         OfficialBook.objects.create(isbn="9787770001112", title="舊書名")
         shared = publish_book(user, _publish_data(title="新書名"), photos=[_jpeg()])
-        assert shared.official_book.title == "新書名"
+        assert shared.official_book.title == "舊書名"
+        assert shared.official_book.author == "作者"
 
     def test_publish_uploads_cover(self):
         user = UserFactory()
@@ -139,10 +140,11 @@ class TestUpdateBook:
     def test_update_official_and_shared_fields(self):
         user = _level1(UserFactory())
         book = SharedBookFactory(owner=user)
+        original_title = book.official_book.title
         update_book(book, user, _edit_data(), photos=[_jpeg()])
         book.refresh_from_db()
-        assert book.official_book.title == "改書名"
-        assert book.official_book.category == OfficialBook.Category.ART
+        assert book.official_book.title == original_title
+        assert book.official_book.category == OfficialBook.Category.ART  # 原為未分類 → 補上
         assert book.min_trust_level == 1
         assert book.loan_duration_days == 45
         assert BookPhoto.objects.filter(shared_book=book).count() == 1

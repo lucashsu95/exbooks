@@ -172,7 +172,11 @@ class BookAddForm(forms.ModelForm):
 
 
 class BookEditForm(forms.ModelForm):
-    title = forms.CharField(max_length=200, label="書名")
+    title = forms.CharField(
+        max_length=200,
+        label="書名",
+        help_text="書名、作者、出版社、分類為多人共用的書目資料，只會補上空白欄位，不會覆寫既有內容；如需更正請聯絡管理員。",
+    )
     author = forms.CharField(max_length=200, required=False, label="作者")
     publisher = forms.CharField(max_length=100, required=False, label="出版社")
     category = forms.ChoiceField(

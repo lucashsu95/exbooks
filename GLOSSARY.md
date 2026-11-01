@@ -6,10 +6,16 @@ Exbooks 共享書籍平臺的 domain 詞彙。討論架構、命名 module、寫
 ## 核心概念
 
 - **發布（publish）**：將一冊實體書上架為 SharedBook 並進入 TRANSFERABLE 狀態的完整流程。
-  含 OfficialBook 依 ISBN upsert、封面處理、書況照片、FSM 初始轉換（S → T）。
+  含 OfficialBook 依 ISBN 建立（既有書目只補空白欄位，見「共用書目保護」）、封面處理、
+  書況照片、FSM 初始轉換（S → T）。
   實作：`books/services/book_service.py::publish_book`。
-- **更新（update）**：owner 修改已上架書籍的 OfficialBook 基本資料與 SharedBook 欄位。
+- **更新（update）**：owner 修改已上架書籍的 SharedBook 欄位（OfficialBook 只補空白欄位）。
   Level 0 使用者無權限。實作：`update_book`。
+- **共用書目保護（catalog protection）**：OfficialBook 由多位 owner 共用，一般使用者在發布
+  或更新時只能補上空白欄位（分類「未分類」視同空白），不能覆寫既有內容；更正由管理員在
+  Django admin 處理。封面同理：共用書目沒有封面時可補上；已有封面時使用者上傳的封面只存在
+  自己那一冊（`SharedBook.cover_image`），顯示一律走 `SharedBook.display_cover`。
+  實作：`book_service.fill_blank_catalog_fields` / `_attach_cover`。
 - **上架 / 下架（list / suspend）**：SharedBook 在 TRANSFERABLE ↔ SUSPENDED 之間的切換。
   實作：`list_book` / `suspend_book`，對外入口 `toggle_listing`。
 - **即將到期（due soon）**：借閱者視角，MEETED 狀態且到期日落在提醒窗口內的交易。

@@ -54,7 +54,7 @@ box-shadow: 0 2px 6px rgba(20, 184, 166, 0.3);
         <div class="bg-white rounded-xl border border-slate-200 p-4 mb-6">
             <div class="flex gap-4 items-center">
                 <div class="w-16 h-22 rounded-lg bg-slate-200 overflow-hidden shrink-0 shadow-md">
-                    {% include 'partials/official_book_cover.html' with book=deal.shared_book.official_book %}
+                    {% include 'partials/book_cover.html' with book=deal.shared_book %}
                 </div>
                 <div class="flex-1">
                     <h3 class="text-slate-900 font-bold text-lg mb-1">{{ deal.shared_book.official_book.title }}</h3>

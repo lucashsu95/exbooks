@@ -97,17 +97,57 @@ def suspend_book(shared_book):
 # ============================================================================
 
 
-def _attach_cover(official_book, uploaded_cover, cover_url=""):
-    """
-    為 OfficialBook 附上封面。
+# 使用者可「補空白」的共用書目欄位。分類的預設值「其他（未分類）」視同空白。
+CATALOG_FILLABLE_FIELDS = ("title", "author", "publisher", "category")
 
-    優先序：上傳檔 > 既有封面 > 下載 cover_url。
+
+def _is_blank_catalog_value(field: str, value: object) -> bool:
+    if field == "category":
+        return not value or value == OfficialBook.Category.OTHER
+    return not (value or "").strip()  # pyright: ignore[reportAttributeAccessIssue]
+
+
+def fill_blank_catalog_fields(official_book: OfficialBook, data: dict) -> list[str]:
+    """
+    共用書目保護：既有 OfficialBook 只補空白欄位，不覆寫已有內容。
+
+    OfficialBook 由多位 owner 的 SharedBook 共用，一般使用者發布同 ISBN
+    或編輯自己的書時不能改掉別人看到的書目；更正既有內容由管理員在
+    Django admin 處理。
+
+    Returns:
+        實際被補上的欄位名稱
+    """
+    filled = []
+    for field in CATALOG_FILLABLE_FIELDS:
+        incoming = data.get(field, "")
+        if _is_blank_catalog_value(field, incoming):
+            continue
+        if _is_blank_catalog_value(field, getattr(official_book, field)):
+            setattr(official_book, field, incoming)
+            filled.append(field)
+    if filled:
+        official_book.save(update_fields=[*filled, "updated_at"])
+    return filled
+
+
+def _attach_cover(
+    official_book: OfficialBook,
+    shared_book: SharedBook,
+    uploaded_cover=None,
+    cover_url: str = "",
+) -> None:
+    """
+    附上封面。
+
+    共用書目沒有封面時視同空白欄位：上傳檔（優先）或下載 cover_url 補到
+    OfficialBook。共用書目已有封面時，上傳檔只存到這一冊的 SharedBook，
+    不取代其他人看到的共用封面；cover_url 則略過。
     下載失敗只記錄日誌、不中斷發布。
     """
     if uploaded_cover:
-        official_book.cover_image.save(
-            uploaded_cover.name, uploaded_cover, save=True
-        )
+        target = shared_book if official_book.cover_image else official_book
+        target.cover_image.save(uploaded_cover.name, uploaded_cover, save=True)
         return
 
     if not cover_url or official_book.cover_image:
@@ -142,9 +182,11 @@ def publish_book(owner, data, photos=(), cover=None, cover_url=""):
     發布（publish）：將一冊實體書上架為 SharedBook 並進入 TRANSFERABLE 狀態。
 
     完整流程：
-    1. OfficialBook 依 ISBN upsert
-    2. 附封面（上傳檔優先，其次下載 cover_url；下載失敗不中斷）
-    3. 建立 SharedBook（owner = keeper = 發布者，初始狀態 SUSPENDED）
+    1. OfficialBook 依 ISBN 建立；已存在時只補空白欄位、不覆寫
+       （見 fill_blank_catalog_fields）
+    2. 建立 SharedBook（owner = keeper = 發布者，初始狀態 SUSPENDED）
+    3. 附封面（見 _attach_cover：共用書目無封面才補上；已有封面時
+       上傳檔只存在這一冊；下載失敗不中斷）
     4. 寫入書況照片
     5. 透過 list_book() 走合法 FSM 通道 S → T
        （副作用：記錄上架時間、通知願望清單使用者）
@@ -180,21 +222,7 @@ def publish_book(owner, data, photos=(), cover=None, cover_url=""):
             },
         )
         if not created:
-            off_book.title = data["title"]
-            off_book.author = data.get("author", "")
-            off_book.publisher = data.get("publisher", "")
-            off_book.category = data["category"]
-            off_book.save(
-                update_fields=[
-                    "title",
-                    "author",
-                    "publisher",
-                    "category",
-                    "updated_at",
-                ]
-            )
-
-        _attach_cover(off_book, cover, cover_url)
+            fill_blank_catalog_fields(off_book, data)
 
         shared = SharedBook.objects.create(
             official_book=off_book,
@@ -204,6 +232,8 @@ def publish_book(owner, data, photos=(), cover=None, cover_url=""):
             condition_description=data.get("condition_description", ""),
             loan_duration_days=data.get("loan_duration_days", 30),
         )
+
+        _attach_cover(off_book, shared, cover, cover_url)
 
         for image in photos:
             _create_book_photo(shared, owner, image)
@@ -242,7 +272,7 @@ def assert_book_toggle_permission(user):
 
 def update_book(book, user, data, photos=()):
     """
-    更新書籍資訊（OfficialBook 基本資料 + SharedBook 欄位 + 新增照片）。
+    更新書籍資訊（SharedBook 欄位 + 新增照片；OfficialBook 只補空白欄位）。
 
     Args:
         book: 要更新的 SharedBook（ownership 由 View 層以
@@ -263,12 +293,8 @@ def update_book(book, user, data, photos=()):
     assert_book_edit_permission(user)
 
     with transaction.atomic():
-        official_book = book.official_book
-        official_book.title = data["title"]
-        official_book.author = data.get("author", "")
-        official_book.publisher = data.get("publisher", "")
-        official_book.category = data["category"]
-        official_book.save()
+        # 共用書目只補空白欄位，不覆寫其他 owner 也看得到的內容
+        fill_blank_catalog_fields(book.official_book, data)
 
         book.transferability = data["transferability"]
         book.min_trust_level = data["min_trust_level"]

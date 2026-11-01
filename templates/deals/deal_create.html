@@ -7,7 +7,7 @@
         <div class="bg-white rounded-xl border border-slate-200 p-4 mb-4">
             <div class="flex gap-4">
                 <div class="w-24 h-32 rounded-lg bg-slate-200 overflow-hidden shrink-0 shadow-md">
-                    {% include 'partials/official_book_cover.html' with book=book.official_book %}
+                    {% include 'partials/book_cover.html' with book=book %}
                 </div>
                 <div class="flex-1 flex flex-col justify-center">
                     <h3 class="text-slate-900 text-lg font-bold leading-tight mb-1">{{ book.official_book.title }}</h3>

@@ -1,12 +1,14 @@
 {% load static i18n %}
 {# 傳入: book (SharedBook), class (CSS) #}
-{# 優先順序：官方封面 cover_image > 預設封面圖 #}
-{% if book.official_book.cover_image %}
-    <img class="{{ class|default:'w-full h-full object-cover' }}"
-         alt="{{ book.official_book.title }}"
-         src="{{ book.official_book.cover_image.url }}" />
-{% else %}
-    <img class="{{ class|default:'w-full h-full object-cover' }}"
-         alt="{% trans '預設封面' %}"
-         src="{% static 'book-placeholder.jpg' %}" />
-{% endif %}
+{# 優先順序：此冊自訂封面 > 共用書目封面（SharedBook.display_cover）> 預設封面圖 #}
+{% with cover=book.display_cover %}
+    {% if cover %}
+        <img class="{{ class|default:'w-full h-full object-cover' }}"
+             alt="{{ book.official_book.title }}"
+             src="{{ cover.url }}" />
+    {% else %}
+        <img class="{{ class|default:'w-full h-full object-cover' }}"
+             alt="{% trans '預設封面' %}"
+             src="{% static 'book-placeholder.jpg' %}" />
+    {% endif %}
+{% endwith %}
