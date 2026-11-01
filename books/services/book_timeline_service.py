@@ -10,7 +10,7 @@ from typing import Dict, List, Any, Optional
 from django.db.models import QuerySet
 from django.contrib.auth import get_user_model
 
-from accounts.models import user_display_name
+from accounts.services.display_name_service import display_name_for
 from books.models import SharedBook, BookPhoto
 from deals.models import Deal, LoanExtension, ExchangeEvent
 from core.constants import MAX_PHOTOS_PER_BOOK
@@ -274,7 +274,7 @@ class BookTimelineService:
     @staticmethod
     def _format_user_display(user: User) -> str:
         """格式化用戶顯示名稱"""
-        return f"{user_display_name(user)} 分享了這本書"
+        return f"{display_name_for(user)} 分享了這本書"
 
     @staticmethod
     def _format_deal_creation_description(deal: Deal) -> str:

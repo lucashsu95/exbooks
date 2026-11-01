@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Any, Callable, Dict, List, Optional
 
-from accounts.models import user_display_name
+from accounts.services.display_name_service import display_name_for
 from deals.models import LoanExtension
 
 logger = logging.getLogger(__name__)
@@ -86,7 +86,7 @@ MAX_TOOL_LINES = 20
 
 
 def _book_line(book) -> str:
-    return f"#{book.pk}《{book.official_book.title}》｜{book.get_status_display()}｜持有者：{user_display_name(book.keeper)}"
+    return f"#{book.pk}《{book.official_book.title}》｜{book.get_status_display()}｜持有者：{display_name_for(book.keeper)}"
 
 
 def _deal_line(deal, viewer, pending) -> str:
@@ -97,7 +97,7 @@ def _deal_line(deal, viewer, pending) -> str:
     # 出借者視角需要答得出「誰借了我的書」，故行內帶借閱者身分
     line = (
         f"#{deal.pk}《{deal.shared_book.official_book.title}》｜{deal.get_status_display()}"
-        f"｜借閱者：{user_display_name(deal.applicant)}"
+        f"｜借閱者：{display_name_for(deal.applicant)}"
     )
     if deal.due_date is not None:
         days_left = (deal.due_date - timezone.localdate()).days

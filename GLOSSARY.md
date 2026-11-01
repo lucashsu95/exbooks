@@ -22,6 +22,11 @@ Exbooks 共享書籍平臺的 domain 詞彙。討論架構、命名 module、寫
   實作：`deals/services/overdue_service.py::get_due_soon_deals`。
 - **逾期（overdue）**：MEETED 狀態且已過到期日的交易。公開展示、信用扣分與通知
   皆以此為依據。實作：`overdue_service`。
+- **他人顯示名稱（display name）**：對其他使用者呈現的名稱只能是暱稱，暱稱空白時為
+  「會員#<user pk>」；任何頁面、API、通知、Email、匯出都不得出現他人的 email 或由 email
+  產生的帳號名稱（也不可用 `User.__str__` / `SharedBook.__str__` 組字串）。
+  實作：`accounts/services/display_name_service.py::display_name_for`（模板 filter
+  `user_tags.display_name`、DRF `DisplayNameField` 皆直接呼叫）。
 
 - **AI 對話編排（chat orchestration）**：一輪 AI 對話的完整流程——tool 呼叫迴圈、
   發出 consent 請求、follow-up 二次呼叫、history 寫入。實作：

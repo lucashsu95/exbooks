@@ -6,15 +6,35 @@ from datetime import timedelta
 
 import pytest
 from django.contrib.auth.models import User
+from django.core import mail
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.template import Context, Template
+from django.template.loader import render_to_string
+from django.test import RequestFactory
 from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import Appeal
+from accounts.services.display_name_service import display_name_for
+from accounts.services.export_service import export_user_data
+from books.serializers import SharedBookSerializer
 from books.services.book_timeline_service import BookTimelineService
-from deals.models import Deal
+from deals.models import Deal, DealMessage, LoanExtension, Notification
+from deals.serializers import (
+    DealMessageSerializer,
+    DealSerializer,
+    LoanExtensionSerializer,
+)
+from deals.services import notification_service as ns
 from deals.services.overdue_service import get_public_overdue_info
-from tests.factories import DealFactory, RatingFactory, SharedBookFactory, UserFactory
+from tests.factories import (
+    DealFactory,
+    DealMessageFactory,
+    LoanExtensionFactory,
+    RatingFactory,
+    SharedBookFactory,
+    UserFactory,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -47,13 +67,13 @@ def viewer_client(client):
 
 class TestDisplayName:
     def test_blank_nickname_shows_member_number(self, hidden):
-        assert hidden.profile.display_name == f"會員#{hidden.pk}"
+        assert display_name_for(hidden) == f"會員#{hidden.pk}"
 
     def test_nickname_is_used_when_present(self):
         user = UserFactory()
         user.profile.nickname = "小明"
         user.profile.save()
-        assert user.profile.display_name == "小明"
+        assert display_name_for(user) == "小明"
 
     def test_template_filter(self, hidden):
         html = Template("{% load user_tags %}{{ u|display_name }}").render(
@@ -166,3 +186,138 @@ class TestTimelineDoesNotLeakEmail:
         text = BookTimelineService._format_user_display(hidden)
         assert SECRET_EMAIL not in text
         assert f"會員#{hidden.pk}" in text
+
+
+class TestDisplayNameService:
+    def test_blank_nickname(self, hidden):
+        assert display_name_for(hidden) == f"會員#{hidden.pk}"
+
+    def test_none(self):
+        assert display_name_for(None) == ""
+
+    def test_profile_str_does_not_leak_email(self, hidden):
+        text = str(hidden.profile)
+        _assert_no_leak(text)
+        assert f"會員#{hidden.pk}" in text
+
+
+class TestNotificationsDoNotLeakEmail:
+    """通知文字（站內、API、Email）不得含對方 email／帳號名稱。"""
+
+    def _assert_notifications_clean(self, recipient: User) -> None:
+        texts = [
+            f"{n.title} {n.message}"
+            for n in Notification.objects.filter(recipient=recipient)
+        ]
+        assert texts
+        for text in texts:
+            _assert_no_leak(text)
+        for message in mail.outbox:
+            _assert_no_leak(f"{message.subject} {message.body}")
+
+    def test_deal_requested(self, hidden):
+        deal = DealFactory(applicant=hidden)
+        ns.notify_deal_requested(deal)
+        self._assert_notifications_clean(deal.responder)
+        assert mail.outbox  # Email 也有寄出並受檢
+
+        n = Notification.objects.get(recipient=deal.responder)
+        assert f"會員#{hidden.pk}" in n.message
+        assert deal.shared_book.official_book.title in n.message
+
+    def test_deal_responded_with_hidden_owner(self, hidden):
+        applicant = UserFactory()
+        deal = DealFactory(
+            applicant=applicant,
+            responder=hidden,
+            shared_book=SharedBookFactory(owner=hidden),
+        )
+        ns.notify_deal_responded(deal)
+        self._assert_notifications_clean(applicant)
+
+    def test_book_texts_do_not_include_owner(self, hidden):
+        borrower = UserFactory()
+        book = SharedBookFactory(owner=hidden, keeper=borrower)
+        deal = DealFactory(
+            applicant=borrower,
+            responder=hidden,
+            shared_book=book,
+            due_date=timezone.now().date(),
+        )
+        ns.notify_deal_cancelled(deal, hidden)
+        ns.notify_deal_meeted(deal)
+        ns.notify_rating_pending(deal, borrower)
+        ns.notify_book_due_soon(deal)
+        ns.notify_book_overdue(deal)
+        ns.notify_book_available(borrower, book)
+        self._assert_notifications_clean(borrower)
+
+    def test_extension_texts(self, hidden):
+        owner = UserFactory()
+        deal = DealFactory(
+            applicant=hidden, responder=owner, shared_book=SharedBookFactory(owner=hidden)
+        )
+        ns.notify_extend_requested(LoanExtensionFactory(deal=deal, requested_by=hidden))
+        self._assert_notifications_clean(owner)
+
+        approved = LoanExtensionFactory(
+            deal=DealFactory(
+                applicant=owner,
+                responder=hidden,
+                shared_book=SharedBookFactory(owner=hidden),
+            ),
+            requested_by=owner,
+            status=LoanExtension.Status.APPROVED,
+        )
+        ns.notify_extend_result(approved)
+        self._assert_notifications_clean(owner)
+
+
+class TestExportDoesNotLeakRaterEmail:
+    def test_rating_export_uses_display_name(self, hidden):
+        ratee = UserFactory()
+        deal = DealFactory(applicant=hidden, shared_book=SharedBookFactory(owner=ratee))
+        RatingFactory(deal=deal, rater=hidden, ratee=ratee)
+        for fmt in ("json", "csv"):
+            text = str(export_user_data(ratee, format=fmt))
+            _assert_no_leak(text)
+            assert f"會員#{hidden.pk}" in text
+
+
+class TestApiSerializersUseDisplayName:
+    def test_shared_book_serializer(self, hidden):
+        data = SharedBookSerializer(SharedBookFactory(owner=hidden)).data
+        assert data["owner_nickname"] == f"會員#{hidden.pk}"
+        assert data["keeper_nickname"] == f"會員#{hidden.pk}"
+
+    def test_deal_serializers(self, hidden):
+        deal = DealFactory(applicant=hidden)
+        assert DealSerializer(deal).data["applicant_nickname"] == f"會員#{hidden.pk}"
+        msg = DealMessageFactory(deal=deal, sender=hidden)
+        assert DealMessageSerializer(msg).data["sender_nickname"] == f"會員#{hidden.pk}"
+        ext_data = LoanExtensionSerializer(
+            LoanExtensionFactory(deal=deal, requested_by=hidden)
+        ).data
+        assert ext_data["requested_by_nickname"] == f"會員#{hidden.pk}"
+        assert ext_data["approved_by_nickname"] is None
+
+
+class TestMessageListAvatarAlt:
+    def test_avatar_alt_uses_display_name(self, hidden):
+        hidden.profile.avatar = SimpleUploadedFile(
+            "a.jpg", b"x", content_type="image/jpeg"
+        )
+        hidden.profile.save()
+        deal = DealFactory(applicant=hidden)
+        DealMessageFactory(deal=deal, sender=hidden)
+        request = RequestFactory().get("/")
+        request.user = deal.responder
+        html = render_to_string(
+            "deals/partials/message_list.html",
+            {
+                "messages": DealMessage.objects.filter(deal=deal),
+                "deal": deal,
+                "request": request,
+            },
+        )
+        assert f'alt="會員#{hidden.pk}"' in html

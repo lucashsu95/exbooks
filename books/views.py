@@ -174,7 +174,7 @@ def my_bookshelf(request):
     elif tab == "requests":
         active_requests = (
             Deal.objects.select_related(
-                "shared_book__official_book", "applicant", "responder"
+                "shared_book__official_book", "applicant__profile", "responder__profile"
             )
             .prefetch_related("shared_book__photos")
             .filter(Q(applicant=request.user) | Q(responder=request.user))
@@ -720,7 +720,7 @@ def book_set_detail(request, pk):
         messages.error(request, service_error_message(e))
         return redirect("books:book_set_list")
 
-    books = book_set.books.select_related("official_book", "keeper").all()
+    books = book_set.books.select_related("official_book", "keeper__profile").all()
 
     return render(
         request,

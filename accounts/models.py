@@ -290,24 +290,6 @@ class Appeal(FSMModelMixin, UpdatableModel):
         })
 
 
-def member_display_name(user_id: int | None, nickname: str = "") -> str:
-    """他人顯示名稱的單一規則：暱稱優先，否則「會員#<user pk>」。"""
-    nickname = (nickname or "").strip()
-    if nickname:
-        return nickname
-    return f"會員#{user_id}"
-
-
-def user_display_name(user) -> str:
-    """User 的對外顯示名稱（profile 不存在時同樣回退「會員#<pk>」）。"""
-    if user is None:
-        return ""
-    try:
-        return user.profile.display_name
-    except UserProfile.DoesNotExist:
-        return member_display_name(user.pk)
-
-
 class UserProfile(UpdatableModel):
     """
     擴展 Django User 模型。
@@ -409,12 +391,11 @@ class UserProfile(UpdatableModel):
         verbose_name = _("用戶資料")
         verbose_name_plural = _("用戶資料")
 
-    def __str__(self):
-        return self.nickname or self.user.get_full_name() or self.user.email
+    def __str__(self) -> str:
+        # 不回退到 email／姓名（admin 下拉選單等處也會出現），規則見 display_name_service。
+        # 延遲 import：accounts.services 套件初始化會反向 import 本模組。
+        from accounts.services.display_name_service import member_display_name
 
-    @property
-    def display_name(self) -> str:
-        """對他人顯示的名稱：暱稱，空白時為「會員#<pk>」，絕不回退到 email。"""
         return member_display_name(self.user_id, self.nickname)  # pyright: ignore[reportAttributeAccessIssue]
 
     @property

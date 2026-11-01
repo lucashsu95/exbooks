@@ -1,4 +1,6 @@
 from rest_framework import serializers
+
+from accounts.serializers import DisplayNameField
 from deals.models.deal import Deal
 from deals.models.loan_extension import LoanExtension
 from deals.models.deal_message import DealMessage
@@ -6,12 +8,8 @@ from deals.models.notification import Notification
 
 
 class LoanExtensionSerializer(serializers.ModelSerializer):
-    requested_by_nickname = serializers.ReadOnlyField(
-        source="requested_by.profile.nickname"
-    )
-    approved_by_nickname = serializers.ReadOnlyField(
-        source="approved_by.profile.nickname"
-    )
+    requested_by_nickname = DisplayNameField(source="requested_by")
+    approved_by_nickname = DisplayNameField(source="approved_by")
 
     class Meta:
         model = LoanExtension
@@ -32,8 +30,8 @@ class DealSerializer(serializers.ModelSerializer):
     shared_book_title = serializers.ReadOnlyField(
         source="shared_book.official_book.title"
     )
-    applicant_nickname = serializers.ReadOnlyField(source="applicant.profile.nickname")
-    responder_nickname = serializers.ReadOnlyField(source="responder.profile.nickname")
+    applicant_nickname = DisplayNameField(source="applicant")
+    responder_nickname = DisplayNameField(source="responder")
 
     class Meta:
         model = Deal
@@ -71,7 +69,7 @@ class DealSerializer(serializers.ModelSerializer):
 
 
 class DealMessageSerializer(serializers.ModelSerializer):
-    sender_nickname = serializers.ReadOnlyField(source="sender.profile.nickname")
+    sender_nickname = DisplayNameField(source="sender")
 
     class Meta:
         model = DealMessage

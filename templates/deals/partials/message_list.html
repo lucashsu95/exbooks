@@ -21,7 +21,7 @@
             <div class="size-8 rounded-full bg-primary/20 overflow-hidden shrink-0 flex items-center justify-center">
                 {% if message.sender.profile.avatar %}
                     <img src="{{ message.sender.profile.avatar.url }}"
-                         alt="{{ message.sender.profile.nickname }}"
+                         alt="{{ message.sender|display_name }}"
                          class="w-full h-full object-cover" />
                 {% else %}
                     <span class="text-primary text-xs font-bold">{{ message.sender|display_name|truncatechars:1 }}</span>
@@ -34,7 +34,7 @@
             <div class="size-8 rounded-full bg-primary/20 overflow-hidden shrink-0 flex items-center justify-center">
                 {% if message.sender.profile.avatar %}
                     <img src="{{ message.sender.profile.avatar.url }}"
-                         alt="{{ message.sender.profile.nickname }}"
+                         alt="{{ message.sender|display_name }}"
                          class="w-full h-full object-cover" />
                 {% else %}
                     <span class="text-primary text-xs font-bold">{{ message.sender|display_name|truncatechars:1 }}</span>
