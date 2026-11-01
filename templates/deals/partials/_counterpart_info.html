@@ -1,3 +1,4 @@
+{% load user_tags %}
 {% comment %}
   Counterpart User Info
   顯示交易中「對方」的頭像和用戶名
@@ -11,7 +12,7 @@
         </div>
         <div class="min-w-0 flex flex-col justify-center gap-1">
             <h4 class="text-sm font-bold text-slate-700 truncate leading-tight">
-                {{ deal.responder.profile.nickname|default:deal.responder.username }}
+                {{ deal.responder|display_name }}
             </h4>
             {% if deal.responder.profile %}
                 <div class="flex items-center">
@@ -26,7 +27,7 @@
         </div>
         <div class="min-w-0 flex flex-col justify-center gap-1">
             <h4 class="text-sm font-bold text-slate-700 truncate leading-tight">
-                {{ deal.applicant.profile.nickname|default:deal.applicant.username }}
+                {{ deal.applicant|display_name }}
             </h4>
             {% if deal.applicant.profile %}
                 <div class="flex items-center">

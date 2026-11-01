@@ -1,3 +1,4 @@
+{% load user_tags %}
 {% comment %}
   Book Card Component (List Style)
   用於「所有書籍」列表的水平卡片
@@ -25,7 +26,7 @@
             {% if show_keeper|default:True %}
                 <p class="text-slate-500 text-[11px] flex items-center gap-1">
                     <span class="material-symbols-outlined text-[14px]">inventory_2</span>
-                    保管：{{ book.keeper.profile.nickname|default:book.keeper.email }}
+                    保管：{{ book.keeper|display_name }}
                 </p>
             {% endif %}
             {% if show_location|default:True %}

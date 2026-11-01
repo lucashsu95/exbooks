@@ -1,3 +1,4 @@
+{% load user_tags %}
 <div id="public-profile-tabs">
     <div class="border-b border-slate-200">
         <nav class="flex">
@@ -66,9 +67,9 @@
                                     <p class="text-sm font-medium text-slate-900 truncate">{{ deal.shared_book.official_book.title }}</p>
                                     <p class="text-xs text-slate-500">
                                         {% if deal.applicant == viewed_user %}
-                                            向 {{ deal.responder.profile.nickname|default:deal.responder.email }}
+                                            向 {{ deal.responder|display_name }}
                                         {% else %}
-                                            借給 {{ deal.applicant.profile.nickname|default:deal.applicant.email }}
+                                            借給 {{ deal.applicant|display_name }}
                                         {% endif %}
                                     </p>
                                 </div>

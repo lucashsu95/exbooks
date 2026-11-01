@@ -1,3 +1,4 @@
+{% load user_tags %}
 {# templates/books/partials/_book_list_rows.html #}
 {# Book list rows partial — extracted from book_list_results.html lines 100-135 #}
 {# Usage: {% include 'books/partials/_book_list_rows.html' with nearby_books=nearby_books %} #}
@@ -22,7 +23,7 @@
                             {% include "partials/trust_badge_inline.html" with trust_level=book.keeper.profile.trust_level %}
                         {% endif %}
                     </div>
-                    <p class="text-slate-400 text-[10px] mt-2 font-medium">持有者：{{ book.keeper.username }}</p>
+                    <p class="text-slate-400 text-[10px] mt-2 font-medium">持有者：{{ book.keeper|display_name }}</p>
                 </div>
                 <div class="text-slate-300">
                     <span class="material-symbols-outlined">chevron_right</span>

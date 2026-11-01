@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Any, Callable, Dict, List, Optional
 
+from accounts.models import user_display_name
 from deals.models import LoanExtension
 
 logger = logging.getLogger(__name__)
@@ -85,7 +86,7 @@ MAX_TOOL_LINES = 20
 
 
 def _book_line(book) -> str:
-    return f"#{book.pk}《{book.official_book.title}》｜{book.get_status_display()}｜持有者：{book.keeper.username}"
+    return f"#{book.pk}《{book.official_book.title}》｜{book.get_status_display()}｜持有者：{user_display_name(book.keeper)}"
 
 
 def _deal_line(deal, viewer, pending) -> str:
@@ -96,7 +97,7 @@ def _deal_line(deal, viewer, pending) -> str:
     # 出借者視角需要答得出「誰借了我的書」，故行內帶借閱者身分
     line = (
         f"#{deal.pk}《{deal.shared_book.official_book.title}》｜{deal.get_status_display()}"
-        f"｜借閱者：{deal.applicant.username}"
+        f"｜借閱者：{user_display_name(deal.applicant)}"
     )
     if deal.due_date is not None:
         days_left = (deal.due_date - timezone.localdate()).days
@@ -162,8 +163,8 @@ def get_user_books(user, status: str = "ALL") -> str:
         books = SharedBook.objects.filter(Q(owner=user) | Q(keeper=user))
     else:
         raise ToolError("status 只能為 OWNED、HELD 或 ALL。")
-    # _book_line 要 official_book.title 與 keeper.username，一併 join 掉避免 N+1
-    books = books.select_related("official_book", "keeper").order_by("-created_at")
+    # _book_line 要 official_book.title 與 keeper 顯示名稱（profile），一併 join 掉避免 N+1
+    books = books.select_related("official_book", "keeper__profile").order_by("-created_at")
 
     empty_messages = {
         "OWNED": "你沒有擁有的書籍。",
@@ -196,8 +197,8 @@ def get_borrowing_status(user) -> str:
             status__in=[Deal.Status.REQUESTED, Deal.Status.RESPONDED, Deal.Status.MEETED],
         )
         .filter(Q(applicant=user) | Q(responder=user))
-        # _deal_line 要 official_book.title 與 applicant.username，一併 join 掉避免 N+1
-        .select_related("shared_book__official_book", "applicant")
+        # _deal_line 要 official_book.title 與 applicant 顯示名稱（profile），一併 join 掉避免 N+1
+        .select_related("shared_book__official_book", "applicant__profile")
         # 每筆 deal 的 pending extension 一次 batch 取回，不再逐筆 filter
         .prefetch_related(
             Prefetch(

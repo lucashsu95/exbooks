@@ -1,3 +1,4 @@
+{% load user_tags %}
 <div id="due-soon-content">
     {% if deals_with_days_left %}
         <div class="space-y-4">
@@ -31,7 +32,7 @@
                             </div>
                             <div class="flex items-center gap-2 text-slate-500 text-sm mb-3">
                                 <span class="material-symbols-outlined text-sm">person</span>
-                                <span>借閱對象：{{ item.deal.responder.profile.nickname|default:item.deal.responder.email }}</span>
+                                <span>借閱對象：{{ item.deal.responder|display_name }}</span>
                             </div>
                             <div class="flex gap-2">
                                 <a href="{% url 'deals:detail' item.deal.id %}"

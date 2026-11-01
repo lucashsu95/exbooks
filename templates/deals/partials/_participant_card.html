@@ -1,3 +1,4 @@
+{% load user_tags %}
 {% comment %}
   Participant Card
   顯示交易參與者資訊（申請者或持有者）
@@ -12,7 +13,7 @@
         </div>
         <div class="min-w-0 flex-1">
             <h4 class="font-extrabold text-slate-900 truncate text-sm sm:text-lg leading-tight mb-0.5">
-                {{ user.profile.nickname|default:user.username }}
+                {{ user|display_name }}
             </h4>
             <p class="text-slate-400 font-black uppercase tracking-widest text-[9px] sm:text-[10px]">{{ role_label }}</p>
         </div>

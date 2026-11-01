@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load user_tags %}
 {% load i18n %}
 {% block title %}{% blocktrans with title=book.official_book.title|default:'大亨小傳' %}Exbooks - {{ title }}{% endblocktrans %}{% endblock %}
 {% block content %}
@@ -75,13 +76,13 @@
                                  src="{{ book.keeper.socialaccount_set.all.0.extra_data.picture }}" />
                         {% else %}
                             <div class="w-full h-full flex items-center justify-center text-white text-lg font-bold">
-                                {{ book.keeper.profile.nickname|default:book.keeper.email|truncatechars:1 }}
+                                {{ book.keeper|display_name|truncatechars:1 }}
                             </div>
                         {% endif %}
                     </div>
                     <div>
                          <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">{% trans "目前持有人" %}</p>
-                        <p class="text-slate-900 font-bold text-lg">{{ book.keeper.profile.nickname|default:book.keeper.email }}</p>
+                        <p class="text-slate-900 font-bold text-lg">{{ book.keeper|display_name }}</p>
                     </div>
                 </div>
                 <a href="{% url 'accounts:public_profile' book.keeper.id %}"

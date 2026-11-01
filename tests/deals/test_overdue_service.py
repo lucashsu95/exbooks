@@ -93,8 +93,8 @@ class OverdueServiceTest(TestCase):
         info = get_public_overdue_info(deal)
         self.assertTrue(info["is_severe"])
 
-    def test_get_public_overdue_info_uses_email_prefix_when_no_nickname(self):
-        """測試無暱稱時使用 Email 前綴"""
+    def test_get_public_overdue_info_uses_member_number_when_no_nickname(self):
+        """測試無暱稱時顯示「會員#<pk>」，不洩漏 Email 前綴"""
         self.borrower.profile.nickname = ""
         self.borrower.profile.save()
 
@@ -108,8 +108,8 @@ class OverdueServiceTest(TestCase):
         )
 
         info = get_public_overdue_info(deal)
-        expected_nickname = self.borrower.email.split("@")[0]
-        self.assertEqual(info["nickname"], expected_nickname)
+        self.assertEqual(info["nickname"], f"會員#{self.borrower.pk}")
+        self.assertNotIn(self.borrower.email.split("@")[0], info["nickname"])
 
     def test_get_overdue_status_none(self):
         """測試逾期狀態：無逾期"""

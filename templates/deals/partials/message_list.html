@@ -1,3 +1,4 @@
+{% load user_tags %}
 {% for message in messages %}
     <!-- 判斷是否為當前用戶發送的訊息 -->
     {% if message.sender == request.user %}
@@ -23,7 +24,7 @@
                          alt="{{ message.sender.profile.nickname }}"
                          class="w-full h-full object-cover" />
                 {% else %}
-                    <span class="text-primary text-xs font-bold">{{ message.sender.profile.nickname|default:message.sender.email|truncatechars:1 }}</span>
+                    <span class="text-primary text-xs font-bold">{{ message.sender|display_name|truncatechars:1 }}</span>
                 {% endif %}
             </div>
         </div>
@@ -36,12 +37,12 @@
                          alt="{{ message.sender.profile.nickname }}"
                          class="w-full h-full object-cover" />
                 {% else %}
-                    <span class="text-primary text-xs font-bold">{{ message.sender.profile.nickname|default:message.sender.email|truncatechars:1 }}</span>
+                    <span class="text-primary text-xs font-bold">{{ message.sender|display_name|truncatechars:1 }}</span>
                 {% endif %}
             </div>
             <div class="flex-1">
                 <p class="text-xs text-slate-500 mb-1">
-                    {{ message.sender.profile.nickname|default:message.sender.email }} ·
+                    {{ message.sender|display_name }} ·
                     {% if message.sender == deal.applicant %}
                         申請者
                     {% else %}

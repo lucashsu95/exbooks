@@ -4,6 +4,7 @@ from django.db.models import Q
 from django.utils import timezone
 from datetime import timedelta
 
+from accounts.models import user_display_name
 from books.models import SharedBook
 from deals.models import Deal
 
@@ -84,10 +85,8 @@ def get_public_overdue_info(deal):
     today = timezone.now().date()
     overdue_days = (today - deal.due_date).days if deal.due_date else 0
 
-    # 取得暱稱，若無則使用 Email 前綴
-    nickname = deal.applicant.profile.nickname
-    if not nickname:
-        nickname = deal.applicant.email.split("@")[0]
+    # 公開頁面：暱稱，空白時「會員#<pk>」，不得洩漏 email
+    nickname = user_display_name(deal.applicant)
 
     logger.debug(
         "public overdue info",
