@@ -173,8 +173,8 @@ docker compose up -d --build
 | `celery_beat` | Celery beat（排程觸發） | — |
 | `nginx` | 反向代理 + 靜態檔案 | **80** |
 | `redis` | Celery broker / 快取（AOF 持久化） | — (內部 6379) |
-| `minio` | 物件儲存（備份落地） | 9002 (SAPI)、9003 (console) |
-| `mailpit` | 本地 SMTP 捕獲（免真寄信） | 8025 (web UI) |
+| `minio` | 物件儲存（備份落地） | 9002 (S3 API)、9003 (console)，僅 127.0.0.1 |
+| `mailpit` | 本地 SMTP 捕獲（免真寄信） | 8025 (web UI)，僅 127.0.0.1 |
 
 另有 `backup`、`media_backup`、`redis_backup` 三個備份服務，歸在 `backup` profile，需 `docker compose --profile backup up -d` 才會啟動。
 
@@ -190,6 +190,16 @@ docker compose exec web python manage.py createsuperuser
 
 - 首頁：http://localhost/
 - 後台：http://localhost/admin/
+- MinIO console：http://localhost:9003/、Mailpit：http://localhost:8025/（只綁 127.0.0.1，不對外開放）
+
+從其他機器連線時，用 SSH tunnel 轉到伺服器本機的 port，例如：
+
+```bash
+ssh -L 9003:127.0.0.1:9003 -L 8025:127.0.0.1:8025 <user>@<host>
+# 之後在自己電腦開 http://localhost:9003/（MinIO console）、http://localhost:8025/（Mailpit）
+```
+
+詳見 [docs/BACKUP.md](docs/BACKUP.md#管理介面minio--mailpit)。
 
 ### 5. 常用指令
 

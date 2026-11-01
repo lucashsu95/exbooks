@@ -137,8 +137,10 @@ services:
     cpus: "1.00"
     command: server /data --console-address ":9001"
     ports:
-      - "9002:9000"
-      - "9003:9001"
+      # 僅綁 127.0.0.1：MinIO API／console 不對外，遠端請用 SSH tunnel（見 docs/BACKUP.md）
+      # 網站的媒體檔由 nginx 經內部網路 proxy 到 minio:9000，不受影響
+      - "127.0.0.1:9002:9000"
+      - "127.0.0.1:9003:9001"
     env_file: .env
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
@@ -172,7 +174,7 @@ services:
     mem_limit: 128m
     cpus: "0.25"
     ports:
-      - "8025:8025"
+      - "127.0.0.1:8025:8025"  # 僅本機可達，遠端請用 SSH tunnel（見 docs/BACKUP.md）
     volumes:
       - mailpit_data:/data
 
